@@ -1,0 +1,66 @@
+import { randomUUID } from "node:crypto";
+import express from "express";
+import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
+import { getHealth } from "./routes/health.js";
+import { getParcelReport } from "./routes/report.js";
+
+export function createApp(commit: string) {
+  const app = express();
+  app.disable("x-powered-by");
+
+  app.use((_req, res, next) => {
+    const requestId = randomUUID();
+    res.locals.requestId = requestId;
+    res.setHeader("x-request-id", requestId);
+    next();
+  });
+
+  app.get("/api/health", getHealth(commit));
+  app.get("/api/parcels/:parcelKey/report", getParcelReport);
+
+  app.use((_req, res) => {
+    sendApiError(
+      res,
+      readRequestId(res),
+      new HttpError(404, "NOT_FOUND", "That route is not available.", false),
+    );
+  });
+
+  app.use(
+    (
+      error: unknown,
+      _req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      if (res.headersSent) {
+        next(error);
+        return;
+      }
+      const requestId = readRequestId(res);
+      if (error instanceof HttpError) {
+        sendApiError(res, requestId, error);
+        return;
+      }
+      logSafeFailure(requestId, error);
+      sendApiError(
+        res,
+        requestId,
+        new HttpError(
+          500,
+          "INTERNAL_ERROR",
+          "The report could not be loaded.",
+          true,
+        ),
+      );
+    },
+  );
+
+  return app;
+}
+
+function readRequestId(res: express.Response): string {
+  return typeof res.locals.requestId === "string"
+    ? res.locals.requestId
+    : "unknown";
+}

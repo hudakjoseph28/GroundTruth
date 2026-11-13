@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Internal row. Report responses are mapped in src/reports/mapReport.ts.
+model ParcelRecord {
+  key                  String        @id
+  sourceParcelId       String
+  county               String
+  countyFips           String
+  township             String?
+  siteAddress          String?
+  acreage              Decimal?      @db.Decimal(12, 4)
+  latitude             Float
+  longitude            Float
+  geometryGeoJson      Json
+  geometryAuthority    String
+  geometrySourceUrl    String
+  geometryRetrievedAt  DateTime      @db.Timestamptz(3)
+  report               ReportRecord?
+}
+
+model ReportRecord {
+  parcelKey           String        @id
+  parcel              ParcelRecord  @relation(fields: [parcelKey], references: [key], onDelete: Cascade)
+  generatedAt         DateTime      @db.Timestamptz(3)
+  coverage            String
+  biggestOpenQuestion String
+  checks              CheckRecord[]
+}
+
+model CheckRecord {
+  id                      String         @id
+  reportParcelKey         String
+  report                  ReportRecord   @relation(fields: [reportParcelKey], references: [parcelKey], onDelete: Cascade)
+  position                Int
+  kind                    String
+  status                  String
+  finding                 String
+  limitation              String
+  nextAction              String
+  responsibleRole         String
+  responsibleOrganization String?
+  publicContactUrl        String?
+  reviewerWallet          String?
+  transactionSignature    String?
+  sources                 SourceRecord[]
+
+  @@unique([reportParcelKey, kind])
+}
+
+model SourceRecord {
+  id            String      @id
+  checkId       String
+  check         CheckRecord @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  position      Int
+  authority     String
+  title         String
+  url           String
+  retrievedAt   DateTime    @db.Timestamptz(3)
+  effectiveDate DateTime?   @db.Timestamptz(3)
+}
