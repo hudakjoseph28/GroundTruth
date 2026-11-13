@@ -5,9 +5,12 @@ import { sampleParcelPath } from "../data/parcelSource";
 export function SearchForm({
   initialQuery = "",
   autoFocus = false,
+  showSampleLink = true,
 }: {
   initialQuery?: string;
   autoFocus?: boolean;
+  /** The homepage shows the sample path in its own status line instead. */
+  showSampleLink?: boolean;
 }) {
   const navigate = useNavigate();
   const fieldId = useId();
@@ -21,7 +24,9 @@ export function SearchForm({
 
   return (
     <form className="search" role="search" onSubmit={onSubmit}>
-      <label htmlFor={fieldId}>Address or parcel ID</label>
+      <label className="visually-hidden" htmlFor={fieldId}>
+        Address or parcel ID
+      </label>
       <div className="search-row">
         <input
           id={fieldId}
@@ -30,14 +35,16 @@ export function SearchForm({
           autoFocus={autoFocus}
           autoComplete="off"
           spellCheck={false}
-          placeholder="123 Main St or STAGED-DEMO"
+          placeholder="Address or parcel ID"
           onChange={(event) => setQuery(event.target.value)}
         />
         <button type="submit">Find parcel</button>
       </div>
-      <Link className="sample-link" to={sampleParcelPath()}>
-        Explore a sample parcel
-      </Link>
+      {showSampleLink ? (
+        <Link className="sample-link" to={sampleParcelPath()}>
+          Explore a sample parcel
+        </Link>
+      ) : null}
     </form>
   );
 }
