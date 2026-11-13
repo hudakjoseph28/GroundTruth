@@ -39,7 +39,7 @@ On your first task, skim **every Markdown file in this repository once**; the fu
 
 ## Where code goes
 
-Folders are empty until the scaffold lands. Put first files in the folder that matches the surface.
+`frontend/web` has the homepage, staged search, and parcel view. `backend` serves the staged parcel report from Postgres. `frontend/mobile` and `escrow` are still empty. Put new files in the folder that matches the surface.
 
 | Folder | What belongs here |
 | --- | --- |

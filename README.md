@@ -10,7 +10,7 @@ Built for the [UBC 2026 Hackathon](docs/ubc/UBC-Hackathon.md). **Main track: Con
 
 By the first end-to-end checkpoint, a judge can open the public site, search real Ohio parcels, inspect one honest source-backed report, and run two staged closings: one payout rejected because a title hold is active and one payout released to the bound seller after every required approval. The result is not a marketplace, legal opinion, title product, or deed-transfer system. It is a polished decision-and-payment prototype with verifiable evidence.
 
-**Repository status on Nov 12:** `@groundtruth/shared` is the checked-in v1 contract. `frontend/web`, `backend`, and `escrow` are still empty. Do not describe a route, test, deployment, or integration as working until the corresponding artifact exists and has been run.
+**Repository status on Nov 12:** `@groundtruth/shared` is the v1 contract. `@groundtruth/web` can search the staged parcel and open it. `@groundtruth/backend` serves `GET /api/health` and `GET /api/parcels/:parcelKey/report` from a local Postgres seed. `escrow` is still empty. Do not describe a route, test, deployment, or integration as working until the corresponding artifact exists and has been run.
 
 ## The demo story
 
@@ -56,9 +56,9 @@ docs/
   phases/                 build order, owners, acceptance checks
   agents/Prompt.md        task template for handing work to an agent
 packages/shared/          `@groundtruth/shared` v1 types and staged fixtures
-frontend/web/             web app (empty until scaffold)
+frontend/web/             Vite app: homepage, staged search, parcel view
 frontend/mobile/          reserved; native app is out of core scope
-backend/                  shared server (empty until scaffold)
+backend/                  Express API: health and staged parcel report
 escrow/                   Anchor program (empty until scaffold)
 ```
 
