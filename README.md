@@ -64,11 +64,10 @@ escrow/                   Anchor program (empty until scaffold)
 
 ## Quickstart
 
-Use Node 26 (`.nvmrc`). From a fresh clone:
+Use Node 26 (`.nvmrc`). From a fresh clone, `npm run setup` installs the locked packages with pnpm 12.18.0 and builds them. pnpm does not need to be on `PATH`.
 
 ```bash
-pnpm install --frozen-lockfile
-pnpm -r build
+npm run setup
 pnpm -r typecheck
 pnpm lint
 pnpm format
