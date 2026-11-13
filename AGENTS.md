@@ -6,16 +6,30 @@
 
 ## Read before you work
 
-Skim all four docs when you first join. For a scoped task, reread the relevant sections and inspect the affected files or fixtures.
+Skim the context set when you first join. For a scoped task, reread the relevant sections and inspect the affected files or fixtures.
 
 | Context | Where to start |
 | --- | --- |
 | Buyer, problem, evidence, and product scope | [Problem.md](docs/context/Problem.md) |
+| Earlier builds to adapt, and what to leave behind | [ReferenceBuilds.md](docs/context/ReferenceBuilds.md) |
 | Track decision, judging, awards, and deadlines | [UBC-Hackathon.md](docs/ubc/UBC-Hackathon.md) |
 | Web, mobile, data flow, and settlement boundaries | [Architecture.md](docs/architecture/Architecture.md) |
+| Weekend build order | [phases](docs/phases/README.md) |
 | Assigning, resuming, or handing off a task | [Prompt.md](docs/agents/Prompt.md) |
+| Where code goes | [Folders below](#where-code-goes) |
 
 1. Own one outcome at a time. Coordinate changes to any shared assumption about coverage, deal states, or platform choices with the affected workstreams.
 2. Label what the evidence supports. A parcel boundary establishes map coverage. A report cites each source and surfaces gaps. A reviewer signs the decision, and Solana determines the payment state.
 3. Verify the affected path. For search, try multiple counties and a missing-data case. For closing, check both the held and released balances when Devnet is available. For phone handoff, check that the correct deal opens for the signed-in buyer.
 4. Report changed paths, checks actually run, and any dependency the next person needs. Follow the maintainer’s requested commit, push, and publishing workflow.
+
+## Where code goes
+
+These folders are empty on purpose. Put the first real files in the folder that matches the surface, and leave the others alone until that work starts.
+
+| Folder | What belongs here |
+| --- | --- |
+| `frontend/web` | The research desk and browser closing flow. |
+| `frontend/mobile` | The phone companion for the same deal. |
+| `backend` | The shared server: parcel lookup, reports, deal access, and intake from voice or chain updates. |
+| `escrow` | The Solana program that holds, rejects, refunds, and releases test USDC. |

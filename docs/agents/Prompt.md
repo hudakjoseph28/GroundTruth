@@ -1,6 +1,6 @@
 # GroundTruth task prompt
 
-Copy the template for one bounded piece of work. Name the files and the specific architecture section the agent needs. Add the smallest relevant fixture, error output, or acceptance example. Use paths for context already in the repo.
+Copy the template for one bounded piece of work. Name the files and the specific architecture section the agent needs. Add the smallest relevant fixture, error output, or acceptance example. Use paths for context already in the repo. For weekend build tasks, name the phase file in `docs/phases` and, when the task touches escrow, maps, or the phone, the relevant section of `docs/context/ReferenceBuilds.md`.
 
 ```text
 Outcome

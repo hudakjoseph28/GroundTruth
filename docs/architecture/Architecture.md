@@ -1,6 +1,6 @@
 # GroundTruth architecture
 
-**Working draft for team discussion.** These diagrams describe the user journey and system boundaries. The team still needs to decide the frontend setup, backend services, data storage, and deployment. See the [problem brief](../context/Problem.md) for the buyer and evidence, and the [UBC brief](../ubc/UBC-Hackathon.md) for competition priorities.
+**Working draft for team discussion.** These diagrams describe the user journey and system boundaries. The team still needs to decide the frontend setup, backend services, data storage, and deployment. See the [problem brief](../context/Problem.md) for the buyer and evidence, the [UBC brief](../ubc/UBC-Hackathon.md) for competition priorities, and [Reference builds](../context/ReferenceBuilds.md) for patterns adapted from earlier projects. The weekend sequence is in [phases](../phases/README.md).
 
 ## Website and phone
 
