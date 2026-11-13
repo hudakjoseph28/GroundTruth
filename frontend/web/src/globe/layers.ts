@@ -268,6 +268,8 @@ export interface GlobeLayers {
   objects: { object: Object3D }[];
   /** Advance the animation; seconds since start. */
   tick(seconds: number): void;
+  /** Match point sizes to the renderer's pixel ratio. */
+  setPixelRatio(ratio: number): void;
   dispose(): void;
 }
 
@@ -284,6 +286,12 @@ export function buildLayers(network: Network, radius = 100, pixelRatio = 1): Glo
 
   return {
     objects: all.map((object) => ({ object })),
+    setPixelRatio(ratio) {
+      for (const layer of [points, halo, pulses]) {
+        const uniform = (layer.material as ShaderMaterial).uniforms.uPixelRatio;
+        if (uniform) uniform.value = ratio;
+      }
+    },
     tick(seconds) {
       time.value = seconds;
       hub.core.scale.setScalar(baseScale * (1 + 0.07 * Math.sin(seconds * 1.7)));

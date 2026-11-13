@@ -27,6 +27,10 @@ export function GlobeSlot() {
       ) : (
         <StaticGlobe reason={staticReason(mode)} />
       )}
+      <p className="globe-caption">
+        Illustrative activity, not live transactions.
+        {mode === "reduced" || mode === "fallback" ? ` ${staticReason(mode)}` : ""}
+      </p>
     </div>
   );
 }

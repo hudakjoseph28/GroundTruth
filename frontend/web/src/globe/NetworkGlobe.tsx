@@ -5,9 +5,14 @@ import { buildLayers } from "./layers";
 import { networkFor } from "./network";
 import { PALETTE } from "./palette";
 import { useCountries } from "./useCountries";
+import { altitudeFor, GLOBE_VIEW, pixelRatioFor } from "./view";
 
-// Start over North America with South America in view below.
-export const INITIAL_VIEW = { lat: 27, lng: -84, altitude: 1.66 } as const;
+// The globe sways around its opening view instead of spinning all the way
+// round, so the Ohio hub never rotates out of sight behind the page content.
+const SWAY_DEGREES = 5;
+const SWAY_PERIOD_SECONDS = 80;
+// OrbitControls turns 6 degrees per second at autoRotateSpeed 1.
+const SWAY_SPEED = (SWAY_DEGREES * 2 * Math.PI) / SWAY_PERIOD_SECONDS / 6;
 
 const EMPTY: object[] = [];
 const layerObject = (d: object) => (d as { object: import("three").Object3D }).object;
@@ -29,12 +34,20 @@ export function NetworkGlobe() {
   useEffect(() => () => layers?.dispose(), [layers]);
   useEffect(() => () => surface.dispose(), [surface]);
 
-  // Pulses and the hub's breathing run on the GPU; this only advances the clock.
+  // Pulses and the hub's breathing run on the GPU; this only advances the clock
+  // and the sway.
   useEffect(() => {
     if (!layers) return;
     let id = 0;
+    let start: number | null = null;
     const loop = (now: number) => {
       layers.tick(now / 1000);
+      start ??= now;
+      const controls = globeRef.current?.controls();
+      if (controls) {
+        const phase = ((now - start) / 1000 / SWAY_PERIOD_SECONDS) * 2 * Math.PI;
+        controls.autoRotateSpeed = SWAY_SPEED * Math.cos(phase);
+      }
       id = requestAnimationFrame(loop);
     };
     id = requestAnimationFrame(loop);
@@ -57,20 +70,31 @@ export function NetworkGlobe() {
     return () => observer.disconnect();
   }, []);
 
-  // Camera: slow auto-rotate, drag to explore, no zoom or pan.
+  // Camera: slow sway, drag to explore, no zoom or pan. On resize, keep where
+  // the viewer has turned the globe and only refit the distance.
+  const placed = useRef(false);
   useEffect(() => {
     const globe = globeRef.current;
-    if (!globe) return;
-    globe.pointOfView(INITIAL_VIEW, 0);
+    if (!globe || !size) return;
+    const altitude = altitudeFor(size.width, size.height);
+    if (placed.current) {
+      globe.pointOfView({ ...globe.pointOfView(), altitude }, 0);
+    } else {
+      globe.pointOfView({ ...GLOBE_VIEW, altitude }, 0);
+      placed.current = true;
+    }
+    const ratio = pixelRatioFor(size.width, size.height);
+    globe.renderer().setPixelRatio(ratio);
+    layers?.setPixelRatio(ratio);
     const controls = globe.controls();
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.22;
+    controls.autoRotateSpeed = 0;
     controls.enablePan = false;
     controls.enableZoom = false;
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     frame.current?.querySelector("canvas")?.setAttribute("tabindex", "-1");
-  }, [size]);
+  }, [size, layers]);
 
   return (
     <div ref={frame} className="webgl-globe" data-globe="webgl" aria-hidden="true">
@@ -90,7 +114,6 @@ export function NetworkGlobe() {
           customThreeObjectUpdate={keepObject}
         />
       ) : null}
-      <p className="globe-caption">Illustrative activity, not live transactions.</p>
     </div>
   );
 }

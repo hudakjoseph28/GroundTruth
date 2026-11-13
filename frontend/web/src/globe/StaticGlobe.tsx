@@ -3,9 +3,8 @@ import { slerp } from "./geo";
 import { networkFor, type Network } from "./network";
 import { PALETTE } from "./palette";
 import { useCountries } from "./useCountries";
+import { GLOBE_VIEW as VIEW, pixelRatioFor } from "./view";
 
-// Same framing as the WebGL globe's opening view.
-const VIEW = { lat: 27, lng: -84 };
 const DEG = Math.PI / 180;
 
 /**
@@ -30,7 +29,7 @@ export function StaticGlobe({ reason }: { reason: string }) {
   return (
     <figure className="static-globe" data-globe="static">
       <canvas ref={canvas} role="img" aria-label="Illustrative network globe" />
-      <figcaption>Illustrative activity, not live transactions. {reason}</figcaption>
+      <figcaption className="visually-hidden">{reason}</figcaption>
     </figure>
   );
 }
@@ -50,7 +49,7 @@ function paint(node: HTMLCanvasElement, network: Network | null) {
   const width = node.clientWidth;
   const height = node.clientHeight;
   if (width < 1 || height < 1) return;
-  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  const ratio = pixelRatioFor(width, height);
   node.width = Math.round(width * ratio);
   node.height = Math.round(height * ratio);
   const ctx = node.getContext("2d");
