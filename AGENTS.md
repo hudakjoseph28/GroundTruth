@@ -1,35 +1,49 @@
 # GroundTruth agent guide
 
-**Goal:** Win UBC with a first-time land-buying product backed by public parcel data and verifiable Solana escrow. The main track is open between **Consumer Applications** and **DeFi & Onchain Applications**. Use the UBC brief to make that decision from the working demo.
+**Goal:** Win UBC 2026 with a land-buying product a first-time buyer actually understands: real Ohio parcel discovery, source-backed reports, and a Solana devnet escrow where a reviewer hold blocks payout and cleared sign-offs release it.
 
-**Current priority:** Target Ohio-wide parcel discovery with deeper, source-backed reports where records support them. Prove that a buyer can research across counties and that a disputed closing holds funds while a cleared closing pays out on Devnet. The architecture is a discussion draft.
+**Now:** scaffold the accepted stack, then build Ohio-wide parcel search with deeper reports where records support them and two staged closings on devnet (one held, one released). The main track is **Consumer Applications**; the escrow is the technical case for **Best Use of Solana**. [Decisions.md](docs/architecture/Decisions.md) is locked for the hackathon. Do not reopen a decision inside an implementation PR unless the accepted option is demonstrably blocked.
+
+## Team and roles
+
+These are the current owners. Update this table and the phase file before transferring an outcome.
+
+| Owner | Owns | Folder |
+| --- | --- | --- |
+| Joey Hudak | Buyer UI / responsive web. Target: ship the core screens in under 3 days, then float to backend and escrow integration. | `frontend/web` |
+| Gagan | Parcel evidence and data: Ohio OGRIP parcels, FEMA flood, report pipeline. Originated the idea. | `backend` (report pipeline) |
+| Kadhir | Solana escrow: Anchor program, USDC vault, hold, release, refund | `escrow` |
+| Satya | Backend API, QuickNode Streams, ElevenLabs, deployment | `backend`, deployment |
 
 ## Read before you work
 
-Skim the context set when you first join. For a scoped task, reread the relevant sections and inspect the affected files or fixtures.
+On your first task, skim **every Markdown file in this repository once**; the full set is short enough to prevent expensive contradictions. Start with [README.md](README.md), then read: [Problem](docs/context/Problem.md) → [Architecture](docs/architecture/Architecture.md) → [DataContract](docs/architecture/DataContract.md) → [Decisions](docs/architecture/Decisions.md) → [Phases](docs/phases/README.md) → [Vision](docs/design/Vision.md) → [UBC brief](docs/ubc/UBC-Hackathon.md) → [Reference builds](docs/context/ReferenceBuilds.md) → [Prompt](docs/agents/Prompt.md). On later tasks, reread only the contract and phase sections you touch.
 
-| Context | Where to start |
-| --- | --- |
-| Buyer, problem, evidence, and product scope | [Problem.md](docs/context/Problem.md) |
-| Earlier builds to adapt, and what to leave behind | [ReferenceBuilds.md](docs/context/ReferenceBuilds.md) |
-| Track decision, judging, awards, and deadlines | [UBC-Hackathon.md](docs/ubc/UBC-Hackathon.md) |
-| Web, mobile, data flow, and settlement boundaries | [Architecture.md](docs/architecture/Architecture.md) |
-| Weekend build order | [phases](docs/phases/README.md) |
-| Assigning, resuming, or handing off a task | [Prompt.md](docs/agents/Prompt.md) |
-| Where code goes | [Folders below](#where-code-goes) |
+## Rules
 
-1. Own one outcome at a time. Coordinate changes to any shared assumption about coverage, deal states, or platform choices with the affected workstreams.
-2. Label what the evidence supports. A parcel boundary establishes map coverage. A report cites each source and surfaces gaps. A reviewer signs the decision, and Solana determines the payment state.
-3. Verify the affected path. For search, try multiple counties and a missing-data case. For closing, check both the held and released balances when Devnet is available. For phone handoff, check that the correct deal opens for the signed-in buyer.
-4. Report changed paths, checks actually run, and any dependency the next person needs. Follow the maintainer’s requested commit, push, and publishing workflow.
+1. **Own one outcome at a time.** State the buyer-visible outcome, paths, and acceptance checks before editing. Finish or hand it off before starting another.
+2. **Use the accepted answer.** Implement [Decisions.md](docs/architecture/Decisions.md). If a library or provider is blocked, capture the exact failing command or response, choose the smallest compatible fallback, and update the decision log in the same change.
+3. **Say exactly what the evidence supports.** A parcel boundary proves map coverage. A report cites each source and names each gap. A reviewer signs the decision. Solana decides whether money moves. Never fabricate a finding, fallback value, demo count, transaction, or statistic.
+4. **Keep boundaries intact.** Web never talks to OGRIP, ElevenLabs, QuickNode, PostgreSQL, or Solana RPC with a secret. API never signs for a buyer, seller, or reviewer. Voice output is evidence, not authorization. Confirmed chain state wins over cached state.
+5. **Verify the path you touched.** Run the narrow test first, then the package-level lint/typecheck/test/build commands that exist. Search work covers two counties and one missing-data case. Closing work records held and released balances. Never claim a command you did not run.
+6. **Write original code.** UBC requires work created during the event. Reference builds are patterns, not paste sources.
+7. **Hand off cleanly.** Report changed paths, commands and results, screenshots or transaction links where relevant, remaining dependency, and the next executable action. Follow the maintainer's commit and push workflow.
+
+## Default behavior under ambiguity
+
+- Prefer a small working vertical slice over a generalized framework.
+- Preserve the public interfaces in `DataContract.md`; add an adapter behind them instead of leaking provider payloads into UI code.
+- Treat `unknown` as a valid product state. Never turn provider failure into a negative or positive land-use conclusion.
+- Keep staged roles and test funds visibly labeled.
+- Do not stop for a stylistic preference. Stop only for credentials, a destructive action, a contract conflict, or a claim that cannot be made truthfully.
 
 ## Where code goes
 
-These folders are empty on purpose. Put the first real files in the folder that matches the surface, and leave the others alone until that work starts.
+Folders are empty until the scaffold lands. Put first files in the folder that matches the surface.
 
 | Folder | What belongs here |
 | --- | --- |
-| `frontend/web` | The research desk and browser closing flow. |
-| `frontend/mobile` | The phone companion for the same deal. |
-| `backend` | The shared server: parcel lookup, reports, deal access, and intake from voice or chain updates. |
-| `escrow` | The Solana program that holds, rejects, refunds, and releases test USDC. |
+| `frontend/web` | Homepage, globe, search, parcel report, browser closing flow |
+| `frontend/mobile` | Reserved; no native app until the responsive web demo is complete |
+| `backend` | Shared server: parcel lookup, reports, deal access, Streams and voice intake |
+| `escrow` | Anchor program that funds, holds, releases, and refunds devnet USDC |

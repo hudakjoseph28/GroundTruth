@@ -1,37 +1,54 @@
 # Phase 1 · Escrow
 
-**Outcome.** A buyer can fund a staged deal in test USDC. A disputed deal stays funded when release is rejected. A cleared deal pays the bound seller once. Both results have a transaction signature and before/after balances.
+**Owner:** Kadhir. Joey wires the generated client into the deal screen after the frontend fixtures render.
 
-**Read first**
+**Outcome:** A buyer funds a staged deal in test USDC. A disputed deal stays funded when release is rejected. A cleared deal pays the bound seller once. Both results have a transaction signature and before/after balances.
 
-- The closing diagram in [Architecture](../../architecture/Architecture.md)
-- The Accord section of [Reference builds](../../context/ReferenceBuilds.md)
-- The Nov 13–15 checkpoints in the [UBC brief](../../ubc/UBC-Hackathon.md)
+**Read first:** the closing diagram in [Architecture](../../architecture/Architecture.md) · [Escrow v1](../../architecture/DataContract.md#escrow-v1) · [Accord](../../context/ReferenceBuilds.md#accord) · the Nov 13–15 checkpoints in the [UBC brief](../../ubc/UBC-Hackathon.md#milestones)
 
-## Carry in
+## Deliverables
 
-Use a deal-scoped SPL token vault. Bind the buyer, the seller payout wallet, the assigned reviewers, the USDC mint, and the amount before funding. Amounts are integer token base units, so the UI, the vault, and the recipient account can be compared directly.
+- Anchor workspace in `escrow/`, program in `escrow/programs/groundtruth_escrow`, and tests in `escrow/tests`.
+- Checked-in IDL copied or generated into `packages/shared`, plus one client helper that derives the deal PDA and token accounts.
+- Program events and rules exactly matching [Escrow v1](../../architecture/DataContract.md#escrow-v1).
+- A `docs/proof/` or README proof block containing program ID, cluster, held release signature/error, cleared release signature, and balance table. Never include a private key.
 
-On Devnet, use Circle test USDC, mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`. The program checks that mint on every transfer. Release pays the bound seller the full agreed amount. Refund pays the bound buyer. A second settlement fails.
+## Build this
 
-The buyer-visible states are: evidence received, reviewer decision signed, and funds still held or settled. The UI may explain readiness. Solana decides whether the funds move.
+- **One deal-scoped SPL token vault per deal.** Bind buyer, seller payout wallet, assigned reviewers, USDC mint, and amount **before** funding. Amounts are integer base units so the UI, vault, and recipient account compare directly.
+- **Devnet mint:** Circle test USDC `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`. The program checks it on every transfer.
+- **Release** may be submitted by any fee payer, but succeeds only from `funded` with every required approval, no hold, exact mint/amount, and the bound seller ATA. **Refund** requires the buyer's signature and an active hold. Both pay the full vault and become terminal; a second settlement fails.
+- Buyer-visible states: evidence received → reviewer decision signed → funds held or settled. The UI explains readiness; **Solana decides whether funds move.**
 
-## Leave behind
+## Leave out
 
-Accord’s 1% fee, referral split, payment tranches, jury, and grace-period auto-release. Silence or a missing signature leaves the vault unchanged. SOLstice’s native SOL transfer and any server route that submits a hard-coded approval stay out. The SOLstice release excerpt is still unpinned, so it is a design caution and not a program interface.
+Accord's 1% fee, referral split, payment tranches, jury, and grace-period auto-release. Silence or a missing signature leaves the vault unchanged. No native SOL transfers (SOLstice) and no server route that submits a hard-coded approval. The SOLstice release excerpt is unpinned: a design caution, not an interface.
 
 ## Demo scope
 
-Two staged deals are enough: one with an active hold, one with the required reviewer signatures and no hold. Participants and funds are labeled as staged Devnet roles. Deed transfer stays off-chain. A fresh deal is an explicit reset, and a refresh keeps the same deal and receipt.
-
-Local tests cover the negative cases. A short Devnet pass covers the held payout and the cleared payout. Save both signatures.
+- Two staged deals: one with an active title hold, one with required title, survey, and septic approvals and no hold. Participants and funds are labeled staged devnet roles. Deed transfer stays off-chain.
+- A fresh deal is an explicit reset; a refresh shows the same deal and receipt.
+- Local tests cover the negative cases. A short devnet pass covers held and cleared payouts. **Save both signatures.**
 
 ## Acceptance checks
 
-1. Record vault, buyer, and seller balances. Submit release on the held deal. The program rejects it, and all three balances are unchanged.
-2. On the cleared deal, the seller balance increases by the agreed amount and the vault balance is zero. Submit release again. The second settlement fails.
+1. Record vault, buyer, and seller balances. Submit release on the held deal. The program rejects it and all three balances are unchanged.
+2. On the cleared deal, the seller balance rises by the agreed amount and the vault is zero. Submit release again: the second settlement fails.
 3. An authorized refund returns the vault balance to the buyer and leaves the seller unchanged.
+
+Run and report:
+
+```bash
+pnpm escrow:test
+pnpm --filter shared typecheck
+```
+
+The local suite also covers wrong mint, wrong destination, unassigned signer, duplicate approval, missing approval, approval-after-hold, and repeated settlement. The devnet pass uses Circle's published test USDC mint and saves Explorer URLs for the held and cleared deals.
+
+## Cut line
+
+The local state machine and balance assertions are non-negotiable. If devnet test USDC or RPC access is unstable, keep retry tooling and a screen recording of the last real pass; do not replace the program with a UI-only status. Fees, tranches, admin recovery, hold clearing, and production legal terms stay out.
 
 ## Depends on
 
-The voice callback and the second-device update belong to [phase 3](../03-connect-surfaces/ConnectSurfaces.md). This phase can use staged signatures without those integrations. Share the deal fixture with [phase 2](../02-parcel-research/ParcelResearch.md) so the report and the closing refer to the same parcel.
+Voice callback and second-device updates are [phase 3](../03-connect-surfaces/ConnectSurfaces.md); use staged signatures until then. Share the deal fixture with [phase 2](../02-parcel-research/ParcelResearch.md) so report and closing point at the same parcel.

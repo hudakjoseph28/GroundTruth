@@ -1,74 +1,80 @@
 # GroundTruth · The problem
 
-GroundTruth helps someone buying vacant land for the first time answer three questions before money goes to the seller:
+**This document governs product claims.** It distinguishes measured evidence, design scenarios, and pilot hypotheses so the team can tell a forceful story without pretending GroundTruth has already proven more than it has.
+
+> **TL;DR**
+> - **Buyer:** someone buying vacant land for the first time, usually to build a home.
+> - **Problem:** a lot looks affordable and usable on a listing while its biggest facts (access, sewer, zoning, who's really selling) are still unresolved and scattered across records and professionals.
+> - **Evidence:** **59%** of surveyed title professionals reported at least one seller-impersonation attempt in the prior year (ALTA 2026) vs. **28%** (ALTA 2024); **82%** rate vacant land at least somewhat common in this fraud; the FBI issued a June 2026 vacant-parcel warning.
+> - **Product:** one place for evidence, open questions, responsible parties, and payment conditions, with the final test-USDC outcome enforced by a Solana escrow.
+> - **Position:** GroundTruth is decision support and closing coordination. It is not a legal buildability opinion, title search, survey, identity service, or deed-transfer system.
+
+GroundTruth answers three questions before money reaches the seller:
 
 1. **Can I use this parcel for what I want to build?**
-2. **Is the person offering to sell it authorized to do so?**
-3. **What still has to happen before my money can move?**
+2. **Is the person selling it authorized to?**
+3. **What still has to happen before my money moves?**
 
-Our first buyer has found a vacant lot and wants to build a home on it. They know the price, approximate location, and what the listing says. They may have little experience reading a zoning code, asking about an easement, or coordinating a survey, title review, and site evaluation. A repeat buyer faces many of the same steps and may be running several deals at once. The first buyer needs help deciding what to do next. The repeat buyer needs a reliable way to see what is holding up each deal.
+Our first buyer has found a lot but has probably never read a zoning code, asked about an easement, or coordinated a survey, title review, and site evaluation. They need **what to do next**. A repeat buyer running several deals needs **what's holding up each one**.
 
 ## Problem statement
 
-A vacant lot can look affordable and usable on a listing while its most consequential facts are still unresolved. The information needed to decide is distributed across listings, public records, local authorities, service providers, and professionals. Some of it can be looked up. Some requires someone qualified to interpret a document, inspect the site, or verify the seller. The buyer has to work out which is which and carry that understanding into closing.
+A vacant lot's key facts are spread across listings, public records, local authorities, service providers, and professionals. Some can be looked up; some need a qualified person. A map shows a parcel touching a road; the buyer still needs the legal right to reach it and approval for a driveway. A tax record gives the title team a starting point on the owner; the person emailing payment instructions still needs independent verification. Same problem both times: **an early clue looks conclusive when the next check is invisible.**
 
-A map can show a parcel touching a road. A buyer still needs to know whether they have the right to reach the lot and whether they can establish a driveway. A tax record can give the title team a starting point for researching the owner. The person emailing payment instructions still needs independent verification. Both are examples of the same product problem: an early clue looks conclusive when the next check is invisible.
+**GroundTruth gives the buyer one place for the evidence, the open questions, and the conditions that govern payment.** Moving ahead, negotiating better, or walking away before paying are all wins.
 
-**GroundTruth should give the buyer one place to see the evidence, the open questions, and the conditions that govern payment.** A good outcome can be moving ahead, negotiating with better information, or walking away before paying. The product creates value at the point of decision, even when no sale closes.
+The core product judgment is decisive: **we should not answer “yes, you can build” when the record cannot support that answer.** The winning experience is still useful when the answer is incomplete because it makes the missing decision, responsible professional, and effect on the buyer's money impossible to miss.
 
 ## What the evidence shows
 
-### Seller impersonation is a documented risk for vacant land
+### Seller impersonation targets vacant land
 
-The FBI's Internet Crime Complaint Center (IC3) issued a June 2026 warning about criminals impersonating owners of vacant parcels and attempting to sell without the owner's knowledge or consent. The cases described include fake IDs, contact details controlled by the impersonator, and a fictitious deed. ALTA's prevention guidance calls for reaching the seller through a phone number independently found and validated or using addresses from trusted records. A seller-provided number and a public record showing the same owner name leave the seller's identity unresolved. [FBI vacant-parcel advisory][fbi-advisory] · [ALTA prevention guidance][alta-guidance]
+The FBI's Internet Crime Complaint Center (IC3) issued a June 2026 warning about criminals impersonating owners of vacant parcels and trying to sell without the owner's knowledge or consent, using fake IDs, impersonator-controlled contact details, and a fictitious deed. ALTA's prevention guidance says to reach the seller through a phone number independently found and validated, or addresses from trusted records. A seller-provided number plus a public record with the same owner name leaves identity unresolved. [FBI vacant-parcel advisory][fbi-advisory] · [ALTA prevention guidance][alta-guidance]
 
-| Signal | Measured result | What it supports for GroundTruth |
-| --- | --- | --- |
-| Exposure at title firms | In ALTA's 2026 survey, **59%** reported at least one attempt during the prior calendar year, versus **28%** in its 2024 survey. The underlying calendar years were 2025 and 2023. That is a **31 percentage point** difference between survey results. | Make seller verification visible in the normal closing flow. These are respondent-level reports of attempts, including unsuccessful ones. They give no per-sale probability or count of successful frauds. |
-| Vacant land as a target | **82%** of respondents rated vacant land at least somewhat common in seller impersonation fraud, the highest property type in ALTA's 2026 summary. | Vacant land is a defensible starting segment. The percentage measures respondents' ratings of the property type. |
-| Financial consequences in the wider real-estate category | IC3 recorded **12,368 complaints** and **$275.1 million** in reported losses in 2025, up from **9,359 complaints** and **$173.6 million** in 2024. The increases were **32.2% in complaints** and **58.5% in reported losses**. | Real-estate fraud can carry substantial consequences. This category is broader than vacant-land seller impersonation and the totals reflect complaints reported to IC3. |
-| Existing verification practice | **94%** of firms in the 2026 ALTA study reported using multiple fraud detection tools they considered helpful. | A callback fits as one source of evidence for the title reviewer. A clean call alone cannot clear the deal. |
+- **Title-firm exposure:** in ALTA's 2026 survey, **59%** reported at least one attempt in the prior calendar year, vs. **28%** in the 2024 survey (underlying years 2025 and 2023), a **31 percentage point** difference. These are respondent-level reports of attempts, including failed ones, not a per-sale probability or a count of successful frauds. *Use:* make seller verification visible in the normal closing flow.
+- **Vacant land as a target:** **82%** rated vacant land at least somewhat common in seller impersonation fraud, the highest property type in ALTA's 2026 summary (a rating of the property type). *Use:* why vacant land is our starting segment.
+- **Wider real-estate losses:** IC3 recorded **12,368 complaints** and **$275.1 million** in reported losses in 2025, up from **9,359** and **$173.6 million** in 2024 (**+32.2%** complaints, **+58.5%** losses). Broader than vacant-land impersonation; complaints reported to IC3. *Use:* context only.
+- **Existing practice:** **94%** of firms in ALTA 2026 use multiple fraud-detection tools they find helpful. *Use:* a callback is one piece of evidence for the title reviewer; a clean call alone can't clear a deal.
 
-The 2026 ALTA study surveyed **245 title insurance professionals** across 40 states, Washington, D.C., and the U.S. Virgin Islands. The two surveys describe the experience of their respondents. Changes in reporting, detection, or the mix of respondents can affect the comparison. [ALTA 2026 study and methodology summary][alta-study] · [ALTA 2026 infographic][alta-chart] · [ALTA 2024 study][alta-2024] · [FBI 2025 IC3 Annual Report, pp. 25–26][fbi-report]
+ALTA 2026 surveyed **245 title insurance professionals** across 40 states, Washington, D.C., and the U.S. Virgin Islands. Both surveys describe respondents' experience; changes in reporting, detection, or respondent mix affect the comparison. [ALTA 2026 study and methodology summary][alta-study] · [ALTA 2026 infographic][alta-chart] · [ALTA 2024 study][alta-2024] · [FBI 2025 IC3 Annual Report, pp. 25–26][fbi-report]
 
-### Buildability depends on local records and site-specific decisions
+### Buildability depends on local records
 
-Franklin County, Ohio, illustrates why the parcel's jurisdiction matters. Its planning department administers county zoning for **10 of the county's 17 townships**. The other seven administer their own zoning. The county recorder also says surveys are typically obtained through a lender or title company, and its GIS maps include information such as lot dimensions and some utilities. A useful report identifies the relevant authority and explains what the available record can establish. [Franklin County planning and zoning][franklin-zoning] · [Franklin County recording FAQs][franklin-faq]
+- **Jurisdiction matters.** Franklin County, Ohio's planning department administers county zoning for **10 of the county's 17 townships**; the other seven run their own. The recorder says surveys usually come through a lender or title company, and county GIS includes lot dimensions and some utilities. The report names the authority and what the record can establish. [Franklin County planning and zoning][franklin-zoning] · [Franklin County recording FAQs][franklin-faq]
+- **Sewer isn't a given.** The EPA says **more than one in five U.S. households** rely on individual septic or small community cluster systems (a national figure on existing households). Franklin County Public Health publishes a separate site-review application for sewage treatment systems. For a given lot we establish whether public sewer is available and, if not, surface the site review. [EPA septic systems overview][epa-septic] · [Franklin County Public Health forms and permits][franklin-health]
+- **Flood data has a source and a date.** Ohio DNR points buyers to FEMA's Map Service Center for official flood maps. [Ohio DNR flood maps and studies][ohio-flood]
 
-The EPA says **more than one in five U.S. households** rely on individual septic or small community cluster systems. Franklin County Public Health publishes a separate site-review application for sewage treatment systems. The national figure describes existing household wastewater treatment. For a specific lot, the product needs to establish whether public sewer service is available and, if on-site treatment is needed, surface the applicable site review. Flood information likewise has a source and an effective date. Ohio's Department of Natural Resources points buyers to FEMA's Map Service Center for official flood maps and related products. [EPA septic systems overview][epa-septic] · [Franklin County Public Health forms and permits][franklin-health] · [Ohio DNR flood maps and studies][ohio-flood]
+**What we haven't proven:** how often lots fail a buyer's intended use, how long buyers spend gathering records, or how much GroundTruth saves. Those come from buyer and title-team interviews and a pilot.
 
-These sources describe why the checks matter. We have yet to establish how often vacant lots fail a buyer's intended use, how much time buyers spend gathering records, or how much money GroundTruth could save. Those are questions for buyer and title-team interviews and a pilot with real parcels.
+## Scenarios to design for (hypothetical)
 
-## Scenarios to design for
+- **Lot beside a road.** The listing says accessible. We show the boundary appears to touch a road but legal access and driveway approval need review → title team checks recorded access, surveyor reviews the boundary, road authority covers driveways.
+- **Rural lot, no confirmed sewer.** The buyer assumes septic. We show wastewater as unresolved, who confirms sewer, and where to request an on-site review → buyer decides on the result.
+- **Remote seller pushes for a quick payout.** The owner, reached at an independently validated contact, says it's not for sale. The callback raises a dispute, the title reviewer holds, and the buyer sees the deposit, why it's held, and who's next → release fails while held; review or cancellation follows the agreed terms with a refund path. An unanswered call also routes to review.
+- **Repeat buyer, several deals.** Each deal shows what's holding it, who acts next, and which approvals arrived → the ready deal pays the seller; the other stays open, no guesswork.
 
-The examples below are hypothetical. They describe what the buyer should learn and what action becomes available.
+## Product decisions
 
-| Situation | What GroundTruth makes clear | What happens next |
-| --- | --- | --- |
-| **First-time buyer finds a lot beside a road.** The listing calls it accessible and the parcel map looks convincing. | The mapped boundary appears to touch a road. Legal access and any driveway approval still need review. | The title team can look for recorded access rights, a surveyor can review the physical boundary, and the relevant road authority can address driveway requirements. The buyer sees the open question before committing. |
-| **A rural lot has no confirmed sewer connection.** The buyer assumes they can install septic. | Wastewater service is unresolved. The report explains who can confirm sewer service and where to request an on-site review if needed. | The buyer requests the review and can decide whether to proceed once the result and any conditions are known. |
-| **A remote seller pushes for a quick payout.** The title team reaches a person at an independently validated contact who says the parcel is not for sale. | The callback raises a dispute. The title reviewer places a hold. The buyer sees the deposit amount, why it is held, and who handles the next step. | A release request fails while the hold is active. Review or cancellation follows the agreed terms, with a defined refund path. An unanswered call routes to review as well. |
-| **A repeat buyer has multiple deals in progress.** One survey is late and one closing is ready. | Each deal shows the condition holding it up, who owns the next action, and which approvals have arrived. | On the ready deal, the closing professional confirms the closing conditions and the agreed seller receives payment. The other deal stays open without guesswork about its status. |
+- **Lead with the parcel.** First useful moment: open a lot and see its biggest unresolved issue, with boundary, report, and sources together. Ask for a wallet only at a payment action.
+- **Show confidence on every finding.** Zoning, access, flood, utilities, and recorded restrictions each get a status and a dated source. Missing, stale, or conflicting? Say so and name who resolves it. Qualified wording: "may be suitable for a home, pending access and septic review."
+- **Every approval has a person and a scope.** Title/closing professional: seller authority and closing readiness. Surveyor: boundary. Specialist or authority: wastewater. AI summarizes and flags gaps. The voice agent helps with outreach; the title team decides what to do with the result.
+- **Carry conditions into payment.** A Solana escrow enforces required approvals, an active hold, and the bound payout destination. Deposit, hold, refund, and payment each have a clear status. For the hackathon contract, a reviewer hold blocks release and lets the buyer refund; all required approvals let anyone trigger payment only to the bound seller. IDs, contact details, and call contents stay private.
+- **Fit the real closing.** On-chain covers approvals and settlement; the deed follows the off-chain process (Franklin County describes county-office review and a recording workflow). A production pilot needs a title or closing partner to define when release and refund are authorized. [Franklin County real-estate recording][franklin-recording]
 
-## Product decisions this should drive
+## Proof, pilot, and beyond
 
-- **Lead with the parcel and intended use.** The first useful interaction is opening a lot and understanding its biggest unresolved issue. Put the boundary, the report, and its sources together. Ask for a wallet when the buyer takes a payment action.
-- **Show the confidence behind each finding.** Give zoning, access, flood exposure, utilities, and recorded restrictions a clear status and a dated source where one is available. If a source is missing, stale, or in conflict, surface the uncertainty and name who can resolve it. Use qualified wording such as “may be suitable for a home, pending access and septic review.”
-- **Give each approval a person and a scope.** The title or closing professional handles seller authority and closing readiness. A surveyor provides boundary evidence. The appropriate specialist or authority handles wastewater feasibility. AI summarizes records and flags gaps. The voice agent assists with outreach, with the title team deciding how to act on the result.
-- **Carry the deal's conditions into payment.** GroundTruth can show conditions in plain English and have a Solana escrow enforce the required approvals, active holds, and agreed payout destination. A deposit, a held payout, a refund, and a seller payment should each have an understandable status. Keep identity documents, contact details, and call contents private.
-- **Fit the real closing process.** The first on-chain record represents approvals and settlement for the deal. The deed follows the applicable off-chain process. For example, Franklin County describes review by county offices and a recording workflow for real-estate transfers. A production pilot needs a title or closing partner to define when release and refund are authorized. [Franklin County real-estate recording][franklin-recording]
+- **Hackathon proof:** statewide OGRIP discovery tested across at least two counties, with one manually verified Franklin County golden parcel and deeper sourced checks only where records allow. After the report, a first-time buyer names the biggest open issue and who to contact. Then both devnet outcomes with staged parties and test USDC: a hold makes the payout fail with the balance intact; a final approval permits the exact bound payout once.
+- **Pilot hypothesis:** buyers come early for the concrete next action; title and closing teams stay if approvals and exceptions are easier to track. Measure time to first actionable finding, share of material findings with traceable evidence, and share of paused deals whose next action buyers explain correctly. Track false flags and cases where missing records weakened the report.
+- **Longer term:** residential vacant land first; expand beyond Ohio as comparable datasets appear. A deal record with evidence, signed approvals, and payment receipts could make physical-asset transactions easier to coordinate across organizations.
 
-## First proof and the path forward
+## Rules for the story
 
-**Hackathon proof.** Target Ohio-wide parcel discovery and test across multiple counties. Give buyers deeper, source-backed reports where the underlying records support them. A first-time buyer should be able to name the biggest unresolved issue and the next person to contact after seeing the report. Then demonstrate both outcomes on Solana Devnet with staged parties and test USDC. In the disputed deal, a reviewer records a hold and the payout fails on-chain with the balance intact. In the cleared deal, the final required approval arrives and the seller receives payment. Show the same deposit and approval states the buyer would see in a normal session.
+Tell it around a person who finds a lot they can afford, learns one fact that changes their plan, and sees why money moves or stays put.
 
-**Pilot hypothesis.** Buyers will use GroundTruth early because the report gives them a concrete next action. Title and closing teams will keep using it if approvals and exceptions are easier to track. Compare a few real deal walkthroughs with the existing workflow. Measure time to the first actionable finding, the share of material findings with traceable evidence, and the share of paused deals whose next action buyers can correctly explain. Track false flags and cases where missing records made the report less useful. A single demo can establish that the payment controls work in the staged cases. A pilot can test whether the workflow helps people make better decisions.
-
-**Longer-term direction.** Start with vacant land for residential use. Expand parcel discovery beyond Ohio as comparable datasets become available, and deepen reports where local data and reviewer workflows are validated. Repeat buyers can reuse the same diligence process across parcels. Over time, a deal record with evidence, signed approvals, and payment receipts could make physical-asset transactions easier to coordinate across organizations. That is the opportunity to test before expanding into other property types or ownership products.
-
-## Handoff for product, design, and Grok
-
-Build the story around a person who finds a lot they can afford, learns one fact that changes their plan, and can see why money moves or stays put. Use the **59% versus 28%** survey comparison as evidence of title-firm exposure, with its years and denominator attached. Use the **82%** figure as evidence of why vacant land is the starting point, with its respondent-rating definition attached. Keep the wider IC3 totals as context. Treat the scenario details and expected pilot benefits as hypotheses or examples. Preserve the difference between a public-record finding, a professional's approval, and an escrow receipt. The story can be more ambitious as long as those claims stay precise.
+- **59% vs. 28%** = title-firm exposure, always with its years and denominator.
+- **82%** = why vacant land, always with its respondent-rating definition.
+- IC3 totals = context, not a vacant-land number. Scenarios and pilot benefits = hypotheses.
+- Never blur a public-record finding, a professional's approval, and an escrow receipt.
 
 [fbi-advisory]: https://www.ic3.gov/PSA/2026/PSA260616
 [fbi-report]: https://www.ic3.gov/AnnualReport/Reports/2025_IC3Report.pdf

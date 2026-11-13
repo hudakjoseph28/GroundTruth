@@ -1,78 +1,143 @@
-# GroundTruth architecture
+# GroundTruth · Architecture
 
-**Working draft for team discussion.** These diagrams describe the user journey and system boundaries. The team still needs to decide the frontend setup, backend services, data storage, and deployment. See the [problem brief](../context/Problem.md) for the buyer and evidence, the [UBC brief](../ubc/UBC-Hackathon.md) for competition priorities, and [Reference builds](../context/ReferenceBuilds.md) for patterns adapted from earlier projects. The weekend sequence is in [phases](../phases/README.md).
+**Status: accepted for the hackathon on Nov 12, 2026.** This file defines the system boundaries and source-of-truth rules. [Decisions.md](Decisions.md) names the chosen tools; [DataContract.md](DataContract.md) defines the interfaces. Change a boundary only when the current design prevents a phase acceptance check.
 
-## Website and phone
+## The system in one sentence
 
-The **website** is the research desk. A buyer searches by parcel ID or address where supported, browses a larger map, compares parcels, and opens the underlying records. The **phone** is the closing companion. The buyer opens their deal, sees the balance and next action, and can receive an alert when an approval or hold lands. Both surfaces read the same deal. A buyer can also follow the closing from the website.
+A responsive React site calls one GroundTruth API; that API turns authoritative public records into explicit evidence states, stores private workflow data in PostgreSQL, and mirrors confirmed events from a deal-scoped Solana escrow into a buyer-readable timeline.
+
+## Product boundary
+
+GroundTruth does four things this week:
+
+1. Searches real Ohio parcels by address or parcel ID and draws the published boundary.
+2. Shows what an authoritative record supports, what is still unknown, who can resolve it, and the source date.
+3. Holds test USDC in a Solana devnet program whose bound reviewers can approve or hold a staged closing.
+4. Shows a rejected payout and a successful payout with balances and Explorer receipts.
+
+GroundTruth does **not** issue a legal buildability opinion, replace a survey or title search, verify a real person's identity, transfer a deed, custody production funds, or promise deep record coverage for all 88 Ohio counties. Those claims would be dishonest and would expand the build past the demo.
+
+## System map
+
+```mermaid
+flowchart LR
+    Buyer["Buyer or judge"] --> Web["Responsive web · Vite + React"]
+    Reviewer["Staged professional reviewer"] --> Web
+    Web -->|"HTTPS JSON"| API["GroundTruth API · Express"]
+
+    API --> Parcel["OGRIP + FEMA + verified local sources"]
+    API --> DB["PostgreSQL · reports, evidence, timeline cache"]
+    API --> Voice["ElevenLabs · staged owner callback"]
+    API --> RPC["Solana devnet RPC"]
+
+    Web -->|"wallet-signed transaction"| Program["Anchor escrow program"]
+    Program --> Vault["Deal PDA + test-USDC vault"]
+    Program --> Stream["QuickNode Stream · confirmed program events"]
+    Stream -->|"HMAC-verified webhook"| API
+    API -->|"poll now; SSE after core works"| Web
+```
+
+The browser owns presentation and user signatures. The API owns provider adapters, normalization, access checks, and private evidence. The Anchor program alone authorizes movement from the vault. QuickNode reports confirmed on-chain events; it never creates them. ElevenLabs reports call evidence; it never approves or holds a deal.
+
+## Source of truth
+
+| Question | Authority | Cached copy | Rule |
+| --- | --- | --- | --- |
+| Where is the parcel boundary? | OGRIP feature geometry | API response cache | Show source URL and retrieval time; never redraw a guessed polygon. |
+| What does a record establish? | Named public authority or signed reviewer | Normalized `Check` in PostgreSQL | No source means `unknown`, not a model-generated answer. |
+| Who may approve or hold? | Reviewer wallets bound when the deal is initialized | Deal row for display | The program rejects any unbound signer. |
+| Is the deal funded, held, released, or refunded? | Confirmed Solana account and transaction state | Timeline projection in PostgreSQL | Chain state wins after disagreement or restart. |
+| What happened in the owner call? | Verified ElevenLabs post-call webhook | Private evidence row | Store the minimum needed for the demo; a human reviewer decides the effect. |
+
+## Parcel path
+
+```mermaid
+sequenceDiagram
+    participant U as Buyer
+    participant W as Web
+    participant A as API
+    participant O as Ohio OGRIP
+    participant F as FEMA / local authority
+
+    U->>W: Search address or parcel ID
+    W->>A: GET /api/parcels/search?q=
+    A->>O: Geocode or query statewide parcels
+    O-->>A: Published attributes + geometry
+    A-->>W: Normalized search results
+    U->>W: Open parcel
+    W->>A: GET parcel + report
+    A->>F: Run independent evidence adapters
+    F-->>A: Found, missing, timeout, or conflict
+    A-->>W: Checks with source, status, and next action
+```
+
+The first implementation queries Ohio's published statewide parcel FeatureServer through the API, never directly from the browser. The official endpoint is `https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer`. Direct parcel-ID search uses an allowlisted equality query. Address search calls the LBRS locator, takes the best Ohio match above the configured score threshold, then asks the parcel service for the polygon containing that point. Provider-specific field names stop at the adapter; the UI sees only the v1 contract.
+
+Each evidence adapter has its own timeout and result. The report renders when some adapters fail. Coverage is reported in two numbers: counties returning searchable boundaries, and checks returning usable evidence. The stage demo uses one verified Franklin County golden parcel and at least one second-county boundary; the exact parcel ID enters the fixture only after a teammate checks the source manually.
+
+## Closing path
+
+```mermaid
+sequenceDiagram
+    participant B as Buyer
+    participant R as Reviewer
+    participant W as Web wallet
+    participant P as Escrow program
+    participant Q as QuickNode Stream
+    participant A as API
+
+    B->>W: Fund staged deal with test USDC
+    W->>P: initialize_deal + fund
+    R->>P: sign_approval or place_hold
+    P-->>Q: Emit confirmed program event
+    Q->>A: Signed webhook payload
+    A->>A: Verify, deduplicate, project timeline
+    W->>A: Poll deal timeline
+    A-->>W: Confirmed state + transaction link
+    B->>P: Trigger settlement
+    alt active hold
+        P-->>B: Reject; vault and balances unchanged
+    else every required approval
+        P-->>B: Pay bound seller once
+    end
+```
+
+Every deal binds buyer, seller token account, mint, amount, and reviewer wallets before funding. Any fee payer may trigger `release`; the program controls the outcome and can send funds only to the bound seller token account. An assigned reviewer may place a terminal hold. The buyer may call `refund` only while that hold is active. Both `release` and `refund` are one-time terminal settlements.
+
+The demo uses two independent deals rather than mutating one deal between outcomes. This makes the story reproducible and keeps the held receipt available after the successful payout.
+
+## Web and phone
+
+There is one responsive web application. Desktop is the research desk; the same routes become the phone closing companion at narrow widths. The desktop closing screen displays a QR code for an HTTPS deal URL. For the staged demo, the URL opens public, non-sensitive fixture data in read-only mode; wallet actions still require the correct staged wallet. No native Expo app, native push setup, or app-store build is part of the core scope.
+
+## Deployment topology
 
 ```mermaid
 flowchart TB
-    W["Web research and closing"] --> S["Shared server"]
-    M["Mobile closing companion"] --> S
-    S --> D["Parcel reports and deal database"]
-    S --> C["Solana Devnet escrow"]
-    C --> E["QuickNode Streams"]
-    E --> S
-    S --> N["Mobile push service"]
-    N --> M
+    V["Vercel · static React build"] --> R["Railway · Express API"]
+    R --> P["Railway PostgreSQL"]
+    R --> X["External public-data and sponsor APIs"]
+    V --> S["Solana devnet via wallet adapter"]
+    X --> R
 ```
 
-The server handles data retrieval, account access, report generation, private case notes, and updates for both clients. The database holds source metadata, reports, private review evidence, and a view of the closing timeline. Wallets sign actions that affect escrow. The chain is authoritative for holds, approvals, balances, and payout. The timeline reflects confirmed chain activity.
+- `frontend/web` deploys to Vercel with an SPA rewrite to `index.html`. It receives only public configuration such as the API base URL, cluster name, and program ID.
+- `backend` and PostgreSQL deploy together on Railway. All provider credentials and webhook secrets stay there.
+- `escrow` deploys to Solana devnet. The checked-in IDL and deployed program ID must match.
+- Pull requests run lint, typecheck, unit tests, web build, API tests, and local Anchor tests. Devnet proof is a deliberate manual gate because faucets and RPCs are external.
 
-## Parcel discovery and report coverage
+## Trust, privacy, and failure rules
 
-```mermaid
-flowchart TB
-    P["Ohio statewide parcel map"] --> I["Parcel search and boundaries"]
-    F["FEMA flood maps"] --> J["Jurisdiction and evidence lookup"]
-    L["Local zoning and records"] --> J
-    I --> J
-    J --> R["Report with sources and gaps"]
-    R --> B["Buyer map and next actions"]
-```
+- Use a consenting teammate and staged phone number for the callback. Never call a real parcel owner during the demo.
+- Do not put owner mailing addresses, identity documents, raw call audio, private phone numbers, secrets, or access tokens into parcel responses, model input, logs, Git, URLs, or QR codes.
+- Verify QuickNode HMAC and ElevenLabs webhook signatures against the raw request body. Deduplicate Streams by transaction signature + event index and calls by conversation ID.
+- Return webhook success only after the event is durably queued or written. Reprocessing the same delivery must be harmless.
+- A provider timeout becomes `unknown` with a next action. A chain/RPC timeout becomes `pending confirmation`, never `released` or `held`.
+- The model may rewrite supplied evidence into plain English. It may not browse independently, invent a source, assign a legal status, or authorize money movement.
+- Test funds, staged roles, illustrative globe traffic, and incomplete coverage are labeled in the interface and video.
 
-**Target Ohio-wide discovery.** Ohio's OGRIP parcel map standardizes county parcel and assessment data. Validate how the public dataset can be queried or ingested, what fields it exposes, and which counties are available. Search and map multiple counties early. Use one repeatable report pipeline with geographic layers such as FEMA flood maps and local lookups for zoning, access, utilities, easements, and site-specific questions. [Ohio Parcels][ohio] · [FEMA National Flood Hazard Layer][fema]
+## Architecture exit check
 
-| What we can show | How to describe it |
-| --- | --- |
-| Searchable parcel with a mapped boundary | Show where the geometry came from and when it was checked. |
-| A finding supported by a record | Show the authority, source, and date. AI can summarize the finding and suggest a next step. |
-| Missing records, conflicting results, or fieldwork needed | Mark that check as unresolved and name the agency or professional who can address it. |
-| Coverage outside Ohio | Add a second geography if its data can feed the same pipeline and the team can verify the resulting map and evidence. Report actual coverage by source. |
+The architecture is working when a fresh browser can search two counties, open the golden report with a source and a gap, fund or inspect the two staged deals, see a reviewer event arrive from the Stream, and verify both terminal outcomes without any browser-held secret or manual database edit. The phase files define the narrower proof required to get there.
 
-Parcel coverage and report depth are separate measures. Track which counties are searchable, which checks return usable evidence, and where data is missing. A well-understood parcel can anchor the stage demo while the product supports discovery across a much larger area.
-
-## Closing and phone handoff
-
-```mermaid
-flowchart TB
-    A["Buyer funds escrow"] --> R["Professional review"]
-    V["ElevenLabs callback"] --> R
-    R --> H["Reviewer signs hold"]
-    R --> C["Required reviewers sign"]
-    H --> X["Escrow rejects payout"]
-    C --> Y["Escrow releases USDC"]
-    X --> T["Confirmed status on both devices"]
-    Y --> T
-```
-
-A callback adds evidence for the reviewer. The reviewer decides whether to sign a hold. The escrow checks required signers, the active hold, and the agreed payout destination. Use staged participants and Devnet funds. Explain the buyer's next step after a hold, including the applicable refund path. Deed transfer remains in the off-chain closing process.
-
-The web closing screen can show a QR code for an HTTPS deal link. With the installed app and platform link configuration, the link can open the same deal on the phone. Provide a mobile-web route for judges without the app. Authenticate the buyer on the phone before displaying private information, and keep credentials and deal details out of the QR payload. After a confirmed hold or approval, the backend can send a push alert that opens the deal. [Expo linking][linking] · [Expo push setup][push]
-
-## Frontend options to decide
-
-| Option | When it makes sense |
-| --- | --- |
-| **React web + Expo React Native** | Good fit for a map-heavy browser workspace and a simpler native companion. Share report and deal models, API clients, and design tokens. Keep mapping, navigation, and wallet interactions platform-specific where needed. |
-| **Expo across web, iOS, and Android** | Expo supports browser builds with React Native Web. Consider this if a quick test confirms the web map, wallet flow, and shared screens work well together. Platform-specific components are still possible. |
-| **Responsive web first, native companion next** | Keeps research and closing available through a judge-friendly link. The same backend and deal URLs give a native companion a clear integration point when ready. |
-
-**Suggested check before choosing:** Load an actual Ohio parcel on desktop, open its staged deal on a phone, and verify the chosen wallet and notification path on the target devices. A real native push demo needs an installed build, notification permissions, and platform credentials. Budget time for that setup if native push is part of the submission. [Expo web][web] · [Expo push setup][push]
-
-[ohio]: https://ohioparcels-geohio.hub.arcgis.com/
-[fema]: https://www.fema.gov/flood-maps/national-flood-hazard-layer
-[web]: https://docs.expo.dev/workflow/web/
-[linking]: https://docs.expo.dev/linking/overview/
-[push]: https://docs.expo.dev/push-notifications/push-notifications-setup/
+[Ohio statewide parcel FeatureServer](https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer) · [Ohio parcels](https://ohioparcels-geohio.hub.arcgis.com/) · [Circle testnet USDC addresses](https://developers.circle.com/stablecoins/usdc-contract-addresses) · [QuickNode Streams webhook](https://www.quicknode.com/docs/streams/destinations/webhooks) · [ElevenLabs post-call webhooks](https://elevenlabs.io/docs/eleven-agents/workflows/post-call-webhooks)
