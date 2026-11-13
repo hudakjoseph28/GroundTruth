@@ -10,7 +10,7 @@ Built for the [UBC 2026 Hackathon](docs/ubc/UBC-Hackathon.md). **Main track: Con
 
 By the first end-to-end checkpoint, a judge can open the public site, search real Ohio parcels, inspect one honest source-backed report, and run two staged closings: one payout rejected because a title hold is active and one payout released to the bound seller after every required approval. The result is not a marketplace, legal opinion, title product, or deed-transfer system. It is a polished decision-and-payment prototype with verifiable evidence.
 
-**Repository status on Nov 12:** documentation and empty ownership folders exist; application code does not. The next commit is the scaffold defined in [Decisions.md](docs/architecture/Decisions.md). Do not describe a route, test, deployment, or integration as working until the corresponding artifact exists and has been run.
+**Repository status on Nov 12:** `@groundtruth/shared` is the checked-in v1 contract. `frontend/web`, `backend`, and `escrow` are still empty. Do not describe a route, test, deployment, or integration as working until the corresponding artifact exists and has been run.
 
 ## The demo story
 
@@ -55,6 +55,7 @@ docs/
   design/Vision.md        how the website should look and feel (+ vision.jpg)
   phases/                 build order, owners, acceptance checks
   agents/Prompt.md        task template for handing work to an agent
+packages/shared/          `@groundtruth/shared` v1 types and staged fixtures
 frontend/web/             web app (empty until scaffold)
 frontend/mobile/          reserved; native app is out of core scope
 backend/                  shared server (empty until scaffold)
@@ -63,19 +64,26 @@ escrow/                   Anchor program (empty until scaffold)
 
 ## Quickstart
 
-The repo is intentionally not pretending to have a runnable app yet. The scaffold must create a root `package.json`, `pnpm-workspace.yaml`, checked-in `.env.example` files, and these commands:
+Use Node 26 (`.nvmrc`). From a fresh clone:
 
 ```bash
-pnpm install
-pnpm dev
+pnpm install --frozen-lockfile
+pnpm -r build
+pnpm -r typecheck
 pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm escrow:test
+pnpm format
 ```
 
-Until those files land, the only truthful setup instruction is: read the docs, take one phase outcome, and scaffold against the accepted decisions. Once code exists, replace this paragraph with commands that were executed from a fresh clone.
+These five commands passed on Nov 12, 2026. `pnpm dev`, `pnpm test`, and `pnpm escrow:test` are not set up yet.
+
+```ts
+import {
+  type Deal,
+  type Parcel,
+  stagedDeal,
+  stagedParcel,
+} from "@groundtruth/shared";
+```
 
 ## Definition of a winning build
 

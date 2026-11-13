@@ -4,7 +4,7 @@
 
 | ID | Accepted decision | Why this is the answer for this week | Replacement trigger |
 | --- | --- | --- | --- |
-| D1 | **pnpm workspace** with `frontend/web`, `backend`, `packages/shared`, and `escrow` | One install and one shared TypeScript contract let four owners build without copying types. | pnpm cannot install or run on a teammate's target machine and the exact failure is recorded. |
+| D1 | **Accepted.** pnpm workspace with `frontend/web`, `backend`, `packages/shared`, and `escrow` | One install and one shared TypeScript contract let four owners build without copying types. | pnpm cannot install or run on a teammate's target machine and the exact failure is recorded. |
 | D2 | **Vite + React + TypeScript** for one responsive web app | Fast scaffold, static deployment, and no server-rendering requirement. Desktop and phone share routes and components. | A required wallet or mapping library fails in a minimal Vite spike. |
 | D3 | **MapLibre GL JS** for parcels and **react-globe.gl** for the homepage atmosphere | MapLibre handles GeoJSON boundaries without a paid map SDK; react-globe.gl supplies the designed points/arcs/drag interaction. Search loads before the globe. | Globe misses the performance/reduced-motion check; replace it with a static canvas, not a new product dependency. |
 | D4 | **Express + TypeScript + Zod + Prisma + PostgreSQL** in `backend` | Familiar request lifecycle, explicit validation, durable webhook dedupe, and a schema the backend and data owners can inspect quickly. | Railway cannot run the service/database or Prisma blocks the first vertical slice; use direct `pg`, not a second ORM. |
@@ -31,5 +31,6 @@ Append a dated row instead of erasing history:
 | Date | Decision | Evidence | Replacement | Owners |
 | --- | --- | --- | --- | --- |
 | — | No replacements yet | — | — | — |
+| 2026-11-12 | D1 accepted | `pnpm install --frozen-lockfile`, `pnpm -r build`, `pnpm -r typecheck`, `pnpm lint`, and `pnpm format` passed from a clean checkout | none | Joey Hudak |
 
 A replacement is complete only when [README](../../README.md), [Architecture](Architecture.md), [DataContract](DataContract.md), affected phase files, environment examples, and deployment notes agree.
