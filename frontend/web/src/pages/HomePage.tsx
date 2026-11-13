@@ -1,21 +1,21 @@
-import { GlobeSlot } from "../components/GlobeSlot";
+import { Link } from "react-router-dom";
+import { GlobeSlot } from "../globe/GlobeSlot";
 import { SearchForm } from "../components/SearchForm";
+import { sampleParcelPath } from "../data/parcelSource";
 import { CHECK_LABELS, DOCUMENTED_CHECKS } from "../labels";
 
 export function HomePage() {
   return (
     <>
-      <section className="hero">
+      <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy">
-          <p className="live">
-            <span className="live-dot" aria-hidden="true" />
-            Live on Solana devnet
-          </p>
-          <h1>Know the land. Know what comes next.</h1>
-          <SearchForm autoFocus />
-          <p className="quiet">
-            This preview searches one staged parcel. Live Ohio records are not
-            connected.
+          <h1 id="hero-title">
+            <span>Know the land.</span> <span>Know what comes next.</span>
+          </h1>
+          <SearchForm autoFocus showSampleLink={false} />
+          <p className="hero-status">
+            Preview: staged sample parcel. Try{" "}
+            <Link to={sampleParcelPath()}>STAGED-DEMO</Link>.
           </p>
         </div>
         <GlobeSlot />
