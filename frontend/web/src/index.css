@@ -3,6 +3,42 @@
   background: #030303;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.45;
+
+  /* Every color means something: gold is the parcel in view or the primary
+     action, green is cleared or released, red is held or blocked. */
+  --gold: #c4a15a;
+  --green: #3fa86a;
+  --red: #d64545;
+  --red-text: #ea6b6b; /* red at text sizes, for contrast on near-black */
+  --line: #232323;
+  --line-soft: #1c1c1c;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Fluid scale. Everything below sizes from these, so no one viewport is special. */
+  --step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.85rem);
+  --step-0: clamp(1rem, 0.97rem + 0.15vw, 1.1rem);
+  --step-1: clamp(1.12rem, 1.04rem + 0.4vw, 1.4rem);
+  --step-2: clamp(1.5rem, 1.2rem + 1.3vw, 2.4rem);
+  --space-s: clamp(0.75rem, 0.6rem + 0.6vw, 1.25rem);
+  --space-m: clamp(1.25rem, 0.9rem + 1.4vw, 2.25rem);
+  --space-l: clamp(2.5rem, 1.6rem + 4vw, 6rem);
+  --header-h: clamp(3.5rem, 3rem + 1.2vw, 4.5rem);
+  --tap: 44px;
+}
+
+/* Root text grows a little on very large screens; it never shrinks below 16px. */
+html {
+  font-size: clamp(100%, 0.5rem + 0.4vw, 118.75%);
+}
+
+/* The page is one inline-size container: widths, gutters and the hero layout
+   all follow the space actually available (no scrollbar guesswork). */
+#root {
+  container: page / inline-size;
+  /* Content column: centered, at most --page-max wide, with fluid gutters. */
+  --page-max: 90rem;
+  --gutter: clamp(1.25rem, 4cqi, 4rem);
+  --pad: max(var(--gutter), (100cqi - var(--page-max)) / 2);
 }
 
 * {
@@ -13,6 +49,13 @@ body {
   margin: 0;
   min-width: 320px;
   background: #030303;
+  overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
 }
 
 .visually-hidden {
@@ -41,31 +84,40 @@ input:focus-visible {
 .skip {
   position: absolute;
   left: 16px;
-  top: -40px;
+  top: 0;
+  transform: translateY(-110%);
+  z-index: 3;
   background: #c4a15a;
   color: #0a0a0a;
   padding: 8px 12px;
 }
 
 .skip:focus {
-  top: 12px;
+  transform: translateY(12px);
 }
 
 .site-header {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 0 var(--space-m);
   align-items: center;
-  height: 60px;
-  padding: 0 36px;
+  min-height: var(--header-h);
+  padding-inline: var(--pad);
   position: relative;
   z-index: 2;
 }
 
+.wordmark,
+.site-header nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+}
+
 .wordmark {
   color: #f3f1ec;
-  font-size: 1.12rem;
+  font-size: var(--step-1);
   font-weight: 560;
   text-decoration: none;
   letter-spacing: -0.02em;
@@ -73,13 +125,14 @@ input:focus-visible {
 
 .site-header nav {
   display: flex;
-  gap: 32px;
+  flex-wrap: wrap;
+  gap: 0 clamp(0.9rem, 2.4cqi, 2rem);
 }
 
 .site-header nav a {
   color: #a9a9a9;
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: clamp(0.85rem, 0.8rem + 0.2vw, 0.98rem);
   transition: color 150ms ease;
 }
 
@@ -87,12 +140,32 @@ input:focus-visible {
   color: #f3f1ec;
 }
 
+/* Inline links inside sentences: a 44px hit area without changing the line box. */
+.hero-status a,
+.proof-sources a,
+.evidence-note a,
+.report-link,
+.sample-link {
+  padding-block: 15px;
+  margin-block: -15px;
+}
+
+/* ---------- Homepage hero ---------- */
+
 .hero {
+  --copy-max: 38rem;
+  --card-min: 22rem;
+  --card-max: 27rem;
+  --hero-gap: clamp(2rem, 5cqi, 5rem);
+  --hero-top: clamp(1.75rem, 1rem + 6svh, 7rem);
+  /* One column first; the container query below adds the second. */
+  --globe-size: min(140cqi, 42rem);
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
-  height: calc(100vh - 60px);
-  min-height: 560px;
-  max-height: 1000px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  padding: var(--hero-top) var(--pad) 0;
+  overflow-x: clip;
 }
 
 .hero > * {
@@ -102,21 +175,43 @@ input:focus-visible {
 .hero-copy {
   position: relative;
   z-index: 1;
-  padding: clamp(72px, 19vh, 200px) 24px 48px 36px;
-  max-width: 600px;
+  max-width: var(--copy-max);
+  container: hero-copy / inline-size;
+}
+
+.eyebrow-quiet {
+  margin: 0 0 var(--space-s);
+  color: #a9a9a9;
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hero-lede {
+  margin: 0 0 var(--space-m);
+  max-width: 32rem;
+  color: #cfcfcf;
+  font-size: var(--step-0);
+  line-height: 1.55;
 }
 
 h1 {
-  margin: 0 0 32px;
-  font-size: clamp(2.1rem, 3.75vw, 3.1rem);
+  margin: 0 0 var(--space-m);
+  font-size: clamp(1.9rem, 1.4rem + 2.4vw, 3.4rem);
   line-height: 1.12;
   letter-spacing: -0.035em;
   font-weight: 560;
 }
 
+/* Sized from the copy column, so "Know what comes next." holds one line
+   wherever the column can fit it, and wraps cleanly where it cannot. */
+.hero h1 {
+  margin-bottom: var(--space-s);
+  font-size: clamp(1.75rem, 9.4cqi, 4.25rem);
+}
+
 .hero h1 span {
   display: block;
-  white-space: nowrap;
 }
 
 .search label:not(.visually-hidden) {
@@ -127,21 +222,22 @@ h1 {
 
 .search-row {
   display: flex;
-  gap: 10px;
-  max-width: 470px;
+  flex-wrap: wrap; /* the button drops under the field once the field would get cramped */
+  gap: 0.625rem;
+  max-width: 30rem;
 }
 
 .search input {
-  flex: 1;
+  flex: 999 1 13rem; /* takes the row; the button keeps its own width */
   min-width: 0;
-  height: 54px;
+  height: clamp(48px, 2.6rem + 0.5vw, 3.5rem);
   background: #0d0d0d;
   color: #f3f1ec;
   border: 1px solid #2e2e2e;
   border-radius: 4px;
-  padding: 0 16px;
+  padding: 0 1rem;
   font: inherit;
-  font-size: 1.02rem;
+  font-size: var(--step-0);
 }
 
 .search input::placeholder {
@@ -160,15 +256,17 @@ h1 {
 }
 
 .search button {
-  flex: none;
-  height: 54px;
+  flex: 1 0 auto;
+  max-width: 100%;
+  height: clamp(48px, 2.6rem + 0.5vw, 3.5rem);
   border: 0;
   background: #d1a84e;
   color: #0a0a0a;
   font: inherit;
-  font-size: 1.02rem;
+  font-size: var(--step-0);
   font-weight: 560;
-  padding: 0 22px;
+  padding: 0 clamp(1rem, 0.7rem + 0.8vw, 1.4rem);
+  white-space: nowrap;
   cursor: pointer;
   transition: background 150ms ease;
 }
@@ -184,10 +282,12 @@ h1 {
 }
 
 .hero-status {
-  margin: 18px 0 0;
+  margin: var(--space-s) 0 0;
+  max-width: 30rem;
   color: #8f8f8f;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.8rem;
+  font-family: var(--mono);
+  font-size: var(--step--1);
+  line-height: 1.6;
 }
 
 .hero-status a {
@@ -205,53 +305,263 @@ h1 {
   color: #bdbdbd;
 }
 
-.globe-slot {
+/* The globe is a dim backdrop. Stacked (narrow), it sits faintly behind the
+   sample report, below the search, and takes no pointer input. Side by side
+   (wide), it fills the space right of the search column; see the container
+   query at the end. It is always under the content in the stacking order. */
+.hero-backdrop {
   position: relative;
-  min-width: 0;
-  max-width: 100%;
-  min-height: 420px;
-  height: calc(100% + 60px);
+  grid-area: 2 / 1;
+  align-self: stretch;
   overflow: hidden;
-  margin-top: -60px; /* let the globe use the header's height too */
+  pointer-events: none;
+}
+
+.globe-slot {
+  position: absolute;
+  inset: 0;
 }
 
 .webgl-globe,
 .static-globe {
-  height: 100%;
-  min-height: 420px;
-  min-width: 0;
-  max-width: 100%;
+  position: absolute;
+  width: var(--globe-size);
+  height: var(--globe-size);
+  left: calc(50% - var(--globe-size) / 2);
+  top: 0;
+  margin: 0;
+}
+
+.hero-backdrop canvas {
+  display: block;
+  opacity: 0.38;
 }
 
 .webgl-globe canvas {
-  display: block;
-  max-width: 100%;
+  cursor: grab;
 }
 
-.static-globe {
-  margin: 0;
-  position: relative;
+.webgl-globe canvas:active {
+  cursor: grabbing;
 }
 
 .static-globe canvas {
-  display: block;
   width: 100%;
   height: 100%;
 }
 
-.static-globe figcaption {
+/* Honest caption, pinned to the bottom corner of the visible backdrop. */
+.globe-caption {
   position: absolute;
-  right: 1rem;
-  bottom: 0.75rem;
+  z-index: 1;
   margin: 0;
-  max-width: 60%;
+  max-width: 70%;
   text-align: right;
+  font-size: 0.72rem;
+  color: rgba(214, 214, 214, 0.45);
+  pointer-events: none;
 }
 
-.static-globe figcaption {
-  color: rgba(214, 214, 214, 0.45);
-  font-size: 0.72rem;
+/* ---------- Sample report card ---------- */
+
+.hero-report {
+  position: relative;
+  z-index: 1;
+  grid-area: 2 / 1;
+  justify-self: start;
+  width: min(100%, 35rem);
+  padding-block: clamp(3rem, 14cqi, 5rem) var(--space-l);
 }
+
+.report-card {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 10px;
+  background: rgba(8, 8, 8, 0.74);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  padding: clamp(1rem, 0.8rem + 0.6vw, 1.25rem) clamp(1rem, 0.8rem + 0.8vw, 1.4rem);
+}
+
+.report-card p {
+  margin: 0;
+}
+
+.report-meta {
+  margin: 0 0 18px;
+  color: #a3a3a3;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.report-parcel {
+  color: var(--gold); /* the parcel being viewed */
+  overflow-wrap: anywhere;
+}
+
+.report-label {
+  color: #8f8f8f;
+  font-size: 0.7rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.report-question-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin: 4px 0 8px;
+}
+
+.report-title {
+  font-size: var(--step-1);
+  font-weight: 560;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.report-resolver {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  color: #e4e1dc;
+  font-size: 0.9rem;
+}
+
+.report-checks {
+  display: grid;
+  /* Two columns when each check has room for its label and pill, else one. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.5rem), 1fr));
+  column-gap: clamp(0.9rem, 3cqi, 1.4rem);
+  margin: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.report-checks > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.report-checks dt {
+  color: #cfcfcf;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.report-checks dd {
+  margin: 0;
+}
+
+.report-escrow {
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #e4e1dc;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.report-escrow-held {
+  border-color: rgba(214, 69, 69, 0.5);
+  background: rgba(214, 69, 69, 0.1);
+}
+
+.report-escrow-held strong {
+  color: var(--red-text);
+  font-weight: 600;
+}
+
+.report-foot {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.report-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  justify-self: start;
+  color: #f3f1ec;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-underline-offset: 4px;
+  text-decoration-color: #6a6a6a;
+}
+
+.report-link:hover {
+  text-decoration-color: #f3f1ec;
+}
+
+.report-disclaimer {
+  color: #8f8f8f;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+/* ---------- Status pills ---------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #3a3a3a;
+  border-radius: 999px;
+  padding: 2px 9px 2px 8px;
+  color: #e4e1dc;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.pill::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pill-needsReview {
+  border-color: rgba(196, 161, 90, 0.55);
+  color: #d1a84e;
+}
+
+.pill-unknown {
+  border-style: dashed;
+  border-color: #4a4a4a;
+  color: #a3a3a3;
+}
+
+.pill-unknown::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.pill-signedOff {
+  border-color: rgba(63, 168, 106, 0.55);
+  color: #4fb87a;
+}
+
+.pill-held {
+  border-color: rgba(214, 69, 69, 0.6);
+  color: var(--red-text);
+}
+
+/* ---------- Other pages ---------- */
 
 .boundary figcaption {
   color: #bdbdbd;
@@ -261,8 +571,19 @@ h1 {
 .band,
 .sheet,
 .parcel aside {
-  padding: 28px 32px 8px;
-  max-width: 760px;
+  padding: var(--space-m) var(--pad) 0.5rem;
+}
+
+.band > *,
+.sheet > * {
+  max-width: 48rem;
+}
+
+.sheet h1,
+.result-id,
+.notice,
+.quiet {
+  overflow-wrap: anywhere;
 }
 
 .band h2,
@@ -299,6 +620,7 @@ h1 {
 
 .results a {
   display: grid;
+  min-height: var(--tap);
   gap: 4px;
   text-decoration: none;
   border: 1px solid #2c2c2c;
@@ -313,9 +635,9 @@ h1 {
 
 .parcel-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
-  padding: 8px 32px 32px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-m);
+  padding: 0.5rem var(--pad) var(--space-l);
 }
 
 .boundary {
@@ -398,99 +720,508 @@ h1 {
   text-transform: uppercase;
 }
 
-@media (max-width: 800px) {
-  .hero,
-  .parcel-grid {
-    grid-template-columns: 1fr;
-  }
+/* ---------- Homepage: proof strip ---------- */
+
+.proof {
+  position: relative;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  background: #050505;
+  padding: var(--space-m) var(--pad);
+}
+
+.proof p {
+  margin: 0;
+}
+
+.proof-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: var(--space-m) 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-list li {
+  border-left: 1px solid var(--line);
+  padding: 0 var(--space-m);
+}
+
+.proof-figure {
+  display: block;
+  margin-bottom: 8px;
+  font-size: clamp(1.8rem, 1.4rem + 1.4vw, 2.6rem);
+  font-weight: 560;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.proof-body {
+  color: #bdbdbd;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.proof-body strong {
+  color: #f3f1ec;
+  font-weight: 600;
+}
+
+.proof-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-top: 10px !important;
+  font-size: 0.78rem;
+}
+
+.proof-sources a,
+.evidence-note a {
+  color: #a9a9a9;
+  text-underline-offset: 3px;
+  text-decoration-color: #555;
+}
+
+.proof-sources a:hover,
+.evidence-note a:hover {
+  color: #f3f1ec;
+}
+
+.proof-note {
+  margin-top: var(--space-m) !important;
+  color: #8f8f8f;
+  font-size: 0.78rem;
+}
+
+/* ---------- Homepage: sections below the hero ---------- */
+
+.home-section {
+  padding: var(--space-l) var(--pad) 0.5rem;
+  scroll-margin-top: 0.75rem;
+}
+
+.home-section h2 {
+  margin: 0 0 14px;
+  max-width: 720px;
+  font-size: var(--step-2);
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  font-weight: 560;
+}
+
+.home-section h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.home-section p {
+  margin: 0;
+}
+
+.section-lede {
+  max-width: 42rem;
+  margin-bottom: var(--space-m) !important;
+  color: #bdbdbd;
+  font-size: var(--step-0);
+  line-height: 1.55;
+}
+
+.question-grid,
+.step-grid,
+.check-grid,
+.timeline,
+.pill-row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.question-grid,
+.step-grid,
+.outcome-grid {
+  display: grid;
+  gap: var(--space-s);
+}
+
+.question-grid li,
+.outcome {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #080808;
+  padding: clamp(1rem, 0.8rem + 0.8vw, 1.5rem);
+}
+
+.step-number {
+  color: #8f8f8f;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+/* Three questions */
+
+.question-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  margin-top: var(--space-m);
+}
+
+.question-grid li {
+  display: flex;
+  flex-direction: column;
+}
+
+.question-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.question-icon {
+  display: block;
+  color: #e4e1dc;
+}
+
+.question-grid li > p {
+  color: #bdbdbd;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.chip-line {
+  margin: 12px 0 18px !important;
+  color: #8f8f8f !important;
+  font-size: 0.8rem !important;
+}
+
+.question-example {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: auto !important;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 14px;
+  color: #e4e1dc !important;
+  font-size: 0.85rem !important;
+}
+
+.question-example .pill {
+  margin-left: auto;
+}
+
+.example-tag {
+  color: #8f8f8f;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Two outcomes */
+
+.outcome-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+}
+
+.outcome {
+  padding: clamp(1rem, 0.8rem + 0.8vw, 1.5rem) clamp(1rem, 0.8rem + 0.8vw, 1.5rem) 0.5rem;
+}
+
+.outcome-held {
+  border-color: rgba(214, 69, 69, 0.45);
+}
+
+.outcome-released {
+  border-color: rgba(63, 168, 106, 0.45);
+}
+
+.outcome-label {
+  margin-bottom: 6px !important;
+  color: #8f8f8f;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.outcome h3 {
+  margin-bottom: var(--space-m);
+  font-size: var(--step-1);
+  font-weight: 560;
+  letter-spacing: -0.02em;
+}
+
+.outcome-held h3 {
+  color: var(--red-text);
+}
+
+.outcome-released h3 {
+  color: #4fb87a;
+}
+
+.timeline li {
+  position: relative;
+  padding: 0 0 20px 28px;
+}
+
+/* Status dot */
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Connector to the next step */
+.timeline li::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 20px;
+  bottom: 2px;
+  width: 1px;
+  background: #2e2e2e;
+}
+
+.timeline li:last-child::after {
+  display: none;
+}
+
+.timeline .tone-evidence {
+  color: #8f8f8f;
+}
+
+.timeline .tone-evidence::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+
+.timeline .tone-held {
+  color: var(--red);
+}
+
+.timeline .tone-signed,
+.timeline .tone-released {
+  color: var(--green);
+}
+
+.timeline li:last-child::before {
+  box-shadow:
+    0 0 0 3px #080808,
+    0 0 0 4px currentColor;
+}
+
+.timeline-where {
+  color: #8f8f8f;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.07em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.timeline-title {
+  color: #f3f1ec;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.timeline-detail {
+  margin-top: 2px !important;
+  color: #bdbdbd;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.evidence-note {
+  max-width: 760px;
+  margin-top: 18px !important;
+  color: #8f8f8f;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+/* How it works */
+
+.step-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-m);
+}
+
+.step-grid li {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.step-grid h3 {
+  margin: 10px 0 6px;
+  font-size: 1rem;
+}
+
+.step-grid p {
+  color: #bdbdbd;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* What a report checks */
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  column-gap: var(--space-m);
+  border-bottom: 1px solid var(--line);
+}
+
+.check-grid li {
+  border-top: 1px solid var(--line);
+  padding: 12px 0 13px;
+}
+
+.check-grid h3 {
+  margin: 0 0 2px;
+  font-size: 0.95rem;
+}
+
+.confirmed-by {
+  color: #bdbdbd;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.confirmed-by span {
+  color: #8f8f8f;
+}
+
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: 22px;
+}
+
+.status-line h3 {
+  margin: 0;
+  color: #bdbdbd;
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill-row li {
+  display: flex;
+}
+
+/* Find your lot, account, footer */
+
+.start-band .search {
+  margin-top: var(--space-m);
+}
+
+.account-note {
+  padding-top: var(--space-l);
+  padding-bottom: var(--space-l);
+  color: #8f8f8f;
+  font-size: 0.9rem;
+}
+
+.account-note h2 {
+  margin-bottom: 6px;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  color: #bdbdbd;
+}
+
+.home-footer {
+  margin: 0;
+  border-top: 1px solid var(--line-soft);
+  padding: var(--space-m) var(--pad) var(--space-l);
+  color: #8f8f8f;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+/* ---------- Wide hero ---------- */
+
+/* Side by side once the page can hold the copy column and the report card
+   (about 60rem). The globe fills the space right of the copy column, runs up
+   behind the header, and off the right edge; the report card floats on it. */
+@container page (min-width: 60rem) {
   .hero {
-    height: auto;
-    min-height: 0;
-    max-height: none;
+    --globe-size: clamp(34rem, min(125svh, 64cqi), 72rem);
+    --copy-col: min(var(--copy-max), 100cqi - 2 * var(--pad) - var(--card-min) - var(--hero-gap));
+    grid-template-columns: minmax(0, var(--copy-max)) minmax(var(--card-min), 1fr);
+    column-gap: var(--hero-gap);
+    align-items: center;
+    margin-top: calc(-1 * var(--header-h));
+    padding-top: calc(var(--header-h) + var(--hero-top));
+    padding-bottom: var(--hero-top);
+    /* Fill the first screen, leaving the top of the proof strip in view, but
+       stay sensible on very short or very tall screens. */
+    min-height: clamp(32rem, 100svh - 4.5rem, 62rem);
   }
   .hero-copy {
-    padding: 48px 20px 8px;
+    grid-area: 1 / 1;
   }
-  .hero h1 span {
-    white-space: normal;
+  .hero-report {
+    grid-area: 1 / 2;
+    justify-self: end;
+    width: min(100%, var(--card-max));
+    padding: 0;
   }
-  .globe-slot {
-    margin-top: 0;
-    height: auto;
-    padding-bottom: 28px;
+  .hero-backdrop {
+    position: absolute;
+    grid-area: auto;
+    inset: 0 0 0 calc(var(--pad) + var(--copy-col) + var(--hero-gap) / 2);
+    /* Fade in from the copy column and stay quiet behind the header links. */
+    -webkit-mask-image:
+      linear-gradient(to right, transparent, #000 clamp(2rem, 6cqi, 6rem)),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.3), #000 calc(var(--header-h) + 4rem));
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to right, transparent, #000 clamp(2rem, 6cqi, 6rem)),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.3), #000 calc(var(--header-h) + 4rem));
+    mask-composite: intersect;
   }
-  .globe-caption,
-  .static-globe figcaption {
-    right: 20px;
-    bottom: -22px;
-  }
-  .globe-slot,
+  /* Centered a little inside the content's right edge, so the card sits on
+     the globe and part of the globe runs off-canvas. */
   .webgl-globe,
   .static-globe {
-    min-height: 300px;
-    height: min(100vw, 400px);
+    left: auto;
+    right: calc(var(--pad) + var(--card-max) / 2 - var(--globe-size) * 0.45);
+    top: calc(50% - var(--globe-size) / 2 + var(--header-h) / 2);
   }
-  .band,
-  .sheet,
-  .parcel aside,
-  .parcel-grid {
-    padding-left: 20px;
-    padding-right: 20px;
+  .hero-backdrop canvas {
+    opacity: 0.55;
   }
-  .search input,
-  .search button {
-    height: 48px;
-  }
-  .search button {
-    padding: 0 16px;
-  }
-  .site-header {
-    padding: 0 20px;
-  }
-  .site-header nav {
-    gap: 18px;
+  .webgl-globe canvas {
+    pointer-events: auto; /* draggable wherever it shows */
   }
 }
 
-@media (max-width: 420px) {
-  .site-header {
-    height: auto;
-    min-height: 56px;
-    padding: 10px 20px;
-    gap: 6px 16px;
-  }
-  .wordmark {
-    font-size: 1rem;
-  }
-  .site-header nav {
-    gap: 14px;
-  }
-  .site-header nav a {
-    font-size: 0.85rem;
-  }
-}
-
-
-
-/* Globe canvas and its honest caption. */
-.webgl-globe {
-  position: relative;
-}
-
-.webgl-globe canvas {
-  cursor: grab;
-}
-
-.webgl-globe canvas:active {
-  cursor: grabbing;
-}
-
+/* Caption sits in the visible corner of the backdrop, not the globe's box. */
 .globe-caption {
-  position: absolute;
-  right: 1rem;
-  bottom: 0.75rem;
-  margin: 0;
-  font-size: 0.72rem;
-  color: rgba(214, 214, 214, 0.45);
-  pointer-events: none;
+  right: 0;
+  bottom: 0.9rem;
+}
+
+@container page (min-width: 60rem) {
+  .globe-caption {
+    right: var(--pad);
+  }
 }

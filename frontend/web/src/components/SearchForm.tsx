@@ -6,11 +6,13 @@ export function SearchForm({
   initialQuery = "",
   autoFocus = false,
   showSampleLink = true,
+  ariaLabel,
 }: {
   initialQuery?: string;
   autoFocus?: boolean;
-  /** The homepage shows the sample path in its own status line instead. */
   showSampleLink?: boolean;
+  /** Names this search landmark when a page has more than one. */
+  ariaLabel?: string;
 }) {
   const navigate = useNavigate();
   const fieldId = useId();
@@ -23,7 +25,12 @@ export function SearchForm({
   }
 
   return (
-    <form className="search" role="search" onSubmit={onSubmit}>
+    <form
+      className="search"
+      role="search"
+      aria-label={ariaLabel}
+      onSubmit={onSubmit}
+    >
       <label className="visually-hidden" htmlFor={fieldId}>
         Address or parcel ID
       </label>
