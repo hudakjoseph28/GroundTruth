@@ -1,0 +1,415 @@
+:root {
+  color: #f3f1ec;
+  background: #0a0a0a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.45;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #0a0a0a;
+}
+
+a {
+  color: inherit;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #c4a15a;
+  outline-offset: 3px;
+}
+
+.skip {
+  position: absolute;
+  left: 16px;
+  top: -40px;
+  background: #c4a15a;
+  color: #0a0a0a;
+  padding: 8px 12px;
+}
+
+.skip:focus {
+  top: 12px;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 28px;
+  border-bottom: 1px solid #222;
+}
+
+.wordmark {
+  color: #f3f1ec;
+  font-weight: 620;
+  text-decoration: none;
+  letter-spacing: -0.03em;
+}
+
+.site-header nav {
+  display: flex;
+  gap: 18px;
+}
+
+.site-header nav a {
+  color: #bdbdbd;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+  min-height: calc(100vh - 64px);
+}
+
+.hero > * {
+  min-width: 0;
+}
+
+.hero-copy {
+  padding: 64px 32px 48px;
+  max-width: 460px;
+}
+
+h1 {
+  margin: 12px 0 24px;
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  font-weight: 560;
+}
+
+.live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #bdbdbd;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3fa86a;
+}
+
+.search label {
+  display: block;
+  margin-bottom: 8px;
+  color: #d7d7d7;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  background: #141414;
+  color: #f3f1ec;
+  border: 1px solid #2c2c2c;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.search button,
+.sample-link {
+  border-radius: 8px;
+}
+
+.search button {
+  border: 0;
+  background: #c4a15a;
+  color: #0a0a0a;
+  font: inherit;
+  font-weight: 650;
+  padding: 0 16px;
+  cursor: pointer;
+}
+
+.sample-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #d7d7d7;
+}
+
+.quiet {
+  color: #bdbdbd;
+}
+
+.globe-slot {
+  position: relative;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 420px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.webgl-globe,
+.static-globe {
+  height: 100%;
+  min-height: 420px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.webgl-globe canvas {
+  display: block;
+  max-width: 100%;
+}
+
+.static-globe {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.static-globe svg {
+  width: min(100%, 520px);
+  height: auto;
+}
+
+.static-globe circle {
+  fill: none;
+  stroke: #3a3a3a;
+}
+.static-globe circle + circle,
+.static-globe svg circle:not(:first-child) {
+  fill: #d6d6d6;
+  stroke: none;
+}
+
+.static-globe figcaption,
+.boundary figcaption {
+  color: #bdbdbd;
+  font-size: 0.85rem;
+}
+
+.band,
+.sheet,
+.parcel aside {
+  padding: 28px 32px 8px;
+  max-width: 760px;
+}
+
+.band h2,
+.sheet h1,
+.parcel h1 {
+  letter-spacing: -0.03em;
+}
+
+.kind-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.kind-list li {
+  border: 1px solid #2c2c2c;
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #d7d7d7;
+}
+
+.notice {
+  border: 1px solid #2c2c2c;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.results {
+  list-style: none;
+  padding: 0;
+}
+
+.results a {
+  display: grid;
+  gap: 4px;
+  text-decoration: none;
+  border: 1px solid #2c2c2c;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.result-id {
+  font-weight: 650;
+}
+
+.parcel-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  padding: 8px 32px 32px;
+}
+
+.boundary {
+  margin: 0;
+  border: 1px solid #2c2c2c;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.boundary svg {
+  width: 100%;
+  height: auto;
+  background: #111;
+  border-radius: 8px;
+}
+.boundary polygon {
+  fill: rgba(196, 161, 90, 0.2);
+  stroke: #c4a15a;
+  stroke-width: 1.5;
+}
+
+.boundary figcaption {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.checks ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.checks article {
+  border: 1px solid #2c2c2c;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.checks header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.checks h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.checks p {
+  margin: 8px 0 0;
+}
+
+.status {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.status-unknown,
+.status-evidenceFound {
+  color: #d7d7d7;
+}
+.status-needsReview {
+  color: #c4a15a;
+}
+.status-signedOff {
+  color: #3fa86a;
+}
+.status-held {
+  color: #d64545;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #c4a15a;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 800px) {
+  .hero,
+  .parcel-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-copy {
+    padding: 28px 20px 12px;
+  }
+  .globe-slot,
+  .webgl-globe,
+  .static-globe {
+    min-height: 280px;
+    height: 320px;
+  }
+  .band,
+  .sheet,
+  .parcel aside,
+  .parcel-grid {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .search-row {
+    flex-direction: column;
+  }
+  .search button {
+    padding: 12px 16px;
+  }
+  .site-header {
+    padding: 14px 20px;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}
+
+/* Globe: subtle starfield behind the planet, and an honest caption. */
+.webgl-globe {
+  position: relative;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 78% 12%, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1px 1px at 64% 84%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 22% 72%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(1px 1px at 92% 58%, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1px 1px at 40% 6%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(1px 1px at 6% 46%, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.webgl-globe canvas {
+  cursor: grab;
+}
+
+.webgl-globe canvas:active {
+  cursor: grabbing;
+}
+
+.globe-caption {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.75rem;
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(214, 214, 214, 0.45);
+  pointer-events: none;
+}
