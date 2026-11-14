@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "node --env-file=.env --watch --import tsx src/index.ts",
-    "start": "node --env-file=.env dist/index.js",
+    "start": "node --env-file-if-exists=.env dist/index.js",
     "build": "prisma generate && tsc -p tsconfig.json",
     "typecheck": "prisma generate && tsc -p tsconfig.typecheck.json",
     "test": "vitest run",
     "test:db": "vitest run --config vitest.db.config.ts",
     "lint": "pnpm -w exec eslint backend",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:seed:dist": "node --env-file-if-exists=.env dist/seed.js"
   },
   "prisma": {
     "seed": "tsx src/seed.ts"
