@@ -38,4 +38,25 @@ pnpm --filter @groundtruth/backend test:db   # against DATABASE_URL after db:mig
 
 `test:db` creates and deletes its own `dbtest-*` deals; it does not touch the seeded demo rows.
 
+## Deployment
+
+| Surface | Host | URL |
+| --- | --- | --- |
+| Web | Vercel project `groundtruth` | <https://groundtruth-lac.vercel.app> |
+| API | Railway project `groundtruth`, service `api` | <https://api-production-db8a8106.up.railway.app> |
+| Database | Railway service `Postgres` | private network only |
+
+Both are deployed from a local checkout with the CLIs (`railway up`, `vercel deploy`), not from GitHub, so merging does not redeploy. Satya owns both projects. From the repo root, after `railway login` / `vercel login` and linking (`railway link`, `vercel link --project groundtruth`):
+
+```bash
+railway up --service api --ci                      # API
+railway variables --service api --set "GIT_COMMIT=$(git rev-parse --short HEAD)"
+vercel deploy --prod                               # web
+```
+
+- **API build:** Railpack runs `pnpm run build`. [railpack.json](../railpack.json) starts the API with `start:prod`, which runs `prisma migrate deploy`, then the compiled seed, then the server. Both are safe to repeat. Do not add `railway.json`: new Railway projects ignore its build, pre-deploy, and healthcheck settings.
+- **API variables:** `DATABASE_URL` references `${{Postgres.DATABASE_URL}}`; `GIT_COMMIT` is set by hand after each deploy; Railway sets `PORT`. Secrets for QuickNode and ElevenLabs go in Railway variables, never in Git.
+- **Web:** [vercel.json](../vercel.json) builds `shared` then `web` with the pinned pnpm, forwards `/api/*` to the Railway API, and sends every other path to `index.html`. Webhook providers call the Railway URL directly so signatures are checked against the unmodified body.
+- [.vercelignore](../.vercelignore) keeps `.env*` files out of CLI uploads; `railway up` already skips everything in `.gitignore`.
+
 On Windows, stop the dev server before `typecheck` or `build`: a running server locks Prisma's engine file and `prisma generate` fails with `EPERM`.
