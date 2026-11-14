@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
+import { getDeal, getDealTimeline } from "./routes/deals.js";
 import { getHealth } from "./routes/health.js";
 import { getParcelReport } from "./routes/report.js";
 
@@ -17,6 +18,8 @@ export function createApp(commit: string) {
 
   app.get("/api/health", getHealth(commit));
   app.get("/api/parcels/:parcelKey/report", getParcelReport);
+  app.get("/api/deals/:id", getDeal);
+  app.get("/api/deals/:id/timeline", getDealTimeline);
 
   app.use((_req, res) => {
     sendApiError(
@@ -49,7 +52,7 @@ export function createApp(commit: string) {
         new HttpError(
           500,
           "INTERNAL_ERROR",
-          "The report could not be loaded.",
+          "The request could not be completed.",
           true,
         ),
       );

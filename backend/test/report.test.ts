@@ -207,7 +207,7 @@ describe("GET /api/parcels/:parcelKey/report", () => {
     expect(res.status).toBe(500);
     expect(res.body.error).toEqual({
       code: "INTERNAL_ERROR",
-      message: "The report could not be loaded.",
+      message: "The request could not be completed.",
       requestId: res.headers["x-request-id"],
       retryable: true,
     });
