@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "node --env-file=.env --watch --import tsx src/index.ts",
     "start": "node --env-file=.env dist/index.js",
-    "build": "sh -c 'DATABASE_URL=\"${DATABASE_URL:-postgresql://localhost:5432/groundtruth}\" prisma generate && tsc -p tsconfig.json'",
-    "typecheck": "sh -c 'DATABASE_URL=\"${DATABASE_URL:-postgresql://localhost:5432/groundtruth}\" prisma generate && tsc -p tsconfig.json --noEmit'",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
     "lint": "pnpm -w exec eslint backend",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed"
