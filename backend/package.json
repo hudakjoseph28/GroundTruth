@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node --env-file=.env --watch --import tsx src/index.ts",
     "start": "node --env-file-if-exists=.env dist/index.js",
+    "start:prod": "pnpm db:migrate && pnpm db:seed:dist && pnpm start",
     "build": "prisma generate && tsc -p tsconfig.json",
     "typecheck": "prisma generate && tsc -p tsconfig.typecheck.json",
     "test": "vitest run",
