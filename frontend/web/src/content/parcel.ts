@@ -111,8 +111,8 @@ export const INSPECTOR = {
   party: "Reviewer",
   program: "Escrow program",
   outcome: {
-    signedOff: "Approval signed",
-    held: "Hold placed",
+    signedOff: "Signed off",
+    held: "Held",
     pending: "Waiting on a decision",
   },
   illustration: "How this decision reaches the escrow. Illustration only: it is not on-chain yet.",

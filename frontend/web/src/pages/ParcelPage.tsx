@@ -1,8 +1,10 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { stagedParcel, type Parcel } from "@groundtruth/shared";
 import { PARCEL_PAGE } from "../content/parcel";
+import { getParcelLedger } from "../data/ledger";
 import { getParcel } from "../data/parcelSource";
+import { Ledger } from "../parcel/Ledger/Ledger";
 import { LandBlock } from "../parcel/ParcelScene/LandBlock";
 import { useLandAssets } from "../parcel/ParcelScene/useLandAssets";
 import { useRenderMode } from "../parcel/useRenderMode";
@@ -40,6 +42,7 @@ function BackLink() {
 function ParcelView({ parcel }: { parcel: Parcel }) {
   const assets = useLandAssets(parcel.sourceParcelId);
   const mode = useRenderMode();
+  const ledger = useMemo(() => getParcelLedger(parcel.key), [parcel.key]);
   const [, setLandReady] = useState(false);
   const markLandReady = useCallback(() => setLandReady(true), []);
   // Only the shared fixture's parcel is a stand-in; real parcels carry no such label.
@@ -66,6 +69,7 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
         </header>
         <LandBlock parcel={parcel} assets={assets} mode={mode} staged={staged} revealed onReady={markLandReady} />
       </div>
+      <Ledger ledger={ledger} />
     </div>
   );
 }
