@@ -6,6 +6,7 @@
     "setup": "bash scripts/setup.sh",
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r --if-present typecheck",
+    "escrow:test": "node escrow/scripts/prepare-test-fixture.mjs && cd escrow && anchor test --validator legacy",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
