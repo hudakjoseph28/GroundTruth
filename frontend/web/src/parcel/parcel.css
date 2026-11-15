@@ -2,6 +2,12 @@
    Sizes come from the fluid scale in index.css; the two-column layout follows
    the page container, not the viewport. */
 
+/* The land is the hero here, so on big screens this page (and the header above
+   it, which shares the column) may run wider than the rest of the site. */
+#root:has(.parcel-page) {
+  --page-max: 120rem;
+}
+
 .parcel-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -88,13 +94,33 @@
   min-width: 0;
 }
 
-/* The stage is only a size: the block floats on the page's own black. */
+/* The stage is only a size: the block floats on the page's own black, and the
+   camera frames the block to fill whatever shape this turns out to be. On a
+   narrow page it runs edge to edge. */
 .land-stage {
   position: relative;
-  width: 100%;
+  width: calc(100% + 2 * var(--pad));
+  margin-inline: calc(-1 * var(--pad));
   aspect-ratio: 4 / 3;
   min-height: 15rem;
-  max-height: min(42rem, 100svh - 13rem);
+  max-height: min(52rem, 100svh - 9rem);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.land-stage:focus {
+  outline: none;
+}
+
+.land-stage:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+/* Flat fallback: the square image, as large as the stage allows. */
+.land-stage[data-flat] {
+  aspect-ratio: 1;
+  min-height: 0;
 }
 
 .land-scene,
@@ -119,8 +145,6 @@
   max-width: 100%;
   aspect-ratio: 1;
   margin-inline: auto;
-  border: 1px solid var(--line);
-  border-radius: 6px;
   background: #0a0a0a;
 }
 
@@ -132,26 +156,149 @@
   vector-effect: non-scaling-stroke;
 }
 
-.land figcaption {
+/* Credits on the left, "Explore the area" on the right; they stack when tight. */
+.land-caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem var(--space-s);
   margin-top: var(--space-s);
+}
+
+.land-credit {
+  flex: 1 1 16rem;
   color: #8f8f8f;
   font-size: var(--step--1);
 }
 
-.land figcaption p {
+.land-credit p {
   margin: 0;
 }
 
-.land figcaption p + p {
+.land-credit p + p {
   margin-top: 0.2rem;
+}
+
+/* ---------- Explore the area ---------- */
+
+/* Always at the right edge, wrapped or not, so its menu can open leftward
+   without ever leaving the page. */
+.explore {
+  position: relative;
+  flex: none;
+  margin-left: auto;
+}
+
+.explore-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  min-height: var(--tap);
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 0 0.9rem;
+  background: #080808;
+  color: #f3f1ec;
+  font: inherit;
+  font-size: var(--step--1);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.explore-toggle:hover,
+.explore-toggle[aria-expanded="true"] {
+  border-color: var(--gold);
+  background: #0c0c0c;
+}
+
+.explore-caret,
+.explore-icon {
+  flex: none;
+  width: 0.8em;
+  height: 0.8em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.explore-caret {
+  transition: transform 150ms ease;
+}
+
+.explore-toggle[aria-expanded="true"] .explore-caret {
+  transform: rotate(180deg);
+}
+
+/* Floats over what is below it, so opening it moves nothing. */
+.explore-menu {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  width: max-content;
+  max-width: min(22rem, 100cqi - 2 * var(--pad));
+  margin: 0;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0.3rem;
+  background: #0a0a0a;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  list-style: none;
+  animation: fade-in 140ms ease-out;
+}
+
+.explore-menu a,
+.explore-menu button {
+  display: grid;
+  gap: 0.1rem;
+  width: 100%;
+  min-height: var(--tap);
+  align-content: center;
+  border: 0;
+  border-radius: 4px;
+  padding: 0.45rem 0.7rem;
+  background: none;
+  color: #f3f1ec;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.explore-menu a:hover,
+.explore-menu button:hover {
+  background: #141414;
+}
+
+.explore-menu a:focus-visible,
+.explore-menu button:focus-visible {
+  outline-offset: -2px;
+}
+
+.explore-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  font-size: var(--step-0);
+}
+
+.explore-note {
+  color: #8f8f8f;
+  font-size: var(--step--1);
 }
 
 /* ---------- Wide: land left, ledger right ---------- */
 
 @container page (min-width: 60rem) {
   .parcel-page {
-    grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
-    column-gap: clamp(2rem, 4cqi, 4.5rem);
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    gap: 0 clamp(1.5rem, 3cqi, 3.5rem);
     align-items: start;
   }
 
@@ -164,9 +311,12 @@
     order: 2;
   }
 
+  /* The block owns the column, and as much of the first screen as leaves the
+     parcel's name in view beneath it. */
   .land-stage {
-    aspect-ratio: 5 / 4;
-    max-height: min(46rem, 100svh - 25rem);
+    width: 100%;
+    margin-inline: 0;
+    max-height: min(56rem, max(18rem, 100svh - 23.5rem));
   }
 }
 
@@ -177,6 +327,15 @@
       position: sticky;
       top: var(--space-s);
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .explore-menu,
+  .explore-caret,
+  .explore-toggle {
+    animation: none;
+    transition: none;
   }
 }
 

@@ -179,8 +179,9 @@ function landingCorners(meta: LandMeta | null): Point[] | null {
   if (!stage) return null;
   const rect = stage.getBoundingClientRect();
   if (rect.width < 1 || rect.height < 1) return null;
-  const project = stageProjector(rect.width, rect.height);
-  return boxCorners(blockDims(meta)).map((corner) => {
+  const dims = blockDims(meta);
+  const project = stageProjector(rect.width, rect.height, dims);
+  return boxCorners(dims).map((corner) => {
     const scaled: Vec3 = [corner[0] * LANDING_SCALE, corner[1] * LANDING_SCALE, corner[2] * LANDING_SCALE];
     const point = project(scaled);
     return { x: rect.left + point.x, y: rect.top + point.y };

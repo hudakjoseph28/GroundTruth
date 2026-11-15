@@ -33,13 +33,14 @@ import { regionUV } from "./landMeta";
 const GRID = 128;
 
 export interface LandBlockObject {
-  /** The block itself; scaled during the hand-off from the transition. */
   group: Group;
   /** Soft floor under the block, so it reads as floating. */
   floor: Mesh;
   setResolution(width: number, height: number): void;
-  /** 0 is the moment of hand-off (gold frame showing); 1 is settled. */
+  /** 0 shows the gold hand-off frame around a slightly small block; 1 is the settled block. */
   setIntro(progress: number): void;
+  /** Puts the travelling pulse this far round the parcel boundary (0..1), or hides it with null. */
+  setBoundaryPulse(progress: number | null): void;
   dispose(): void;
 }
 
@@ -337,10 +338,46 @@ export function buildLandBlock(
   const boundaryMaterial = keep(
     new LineMaterial({ color: PALETTE.gold, linewidth: 2.2, transparent: true, opacity: 0.95 }),
   );
+  // A soft point of light that runs round the boundary, like the ledger's pulse.
+  const pulseMaterial = keep(
+    new PointsMaterial({
+      map: keep(
+        glowTexture([
+          [0, "rgba(255,255,255,1)"],
+          [0.25, "rgba(255,236,196,0.75)"],
+          [1, "rgba(217,174,95,0)"],
+        ]),
+      ),
+      size: 18,
+      sizeAttenuation: false,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: AdditiveBlending,
+    }),
+  );
+  const pulseGeometry = keep(new BufferGeometry());
+  pulseGeometry.setAttribute("position", new Float32BufferAttribute([0, 0, 0], 3));
+  const pulse = new Points(pulseGeometry, pulseMaterial);
+  pulse.visible = false;
+  pulse.frustumCulled = false;
+  pulse.renderOrder = 3;
+
+  // The boundary as a path: points, and how far along the line each one is.
+  let path: { points: number[]; along: number[]; length: number } | null = null;
   if (ring.length >= 4) {
+    const points = boundaryPositions(assets, dims, ring);
     const boundaryGeometry = keep(new LineGeometry());
-    boundaryGeometry.setPositions(boundaryPositions(assets, dims, ring));
-    group.add(new Line2(boundaryGeometry, boundaryMaterial));
+    boundaryGeometry.setPositions(points);
+    group.add(new Line2(boundaryGeometry, boundaryMaterial), pulse);
+    const along = [0];
+    for (let i = 3; i < points.length; i += 3) {
+      along.push(
+        along[along.length - 1]! +
+          Math.hypot(points[i]! - points[i - 3]!, points[i + 1]! - points[i - 2]!, points[i + 2]! - points[i - 1]!),
+      );
+    }
+    path = { points, along, length: along[along.length - 1]! };
   }
 
   // Frame in the globe's language: hairlines along the block's edges, with a
@@ -446,6 +483,36 @@ export function buildLandBlock(
       group.scale.setScalar(0.94 + 0.06 * eased);
       handoffMaterial.opacity = 1 - eased;
       handoff.visible = eased < 1;
+    },
+    setBoundaryPulse(progress) {
+      if (!path || progress === null || path.length <= 0) {
+        pulse.visible = false;
+        return;
+      }
+      const at = (((progress % 1) + 1) % 1) * path.length;
+      // Find the segment this distance falls on.
+      let low = 0;
+      let high = path.along.length - 1;
+      while (high - low > 1) {
+        const middle = (low + high) >> 1;
+        if (path.along[middle]! <= at) low = middle;
+        else high = middle;
+      }
+      const span = path.along[high]! - path.along[low]! || 1;
+      const t = (at - path.along[low]!) / span;
+      const a = low * 3;
+      const b = high * 3;
+      const position = pulseGeometry.getAttribute("position");
+      position.setXYZ(
+        0,
+        path.points[a]! + (path.points[b]! - path.points[a]!) * t,
+        path.points[a + 1]! + (path.points[b + 1]! - path.points[a + 1]!) * t + 0.004,
+        path.points[a + 2]! + (path.points[b + 2]! - path.points[a + 2]!) * t,
+      );
+      position.needsUpdate = true;
+      // Fade in and out at the ends of the lap.
+      pulseMaterial.opacity = Math.min(1, Math.sin(Math.PI * Math.min(1, Math.max(0, progress))) * 3) * 0.9;
+      pulse.visible = true;
     },
     dispose() {
       for (const geometry of geometries) geometry.dispose();

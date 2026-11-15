@@ -1,11 +1,11 @@
 import { useId } from "react";
-import { LAND } from "../../content/parcel";
 import type { LandAssets } from "./landAssets";
 import { regionUV } from "./landMeta";
 
 /**
  * The baked imagery as a flat picture: dim outside the parcel, clear inside,
  * boundary in gold. Used when motion is reduced or WebGL is unavailable.
+ * Decorative here: the land block around it carries the label and caption.
  */
 export function FlatLand({ assets, ring }: { assets: LandAssets; ring: number[][] }) {
   const clip = useId();
@@ -21,8 +21,7 @@ export function FlatLand({ assets, ring }: { assets: LandAssets; ring: number[][
       className="land-flat"
       data-land="flat"
       viewBox="0 0 100 100"
-      role="img"
-      aria-label={LAND.labelFlat}
+      aria-hidden="true"
     >
       <defs>
         <clipPath id={clip}>

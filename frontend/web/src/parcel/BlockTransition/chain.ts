@@ -37,7 +37,7 @@ const color = (from: readonly number[], to: readonly number[], t: number, alpha:
 export function chainLayout(width: number, height: number) {
   const count = width < 560 ? 3 : width < 1200 ? 4 : 5;
   const spacing = Math.min((width - 40) / count, 190);
-  const size = spacing * 0.78;
+  const size = spacing * 0.68;
   const y = height * 0.44;
   const centers: Point[] = Array.from({ length: count }, (_, index) => ({
     x: width / 2 + (index - (count - 1) / 2) * spacing,
@@ -51,7 +51,7 @@ let cubeCache: { size: number; corners: Point[] } | null = null;
 /** A cube's corners around its center, seen from the land block's camera. */
 function cubeCorners(size: number): Point[] {
   if (cubeCache?.size !== size) {
-    const project = stageProjector(size, size);
+    const project = stageProjector(size, size, CUBE);
     cubeCache = {
       size,
       corners: boxCorners(CUBE).map((corner) => {

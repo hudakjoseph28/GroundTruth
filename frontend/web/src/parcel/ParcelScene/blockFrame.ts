@@ -9,7 +9,9 @@ export const EXAGGERATION = 3;
 /** The block is 2 units wide. Everything else is in the same units. */
 const WIDTH = 2;
 /** Soil shown below the lowest point of the surface. */
-const SOIL_DEPTH = 0.42;
+const SOIL_DEPTH = 0.58;
+/** Share of the container the block may fill; the rest is room to float and tilt. */
+const FILL = 0.96;
 
 export const VIEW = {
   fov: 30,
@@ -19,7 +21,6 @@ export const VIEW = {
   polar: 1.08,
   minPolar: 0.72,
   maxPolar: 1.38,
-  targetY: -0.06,
 } as const;
 
 export type Vec3 = [number, number, number];
@@ -49,18 +50,51 @@ export function blockDims(meta: LandMeta | null): BlockDims {
   };
 }
 
-/** Camera distance that keeps the whole block in frame at any aspect ratio. */
-export function fitDistance(aspect: number): number {
-  const vertical = (VIEW.fov * Math.PI) / 180;
-  const horizontal = 2 * Math.atan(Math.tan(vertical / 2) * aspect);
-  return 1.58 / Math.sin(Math.min(vertical, horizontal) / 2);
+/** The point the camera looks at: the middle of the block's bounding box. */
+export function blockCenter(dims: BlockDims): Vec3 {
+  return [0, (dims.top + dims.base) / 2, 0];
 }
 
-export function cameraPosition(azimuth: number, polar: number, distance: number): Vec3 {
+/**
+ * Camera distance at which the block just fills a container of this aspect
+ * ratio, seen from this angle above. It is worked out from the block's
+ * bounding box, turned through every angle around the vertical axis, so the
+ * block stays in frame as it rotates.
+ */
+export function fitDistance(aspect: number, dims: BlockDims, polar: number = VIEW.polar): number {
+  const tanV = Math.tan((VIEW.fov * Math.PI) / 360) * FILL;
+  const tanH = tanV * aspect;
+  const radius = Math.hypot(dims.width, dims.depth) / 2;
+  const half = (dims.top - dims.base) / 2;
+  const sin = Math.sin(polar);
+  const cos = Math.cos(polar);
+  let distance = 0;
+  const steps = 48;
+  for (let step = 0; step < steps; step++) {
+    const angle = (step / steps) * Math.PI * 2;
+    // A point on the box's turning circle: `along` is toward the camera, `across` is sideways.
+    const along = radius * Math.cos(angle);
+    const across = Math.abs(radius * Math.sin(angle));
+    for (const height of [half, -half]) {
+      const up = Math.abs(height * sin - along * cos);
+      const near = along * sin + height * cos;
+      distance = Math.max(distance, across / tanH + near, up / tanV + near);
+    }
+  }
+  return distance;
+}
+
+/** Where the camera sits, for an angle around the block and an angle down from overhead. */
+export function cameraPosition(
+  azimuth: number,
+  polar: number,
+  distance: number,
+  target: Vec3,
+): Vec3 {
   return [
-    distance * Math.sin(polar) * Math.sin(azimuth),
-    VIEW.targetY + distance * Math.cos(polar),
-    distance * Math.sin(polar) * Math.cos(azimuth),
+    target[0] + distance * Math.sin(polar) * Math.sin(azimuth),
+    target[1] + distance * Math.cos(polar),
+    target[2] + distance * Math.sin(polar) * Math.cos(azimuth),
   ];
 }
 
@@ -80,10 +114,15 @@ const normalize = (a: Vec3): Vec3 => {
  * Projects block-space points to pixels in a stage of the given size, with the
  * opening camera. Matches the three.js camera in LandBlockScene.
  */
-export function stageProjector(width: number, height: number): (point: Vec3) => { x: number; y: number } {
+export function stageProjector(
+  width: number,
+  height: number,
+  dims: BlockDims,
+): (point: Vec3) => { x: number; y: number } {
   const aspect = width / Math.max(1, height);
-  const eye = cameraPosition(VIEW.azimuth, VIEW.polar, fitDistance(aspect));
-  const forward = normalize(sub([0, VIEW.targetY, 0], eye));
+  const target = blockCenter(dims);
+  const eye = cameraPosition(VIEW.azimuth, VIEW.polar, fitDistance(aspect, dims), target);
+  const forward = normalize(sub(target, eye));
   const right = normalize(cross(forward, [0, 1, 0]));
   const up = cross(right, forward);
   const tan = Math.tan((VIEW.fov * Math.PI) / 360);

@@ -22,13 +22,28 @@ export const LAND = {
   label3d:
     "The parcel as a block of land: aerial imagery on its terrain, soil below, and the boundary outlined in gold.",
   labelFlat: "Aerial imagery of the parcel, with the boundary outlined in gold.",
-  hint: "Drag to turn it.",
+  hint: "Drag to turn it, or click it to explore the area.",
   exaggerated: (times: number) => `Height exaggerated ×${times}`,
   flat: {
     reduced: "Shown flat because motion is reduced.",
     fallback: "Shown flat because WebGL is unavailable.",
   },
   loading: "Loading the land…",
+  /** What the land block says when it has keyboard focus. */
+  stage: {
+    turning: "Land block. Arrow keys turn it. Enter opens Explore the area.",
+    still: "Aerial image of the parcel. Enter opens Explore the area.",
+  },
+} as const;
+
+// Links out to the real surroundings. Google's names are theirs; the in-app
+// view is labeled as Google's imagery, not as anything about the parcel.
+export const EXPLORE = {
+  button: "Explore the area",
+  newTab: "opens in a new tab",
+  maps: { title: "Google Maps satellite", note: "The parcel from above" },
+  earth: { title: "Google Earth 3D", note: "The surroundings in 3D" },
+  area: { title: "3D area view", note: "Google 3D imagery of the area, in this page" },
 } as const;
 
 // ---------- Ledger ----------
