@@ -2,6 +2,8 @@ export interface ServerEnv {
   databaseUrl: string;
   port: number;
   commit: string;
+  /** QuickNode Stream security token; the webhook refuses all deliveries without it. */
+  quicknodeStreamToken: string | undefined;
 }
 
 export function readServerEnv(
@@ -15,6 +17,7 @@ export function readServerEnv(
     databaseUrl,
     port: readPort(source.PORT),
     commit: readCommit(source.GIT_COMMIT),
+    quicknodeStreamToken: source.QUICKNODE_STREAM_TOKEN?.trim() || undefined,
   };
 }
 
