@@ -29,6 +29,29 @@ pnpm --filter @groundtruth/backend dev
 
 Timeline rows are ordered by time, then chain slot, then event index. A confirmed row is unique by transaction signature + event index, which is the QuickNode replay guard.
 
+## QuickNode Stream webhook
+
+`POST /api/webhooks/quicknode` turns confirmed GroundTruth program events into deal state and timeline rows.
+
+1. **Signature.** QuickNode signs `nonce + timestamp + body` with HMAC-SHA256, keyed by the Stream's security token (`QUICKNODE_STREAM_TOKEN`), and sends hex in `X-QN-Signature` with `X-QN-Nonce` and `X-QN-Timestamp`. The route checks it against the raw decompressed body (gzip deliveries are inflated first). With no token set, every delivery gets `503`.
+2. **Payload.** The Stream filter must return exactly this shape (one entry per confirmed transaction that touched the program, in block order), or `null` to skip a block:
+
+   ```json
+   { "transactions": [{ "signature": "<base58>", "slot": 123, "blockTime": 1794700800, "logMessages": ["Program log: ..."] }] }
+   ```
+
+3. **Decode.** `logMessages` → program events needs the escrow IDL. Until it lands, the decoder throws, so the route answers `500` instead of acknowledging events it cannot read. QuickNode retries and then pauses the Stream; nothing is lost.
+4. **Apply.** Each event is matched to a deal by its PDA (`escrowAddress`) and applied in one database transaction: timeline row, reviewer approval or hold, and the deal state change. Events for unknown PDAs are skipped. An event the stored deal cannot accept (approval after a hold, a second release, a payout to someone other than the bound seller, an unbound reviewer, a different amount) throws `ChainDriftError` and writes nothing.
+
+| Response | Meaning | QuickNode does |
+| --- | --- | --- |
+| `204` | Applied, or already applied | Moves to the next block |
+| `400` | Signed body is not the filter shape | Retries, then pauses: fix the filter |
+| `401` | Signature missing or wrong | Retries, then pauses: check the token |
+| `500` / `503` | Decoder missing, drift, database error, or no token | Retries, then pauses |
+
+Replays are harmless: a timeline row is unique by transaction signature + event index, and re-applying finds it and does nothing. The timestamp is not checked against a window. QuickNode does not document its format, and deduplication already makes a replayed delivery a no-op.
+
 ## Tests
 
 ```bash

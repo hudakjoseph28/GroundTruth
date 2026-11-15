@@ -67,7 +67,8 @@ model DealRecord {
   mint               String
   cluster            String
   state              String
-  escrowAddress      String?
+  /// Deal PDA. Confirmed program events are matched to a deal by this.
+  escrowAddress      String?               @unique
   /// Only staged, non-sensitive demo deals are readable without auth.
   publicDemo         Boolean               @default(false)
   reviewers          ReviewerRecord[]

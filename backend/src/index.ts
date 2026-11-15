@@ -2,7 +2,9 @@ import { createApp } from "./app.js";
 import { readServerEnv } from "./env.js";
 
 const env = readServerEnv();
-const app = createApp(env.commit);
+const app = createApp(env.commit, {
+  quicknode: { token: env.quicknodeStreamToken },
+});
 
 app.listen(env.port, () => {
   console.log(`GroundTruth API listening on ${env.port}`);
