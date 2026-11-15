@@ -74,8 +74,14 @@ Both are deployed from a local checkout with the CLIs (`railway up`, `vercel dep
 ```bash
 railway up --service api --ci                      # API
 railway variables --service api --set "GIT_COMMIT=$(git rev-parse --short HEAD)"
-vercel deploy --prod                               # web
+
+# Web: deploy an export of main without Git metadata (see note below).
+rm -rf /tmp/gt-web && mkdir /tmp/gt-web
+git archive main | tar -x -C /tmp/gt-web && cp -r .vercel /tmp/gt-web/
+(cd /tmp/gt-web && vercel deploy --prod --yes)
 ```
+
+Why the export: Vercel's Hobby plan **blocks** a CLI deploy when the checkout's latest commit was authored by someone other than the project owner. A PR merge commit has the merger as its author. Exporting with `git archive` sends exactly the committed tree with no commit author. `vercel ls groundtruth` shows `Blocked` if this is skipped.
 
 - **API build:** Railpack runs `pnpm run build`. [railpack.json](../railpack.json) starts the API with `start:prod`, which runs `prisma migrate deploy`, then the compiled seed, then the server. Both are safe to repeat. Do not add `railway.json`: new Railway projects ignore its build, pre-deploy, and healthcheck settings.
 - **API variables:** `DATABASE_URL` references `${{Postgres.DATABASE_URL}}`; `GIT_COMMIT` is set by hand after each deploy; Railway sets `PORT`. Secrets for QuickNode and ElevenLabs go in Railway variables, never in Git.
