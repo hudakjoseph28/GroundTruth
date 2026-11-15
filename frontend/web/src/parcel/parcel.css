@@ -922,3 +922,75 @@
     transition: none;
   }
 }
+
+/* ---------- Block-to-block transition ---------- */
+
+.transition {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  transition: opacity 150ms ease;
+}
+
+.transition > * {
+  grid-area: 1 / 1;
+}
+
+.transition-veil {
+  background: #030303;
+}
+
+.transition canvas {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.transition-text {
+  position: relative;
+  align-self: end;
+  justify-self: center;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0 var(--gutter, 1.25rem) clamp(2rem, 16svh, 9rem);
+  color: #8f8f8f;
+  font-size: var(--step--1);
+  text-align: center;
+  transition: opacity 180ms ease;
+}
+
+.transition-text p {
+  margin: 0;
+}
+
+.transition-status {
+  color: #e4e1dc;
+  font-size: var(--step-0);
+}
+
+.transition-skip {
+  color: #6f6f6f;
+}
+
+/* Hand-off: the words go, then the veil lifts as the gold block lands. */
+.transition[data-phase="handoff"] .transition-text {
+  opacity: 0;
+}
+
+.transition[data-phase="handoff"] .transition-veil {
+  opacity: 0;
+  transition: opacity 360ms ease 240ms;
+}
+
+.transition[data-phase="leaving"] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transition-text {
+    align-self: center;
+    padding-bottom: 0;
+  }
+}

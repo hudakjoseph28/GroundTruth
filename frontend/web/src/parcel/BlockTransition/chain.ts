@@ -1,0 +1,218 @@
+import { PALETTE, rgb } from "../../globe/palette";
+import { BOX_EDGES, boxCorners, stageProjector, type BlockDims } from "../ParcelScene/blockFrame";
+
+// The chain of blocks, drawn in the globe's point-and-line style on a 2D
+// canvas. The last block turns gold and flies to where the land block sits.
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface ChainFrame {
+  width: number;
+  height: number;
+  /** Milliseconds since the transition started. */
+  now: number;
+  /** When the hand-off began, or null while the chain is still waiting. */
+  handoffAt: number | null;
+  /** One label per block, or null while the slot is being read. */
+  labels: readonly string[] | null;
+  /** Where the land block's eight corners sit on screen, when there is one. */
+  target: readonly Point[] | null;
+}
+
+export const HANDOFF_MS = 620;
+
+const APPEAR_STEP = 110;
+const APPEAR_MS = 240;
+const PULSE_MS = 520;
+const PULSE_EVERY = 860;
+
+const CUBE: BlockDims = { width: 1.5, depth: 1.5, top: 0.75, base: -0.75, unitsPerMeter: 0 };
+const WHITE: readonly [number, number, number] = [1, 1, 1];
+const GOLD = rgb(PALETTE.gold);
+
+const clamp = (value: number) => Math.min(1, Math.max(0, value));
+const easeOut = (value: number) => 1 - Math.pow(1 - clamp(value), 3);
+const easeInOut = (value: number) => {
+  const t = clamp(value);
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+};
+const mix = (a: number, b: number, t: number) => a + (b - a) * t;
+const color = (from: readonly number[], to: readonly number[], t: number, alpha: number) =>
+  `rgba(${[0, 1, 2].map((i) => Math.round(mix(from[i] ?? 1, to[i] ?? 1, t) * 255)).join(",")},${alpha})`;
+
+/** How many blocks fit, where they sit, and how big they are. */
+export function chainLayout(width: number, height: number) {
+  const count = width < 560 ? 3 : width < 1200 ? 4 : 5;
+  const spacing = Math.min((width - 40) / count, 190);
+  const size = spacing * 0.78;
+  const y = height * 0.44;
+  const centers: Point[] = Array.from({ length: count }, (_, index) => ({
+    x: width / 2 + (index - (count - 1) / 2) * spacing,
+    y,
+  }));
+  return { count, spacing, size, centers };
+}
+
+let cubeCache: { size: number; corners: Point[] } | null = null;
+
+/** A cube's corners around its center, seen from the land block's camera. */
+function cubeCorners(size: number): Point[] {
+  if (cubeCache?.size !== size) {
+    const project = stageProjector(size, size);
+    cubeCache = {
+      size,
+      corners: boxCorners(CUBE).map((corner) => {
+        const point = project(corner);
+        return { x: point.x - size / 2, y: point.y - size / 2 };
+      }),
+    };
+  }
+  return cubeCache.corners;
+}
+
+function drawBox(
+  context: CanvasRenderingContext2D,
+  corners: readonly Point[],
+  stroke: string,
+  dot: string,
+  lineWidth: number,
+  glow: number,
+) {
+  context.lineWidth = lineWidth;
+  context.strokeStyle = stroke;
+  context.shadowColor = stroke;
+  context.shadowBlur = glow;
+  context.beginPath();
+  for (const [a, b] of BOX_EDGES) {
+    const from = corners[a];
+    const to = corners[b];
+    if (!from || !to) continue;
+    context.moveTo(from.x, from.y);
+    context.lineTo(to.x, to.y);
+  }
+  context.stroke();
+
+  context.fillStyle = dot;
+  context.shadowColor = dot;
+  context.shadowBlur = 6;
+  context.beginPath();
+  for (const corner of corners) {
+    context.moveTo(corner.x + 1.6, corner.y);
+    context.arc(corner.x, corner.y, 1.6, 0, Math.PI * 2);
+  }
+  context.fill();
+  context.shadowBlur = 0;
+}
+
+export function drawChain(context: CanvasRenderingContext2D, frame: ChainFrame): void {
+  const { width, height, now, handoffAt, labels, target } = frame;
+  const { count, spacing, size, centers } = chainLayout(width, height);
+  const offsets = cubeCorners(size);
+  const last = count - 1;
+  const handoff = handoffAt === null ? null : now - handoffAt;
+  // Everything but the last block leaves as the hand-off starts.
+  const rest = handoff === null ? 1 : 1 - easeOut(handoff / 220);
+
+  context.clearRect(0, 0, width, height);
+  context.lineCap = "round";
+
+  // The pulse runs down the chain once the blocks are in, then keeps time.
+  const first = centers[0];
+  const end = centers[last];
+  const pulseStart = last * APPEAR_STEP + APPEAR_MS - 80;
+  let pulseX: number | null = null;
+  if (first && end && handoff === null && now >= pulseStart) {
+    const phase = (now - pulseStart) % PULSE_EVERY;
+    if (phase <= PULSE_MS) pulseX = mix(first.x, end.x, easeInOut(phase / PULSE_MS));
+  }
+
+  // Links first, so the blocks sit on top of them.
+  for (let index = 0; index < last; index++) {
+    const from = centers[index];
+    const to = centers[index + 1];
+    if (!from || !to) continue;
+    const drawn = easeOut((now - (index + 1) * APPEAR_STEP) / APPEAR_MS) * rest;
+    if (drawn <= 0) continue;
+    const inset = size * 0.46;
+    const x0 = from.x + inset;
+    const x1 = mix(x0, to.x - inset, drawn);
+    context.lineWidth = 1;
+    context.strokeStyle = `rgba(255,255,255,${0.42 * rest})`;
+    context.shadowColor = "rgba(255,255,255,0.9)";
+    context.shadowBlur = 5;
+    context.beginPath();
+    context.moveTo(x0, from.y);
+    context.lineTo(x1, from.y);
+    context.stroke();
+    context.shadowBlur = 0;
+  }
+
+  centers.forEach((center, index) => {
+    const appear = easeOut((now - index * APPEAR_STEP) / APPEAR_MS);
+    if (appear <= 0) return;
+    const isLast = index === last;
+    const scale = 0.7 + 0.3 * appear;
+    let corners = offsets.map((offset) => ({
+      x: center.x + offset.x * scale,
+      y: center.y + offset.y * scale,
+    }));
+    const lit = pulseX === null ? 0 : clamp(1 - Math.abs(pulseX - center.x) / (spacing * 0.55));
+
+    if (isLast && handoff !== null) {
+      // Flash gold, then become the land block (or fade, if there is none).
+      const gold = easeOut(handoff / 160);
+      const flash = 1 - clamp(handoff / 320);
+      const travel = easeInOut((handoff - 140) / (HANDOFF_MS - 140));
+      let alpha = 1;
+      if (target) {
+        corners = corners.map((corner, at) => {
+          const to = target[at] ?? corner;
+          return { x: mix(corner.x, to.x, travel), y: mix(corner.y, to.y, travel) };
+        });
+      } else {
+        alpha = 1 - easeOut((handoff - 200) / (HANDOFF_MS - 200));
+      }
+      drawBox(
+        context,
+        corners,
+        color(WHITE, GOLD, gold, (0.75 + 0.25 * flash) * alpha),
+        color(WHITE, GOLD, gold * 0.6, alpha),
+        1.1 + 0.9 * flash,
+        4 + 14 * flash,
+      );
+    } else {
+      const alpha = appear * (isLast ? 1 : rest);
+      drawBox(
+        context,
+        corners,
+        `rgba(255,255,255,${(0.5 + 0.45 * lit) * alpha})`,
+        `rgba(255,255,255,${alpha})`,
+        1,
+        2 + 8 * lit,
+      );
+    }
+
+    const label = labels?.[index];
+    const labelAlpha = appear * rest;
+    if (label && labelAlpha > 0) {
+      context.font = `${spacing < 130 ? 10 : 11}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+      context.textAlign = "center";
+      context.textBaseline = "top";
+      context.fillStyle = `rgba(169,169,169,${labelAlpha})`;
+      context.fillText(label, center.x, center.y + size * 0.5 + 10);
+    }
+  });
+
+  if (pulseX !== null && first) {
+    context.fillStyle = "#fff";
+    context.shadowColor = "#fff";
+    context.shadowBlur = 12;
+    context.beginPath();
+    context.arc(pulseX, first.y, 2.4, 0, Math.PI * 2);
+    context.fill();
+    context.shadowBlur = 0;
+  }
+}
