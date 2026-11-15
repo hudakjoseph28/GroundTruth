@@ -1,10 +1,22 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
+import { applyConfirmedEvent } from "./chain/applyEvent.js";
+import { decoderPendingIdl } from "./chain/programEvents.js";
+import { prisma } from "./db.js";
 import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
+import { getDeal, getDealTimeline } from "./routes/deals.js";
 import { getHealth } from "./routes/health.js";
+import {
+  quickNodeWebhook,
+  type QuickNodeWebhookOptions,
+} from "./routes/quicknodeWebhook.js";
 import { getParcelReport } from "./routes/report.js";
 
-export function createApp(commit: string) {
+export interface AppOptions {
+  quicknode?: Partial<QuickNodeWebhookOptions>;
+}
+
+export function createApp(commit: string, options: AppOptions = {}) {
   const app = express();
   app.disable("x-powered-by");
 
@@ -17,6 +29,18 @@ export function createApp(commit: string) {
 
   app.get("/api/health", getHealth(commit));
   app.get("/api/parcels/:parcelKey/report", getParcelReport);
+  app.get("/api/deals/:id", getDeal);
+  app.get("/api/deals/:id/timeline", getDealTimeline);
+  app.post(
+    "/api/webhooks/quicknode",
+    ...quickNodeWebhook({
+      token: options.quicknode?.token,
+      decode: options.quicknode?.decode ?? decoderPendingIdl,
+      apply:
+        options.quicknode?.apply ??
+        ((event) => applyConfirmedEvent(prisma, event)),
+    }),
+  );
 
   app.use((_req, res) => {
     sendApiError(
@@ -49,7 +73,7 @@ export function createApp(commit: string) {
         new HttpError(
           500,
           "INTERNAL_ERROR",
-          "The report could not be loaded.",
+          "The request could not be completed.",
           true,
         ),
       );

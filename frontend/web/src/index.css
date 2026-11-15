@@ -569,8 +569,7 @@ h1 {
 }
 
 .band,
-.sheet,
-.parcel aside {
+.sheet {
   padding: var(--space-m) var(--pad) 0.5rem;
 }
 
@@ -587,8 +586,7 @@ h1 {
 }
 
 .band h2,
-.sheet h1,
-.parcel h1 {
+.sheet h1 {
   letter-spacing: -0.03em;
 }
 
@@ -633,13 +631,6 @@ h1 {
   font-weight: 650;
 }
 
-.parcel-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-  gap: var(--space-m);
-  padding: 0.5rem var(--pad) var(--space-l);
-}
-
 .boundary {
   margin: 0;
   border: 1px solid #2c2c2c;
@@ -663,53 +654,6 @@ h1 {
   display: grid;
   gap: 4px;
   margin-top: 8px;
-}
-
-.checks ol {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 10px;
-}
-
-.checks article {
-  border: 1px solid #2c2c2c;
-  border-radius: 10px;
-  padding: 12px 14px;
-}
-
-.checks header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: baseline;
-}
-
-.checks h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-.checks p {
-  margin: 8px 0 0;
-}
-
-.status {
-  margin: 0;
-  font-size: 0.85rem;
-}
-.status-unknown,
-.status-evidenceFound {
-  color: #d7d7d7;
-}
-.status-needsReview {
-  color: #c4a15a;
-}
-.status-signedOff {
-  color: #3fa86a;
-}
-.status-held {
-  color: #d64545;
 }
 
 .eyebrow {

@@ -1,6 +1,11 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { SearchForm } from "../components/SearchForm";
 import { parcelPath, searchParcels } from "../data/parcelSource";
+import { readDevnetSlot } from "../parcel/BlockTransition/devnetSlot";
+
+// The parcel transition shows real devnet slots; asking as the visitor reaches
+// for a result gives the answer a head start.
+const warmSlot = () => void readDevnetSlot();
 
 export function SearchPage() {
   const [params] = useSearchParams();
@@ -15,7 +20,7 @@ export function SearchPage() {
         <ul className="results">
           {outcome.results.map((result) => (
             <li key={result.parcel.key}>
-              <Link to={parcelPath(result.parcel.key)}>
+              <Link to={parcelPath(result.parcel.key)} onPointerDown={warmSlot} onFocus={warmSlot}>
                 <span className="result-id">
                   {result.parcel.sourceParcelId}
                 </span>

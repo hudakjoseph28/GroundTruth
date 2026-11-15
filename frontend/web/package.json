@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json --noEmit && vite build",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "build": "tsc -p tsconfig.json --noEmit && tsc -p scripts/tsconfig.json && vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p scripts/tsconfig.json",
+    "bake:parcel": "node scripts/bake-parcel.ts"
   },
   "dependencies": {
     "@groundtruth/shared": "workspace:*",
@@ -17,10 +18,14 @@
     "three": "0.187.0"
   },
   "devDependencies": {
+    "@types/node": "26.6.6",
+    "@types/pngjs": "6.0.5",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@types/three": "0.187.0",
     "@vitejs/plugin-react": "6.3.0",
+    "jpeg-js": "0.4.4",
+    "pngjs": "7.0.0",
     "typescript": "5.9.3",
     "vite": "8.3.8"
   }
