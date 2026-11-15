@@ -4,6 +4,7 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
+  createTransferCheckedInstruction,
   getAccount,
   getAssociatedTokenAddressSync,
   mintTo,
@@ -697,5 +698,175 @@ describe("groundtruth_escrow sprint 1", () => {
     expect(buyerBalAfter).to.equal(buyerBalBefore);
     expect(vaultBalAfter).to.equal(vaultBalBefore);
     expect(dealAfter.state).to.deep.equal(dealBefore.state);
+  });
+
+  it("20. ESC-01: Vault funding succeeds with exact delta accounting when unsolicited tokens exist", async () => {
+    const buyer = Keypair.generate();
+    const buyerAta = await setupBuyerWithUsdc(buyer, 50_000_000n);
+    const seller = Keypair.generate();
+    const sellerAta = getAssociatedTokenAddressSync(USDC_MINT, seller.publicKey);
+
+    const dealId = randomDealId();
+    const [dealPda] = getDealPda(buyer.publicKey, dealId);
+    const vault = getAssociatedTokenAddressSync(USDC_MINT, dealPda, true);
+
+    await program.methods
+      .initializeDeal(dealId, ESCROW_AMOUNT, [])
+      .accountsPartial({
+        buyer: buyer.publicKey,
+        deal: dealPda,
+        seller: seller.publicKey,
+        sellerTokenAccount: sellerAta,
+        mint: USDC_MINT,
+        vault,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+      .signers([buyer])
+      .rpc();
+
+    // External third party sends 1 base unit of test USDC into vault before buyer funds
+    const thirdParty = Keypair.generate();
+    const thirdPartyAta = await setupBuyerWithUsdc(thirdParty, 10_000_000n);
+
+    const unsolicitedTx = new Transaction().add(
+      createTransferCheckedInstruction(
+        thirdPartyAta,
+        USDC_MINT,
+        vault,
+        thirdParty.publicKey,
+        1n,
+        6
+      )
+    );
+    await provider.sendAndConfirm(unsolicitedTx, [thirdParty]);
+
+    // Confirm unsolicited transfer succeeded
+    const vaultPreFunding = await getAccount(provider.connection, vault);
+    expect(vaultPreFunding.amount).to.equal(1n);
+
+    // Legitimate buyer funds the deal
+    const buyerBefore = await getAccount(provider.connection, buyerAta);
+    expect(buyerBefore.amount).to.equal(50_000_000n);
+
+    await program.methods
+      .fund()
+      .accountsPartial({
+        buyer: buyer.publicKey,
+        deal: dealPda,
+        buyerTokenAccount: buyerAta,
+        vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([buyer])
+      .rpc();
+
+    // Verify buyer's token balance decreased by exactly 25 USDC
+    const buyerAfter = await getAccount(provider.connection, buyerAta);
+    expect(buyerAfter.amount).to.equal(25_000_000n);
+    expect(buyerBefore.amount - buyerAfter.amount).to.equal(25_000_000n);
+
+    // Verify vault balance increased by exactly 25 USDC during funding
+    const vaultPostFunding = await getAccount(provider.connection, vault);
+    expect(vaultPostFunding.amount - vaultPreFunding.amount).to.equal(25_000_000n);
+
+    // Verify vault's final balance includes the original unsolicited token (25 USDC + 1 base unit)
+    expect(vaultPostFunding.amount).to.equal(25_000_001n);
+
+    // Verify deal state is Funded and amount is immutable
+    const dealAccount = await program.account.dealAccount.fetch(dealPda);
+    expect(dealAccount.state).to.deep.equal({ funded: {} });
+    expect(dealAccount.amount.toNumber()).to.equal(25_000_000);
+
+    // Confirm deal cannot be funded again
+    try {
+      await program.methods
+        .fund()
+        .accountsPartial({
+          buyer: buyer.publicKey,
+          deal: dealPda,
+          buyerTokenAccount: buyerAta,
+          vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([buyer])
+        .rpc();
+      expect.fail("Should have failed to fund already funded deal");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState/i);
+    }
+  });
+
+  it("21. ESC-01: Unsolicited deposits after funding cannot alter DealAccount state or terms", async () => {
+    const buyer = Keypair.generate();
+    const buyerAta = await setupBuyerWithUsdc(buyer, 50_000_000n);
+    const seller = Keypair.generate();
+    const sellerAta = getAssociatedTokenAddressSync(USDC_MINT, seller.publicKey);
+
+    const dealId = randomDealId();
+    const [dealPda] = getDealPda(buyer.publicKey, dealId);
+    const vault = getAssociatedTokenAddressSync(USDC_MINT, dealPda, true);
+
+    await program.methods
+      .initializeDeal(dealId, ESCROW_AMOUNT, [])
+      .accountsPartial({
+        buyer: buyer.publicKey,
+        deal: dealPda,
+        seller: seller.publicKey,
+        sellerTokenAccount: sellerAta,
+        mint: USDC_MINT,
+        vault,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+      .signers([buyer])
+      .rpc();
+
+    await program.methods
+      .fund()
+      .accountsPartial({
+        buyer: buyer.publicKey,
+        deal: dealPda,
+        buyerTokenAccount: buyerAta,
+        vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([buyer])
+      .rpc();
+
+    const dealAccountFunded = await program.account.dealAccount.fetch(dealPda);
+    expect(dealAccountFunded.state).to.deep.equal({ funded: {} });
+    expect(dealAccountFunded.amount.toString()).to.equal(ESCROW_AMOUNT.toString());
+
+    // Third party sends unsolicited tokens post-funding
+    const thirdParty = Keypair.generate();
+    const thirdPartyAta = await setupBuyerWithUsdc(thirdParty, 10_000_000n);
+    const postFundingTransferTx = new Transaction().add(
+      createTransferCheckedInstruction(
+        thirdPartyAta,
+        USDC_MINT,
+        vault,
+        thirdParty.publicKey,
+        5_000_000n, // 5 USDC
+        6
+      )
+    );
+    await provider.sendAndConfirm(postFundingTransferTx, [thirdParty]);
+
+    // Vault has 30 USDC now (25 + 5 surplus)
+    const vaultAccount = await getAccount(provider.connection, vault);
+    expect(vaultAccount.amount).to.equal(30_000_000n);
+
+    // Deal account state and immutable terms are completely unchanged
+    const dealAccountAfterSurplus = await program.account.dealAccount.fetch(dealPda);
+    expect(dealAccountAfterSurplus.state).to.deep.equal({ funded: {} });
+    expect(dealAccountAfterSurplus.amount.toString()).to.equal(ESCROW_AMOUNT.toString());
+    expect(dealAccountAfterSurplus.buyer.toBase58()).to.equal(buyer.publicKey.toBase58());
+    expect(dealAccountAfterSurplus.seller.toBase58()).to.equal(seller.publicKey.toBase58());
   });
 });

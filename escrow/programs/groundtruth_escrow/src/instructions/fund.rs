@@ -52,6 +52,8 @@ pub fn handle_fund(ctx: Context<Fund>) -> Result<()> {
 
     let amount = ctx.accounts.deal.amount;
 
+    let vault_balance_before = ctx.accounts.vault.amount;
+
     let cpi_accounts = anchor_spl::token::TransferChecked {
         from: ctx.accounts.buyer_token_account.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
@@ -62,8 +64,14 @@ pub fn handle_fund(ctx: Context<Fund>) -> Result<()> {
     anchor_spl::token::transfer_checked(cpi_ctx, amount, USDC_DECIMALS)?;
 
     ctx.accounts.vault.reload()?;
+    let vault_balance_after = ctx.accounts.vault.amount;
+
+    let balance_increase = vault_balance_after
+        .checked_sub(vault_balance_before)
+        .ok_or(EscrowError::VaultAmountMismatch)?;
+
     require_eq!(
-        ctx.accounts.vault.amount,
+        balance_increase,
         amount,
         EscrowError::VaultAmountMismatch
     );
