@@ -300,7 +300,9 @@
   margin-right: 0.6rem;
 }
 
+/* The verdict lands once the chain below it has settled. */
 .escrow-verdict {
+  animation: fade-in 420ms var(--ease-out) var(--settled) backwards;
   margin: 0.45rem 0 0.7rem;
   color: var(--tone-text, #e4e1dc);
   font-size: var(--step-1);
@@ -334,12 +336,17 @@
   font-size: var(--step--1);
 }
 
-/* The chain: a thin line down the left, one node per record. */
+/* The chain: a thin line down the left, one wireframe node per record. It
+   arrives the way the transition's blocks did (same step, duration and curve,
+   passed in from motion.ts), then idles. Everything moves by transform and
+   opacity only, and holds its first frame until the page is revealed. */
 .chain {
-  --node: 0.5rem;
-  --rail: 1.6rem;
+  --node: 1.05rem;
+  --node-top: 0.95rem; /* lines the node up with the card's title */
+  --rail: 1.9rem;
+  --gap: 0.6rem;
   display: grid;
-  gap: 0.6rem;
+  gap: var(--gap);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -347,6 +354,7 @@
 
 .record {
   --tone: #cfcfcf;
+  --at: calc(var(--i) * var(--step)); /* when this record arrives */
   position: relative;
   padding-left: var(--rail);
 }
@@ -356,7 +364,7 @@
 }
 
 .record[data-status="unknown"] {
-  --tone: #6f6f6f;
+  --tone: #8a8a8a;
 }
 
 .record[data-status="signedOff"] {
@@ -367,37 +375,212 @@
   --tone: var(--red);
 }
 
-/* Link to the next record. */
-.record::before {
+.record-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--node);
+  pointer-events: none;
+}
+
+/* Link to the next record: from under this node to the top of the next. */
+.record-link {
+  position: absolute;
+  left: calc(50% - 0.5px);
+  top: calc(var(--node-top) + var(--node));
+  bottom: calc(-1 * var(--gap) - var(--node-top));
+  width: 1px;
+}
+
+.record-link::before {
   content: "";
   position: absolute;
-  left: calc(var(--node) / 2 - 0.5px);
-  top: 1.45rem;
-  bottom: calc(-0.6rem - 1.45rem + var(--node));
-  width: 1px;
+  inset: 0;
   background: #2e2e2e;
+  transform-origin: top;
+  animation: link-draw var(--step) linear calc(var(--at) + var(--appear) / 2) backwards;
 }
 
-.record:last-child::before {
-  display: none;
+/* The pulse. The spark is as tall as its link and slides down by its own
+   height, so the point on its lower edge runs the length of the link. */
+.record-spark {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation:
+    spark-in var(--step) linear calc(var(--at) + var(--appear) / 2) backwards,
+    spark-ambient var(--ambient-every) linear
+      calc(var(--settled) + var(--ambient-every) / 2 + var(--i) * var(--ambient-link)) infinite;
 }
 
-/* Node: a point with a tight glow, like the globe's. */
-.record::after {
+.record-spark::after {
   content: "";
+  position: absolute;
+  left: -1.5px;
+  bottom: -2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px 1px rgba(255, 255, 255, 0.9);
+}
+
+/* Node: a small wireframe block with a tight glow. */
+.record-node {
   position: absolute;
   left: 0;
-  top: calc(1.45rem - var(--node) / 2);
+  top: var(--node-top);
   width: var(--node);
   height: var(--node);
-  border-radius: 50%;
-  background: var(--tone);
-  box-shadow: 0 0 6px -1px var(--tone);
+  color: var(--tone);
+  animation: node-in var(--appear) var(--ease-out) var(--at) backwards;
+  transition:
+    transform 260ms var(--ease-out),
+    opacity 260ms var(--ease-out);
 }
 
-.record[data-status="unknown"]::after {
-  background: #030303;
-  box-shadow: inset 0 0 0 1px var(--tone);
+.record-node svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.record-node-shell {
+  fill: #030303;
+}
+
+.record-node-edges {
+  opacity: 0.45;
+}
+
+.record-node-point {
+  fill: currentColor;
+  stroke: none;
+  filter: drop-shadow(0 0 2px currentColor);
+}
+
+.record-node-check {
+  stroke-width: 1.5;
+}
+
+.record[data-status="unknown"] .record-node-shell {
+  stroke-dasharray: 2 2;
+}
+
+/* Held: solid red, and still. */
+.record[data-status="held"] .record-node-shell {
+  fill: rgba(214, 69, 69, 0.28);
+}
+
+/* Still open: a slow gold breathe behind the node. */
+.record[data-status="needsReview"] .record-node::before,
+.record[data-status="unknown"] .record-node::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(196, 161, 90, 0.5), rgba(196, 161, 90, 0));
+  opacity: 0.25;
+  animation: node-breathe 4.2s ease-in-out calc(var(--settled) + var(--i) * 370ms) infinite;
+}
+
+/* Opening a record: its node swells and gives way to the details. */
+.record[data-open] .record-node {
+  transform: scale(2.6);
+  opacity: 0;
+}
+
+@keyframes link-draw {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* Hidden until its turn, so only one point is ever on the chain. */
+@keyframes spark-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  1%,
+  100% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* One faint pass per cycle: each link's spark takes its turn, then waits.
+   1.875% is AMBIENT_LINK_MS / AMBIENT_EVERY in motion.ts. */
+@keyframes spark-ambient {
+  0% {
+    opacity: 0.55;
+    transform: translateY(-100%);
+  }
+  1.875% {
+    opacity: 0.55;
+    transform: translateY(0);
+  }
+  1.9%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+@keyframes node-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes node-breathe {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes record-in {
+  from {
+    opacity: 0.4;
+    transform: translateY(0.5rem);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Under the transition: hold the first frame. */
+.ledger[data-revealed="false"] .record-link::before,
+.ledger[data-revealed="false"] .record-spark,
+.ledger[data-revealed="false"] .record-node,
+.ledger[data-revealed="false"] .record-node::before,
+.ledger[data-revealed="false"] .record-card,
+.ledger[data-revealed="false"] .escrow-verdict {
+  animation-play-state: paused;
+}
+
+/* Tab hidden or details open: the idle motion rests. */
+.ledger[data-paused="true"] .record-spark,
+.ledger[data-paused="true"] .record-node::before {
+  animation-play-state: paused;
 }
 
 .record-card {
@@ -406,6 +589,8 @@
   border-radius: 6px;
   padding: 0.7rem 0.9rem 0.75rem;
   background: #080808;
+  /* Dim, never hidden: the card can be read and clicked while it arrives. */
+  animation: record-in var(--appear) var(--ease-out) var(--at) backwards;
   transition:
     border-color 150ms ease,
     background-color 150ms ease;
@@ -578,24 +763,19 @@
   background: rgba(0, 0, 0, 0.62);
 }
 
+/* The drawer grows out of the record's node (its transform-origin, set when
+   it opens), like zooming into that block. */
 .inspector[open] {
-  animation: inspector-up 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation: inspector-zoom 320ms var(--ease-out, ease-out);
 }
 
 .inspector[open]::backdrop {
   animation: inspector-fade 240ms ease;
 }
 
-@keyframes inspector-up {
+@keyframes inspector-zoom {
   from {
-    transform: translateY(1.5rem);
-    opacity: 0;
-  }
-}
-
-@keyframes inspector-side {
-  from {
-    transform: translateX(1.5rem);
+    transform: scale(0.06);
     opacity: 0;
   }
 }
@@ -615,10 +795,6 @@
     border-top: 0;
     border-left: 1px solid #333;
     border-radius: 0;
-  }
-
-  .inspector[open] {
-    animation-name: inspector-side;
   }
 }
 
@@ -777,7 +953,18 @@
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
-  animation: approval-pulse 420ms ease-out 460ms backwards;
+  animation: approval-pulse 360ms ease-out 540ms backwards;
+}
+
+/* The record's node, arriving as the reviewer's wallet. */
+.approval-seed {
+  fill: none;
+  stroke: var(--mark);
+  stroke-width: 1;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: approval-seed 380ms var(--ease-out) backwards;
 }
 
 .approval-packet {
@@ -787,13 +974,13 @@
 }
 
 .approval-out {
-  animation: approval-out 480ms cubic-bezier(0.45, 0, 0.25, 1) 60ms backwards;
+  animation: approval-out 420ms var(--ease-in-out) 180ms backwards;
 }
 
 .approval-back {
   fill: var(--mark);
   filter: drop-shadow(0 0 4px var(--mark));
-  animation: approval-back 420ms cubic-bezier(0.45, 0, 0.25, 1) 720ms backwards;
+  animation: approval-back 360ms var(--ease-in-out) 780ms backwards;
 }
 
 .approval-mark-disc {
@@ -812,7 +999,7 @@
 
 .approval-mark-disc,
 .approval-mark-ring {
-  animation: approval-draw 320ms ease-out 1080ms backwards;
+  animation: approval-draw 280ms ease-out 1080ms backwards;
 }
 
 .approval-mark-disc {
@@ -820,7 +1007,7 @@
 }
 
 .approval-mark-glyph {
-  animation: approval-draw 300ms ease-out 1260ms backwards;
+  animation: approval-draw 280ms ease-out 1220ms backwards;
 }
 
 @keyframes approval-out {
@@ -853,6 +1040,17 @@
   to {
     opacity: 0;
     transform: scale(2.1);
+  }
+}
+
+@keyframes approval-seed {
+  from {
+    opacity: 0.9;
+    transform: scale(3.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1);
   }
 }
 
@@ -897,7 +1095,7 @@
   font-size: var(--step--1);
   font-weight: 560;
   text-align: center;
-  animation: approval-appear 300ms ease-out 1260ms backwards;
+  animation: approval-appear 280ms ease-out 1220ms backwards;
 }
 
 .approval figcaption {
@@ -908,13 +1106,16 @@
   font-size: var(--step--1);
 }
 
+/* Reduced motion: no entrance, pulse or breathing. Every rule above draws its
+   end state, so switching the animations off leaves the same colors and words. */
 @media (prefers-reduced-motion: reduce) {
+  .ledger *,
+  .ledger *::before,
+  .ledger *::after,
   .inspector[open],
-  .inspector[open]::backdrop,
-  .approval *,
-  .record-card {
-    animation: none;
-    transition: none;
+  .inspector[open]::backdrop {
+    animation: none !important;
+    transition: none !important;
   }
 }
 

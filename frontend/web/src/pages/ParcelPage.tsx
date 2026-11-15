@@ -82,7 +82,7 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
           </header>
           <LandBlock parcel={parcel} assets={assets} mode={mode} staged={staged} revealed={revealed} onReady={markLandReady} />
         </div>
-        <Ledger ledger={ledger} />
+        <Ledger ledger={ledger} revealed={revealed} animated={mode !== "reduced"} />
       </div>
     </>
   );

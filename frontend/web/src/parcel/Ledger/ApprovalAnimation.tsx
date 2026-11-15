@@ -29,6 +29,7 @@ export function ApprovalAnimation({
     <figure className="approval" data-outcome={outcome}>
       <svg viewBox="0 0 320 64" aria-hidden="true">
         <line className="approval-line" x1="34" y1="32" x2="286" y2="32" pathLength="1" />
+        <circle className="approval-seed" cx="34" cy="32" r="9" />
         <circle className="approval-halo" cx="34" cy="32" r="9" />
         <circle className="approval-node" cx="34" cy="32" r="3.2" />
         <circle className="approval-pulse" cx="286" cy="32" r="9" />

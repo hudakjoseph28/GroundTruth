@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MouseEvent } from "react";
+import { useLayoutEffect, useRef, type MouseEvent } from "react";
 import { StatusPill } from "../../components/StatusPill";
 import { CHECK_TITLES, INSPECTOR, LEDGER } from "../../content/parcel";
 import { explorerTxUrl, shortAddress, type LedgerRecord } from "../../data/ledger";
@@ -14,25 +14,41 @@ const date = (iso: string) => {
 const outcomeOf = (record: LedgerRecord): Outcome =>
   record.check.status === "signedOff" ? "signedOff" : record.check.status === "held" ? "held" : "pending";
 
+/** A point on screen, in viewport pixels. */
+export interface Origin {
+  x: number;
+  y: number;
+}
+
 /**
- * The details behind one record, in a drawer. A native modal dialog: focus
+ * The details behind one record, in a drawer that grows out of the record's
+ * node on the chain, like zooming into that block. A native modal dialog: focus
  * stays inside, Esc closes it, and focus returns to the card that opened it.
  */
 export function Inspector({
   record,
+  origin,
   onClose,
 }: {
   record: LedgerRecord | null;
+  /** Where the record's node sits; the drawer opens from there. */
+  origin: Origin | null;
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const node = dialog.current;
     if (!node) return;
-    if (record && !node.open) node.showModal();
+    if (record && !node.open) {
+      node.showModal();
+      // offsetLeft/Top are the laid-out position, unaffected by the opening scale.
+      node.style.transformOrigin = origin
+        ? `${origin.x - node.offsetLeft}px ${origin.y - node.offsetTop}px`
+        : "";
+    }
     if (!record && node.open) node.close();
-  }, [record]);
+  }, [record, origin]);
 
   // A click on the backdrop lands on the dialog itself, not on its contents.
   const onBackdrop = (event: MouseEvent<HTMLDialogElement>) => {

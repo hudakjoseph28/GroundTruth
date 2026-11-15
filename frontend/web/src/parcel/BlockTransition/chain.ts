@@ -1,4 +1,5 @@
 import { PALETTE, rgb } from "../../globe/palette";
+import { APPEAR_MS, APPEAR_STEP, PULSE_EVERY, PULSE_MS, clamp01 as clamp, easeInOut, easeOut } from "../motion";
 import { BOX_EDGES, boxCorners, stageProjector, type BlockDims } from "../ParcelScene/blockFrame";
 
 // The chain of blocks, drawn in the globe's point-and-line style on a 2D
@@ -24,21 +25,10 @@ export interface ChainFrame {
 
 export const HANDOFF_MS = 620;
 
-const APPEAR_STEP = 110;
-const APPEAR_MS = 240;
-const PULSE_MS = 520;
-const PULSE_EVERY = 860;
-
 const CUBE: BlockDims = { width: 1.5, depth: 1.5, top: 0.75, base: -0.75, unitsPerMeter: 0 };
 const WHITE: readonly [number, number, number] = [1, 1, 1];
 const GOLD = rgb(PALETTE.gold);
 
-const clamp = (value: number) => Math.min(1, Math.max(0, value));
-const easeOut = (value: number) => 1 - Math.pow(1 - clamp(value), 3);
-const easeInOut = (value: number) => {
-  const t = clamp(value);
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-};
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 const color = (from: readonly number[], to: readonly number[], t: number, alpha: number) =>
   `rgba(${[0, 1, 2].map((i) => Math.round(mix(from[i] ?? 1, to[i] ?? 1, t) * 255)).join(",")},${alpha})`;
