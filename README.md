@@ -10,7 +10,11 @@ Built for the [UBC 2026 Hackathon](docs/ubc/UBC-Hackathon.md). **Main track: Con
 
 By the first end-to-end checkpoint, a judge can open the public site, search real Ohio parcels, inspect one honest source-backed report, and run two staged closings: one payout rejected because a title hold is active and one payout released to the bound seller after every required approval. The result is not a marketplace, legal opinion, title product, or deed-transfer system. It is a polished decision-and-payment prototype with verifiable evidence.
 
-**Repository status on Nov 12:** `@groundtruth/shared` is the v1 contract. `@groundtruth/web` can search the staged parcel and open it. `@groundtruth/backend` serves `GET /api/health` and `GET /api/parcels/:parcelKey/report` from a local Postgres seed. `escrow` is still empty. Do not describe a route, test, deployment, or integration as working until the corresponding artifact exists and has been run.
+**Repository status on Nov 12:** `@groundtruth/shared` is the v1 contract. `@groundtruth/web` can search the staged parcel and open it. `@groundtruth/backend` serves `GET /api/health` and `GET /api/parcels/:parcelKey/report` from a local Postgres seed. `escrow` is still empty.
+
+**Deployed on Nov 14:** web at <https://groundtruth-lac.vercel.app> (Vercel) and API at <https://api-production-db8a8106.up.railway.app> (Railway, with its own Postgres). The web forwards `/api/*` to the API, so browser code calls relative `/api/...` paths. The API serves health, the staged parcel report, and the staged deal and timeline. How to redeploy: [backend/README.md](backend/README.md#deployment).
+
+Do not describe a route, test, deployment, or integration as working until the corresponding artifact exists and has been run.
 
 ## The demo story
 

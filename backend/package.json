@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "node --env-file=.env --watch --import tsx src/index.ts",
-    "start": "node --env-file=.env dist/index.js",
-    "build": "sh -c 'DATABASE_URL=\"${DATABASE_URL:-postgresql://localhost:5432/groundtruth}\" prisma generate && tsc -p tsconfig.json'",
-    "typecheck": "sh -c 'DATABASE_URL=\"${DATABASE_URL:-postgresql://localhost:5432/groundtruth}\" prisma generate && tsc -p tsconfig.json --noEmit'",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "start:prod": "pnpm db:migrate && pnpm db:seed:dist && pnpm start",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "typecheck": "prisma generate && tsc -p tsconfig.typecheck.json",
+    "test": "vitest run",
+    "test:db": "vitest run --config vitest.db.config.ts",
     "lint": "pnpm -w exec eslint backend",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:seed:dist": "node --env-file-if-exists=.env dist/seed.js"
   },
   "prisma": {
     "seed": "tsx src/seed.ts"
@@ -24,8 +28,11 @@
   "devDependencies": {
     "@types/express": "5.0.6",
     "@types/node": "26.6.6",
+    "@types/supertest": "7.2.1",
     "prisma": "6.19.3",
+    "supertest": "7.3.1",
     "tsx": "4.23.15",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
   }
 }

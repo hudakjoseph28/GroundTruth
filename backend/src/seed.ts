@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { stagedParcel, type Parcel } from "@groundtruth/shared";
+import { stagedDeal, stagedParcel, type Parcel } from "@groundtruth/shared";
 import { prisma } from "./db.js";
+import { seedDeal } from "./deals/seedDeal.js";
 import { stagedReport } from "./reports/stagedReport.js";
 
 async function main(): Promise<void> {
@@ -75,12 +76,18 @@ async function main(): Promise<void> {
         transactionSignature: check.transactionSignature ?? null,
       })),
     });
+
+    await seedDeal(tx, stagedDeal);
   });
 
   const checks = await prisma.checkRecord.count({
     where: { reportParcelKey: stagedReport.parcelKey },
   });
   console.log(`seeded ${stagedReport.parcelKey} with ${checks} checks`);
+  const events = await prisma.timelineEventRecord.count({
+    where: { dealId: stagedDeal.id },
+  });
+  console.log(`seeded deal ${stagedDeal.id} (${events} timeline events)`);
 }
 
 main()
