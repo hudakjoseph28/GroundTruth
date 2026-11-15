@@ -13,6 +13,7 @@ import type { Parcel } from "@groundtruth/shared";
 import { ParcelBoundary } from "../../components/ParcelBoundary";
 import { LAND, PARCEL_PAGE } from "../../content/parcel";
 import { ExploreMenu } from "../Explore/ExploreMenu";
+import { GOOGLE_MAPS_KEY } from "../Explore/links";
 import { SceneBoundary } from "../SceneBoundary";
 import type { RenderMode } from "../useRenderMode";
 import { EXAGGERATION } from "./blockFrame";
@@ -25,6 +26,8 @@ import { outerRing } from "./landMeta";
 const LandBlockScene = lazy(() =>
   import("./LandBlockScene").then((module) => ({ default: module.LandBlockScene })),
 );
+// Google's 3D view is its own chunk too, fetched only if someone opens it.
+const AreaView3D = lazy(() => import("../Explore/AreaView3D"));
 
 /** How far one arrow-key press turns the block, in radians. */
 const KEY_TURN = 0.14;
@@ -69,6 +72,7 @@ export function LandBlock({
   const button = useRef<HTMLButtonElement>(null);
   const turn = useRef<Turn | null>(null);
   const [menu, setMenu] = useState<"land" | "button" | null>(null);
+  const [areaOpen, setAreaOpen] = useState(false);
 
   const openFromLand = useCallback(() => setMenu((opened) => opened ?? "land"), []);
   const closeMenu = useCallback(
@@ -78,6 +82,12 @@ export function LandBlock({
     },
     [menu],
   );
+  const closeArea = useCallback(() => {
+    setAreaOpen(false);
+    // Back to the land block, or to the button when there is no block to focus.
+    (stage.current ?? button.current)?.focus();
+  }, []);
+
   const onStageKey = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
     if (event.key === "Enter" || event.key === " ") {
@@ -105,7 +115,29 @@ export function LandBlock({
       button={button}
       onToggle={() => setMenu(menu === null ? "button" : null)}
       onClose={closeMenu}
+      onOpenArea={
+        GOOGLE_MAPS_KEY
+          ? () => {
+              setMenu(null);
+              setAreaOpen(true);
+            }
+          : undefined
+      }
     />
+  );
+  const areaView = GOOGLE_MAPS_KEY && areaOpen && (
+    <SceneBoundary fallback={null}>
+      <Suspense fallback={null}>
+        <AreaView3D
+          apiKey={GOOGLE_MAPS_KEY}
+          parcel={parcel}
+          ring={ring}
+          staged={staged}
+          animate={mode !== "reduced"}
+          onClose={closeArea}
+        />
+      </Suspense>
+    </SceneBoundary>
   );
 
   if (loading) {
@@ -132,6 +164,7 @@ export function LandBlock({
       <div className="land">
         <ParcelBoundary geometry={parcel.geometry} />
         <div className="land-caption">{explore}</div>
+        {areaView}
       </div>
     );
   }
@@ -186,6 +219,7 @@ export function LandBlock({
         </div>
         {explore}
       </figcaption>
+      {areaView}
     </figure>
   );
 }

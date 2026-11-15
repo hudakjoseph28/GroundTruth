@@ -13,3 +13,9 @@ export function googleMapsSatelliteUrl(centroid: Centroid): string {
 export function googleEarthUrl(centroid: Centroid): string {
   return `https://earth.google.com/web/@${at(centroid)},300a,800d,35y,0h,60t,0r`;
 }
+
+/**
+ * The key for the in-app 3D view, or null. Without it that view is never
+ * rendered and nothing from Google loads.
+ */
+export const GOOGLE_MAPS_KEY: string | null = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim() || null;

@@ -46,6 +46,17 @@ export const EXPLORE = {
   area: { title: "3D area view", note: "Google 3D imagery of the area, in this page" },
 } as const;
 
+export const AREA_VIEW = {
+  title: "Google 3D imagery of the area",
+  around: (parcelId: string) => `Around parcel ${parcelId}`,
+  boundary: "The gold line is the parcel boundary.",
+  stagedBoundary: "The gold line is the demo's stand-in boundary, not a surveyed lot.",
+  close: "Close",
+  loading: "Loading Google 3D imagery…",
+  failed: "Google 3D imagery could not be loaded. The links above still open the area in Google Maps and Google Earth.",
+  mapLabel: "Google 3D imagery around the parcel",
+} as const;
+
 // ---------- Ledger ----------
 
 export const CHECK_TITLES: Record<CheckKind, string> = {
