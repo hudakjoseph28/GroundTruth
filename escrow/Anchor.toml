@@ -1,0 +1,23 @@
+[toolchain]
+package_manager = "npm"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+groundtruth_escrow = "2ox43XbbztcxCt7LDZaF9fSaRezwTbCNxWBKf89uVHP1"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[test.validator]
+[[test.validator.account]]
+address = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+filename = ".anchor/usdc_mint.json"
+
+[scripts]
+test = "npx mocha --node-option import=tsx -t 1000000 \"tests/**/*.ts\""
+
+[hooks]
