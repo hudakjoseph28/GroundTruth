@@ -52,6 +52,38 @@ Timeline rows are ordered by time, then chain slot, then event index. A confirme
 
 Replays are harmless: a timeline row is unique by transaction signature + event index, and re-applying finds it and does nothing. The timestamp is not checked against a window. QuickNode does not document its format, and deduplication already makes a replayed delivery a no-op.
 
+### Filters
+
+Filters live in [quicknode/](quicknode/) and are pasted into the Stream's filter editor (wizard step 2, "Stream dataset"). The **Fetch Final Payload** preview on step 3 shows the exact body the webhook will receive. QuickNode sends the filter's return value as-is, with no envelope.
+
+| File | Use |
+| --- | --- |
+| `heartbeat-filter.js` | `{ "transactions": [] }` for every block. Proves signing and delivery before the program exists. |
+| `groundtruth-filter.js` | The real filter. Set `PROGRAM_ID` to the deployed escrow program. Until the IDL decoder exists, deliveries it produces get `500`. |
+| `inspect-filter.js` | Preview only. Reports the Block payload's field layout. |
+
+`quicknodeFilters.test.ts` runs the filter files and posts their output to the webhook, so a shape change on either side fails a test.
+
+### Setting up a Stream
+
+1. Network **Solana Devnet**, dataset **Block**, start at the latest block, filter as above, destination **Webhook** → `https://api-production-db8a8106.up.railway.app/api/webhooks/quicknode`.
+2. **Set the token before the Stream sends anything.** Each Stream has its own security token (Stream → Settings). With the default retry settings (every 1 s, stop after 3 failures), a Stream that starts before Railway has its token gets `503`s and is stopped within about 3 seconds. Either raise the retry settings in the destination, or set the token first and wait for the restart. A stopped Stream can be resumed with the same token.
+3. Set it from your own terminal so it never lands in chat or Git: `railway variables --service api --set "QUICKNODE_STREAM_TOKEN=qnsec_..."`. Paste only the value, with no brackets. Do not rotate it afterwards without updating Railway.
+4. Pause the Stream when not demoing. Streams bills per block processed, filtered or not.
+
+### Proof: heartbeat Stream, Nov 15, 2026
+
+| Item | Value |
+| --- | --- |
+| Stream | `test-stream`, Solana devnet, Block dataset, region `usa_east` |
+| Filter | `heartbeat-filter.js` |
+| Destination | `https://api-production-db8a8106.up.railway.app/api/webhooks/quicknode` |
+| API commit | `de8c7ab` |
+| Result | 117 of 117 deliveries answered `204` between 23:07:35 and 23:07:56 UTC (Railway HTTP logs): signature verified and payload accepted on the live URL |
+| Filter check | `groundtruth-filter.js` with a stand-in program ID returned the expected `{ transactions: [...] }` for devnet block `522700233` in the final-payload preview |
+
+The first start (22:56:59 UTC) was stopped after three `503`s because the token was not yet set. Resuming it after the token was set produced the run above.
+
 ## Tests
 
 ```bash
@@ -74,8 +106,14 @@ Both are deployed from a local checkout with the CLIs (`railway up`, `vercel dep
 ```bash
 railway up --service api --ci                      # API
 railway variables --service api --set "GIT_COMMIT=$(git rev-parse --short HEAD)"
-vercel deploy --prod                               # web
+
+# Web: deploy an export of main without Git metadata (see note below).
+rm -rf /tmp/gt-web && mkdir /tmp/gt-web
+git archive main | tar -x -C /tmp/gt-web && cp -r .vercel /tmp/gt-web/
+(cd /tmp/gt-web && vercel deploy --prod --yes)
 ```
+
+Why the export: Vercel's Hobby plan **blocks** a CLI deploy when the checkout's latest commit was authored by someone other than the project owner. A PR merge commit has the merger as its author. Exporting with `git archive` sends exactly the committed tree with no commit author. `vercel ls groundtruth` shows `Blocked` if this is skipped.
 
 - **API build:** Railpack runs `pnpm run build`. [railpack.json](../railpack.json) starts the API with `start:prod`, which runs `prisma migrate deploy`, then the compiled seed, then the server. Both are safe to repeat. Do not add `railway.json`: new Railway projects ignore its build, pre-deploy, and healthcheck settings.
 - **API variables:** `DATABASE_URL` references `${{Postgres.DATABASE_URL}}`; `GIT_COMMIT` is set by hand after each deploy; Railway sets `PORT`. Secrets for QuickNode and ElevenLabs go in Railway variables, never in Git.

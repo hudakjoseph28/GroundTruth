@@ -147,7 +147,8 @@ describe("POST /api/webhooks/quicknode", () => {
     expect(apply).toHaveBeenCalledTimes(3);
   });
 
-  it("accepts an empty batch", async () => {
+  it("accepts an empty batch (the heartbeat filter) silently", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const { app, apply } = setup();
     const body = JSON.stringify({ transactions: [] });
 
@@ -155,6 +156,22 @@ describe("POST /api/webhooks/quicknode", () => {
 
     expect(res.status).toBe(204);
     expect(apply).not.toHaveBeenCalled();
+    expect(log).not.toHaveBeenCalled();
+  });
+
+  it("logs one receipt line per event with its outcome", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const { app, apply } = setup();
+    apply.mockResolvedValueOnce("applied").mockResolvedValueOnce("duplicate");
+    const body = JSON.stringify(payload);
+
+    await post(app, body).set(sign(body));
+
+    expect(log.mock.calls.map(([line]) => line)).toEqual([
+      `quicknode applied DealFunded ${SIG_A}:0`,
+      `quicknode duplicate ApprovalSigned ${SIG_B}:0`,
+      `quicknode applied ApprovalSigned ${SIG_B}:1`,
+    ]);
   });
 
   describe("rejects with 401 and applies nothing when", () => {

@@ -86,7 +86,12 @@ export function quickNodeWebhook(
       // Sequential on purpose: events must apply in chain order.
       for (const tx of parsed.data.transactions) {
         for (const event of toConfirmedEvents(tx, options.decode)) {
-          await options.apply(event);
+          const result = await options.apply(event);
+          // Public chain data only. Railway's log timestamp is the receipt
+          // time the Phase 3 proof records.
+          console.log(
+            `quicknode ${result} ${event.event.name} ${event.signature}:${event.eventIndex}`,
+          );
         }
       }
       res.status(204).end();
