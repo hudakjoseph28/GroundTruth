@@ -1,44 +1,81 @@
-:root {
-  color: #f3f1ec;
-  background: #030303;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  line-height: 1.45;
+/* Design tokens and the styles every page shares. Page-specific styles live
+   beside their components: layout/layout.css, home/home.css, parcel/parcel.css. */
 
-  /* Every color means something: gold is the parcel in view or the primary
-     action, green is cleared or released, red is held or blocked. */
+:root {
+  /* Color. Each one means something, and always comes with a word:
+     gold  = the parcel in view, the primary action, or pending
+     green = signed or released
+     red   = held or blocked */
+  --bg: #050505;
+  --surface-1: #0b0b0c;
+  --surface-2: #111113;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #f5f5f7;
+  --text-2: #a1a1a6;
+  --text-3: #6e6e73; /* decoration and large type only: too dim for small text */
   --gold: #c4a15a;
+  --gold-text: #d1a84e;
   --green: #3fa86a;
+  --green-text: #4fb87a;
   --red: #d64545;
   --red-text: #ea6b6b; /* red at text sizes, for contrast on near-black */
+  /* Opaque hairlines, for the parcel page's cards. */
   --line: #232323;
   --line-soft: #1c1c1c;
-  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Fluid scale. Everything below sizes from these, so no one viewport is special. */
+  /* Type: the system sans, mono for addresses, slots and amounts. */
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.85rem);
   --step-0: clamp(1rem, 0.97rem + 0.15vw, 1.1rem);
   --step-1: clamp(1.12rem, 1.04rem + 0.4vw, 1.4rem);
   --step-2: clamp(1.5rem, 1.2rem + 1.3vw, 2.4rem);
+  --step-3: clamp(1.9rem, 1.4rem + 2.2vw, 3.1rem);
+
+  /* Space, on a 4/8 scale, plus three fluid steps for gaps between blocks. */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-6: 1.5rem;
+  --s-8: 2rem;
+  --s-12: 3rem;
   --space-s: clamp(0.75rem, 0.6rem + 0.6vw, 1.25rem);
   --space-m: clamp(1.25rem, 0.9rem + 1.4vw, 2.25rem);
   --space-l: clamp(2.5rem, 1.6rem + 4vw, 6rem);
-  --header-h: clamp(3.5rem, 3rem + 1.2vw, 4.5rem);
+  --space-xl: clamp(4rem, 2.5rem + 6vw, 8.5rem);
+
+  --radius-s: 6px;
+  --radius-m: 8px;
+  --radius-l: 10px;
+  --header-h: clamp(3.5rem, 3.3rem + 0.5vw, 4rem);
   --tap: 44px;
+  --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--sans);
+  line-height: 1.45;
 }
 
 /* Root text grows a little on very large screens; it never shrinks below 16px. */
 html {
+  scroll-padding-top: calc(var(--header-h) + 0.75rem);
   font-size: clamp(100%, 0.5rem + 0.4vw, 118.75%);
 }
 
-/* The page is one inline-size container: widths, gutters and the hero layout
-   all follow the space actually available (no scrollbar guesswork). */
+/* The page is one inline-size container: widths and gutters follow the space
+   actually available (no scrollbar guesswork). */
 #root {
   container: page / inline-size;
   /* Content column: centered, at most --page-max wide, with fluid gutters. */
-  --page-max: 90rem;
+  --page-max: 80rem;
   --gutter: clamp(1.25rem, 4cqi, 4rem);
   --pad: max(var(--gutter), (100cqi - var(--page-max)) / 2);
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
 }
 
 * {
@@ -48,14 +85,34 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: #030303;
+  background: var(--bg);
   overflow-wrap: break-word;
+}
+
+main {
+  flex: 1 0 auto;
 }
 
 h1,
 h2,
 h3 {
   text-wrap: balance;
+}
+
+h1 {
+  margin: 0 0 var(--space-m);
+  font-size: var(--step-3);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
 }
 
 .visually-hidden {
@@ -70,15 +127,18 @@ h3 {
   border: 0;
 }
 
-a {
-  color: inherit;
-}
-
 a:focus-visible,
 button:focus-visible,
-input:focus-visible {
-  outline: 2px solid #c4a15a;
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--gold);
   outline-offset: 3px;
+}
+
+/* A section reached from a nav link takes focus so Tab continues from there;
+   it is not a control, so it shows no ring. */
+section[tabindex="-1"]:focus {
+  outline: none;
 }
 
 .skip {
@@ -86,8 +146,9 @@ input:focus-visible {
   left: 16px;
   top: 0;
   transform: translateY(-110%);
-  z-index: 3;
-  background: #c4a15a;
+  z-index: 20;
+  border-radius: var(--radius-s);
+  background: var(--gold);
   color: #0a0a0a;
   padding: 8px 12px;
 }
@@ -96,418 +157,221 @@ input:focus-visible {
   transform: translateY(12px);
 }
 
-.site-header {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0 var(--space-m);
-  align-items: center;
-  min-height: var(--header-h);
-  padding-inline: var(--pad);
-  position: relative;
-  z-index: 2;
+/* ---------- Small shared pieces ---------- */
+
+.mono {
+  font-family: var(--mono);
 }
 
-.wordmark,
-.site-header nav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap);
+.quiet {
+  color: var(--text-2);
 }
 
-.wordmark {
-  color: #f3f1ec;
-  font-size: var(--step-1);
-  font-weight: 560;
-  text-decoration: none;
-  letter-spacing: -0.02em;
-}
-
-.site-header nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 clamp(0.9rem, 2.4cqi, 2rem);
-}
-
-.site-header nav a {
-  color: #a9a9a9;
-  text-decoration: none;
-  font-size: clamp(0.85rem, 0.8rem + 0.2vw, 0.98rem);
-  transition: color 150ms ease;
-}
-
-.site-header nav a:hover {
-  color: #f3f1ec;
-}
-
-/* Inline links inside sentences: a 44px hit area without changing the line box. */
-.hero-status a,
-.proof-sources a,
-.evidence-note a,
-.report-link,
-.sample-link {
-  padding-block: 15px;
-  margin-block: -15px;
-}
-
-/* ---------- Homepage hero ---------- */
-
-.hero {
-  --copy-max: 38rem;
-  --card-min: 22rem;
-  --card-max: 27rem;
-  --hero-gap: clamp(2rem, 5cqi, 5rem);
-  --hero-top: clamp(1.75rem, 1rem + 6svh, 7rem);
-  /* One column first; the container query below adds the second. */
-  --globe-size: min(140cqi, 42rem);
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-  padding: var(--hero-top) var(--pad) 0;
-  overflow-x: clip;
-}
-
-.hero > * {
-  min-width: 0;
-}
-
-.hero-copy {
-  position: relative;
-  z-index: 1;
-  max-width: var(--copy-max);
-  container: hero-copy / inline-size;
-}
-
-.eyebrow-quiet {
-  margin: 0 0 var(--space-s);
-  color: #a9a9a9;
+.eyebrow {
+  margin: 0;
+  color: var(--text-2);
   font-size: var(--step--1);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.hero-lede {
-  margin: 0 0 var(--space-m);
-  max-width: 32rem;
-  color: #cfcfcf;
-  font-size: var(--step-0);
-  line-height: 1.55;
+.tag {
+  display: inline-block;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 7px;
+  color: #a9a9a9;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-h1 {
-  margin: 0 0 var(--space-m);
-  font-size: clamp(1.9rem, 1.4rem + 2.4vw, 3.4rem);
-  line-height: 1.12;
-  letter-spacing: -0.035em;
+.copy {
+  position: relative;
+  z-index: 1; /* above a card-wide button, where there is one */
+  margin: -0.5rem -0.4rem -0.5rem 0.1rem;
+  border: 0;
+  padding: 0.5rem 0.4rem;
+  background: none;
+  color: #a9a9a9;
+  font: inherit;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.copy:hover {
+  color: var(--text);
+}
+
+/* Buttons. Gold is the one primary action; everything else is quiet. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: var(--tap);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  padding: 0 1.1rem;
+  background: var(--surface-1);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
   font-weight: 560;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
 }
 
-/* Sized from the copy column, so "Know what comes next." holds one line
-   wherever the column can fit it, and wraps cleanly where it cannot. */
-.hero h1 {
-  margin-bottom: var(--space-s);
-  font-size: clamp(1.75rem, 9.4cqi, 4.25rem);
+.btn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--surface-2);
 }
 
-.hero h1 span {
-  display: block;
+.btn-primary {
+  border-color: transparent;
+  background: var(--gold-text);
+  color: #0a0a0a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
-.search label:not(.visually-hidden) {
-  display: block;
-  margin-bottom: 8px;
-  color: #d7d7d7;
+.btn-primary:hover {
+  border-color: transparent;
+  background: #ddb65e;
 }
 
+.btn-small {
+  min-height: 2.25rem;
+  padding: 0 0.85rem;
+  font-size: 0.88rem;
+}
+
+/* A segmented choice: one option is always on. */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  padding: 2px;
+  background: rgba(11, 11, 12, 0.82);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.segmented button {
+  min-width: 2.75rem;
+  min-height: 2rem;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 0.7rem;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 560;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button[aria-checked="true"] {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.segmented button[aria-disabled="true"] {
+  color: var(--text-3);
+  cursor: not-allowed;
+}
+
+.segmented button:focus-visible {
+  outline-offset: 1px;
+}
+
+/* ---------- Search ---------- */
+
+/* One field: the input and its button share a border, so it reads as a single
+   control and the button never drops to its own line. */
 .search-row {
   display: flex;
-  flex-wrap: wrap; /* the button drops under the field once the field would get cramped */
-  gap: 0.625rem;
-  max-width: 30rem;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 34rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  padding: 5px 5px 5px 0.9rem;
+  background: var(--surface-1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.search-row:focus-within {
+  border-color: rgba(196, 161, 90, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 3px rgba(196, 161, 90, 0.16);
+}
+
+.search-icon {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: none;
+  stroke: var(--text-2);
+  stroke-width: 1.5;
+  stroke-linecap: round;
 }
 
 .search input {
-  flex: 999 1 13rem; /* takes the row; the button keeps its own width */
+  flex: 1 1 8rem;
   min-width: 0;
-  height: clamp(48px, 2.6rem + 0.5vw, 3.5rem);
-  background: #0d0d0d;
-  color: #f3f1ec;
-  border: 1px solid #2e2e2e;
-  border-radius: 4px;
-  padding: 0 1rem;
+  height: clamp(2.6rem, 2.4rem + 0.5vw, 3rem);
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text);
   font: inherit;
   font-size: var(--step-0);
 }
 
 .search input::placeholder {
-  color: #8a8a8a;
+  color: #85858a;
 }
 
 .search input:focus-visible {
   outline: none;
-  border-color: #8f7848;
-  box-shadow: 0 0 0 1px rgba(196, 161, 90, 0.35);
-}
-
-.search button,
-.sample-link {
-  border-radius: 4px;
 }
 
 .search button {
-  flex: 1 0 auto;
-  max-width: 100%;
-  height: clamp(48px, 2.6rem + 0.5vw, 3.5rem);
-  border: 0;
-  background: #d1a84e;
-  color: #0a0a0a;
-  font: inherit;
-  font-size: var(--step-0);
-  font-weight: 560;
-  padding: 0 clamp(1rem, 0.7rem + 0.8vw, 1.4rem);
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 150ms ease;
-}
-
-.search button:hover {
-  background: #ddb65e;
+  flex: none;
+  height: clamp(2.6rem, 2.4rem + 0.5vw, 3rem);
+  min-height: 0;
+  border-radius: 7px;
+  padding: 0 clamp(0.8rem, 0.6rem + 0.8vw, 1.25rem);
 }
 
 .sample-link {
   display: inline-block;
   margin-top: 12px;
+  padding-block: 15px;
+  margin-block: -3px -15px;
   color: #d7d7d7;
-}
-
-.hero-status {
-  margin: var(--space-s) 0 0;
-  max-width: 30rem;
-  color: #8f8f8f;
-  font-family: var(--mono);
-  font-size: var(--step--1);
-  line-height: 1.6;
-}
-
-.hero-status a {
-  white-space: nowrap;
-  color: #c9c9c9;
-  text-underline-offset: 3px;
-  text-decoration-color: #555;
-}
-
-.hero-status a:hover {
-  color: #f3f1ec;
-}
-
-.quiet {
-  color: #bdbdbd;
-}
-
-/* The globe is a dim backdrop. Stacked (narrow), it sits faintly behind the
-   sample report, below the search, and takes no pointer input. Side by side
-   (wide), it fills the space right of the search column; see the container
-   query at the end. It is always under the content in the stacking order. */
-.hero-backdrop {
-  position: relative;
-  grid-area: 2 / 1;
-  align-self: stretch;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.globe-slot {
-  position: absolute;
-  inset: 0;
-}
-
-.webgl-globe,
-.static-globe {
-  position: absolute;
-  width: var(--globe-size);
-  height: var(--globe-size);
-  left: calc(50% - var(--globe-size) / 2);
-  top: 0;
-  margin: 0;
-}
-
-.hero-backdrop canvas {
-  display: block;
-  opacity: 0.38;
-}
-
-.webgl-globe canvas {
-  cursor: grab;
-}
-
-.webgl-globe canvas:active {
-  cursor: grabbing;
-}
-
-.static-globe canvas {
-  width: 100%;
-  height: 100%;
-}
-
-/* Honest caption, pinned to the bottom corner of the visible backdrop. */
-.globe-caption {
-  position: absolute;
-  z-index: 1;
-  margin: 0;
-  max-width: 70%;
-  text-align: right;
-  font-size: 0.72rem;
-  color: rgba(214, 214, 214, 0.45);
-  pointer-events: none;
-}
-
-/* ---------- Sample report card ---------- */
-
-.hero-report {
-  position: relative;
-  z-index: 1;
-  grid-area: 2 / 1;
-  justify-self: start;
-  width: min(100%, 35rem);
-  padding-block: clamp(3rem, 14cqi, 5rem) var(--space-l);
-}
-
-.report-card {
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 10px;
-  background: rgba(8, 8, 8, 0.74);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
-  padding: clamp(1rem, 0.8rem + 0.6vw, 1.25rem) clamp(1rem, 0.8rem + 0.8vw, 1.4rem);
-}
-
-.report-card p {
-  margin: 0;
-}
-
-.report-meta {
-  margin: 0 0 18px;
-  color: #a3a3a3;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  font-weight: 400;
-  letter-spacing: 0.05em;
-  line-height: 1.5;
-  text-transform: uppercase;
-}
-
-.report-parcel {
-  color: var(--gold); /* the parcel being viewed */
-  overflow-wrap: anywhere;
-}
-
-.report-label {
-  color: #8f8f8f;
-  font-size: 0.7rem;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.report-question-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px 12px;
-  margin: 4px 0 8px;
-}
-
-.report-title {
-  font-size: var(--step-1);
-  font-weight: 560;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.report-resolver {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 10px;
-  color: #e4e1dc;
-  font-size: 0.9rem;
-}
-
-.report-checks {
-  display: grid;
-  /* Two columns when each check has room for its label and pill, else one. */
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.5rem), 1fr));
-  column-gap: clamp(0.9rem, 3cqi, 1.4rem);
-  margin: 16px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-}
-
-.report-checks > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 38px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-}
-
-.report-checks dt {
-  color: #cfcfcf;
-  font-size: 0.85rem;
-  line-height: 1.2;
-}
-
-.report-checks dd {
-  margin: 0;
-}
-
-.report-escrow {
-  border: 1px solid #333;
-  border-radius: 6px;
-  padding: 10px 12px;
-  color: #e4e1dc;
-  font-size: 0.85rem;
-  line-height: 1.45;
-}
-
-.report-escrow-held {
-  border-color: rgba(214, 69, 69, 0.5);
-  background: rgba(214, 69, 69, 0.1);
-}
-
-.report-escrow-held strong {
-  color: var(--red-text);
-  font-weight: 600;
-}
-
-.report-foot {
-  display: grid;
-  gap: 6px;
-  margin-top: 14px;
-}
-
-.report-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3em;
-  justify-self: start;
-  color: #f3f1ec;
-  font-size: 0.92rem;
-  font-weight: 500;
-  text-underline-offset: 4px;
-  text-decoration-color: #6a6a6a;
-}
-
-.report-link:hover {
-  text-decoration-color: #f3f1ec;
-}
-
-.report-disclaimer {
-  color: #8f8f8f;
-  font-size: 0.72rem;
-  line-height: 1.45;
+  border-radius: 4px;
 }
 
 /* ---------- Status pills ---------- */
@@ -537,7 +401,7 @@ h1 {
 
 .pill-needsReview {
   border-color: rgba(196, 161, 90, 0.55);
-  color: #d1a84e;
+  color: var(--gold-text);
 }
 
 .pill-unknown {
@@ -553,7 +417,7 @@ h1 {
 
 .pill-signedOff {
   border-color: rgba(63, 168, 106, 0.55);
-  color: #4fb87a;
+  color: var(--green-text);
 }
 
 .pill-held {
@@ -561,19 +425,12 @@ h1 {
   color: var(--red-text);
 }
 
-/* ---------- Other pages ---------- */
+/* ---------- Search results and plain pages ---------- */
 
-.boundary figcaption {
-  color: #bdbdbd;
-  font-size: 0.85rem;
-}
-
-.band,
 .sheet {
-  padding: var(--space-m) var(--pad) 0.5rem;
+  padding: var(--space-m) var(--pad) var(--space-l);
 }
 
-.band > *,
 .sheet > * {
   max-width: 48rem;
 }
@@ -585,30 +442,12 @@ h1 {
   overflow-wrap: anywhere;
 }
 
-.band h2,
-.sheet h1 {
-  letter-spacing: -0.03em;
-}
-
-.kind-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0;
-  list-style: none;
-}
-
-.kind-list li {
-  border: 1px solid #2c2c2c;
-  border-radius: 999px;
-  padding: 6px 10px;
-  color: #d7d7d7;
-}
-
 .notice {
-  border: 1px solid #2c2c2c;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
   padding: 14px 16px;
+  background: var(--surface-1);
+  color: #d7d7d7;
 }
 
 .results {
@@ -620,20 +459,31 @@ h1 {
   display: grid;
   min-height: var(--tap);
   gap: 4px;
-  text-decoration: none;
-  border: 1px solid #2c2c2c;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
   padding: 14px 16px;
   margin-bottom: 10px;
+  background: var(--surface-1);
+  text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.results a:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
 }
 
 .result-id {
-  font-weight: 650;
+  font-family: var(--mono);
+  font-weight: 600;
 }
 
+/* The plain boundary drawing, for a parcel with no baked imagery. */
 .boundary {
   margin: 0;
-  border: 1px solid #2c2c2c;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
 }
@@ -644,9 +494,10 @@ h1 {
   background: #111;
   border-radius: 8px;
 }
+
 .boundary polygon {
   fill: rgba(196, 161, 90, 0.2);
-  stroke: #c4a15a;
+  stroke: var(--gold);
   stroke-width: 1.5;
 }
 
@@ -654,518 +505,15 @@ h1 {
   display: grid;
   gap: 4px;
   margin-top: 8px;
-}
-
-.eyebrow {
-  margin: 0;
-  color: #c4a15a;
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-/* ---------- Homepage: proof strip ---------- */
-
-.proof {
-  position: relative;
-  border-top: 1px solid var(--line-soft);
-  border-bottom: 1px solid var(--line-soft);
-  background: #050505;
-  padding: var(--space-m) var(--pad);
-}
-
-.proof p {
-  margin: 0;
-}
-
-.proof-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
-  gap: var(--space-m) 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.proof-list li {
-  border-left: 1px solid var(--line);
-  padding: 0 var(--space-m);
-}
-
-.proof-figure {
-  display: block;
-  margin-bottom: 8px;
-  font-size: clamp(1.8rem, 1.4rem + 1.4vw, 2.6rem);
-  font-weight: 560;
-  letter-spacing: -0.035em;
-  line-height: 1.1;
-}
-
-.proof-body {
-  color: #bdbdbd;
-  font-size: 0.92rem;
-  line-height: 1.5;
-}
-
-.proof-body strong {
-  color: #f3f1ec;
-  font-weight: 600;
-}
-
-.proof-sources {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
-  margin-top: 10px !important;
-  font-size: 0.78rem;
-}
-
-.proof-sources a,
-.evidence-note a {
-  color: #a9a9a9;
-  text-underline-offset: 3px;
-  text-decoration-color: #555;
-}
-
-.proof-sources a:hover,
-.evidence-note a:hover {
-  color: #f3f1ec;
-}
-
-.proof-note {
-  margin-top: var(--space-m) !important;
-  color: #8f8f8f;
-  font-size: 0.78rem;
-}
-
-/* ---------- Homepage: sections below the hero ---------- */
-
-.home-section {
-  padding: var(--space-l) var(--pad) 0.5rem;
-  scroll-margin-top: 0.75rem;
-}
-
-.home-section h2 {
-  margin: 0 0 14px;
-  max-width: 720px;
-  font-size: var(--step-2);
-  line-height: 1.18;
-  letter-spacing: -0.03em;
-  font-weight: 560;
-}
-
-.home-section h3 {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.home-section p {
-  margin: 0;
-}
-
-.section-lede {
-  max-width: 42rem;
-  margin-bottom: var(--space-m) !important;
-  color: #bdbdbd;
-  font-size: var(--step-0);
-  line-height: 1.55;
-}
-
-.question-grid,
-.step-grid,
-.check-grid,
-.timeline,
-.pill-row {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.question-grid,
-.step-grid,
-.outcome-grid {
-  display: grid;
-  gap: var(--space-s);
-}
-
-.question-grid li,
-.outcome {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #080808;
-  padding: clamp(1rem, 0.8rem + 0.8vw, 1.5rem);
-}
-
-.step-number {
-  color: #8f8f8f;
-  font-family: var(--mono);
-  font-size: 0.8rem;
-}
-
-/* Three questions */
-
-.question-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-  margin-top: var(--space-m);
-}
-
-.question-grid li {
-  display: flex;
-  flex-direction: column;
-}
-
-.question-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.question-icon {
-  display: block;
-  color: #e4e1dc;
-}
-
-.question-grid li > p {
-  color: #bdbdbd;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.chip-line {
-  margin: 12px 0 18px !important;
-  color: #8f8f8f !important;
-  font-size: 0.8rem !important;
-}
-
-.question-example {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-  margin-top: auto !important;
-  border-top: 1px solid var(--line-soft);
-  padding-top: 14px;
-  color: #e4e1dc !important;
-  font-size: 0.85rem !important;
-}
-
-.question-example .pill {
-  margin-left: auto;
-}
-
-.example-tag {
-  color: #8f8f8f;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-/* Two outcomes */
-
-.outcome-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
-}
-
-.outcome {
-  padding: clamp(1rem, 0.8rem + 0.8vw, 1.5rem) clamp(1rem, 0.8rem + 0.8vw, 1.5rem) 0.5rem;
-}
-
-.outcome-held {
-  border-color: rgba(214, 69, 69, 0.45);
-}
-
-.outcome-released {
-  border-color: rgba(63, 168, 106, 0.45);
-}
-
-.outcome-label {
-  margin-bottom: 6px !important;
-  color: #8f8f8f;
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.outcome h3 {
-  margin-bottom: var(--space-m);
-  font-size: var(--step-1);
-  font-weight: 560;
-  letter-spacing: -0.02em;
-}
-
-.outcome-held h3 {
-  color: var(--red-text);
-}
-
-.outcome-released h3 {
-  color: #4fb87a;
-}
-
-.timeline li {
-  position: relative;
-  padding: 0 0 20px 28px;
-}
-
-/* Status dot */
-.timeline li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 3px;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-/* Connector to the next step */
-.timeline li::after {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 20px;
-  bottom: 2px;
-  width: 1px;
-  background: #2e2e2e;
-}
-
-.timeline li:last-child::after {
-  display: none;
-}
-
-.timeline .tone-evidence {
-  color: #8f8f8f;
-}
-
-.timeline .tone-evidence::before {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px currentColor;
-}
-
-.timeline .tone-held {
-  color: var(--red);
-}
-
-.timeline .tone-signed,
-.timeline .tone-released {
-  color: var(--green);
-}
-
-.timeline li:last-child::before {
-  box-shadow:
-    0 0 0 3px #080808,
-    0 0 0 4px currentColor;
-}
-
-.timeline-where {
-  color: #8f8f8f;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.07em;
-  line-height: 1.6;
-  text-transform: uppercase;
-}
-
-.timeline-title {
-  color: #f3f1ec;
-  font-size: 0.98rem;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.timeline-detail {
-  margin-top: 2px !important;
-  color: #bdbdbd;
-  font-size: 0.88rem;
-  line-height: 1.45;
-}
-
-.evidence-note {
-  max-width: 760px;
-  margin-top: 18px !important;
-  color: #8f8f8f;
-  font-size: 0.8rem;
-  line-height: 1.55;
-}
-
-/* How it works */
-
-.step-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-  gap: var(--space-m);
-}
-
-.step-grid li {
-  border-top: 1px solid var(--line);
-  padding-top: 14px;
-}
-
-.step-grid h3 {
-  margin: 10px 0 6px;
-  font-size: 1rem;
-}
-
-.step-grid p {
-  color: #bdbdbd;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-/* What a report checks */
-
-.check-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
-  column-gap: var(--space-m);
-  border-bottom: 1px solid var(--line);
-}
-
-.check-grid li {
-  border-top: 1px solid var(--line);
-  padding: 12px 0 13px;
-}
-
-.check-grid h3 {
-  margin: 0 0 2px;
-  font-size: 0.95rem;
-}
-
-.confirmed-by {
   color: #bdbdbd;
   font-size: 0.85rem;
-  line-height: 1.45;
 }
 
-.confirmed-by span {
-  color: #8f8f8f;
-}
-
-.status-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 18px;
-  margin-top: 22px;
-}
-
-.status-line h3 {
-  margin: 0;
-  color: #bdbdbd;
-  font-size: 0.85rem;
-  font-weight: 400;
-  letter-spacing: 0;
-}
-
-.pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.pill-row li {
-  display: flex;
-}
-
-/* Find your lot, account, footer */
-
-.start-band .search {
-  margin-top: var(--space-m);
-}
-
-.account-note {
-  padding-top: var(--space-l);
-  padding-bottom: var(--space-l);
-  color: #8f8f8f;
-  font-size: 0.9rem;
-}
-
-.account-note h2 {
-  margin-bottom: 6px;
-  font-size: 1rem;
-  letter-spacing: -0.01em;
-  color: #bdbdbd;
-}
-
-.home-footer {
-  margin: 0;
-  border-top: 1px solid var(--line-soft);
-  padding: var(--space-m) var(--pad) var(--space-l);
-  color: #8f8f8f;
-  font-size: 0.8rem;
-  line-height: 1.55;
-}
-
-/* ---------- Wide hero ---------- */
-
-/* Side by side once the page can hold the copy column and the report card
-   (about 60rem). The globe fills the space right of the copy column, runs up
-   behind the header, and off the right edge; the report card floats on it. */
-@container page (min-width: 60rem) {
-  .hero {
-    --globe-size: clamp(34rem, min(125svh, 64cqi), 72rem);
-    --copy-col: min(var(--copy-max), 100cqi - 2 * var(--pad) - var(--card-min) - var(--hero-gap));
-    grid-template-columns: minmax(0, var(--copy-max)) minmax(var(--card-min), 1fr);
-    column-gap: var(--hero-gap);
-    align-items: center;
-    margin-top: calc(-1 * var(--header-h));
-    padding-top: calc(var(--header-h) + var(--hero-top));
-    padding-bottom: var(--hero-top);
-    /* Fill the first screen, leaving the top of the proof strip in view, but
-       stay sensible on very short or very tall screens. */
-    min-height: clamp(32rem, 100svh - 4.5rem, 62rem);
-  }
-  .hero-copy {
-    grid-area: 1 / 1;
-  }
-  .hero-report {
-    grid-area: 1 / 2;
-    justify-self: end;
-    width: min(100%, var(--card-max));
-    padding: 0;
-  }
-  .hero-backdrop {
-    position: absolute;
-    grid-area: auto;
-    inset: 0 0 0 calc(var(--pad) + var(--copy-col) + var(--hero-gap) / 2);
-    /* Fade in from the copy column and stay quiet behind the header links. */
-    -webkit-mask-image:
-      linear-gradient(to right, transparent, #000 clamp(2rem, 6cqi, 6rem)),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.3), #000 calc(var(--header-h) + 4rem));
-    -webkit-mask-composite: source-in;
-    mask-image:
-      linear-gradient(to right, transparent, #000 clamp(2rem, 6cqi, 6rem)),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.3), #000 calc(var(--header-h) + 4rem));
-    mask-composite: intersect;
-  }
-  /* Centered a little inside the content's right edge, so the card sits on
-     the globe and part of the globe runs off-canvas. */
-  .webgl-globe,
-  .static-globe {
-    left: auto;
-    right: calc(var(--pad) + var(--card-max) / 2 - var(--globe-size) * 0.45);
-    top: calc(50% - var(--globe-size) / 2 + var(--header-h) / 2);
-  }
-  .hero-backdrop canvas {
-    opacity: 0.55;
-  }
-  .webgl-globe canvas {
-    pointer-events: auto; /* draggable wherever it shows */
-  }
-}
-
-/* Caption sits in the visible corner of the backdrop, not the globe's box. */
-.globe-caption {
-  right: 0;
-  bottom: 0.9rem;
-}
-
-@container page (min-width: 60rem) {
-  .globe-caption {
-    right: var(--pad);
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .segmented button,
+  .search-row,
+  .results a {
+    transition: none;
   }
 }
