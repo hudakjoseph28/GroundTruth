@@ -3,9 +3,14 @@ import { slerp } from "./geo";
 import { networkFor, type Network } from "./network";
 import { PALETTE } from "./palette";
 import { useCountries } from "./useCountries";
-import { GLOBE_VIEW as VIEW, pixelRatioFor } from "./view";
+import { CAMERA_DISTANCE, DISC_SHARE, GLOBE_VIEW as VIEW, pixelRatioFor, zoomFor } from "./view";
 
 const DEG = Math.PI / 180;
+// The still picture is drawn in the moving globe's perspective, so nothing
+// shifts when one replaces the other. A point is in view while it is nearer
+// the camera than the horizon.
+const HORIZON = 1 / CAMERA_DISTANCE;
+const REACH = Math.sqrt(CAMERA_DISTANCE * CAMERA_DISTANCE - 1);
 
 /**
  * Still picture of the network globe, drawn once with Canvas 2D.
@@ -57,12 +62,14 @@ function paint(node: HTMLCanvasElement, network: Network | null) {
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.clearRect(0, 0, width, height);
 
-  const radius = Math.min(width, height) * 0.44;
+  const radius = Math.min(width, height) * DISC_SHARE;
+  const zoom = zoomFor(width);
   const cx = width / 2;
   const cy = height / 2;
   const at = (lat: number, lng: number, alt = 0) => {
     const v = project(lat, lng);
-    return { x: cx + v.x * radius * (1 + alt), y: cy - v.y * radius * (1 + alt), z: v.z };
+    const scale = (radius * (1 + alt) * REACH) / (CAMERA_DISTANCE - v.z * (1 + alt));
+    return { x: cx + v.x * scale, y: cy - v.y * scale, z: v.z - HORIZON };
   };
 
   // Near-black disc with a faint rim, so the points define the shape.
@@ -109,7 +116,7 @@ function paint(node: HTMLCanvasElement, network: Network | null) {
     const [r, g, b] = p.color.map((c) => Math.round(c * 255));
     ctx.fillStyle = `rgba(${r},${g},${b},${p.alpha * 0.8 * Math.min(1, q.z * 5)})`;
     ctx.beginPath();
-    ctx.arc(q.x, q.y, Math.max(0.5, p.size * 0.22), 0, Math.PI * 2);
+    ctx.arc(q.x, q.y, Math.max(0.5, p.size * 0.22 * zoom), 0, Math.PI * 2);
     ctx.fill();
   }
 
