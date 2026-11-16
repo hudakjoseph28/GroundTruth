@@ -191,7 +191,7 @@ One `DealAccount` PDA and one associated SPL-token vault exist per deal. PDA see
 
 | Instruction | Transaction signer | Program requirements and result |
 | --- | --- | --- |
-| `initialize_deal` | Buyer | Creates the PDA; binds buyer, seller wallet/token account, reviewer wallets/roles/required flags, devnet USDC mint, amount, and deal ID. Maximum eight reviewers. |
+| `initialize_deal` | Buyer | Creates the PDA; binds buyer, seller wallet/token account, reviewer wallets/roles/required flags, devnet USDC mint, amount, and deal ID. Requires at least one reviewer with `required=true`; reviewer cannot be default, buyer, or seller. Maximum eight reviewers. |
 | `fund` | Buyer | State `draft`; transfers exactly the bound amount and mint into the PDA vault; state becomes `funded`. |
 | `sign_approval` | Assigned reviewer | State `funded`; signer and role match an assigned reviewer; records one approval and emits `ApprovalSigned`. Duplicate approval fails. |
 | `place_hold` | Assigned reviewer | State `funded`; records reason code, makes the deal `held`, emits `HoldPlaced`. Approval and release after a hold fail. |

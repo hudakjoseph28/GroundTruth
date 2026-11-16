@@ -15,7 +15,7 @@
 
 ## Build this
 
-- **One deal-scoped SPL token vault per deal.** Bind buyer, seller payout wallet, assigned reviewers, USDC mint, and amount **before** funding. Amounts are integer base units so the UI, vault, and recipient account compare directly.
+- **One deal-scoped SPL token vault per deal.** Bind buyer, seller payout wallet, assigned reviewers, USDC mint, and amount **before** funding. Amounts are integer base units so the UI, vault, and recipient account compare directly. Reviewer wallets must be independent (neither buyer nor seller), and at least one reviewer must be required.
 - **Devnet mint:** Circle test USDC `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`. The program checks it on every transfer.
 - **Release** may be submitted by any fee payer, but succeeds only from `funded` with every required approval, no hold, exact mint/amount, and the bound seller ATA. **Refund** requires the buyer's signature and an active hold. Both pay the full vault and become terminal; a second settlement fails.
 - Buyer-visible states: evidence received → reviewer decision signed → funds held or settled. The UI explains readiness; **Solana decides whether funds move.**

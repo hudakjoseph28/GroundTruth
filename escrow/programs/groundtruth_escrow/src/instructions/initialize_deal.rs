@@ -79,6 +79,11 @@ pub fn handle_initialize_deal(
     );
 
     require!(
+        reviewers.iter().any(|r| r.required),
+        EscrowError::NoRequiredReviewers
+    );
+
+    require!(
         reviewers.len() <= MAX_REVIEWERS,
         EscrowError::TooManyReviewers
     );
@@ -92,6 +97,11 @@ pub fn handle_initialize_deal(
         require_keys_neq!(
             r.wallet,
             ctx.accounts.buyer.key(),
+            EscrowError::InvalidReviewerAssignment
+        );
+        require_keys_neq!(
+            r.wallet,
+            ctx.accounts.seller.key(),
             EscrowError::InvalidReviewerAssignment
         );
 

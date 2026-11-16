@@ -27,4 +27,16 @@ pub mod groundtruth_escrow {
     pub fn fund(ctx: Context<Fund>) -> Result<()> {
         instructions::fund::handle_fund(ctx)
     }
+
+    pub fn sign_approval(ctx: Context<SignApproval>, role: ReviewerRole) -> Result<()> {
+        instructions::sign_approval::handle_sign_approval(ctx, role)
+    }
+
+    pub fn place_hold(
+        ctx: Context<PlaceHold>,
+        role: ReviewerRole,
+        reason_code: HoldReason,
+    ) -> Result<()> {
+        instructions::place_hold::handle_place_hold(ctx, role, reason_code)
+    }
 }
