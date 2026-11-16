@@ -5,6 +5,7 @@ import {
   AdditiveBlending,
   BufferGeometry,
   CanvasTexture,
+  Color,
   Float32BufferAttribute,
   Group,
   LineBasicMaterial,
@@ -12,6 +13,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
+  type Object3D,
   PlaneGeometry,
   Points,
   PointsMaterial,
@@ -25,7 +27,15 @@ import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { seeded } from "../../globe/geo";
 import { PALETTE } from "../../globe/palette";
-import { BOX_EDGES, blockDims, boxCorners, type BlockDims, type Vec3 } from "./blockFrame";
+import {
+  BOX_EDGES,
+  SOIL_DEPTH,
+  TABLE_SOIL_DEPTH,
+  blockDims,
+  boxCorners,
+  type BlockDims,
+  type Vec3,
+} from "./blockFrame";
 import { heightAt, type LandAssets } from "./landAssets";
 import { regionUV } from "./landMeta";
 
@@ -34,13 +44,15 @@ const GRID = 128;
 
 export interface LandBlockObject {
   group: Group;
-  /** Soft floor under the block, so it reads as floating. */
-  floor: Mesh;
+  /** What is under the block: a soft glow when it floats, a ground sheet when it rests on a table. */
+  floor: Object3D;
   setResolution(width: number, height: number): void;
   /** 0 shows the gold hand-off frame around a slightly small block; 1 is the settled block. */
   setIntro(progress: number): void;
   /** Puts the travelling pulse this far round the parcel boundary (0..1), or hides it with null. */
   setBoundaryPulse(progress: number | null): void;
+  /** Tints the boundary from gold (0) toward green (1), for a release. */
+  setBoundaryTone(amount: number): void;
   dispose(): void;
 }
 
@@ -53,13 +65,17 @@ function canvas2d(width: number, height: number): [HTMLCanvasElement, CanvasRend
   return [canvas, context];
 }
 
-/** The aerial imagery, a little dimmer outside the parcel so the lot reads first. */
-function imageryTexture(assets: LandAssets, ring: number[][]): CanvasTexture {
+/**
+ * The aerial imagery, a little dimmer outside the parcel so the lot reads
+ * first. `calm` holds the whole picture back, for where the boundary and what
+ * is pinned to it should lead.
+ */
+function imageryTexture(assets: LandAssets, ring: number[][], calm: boolean): CanvasTexture {
   const width = assets.imagery.naturalWidth;
   const height = assets.imagery.naturalHeight;
   const [canvas, context] = canvas2d(width, height);
   // Aerial photos are hazy; a little contrast keeps the ground from washing out under the lights.
-  context.filter = "contrast(1.14) saturate(1.18)";
+  context.filter = calm ? "contrast(1.12) saturate(1) brightness(1.02)" : "contrast(1.14) saturate(1.18)";
   context.drawImage(assets.imagery, 0, 0, width, height);
   context.filter = "none";
   if (ring.length) {
@@ -71,7 +87,7 @@ function imageryTexture(assets: LandAssets, ring: number[][]): CanvasTexture {
       else context.lineTo(u * width, v * height);
     });
     context.closePath();
-    context.fillStyle = "rgba(4, 4, 4, 0.36)";
+    context.fillStyle = calm ? "rgba(4, 4, 4, 0.5)" : "rgba(4, 4, 4, 0.36)";
     context.fill("evenodd");
   }
   const texture = new CanvasTexture(canvas);
@@ -212,17 +228,21 @@ const WALLS: readonly { normal: Vec3; at: (t: number) => [number, number] }[] = 
   { normal: [-1, 0, 0], at: (t) => [0, t] }, // west
 ];
 
-/** Walls from the surface edge down to the flat base, plus that edge as a polyline. */
+/**
+ * Walls from the surface edge down to the flat base, plus that edge as a
+ * polyline. The soil picture is `strataSpan` units tall, so a thin slab shows
+ * only its upper bands.
+ */
 function wallGeometry(
   assets: LandAssets,
   dims: BlockDims,
+  strataSpan: number,
 ): { geometry: BufferGeometry; rim: Vec3[][] } {
   const position: number[] = [];
   const normal: number[] = [];
   const uv: number[] = [];
   const index: number[] = [];
   const rim: Vec3[][] = [];
-  const thickness = dims.top - dims.base;
   for (const wall of WALLS) {
     const start = position.length / 3;
     const edge: Vec3[] = [];
@@ -236,7 +256,7 @@ function wallGeometry(
       position.push(x, y, z, x, dims.base, z);
       normal.push(...wall.normal, ...wall.normal);
       // The strata hang from the surface, so the bands follow the terrain.
-      uv.push(t, 1, t, 1 - (y - dims.base) / thickness);
+      uv.push(t, 1, t, 1 - (y - dims.base) / strataSpan);
       if (k < GRID) {
         const top = start + k * 2;
         index.push(top, top + 1, top + 3, top, top + 3, top + 2);
@@ -283,12 +303,125 @@ function segments(points: Vec3[][]): BufferGeometry {
   return geometry;
 }
 
+/**
+ * What the block rests on, on a table: a faint survey grid squared to the
+ * block's edges, a little light to stand in, and a contact shadow. All of it
+ * fades to nothing well inside the picture, so no edge shows.
+ */
+function tableGround(
+  dims: BlockDims,
+  keep: <T extends Texture | Material | BufferGeometry>(item: T) => T,
+): Group {
+  const ground = new Group();
+  const reach = (Math.hypot(dims.width, dims.depth) / 2) * GROUND_REACH;
+  const y = dims.base - 0.004;
+
+  const pool = new Mesh(
+    keep(new PlaneGeometry(reach * 2, reach * 2)),
+    keep(
+      new MeshBasicMaterial({
+        map: keep(
+          glowTexture([
+            [0, "rgba(255,250,240,0.085)"],
+            [0.42, "rgba(255,250,240,0.055)"],
+            [0.78, "rgba(255,250,240,0.014)"],
+            [1, "rgba(255,250,240,0)"],
+          ]),
+        ),
+        transparent: true,
+        depthWrite: false,
+      }),
+    ),
+  );
+  pool.rotation.x = -Math.PI / 2;
+  pool.position.y = y;
+  pool.renderOrder = -3;
+
+  // Grid lines: every fourth one runs along an edge of the block. Each is cut
+  // into short pieces so it can fade with distance.
+  const position: number[] = [];
+  const color: number[] = [];
+  const shade = (x: number, z: number) => {
+    const t = Math.min(1, Math.max(0, (1 - Math.hypot(x, z) / reach) / 0.62));
+    return GRID_LIGHT * t * t * (3 - 2 * t);
+  };
+  const pieces = 40;
+  const lay = (along: "x" | "z", at: number) => {
+    for (let piece = 0; piece < pieces; piece++) {
+      const a = -reach + (piece / pieces) * reach * 2;
+      const b = -reach + ((piece + 1) / pieces) * reach * 2;
+      const from: [number, number] = along === "x" ? [a, at] : [at, a];
+      const to: [number, number] = along === "x" ? [b, at] : [at, b];
+      const light = [shade(...from), shade(...to)];
+      if (light[0]! + light[1]! <= 0) continue;
+      position.push(from[0], y, from[1], to[0], y, to[1]);
+      color.push(light[0]!, light[0]!, light[0]!, light[1]!, light[1]!, light[1]!);
+    }
+  };
+  const cellX = dims.width / 4;
+  const cellZ = dims.depth / 4;
+  for (let i = -Math.floor(reach / cellX); i * cellX <= reach; i++) lay("z", i * cellX);
+  for (let j = -Math.floor(reach / cellZ); j * cellZ <= reach; j++) lay("x", j * cellZ);
+  const gridGeometry = keep(new BufferGeometry());
+  gridGeometry.setAttribute("position", new Float32BufferAttribute(position, 3));
+  gridGeometry.setAttribute("color", new Float32BufferAttribute(color, 3));
+  const grid = new LineSegments(
+    gridGeometry,
+    keep(
+      new LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        blending: AdditiveBlending,
+        depthWrite: false,
+      }),
+    ),
+  );
+  grid.renderOrder = -2;
+
+  // Contact shadow: the block's footprint, blurred, cast a little away from the light.
+  const [canvas, context] = canvas2d(256, 256);
+  context.shadowColor = "rgba(0, 0, 0, 0.94)";
+  context.shadowBlur = 26;
+  context.shadowOffsetX = 512;
+  context.fillRect(70 - 512, 70, 116, 116);
+  const shadow = new Mesh(
+    keep(new PlaneGeometry((dims.width * 256) / 116, (dims.depth * 256) / 116)),
+    keep(
+      new MeshBasicMaterial({
+        map: keep(new CanvasTexture(canvas)),
+        transparent: true,
+        depthWrite: false,
+      }),
+    ),
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.set(0.1, y + 0.002, -0.08);
+  shadow.renderOrder = -1;
+
+  ground.add(pool, grid, shadow);
+  return ground;
+}
+
+/** How far the ground sheet reaches, in block half-diagonals, before it has faded out. */
+const GROUND_REACH = 1.36;
+/** The grid's brightest lines, added to the page's near-black. */
+const GRID_LIGHT = 0.1;
+
 export function buildLandBlock(
   assets: LandAssets,
   ring: number[][],
   anisotropy: number,
+  {
+    cornerDots = true,
+    table = false,
+  }: {
+    /** False leaves out the glowing points on the block's corners. */
+    cornerDots?: boolean;
+    /** True rests a thinner block on a ground sheet, with the imagery held back. */
+    table?: boolean;
+  } = {},
 ): LandBlockObject {
-  const dims = blockDims(assets.meta);
+  const dims = blockDims(assets.meta, table ? TABLE_SOIL_DEPTH : SOIL_DEPTH);
   const group = new Group();
   const textures: Texture[] = [];
   const materials: Material[] = [];
@@ -300,7 +433,7 @@ export function buildLandBlock(
     return item;
   };
 
-  const imagery = keep(imageryTexture(assets, ring));
+  const imagery = keep(imageryTexture(assets, ring, table));
   imagery.anisotropy = anisotropy;
   const top = new Mesh(
     keep(surfaceGeometry(assets, dims)),
@@ -319,7 +452,7 @@ export function buildLandBlock(
 
   const strata = keep(strataTexture());
   strata.anisotropy = anisotropy;
-  const walls = wallGeometry(assets, dims);
+  const walls = wallGeometry(assets, dims, dims.top + SOIL_DEPTH);
   const sides = new Mesh(
     keep(walls.geometry),
     keep(new MeshStandardMaterial({ map: strata, roughness: 1, metalness: 0 })),
@@ -428,7 +561,8 @@ export function buildLandBlock(
       }),
     ),
   );
-  group.add(frame, nodes);
+  group.add(frame);
+  if (cornerDots) group.add(nodes);
 
   // The gold wireframe the transition hands over; it fades as the land appears.
   const handoffMaterial = keep(
@@ -448,9 +582,9 @@ export function buildLandBlock(
   handoff.renderOrder = 2;
   group.add(handoff);
 
-  // A faint pool of light with a dark core: a contact shadow that still reads
-  // on a near-black page.
-  const floor = new Mesh(
+  // Floating: a faint pool of light with a dark core, a contact shadow that
+  // still reads on a near-black page.
+  const glow = new Mesh(
     keep(new PlaneGeometry(dims.width * 1.95, dims.depth * 1.95)),
     keep(
       new MeshBasicMaterial({
@@ -469,12 +603,21 @@ export function buildLandBlock(
       }),
     ),
   );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = dims.base - 0.26;
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.y = dims.base - 0.26;
+  const floor = table ? tableGround(dims, keep) : glow;
+
+  const gold = new Color(PALETTE.gold);
+  const green = new Color(PALETTE.green);
 
   return {
     group,
     floor,
+    setBoundaryTone(amount) {
+      const tone = Math.min(1, Math.max(0, amount));
+      boundaryMaterial.color.copy(gold).lerp(green, tone);
+      boundaryMaterial.linewidth = 2.2 + 1.4 * tone;
+    },
     setResolution(width, height) {
       boundaryMaterial.resolution.set(width, height);
     },
