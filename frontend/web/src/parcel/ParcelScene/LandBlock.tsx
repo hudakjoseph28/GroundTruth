@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Parcel } from "@groundtruth/shared";
+import { Segmented } from "../../components/Segmented";
 import { ParcelBoundary } from "../../components/ParcelBoundary";
 import { LAND, PARCEL_PAGE } from "../../content/parcel";
 import { ExploreMenu } from "../Explore/ExploreMenu";
@@ -18,25 +19,24 @@ import { SceneBoundary } from "../SceneBoundary";
 import type { RenderMode } from "../useRenderMode";
 import { EXAGGERATION } from "./blockFrame";
 import { FlatLand } from "./FlatLand";
+import { FlatLandView } from "./FlatLandView";
 import type { LandAssets } from "./landAssets";
 import type { Turn } from "./LandBlockScene";
 import { outerRing } from "./landMeta";
+import { useLandView } from "./useLandView";
 
-// three.js and the scene load as their own chunk, after the page has painted.
 const LandBlockScene = lazy(() =>
   import("./LandBlockScene").then((module) => ({ default: module.LandBlockScene })),
 );
-// Google's 3D view is its own chunk too, fetched only if someone opens it.
 const AreaView3D = lazy(() => import("../Explore/AreaView3D"));
 
-/** How far one arrow-key press turns the block, in radians. */
 const KEY_TURN = 0.14;
 const KEY_TILT = 0.08;
 
 /**
- * The parcel as a block of land. Picks the richest version the browser and
- * the visitor's settings allow, says where the picture comes from, and opens
- * the way out to the real surroundings.
+ * The parcel as a block of land. Picks 3D or 2D from the visitor's choice
+ * (remembered), falls back to 2D when motion is reduced or WebGL is gone, and
+ * opens the way out to the real surroundings.
  */
 export function LandBlock({
   parcel,
@@ -47,27 +47,24 @@ export function LandBlock({
   onReady,
 }: {
   parcel: Parcel;
-  /** True when the boundary is the demo's stand-in, so the caption says so. */
   staged: boolean;
-  /** undefined while loading, null when nothing is baked for this parcel. */
   assets: LandAssets | null | undefined;
   mode: RenderMode;
   revealed: boolean;
-  /** Called once something is drawn, so the transition knows it can hand off. */
   onReady: () => void;
 }) {
   const ring = useMemo(() => outerRing(parcel.geometry.geojson), [parcel]);
   const loading = assets === undefined || mode === "pending";
-  const flat = !loading && assets !== null && mode !== "webgl";
-  const drawable = assets && ring.length >= 3;
+  const drawable = Boolean(assets && ring.length >= 3);
+  const { view, setView, threeDisabled } = useLandView(mode);
+  const show3d = !loading && drawable && view === "3d" && !threeDisabled;
+  const show2d = !loading && drawable && !show3d;
 
-  // The 3D scene reports its own first frame; everything else is ready at once.
-  const immediate = !loading && (!drawable || flat);
+  const immediate = !loading && (!drawable || show2d);
   useEffect(() => {
     if (immediate) onReady();
   }, [immediate, onReady]);
 
-  // "Explore the area" opens from the land itself or from the button under it.
   const stage = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const turn = useRef<Turn | null>(null);
@@ -84,7 +81,6 @@ export function LandBlock({
   );
   const closeArea = useCallback(() => {
     setAreaOpen(false);
-    // Back to the land block, or to the button when there is no block to focus.
     (stage.current ?? button.current)?.focus();
   }, []);
 
@@ -95,6 +91,7 @@ export function LandBlock({
       openFromLand();
       return;
     }
+    if (!show3d) return;
     const turns: Record<string, [number, number]> = {
       ArrowLeft: [-KEY_TURN, 0],
       ArrowRight: [KEY_TURN, 0],
@@ -125,6 +122,30 @@ export function LandBlock({
       }
     />
   );
+
+  const viewToggle = drawable && (
+    <div className="land-view">
+      <Segmented
+        label={LAND.view.label}
+        value={show3d ? "3d" : "2d"}
+        options={[
+          {
+            value: "3d",
+            label: LAND.view.three,
+            disabled: threeDisabled,
+            hint: threeDisabled
+              ? mode === "reduced"
+                ? LAND.view.reduced
+                : LAND.view.noWebgl
+              : undefined,
+          },
+          { value: "2d", label: LAND.view.two },
+        ]}
+        onChange={setView}
+      />
+    </div>
+  );
+
   const areaView = GOOGLE_MAPS_KEY && areaOpen && (
     <SceneBoundary fallback={null}>
       <Suspense fallback={null}>
@@ -146,7 +167,6 @@ export function LandBlock({
         <div className="land-stage" data-land-stage>
           <p className="visually-hidden">{LAND.loading}</p>
         </div>
-        {/* Same shape as the loaded caption, so nothing below moves when it fills in. */}
         <figcaption className="land-caption">
           <div className="land-credit" aria-hidden="true">
             <p>&nbsp;</p>
@@ -158,8 +178,7 @@ export function LandBlock({
     );
   }
 
-  // Nothing baked for this parcel: the plain boundary drawing still works.
-  if (!drawable) {
+  if (!drawable || !assets) {
     return (
       <div className="land">
         <ParcelBoundary geometry={parcel.geometry} />
@@ -169,52 +188,67 @@ export function LandBlock({
     );
   }
 
-  const flatLand = <FlatLand assets={assets} ring={ring} />;
   const { meta } = assets;
+  const flatHint =
+    mode === "reduced" ? LAND.flat.reduced : mode === "fallback" ? LAND.flat.fallback : LAND.flat.chosen;
 
   return (
     <figure className="land">
-      {/* The land is a control too: click or Enter opens "Explore the area". */}
-      <div
-        ref={stage}
-        className="land-stage"
-        data-land-stage
-        data-flat={flat || undefined}
-        role="button"
-        tabIndex={0}
-        aria-label={flat ? LAND.stage.still : LAND.stage.turning}
-        aria-haspopup="true"
-        aria-expanded={menu !== null}
-        onKeyDown={onStageKey}
-        onClick={flat ? openFromLand : undefined}
-      >
-        {flat ? (
-          flatLand
-        ) : (
-          <SceneBoundary fallback={<FlatLandReady onReady={onReady}>{flatLand}</FlatLandReady>}>
-            <Suspense fallback={null}>
-              <LandBlockScene
-                assets={assets}
-                ring={ring}
-                revealed={revealed}
-                turn={turn}
-                onReady={onReady}
-                onActivate={openFromLand}
-              />
-            </Suspense>
-          </SceneBoundary>
-        )}
+      <div className="land-frame">
+        {viewToggle}
+        <div
+          ref={stage}
+          className="land-stage"
+          data-land-stage
+          data-flat={show2d || undefined}
+          data-view={show3d ? "3d" : "2d"}
+          role="button"
+          tabIndex={0}
+          aria-label={show3d ? LAND.stage.turning : LAND.stage.still}
+          aria-haspopup="true"
+          aria-expanded={menu !== null}
+          onKeyDown={onStageKey}
+          onClick={show2d ? openFromLand : undefined}
+        >
+          <div className="land-swap" data-showing={show3d ? "3d" : "2d"}>
+            <div className="land-pane" data-pane="3d" hidden={!show3d}>
+              {show3d && (
+                <SceneBoundary
+                  fallback={
+                    <FlatLandReady onReady={onReady}>
+                      <FlatLand assets={assets} ring={ring} />
+                    </FlatLandReady>
+                  }
+                >
+                  <Suspense fallback={null}>
+                    <LandBlockScene
+                      assets={assets}
+                      ring={ring}
+                      revealed={revealed}
+                      turn={turn}
+                      onReady={onReady}
+                      onActivate={openFromLand}
+                    />
+                  </Suspense>
+                </SceneBoundary>
+              )}
+            </div>
+            <div className="land-pane" data-pane="2d" hidden={!show2d}>
+              {show2d && <FlatLandView assets={assets} ring={ring} />}
+            </div>
+          </div>
+        </div>
       </div>
       <figcaption className="land-caption">
         <div className="land-credit">
-          <p className="visually-hidden">{flat ? LAND.labelFlat : LAND.label3d}</p>
+          <p className="visually-hidden">{show3d ? LAND.label3d : LAND.labelFlat}</p>
           <p>
             {meta.imagery.attribution} · {meta.elevation.attribution}
-            {!flat && <> · {LAND.exaggerated(EXAGGERATION)}</>}
+            {show3d && <> · {LAND.exaggerated(EXAGGERATION)}</>}
           </p>
           <p>
             {staged && <>{PARCEL_PAGE.stagedNote} </>}
-            {flat ? (mode === "reduced" ? LAND.flat.reduced : LAND.flat.fallback) : LAND.hint}
+            {show3d ? LAND.hint : flatHint}
           </p>
         </div>
         {explore}
@@ -224,7 +258,6 @@ export function LandBlock({
   );
 }
 
-/** The flat picture standing in for a scene that failed; it still has to report in. */
 function FlatLandReady({ onReady, children }: { onReady: () => void; children: ReactNode }) {
   useEffect(() => {
     onReady();

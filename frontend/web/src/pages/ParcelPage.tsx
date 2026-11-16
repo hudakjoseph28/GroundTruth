@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { stagedParcel, type Parcel } from "@groundtruth/shared";
 import { PARCEL_PAGE } from "../content/parcel";
 import { getParcelLedger } from "../data/ledger";
 import { getParcel } from "../data/parcelSource";
 import { BlockTransition } from "../parcel/BlockTransition/BlockTransition";
+import { readBlockOrigin } from "../parcel/BlockTransition/origin";
 import { Ledger } from "../parcel/Ledger/Ledger";
 import { LandBlock } from "../parcel/ParcelScene/LandBlock";
 import { useLandAssets } from "../parcel/ParcelScene/useLandAssets";
@@ -44,6 +45,9 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
   const assets = useLandAssets(parcel.sourceParcelId);
   const mode = useRenderMode();
   const ledger = useMemo(() => getParcelLedger(parcel.key), [parcel.key]);
+  // A block carried over from the page the visitor came from, read once.
+  const location = useLocation();
+  const [origin] = useState(() => readBlockOrigin(location.state));
   const [landReady, setLandReady] = useState(false);
   const markLandReady = useCallback(() => setLandReady(true), []);
 
@@ -67,7 +71,13 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
   return (
     <>
       {!revealed && (
-        <BlockTransition mode={mode} ready={landReady} meta={assets?.meta ?? null} onDone={reveal} />
+        <BlockTransition
+          mode={mode}
+          ready={landReady}
+          meta={assets?.meta ?? null}
+          origin={origin}
+          onDone={reveal}
+        />
       )}
       <div className="parcel-page" inert={!revealed}>
         <BackLink />

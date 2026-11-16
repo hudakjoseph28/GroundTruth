@@ -1,0 +1,2129 @@
+/* Homepage: the hero (copy, the parcel on its ground sheet, pinned tags), how
+   it works, for reviewers, three seats, proof, and the closing call to action.
+   Motion is transform and opacity wherever it repeats; with reduced motion
+   every diagram rests on its final frame. */
+
+/* The homepage's content column is a little wider than the default. */
+#root:has(.home) {
+  --page-max: 90rem;
+}
+
+.home {
+  position: relative;
+  overflow-x: clip;
+  --quiet: #8b8b90; /* small captions: dimmer than body text, still readable */
+}
+
+/* ---------- Shared pieces ---------- */
+
+.icon,
+.coin,
+.wallet,
+.lock {
+  flex: none;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon {
+  width: 1rem;
+  height: 1rem;
+  stroke: var(--gold);
+  stroke-width: 1.35;
+}
+
+.coin {
+  width: 1.15em;
+  height: 1.15em;
+  stroke: currentColor;
+  stroke-width: 1.3;
+}
+
+.section {
+  padding: var(--space-xl) var(--pad);
+}
+
+.section h2 {
+  margin: 0.5rem 0 0;
+  max-width: 24ch;
+  font-size: var(--step-3);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+/* Feature bullets: a gold check and one short line each. */
+.ticks {
+  display: grid;
+  gap: 0.75rem;
+  margin: var(--space-m) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ticks li {
+  position: relative;
+  padding-left: 1.8rem;
+  color: var(--text);
+  font-size: var(--step-0);
+  line-height: 1.4;
+}
+
+.ticks li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.2em;
+  width: 1.05rem;
+  height: 1.05rem;
+  background: var(--gold);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='8' r='6.2'/%3E%3Cpath d='M5.2 8.2 7.2 10.2 10.9 6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='8' r='6.2'/%3E%3Cpath d='M5.2 8.2 7.2 10.2 10.9 6'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+/* Sections reveal once as they enter: a fade and a 12px rise, staggered. */
+[data-reveal] > section > * {
+  transition:
+    opacity 460ms var(--ease-out),
+    transform 460ms var(--ease-out);
+}
+
+[data-reveal="out"] > section > * {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+[data-reveal="in"] > section > :nth-child(2) {
+  transition-delay: 70ms;
+}
+
+[data-reveal="in"] > section > :nth-child(3) {
+  transition-delay: 140ms;
+}
+
+[data-reveal="in"] > section > :nth-child(n + 4) {
+  transition-delay: 210ms;
+}
+
+/* ---------- Hero ---------- */
+
+/* The first screen: it runs up behind the header and fills the viewport. */
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: 100svh;
+  margin-top: calc(-1 * var(--header-h));
+  overflow: clip;
+}
+
+/* A little warmth where the land sits, so it stands somewhere. */
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(70% 34% at 50% 82%, rgba(196, 161, 90, 0.06), transparent 72%);
+}
+
+.hero-inner {
+  display: grid;
+  align-content: center;
+  gap: var(--space-m);
+  width: 100%;
+  min-width: 0;
+  padding: calc(var(--header-h) + var(--space-m)) var(--pad) var(--space-l);
+}
+
+.hero-copy {
+  container: hero-copy / inline-size;
+  min-width: 0;
+  max-width: 41rem;
+}
+
+/* Three lines, sized from the column so the longest never wraps. */
+.hero h1 {
+  margin: 0.9rem 0 1.15rem;
+  font-size: clamp(2.05rem, 11.4cqi, 4.9rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  text-wrap: normal;
+}
+
+.hero-line {
+  display: block;
+}
+
+.hero-lede {
+  max-width: 34rem;
+  margin: 0 0 var(--space-m);
+  color: #c3c3c8;
+  font-size: var(--step-1);
+  line-height: 1.4;
+}
+
+.hero .search-row {
+  max-width: 36rem;
+  background: rgba(11, 11, 12, 0.86);
+}
+
+.hero-demo {
+  margin: var(--s-4) 0 0;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+.hero-demo-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.8rem;
+  margin-left: 0.25rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0 0.7rem;
+  background: rgba(11, 11, 12, 0.86);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.hero-demo-chip:hover {
+  border-color: var(--gold);
+  color: var(--gold-text);
+}
+
+.hero-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: var(--space-m) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-2);
+  font-size: 0.8rem;
+}
+
+.hero-trust li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.hero-caption {
+  position: absolute;
+  right: var(--pad);
+  bottom: 0.8rem;
+  margin: 0;
+  color: var(--quiet);
+  font-size: 0.7rem;
+}
+
+@container page (min-width: 60rem) {
+  .hero-backdrop {
+    background: radial-gradient(36% 46% at 73% 62%, rgba(196, 161, 90, 0.065), transparent 72%);
+  }
+
+  .hero-inner {
+    grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
+    column-gap: clamp(1.5rem, 3cqi, 3.5rem);
+    align-content: stretch;
+    align-items: center;
+  }
+
+  .living[data-variant="hero"] {
+    align-self: stretch;
+    height: auto;
+    min-height: 24rem;
+  }
+}
+
+/* ---------- The parcel on its ground sheet ---------- */
+
+/* One picture: the land low in the box, and room above it for its tags. */
+.living {
+  position: relative;
+  min-width: 0;
+  height: clamp(17.5rem, 80cqi, 26rem);
+}
+
+.living[data-variant="compact"] {
+  height: clamp(18rem, 76cqi, 23rem);
+}
+
+/* The picture runs a little into the page's margins, so the ground sheet has
+   room to fade out. */
+.living-stage {
+  position: absolute;
+  inset: 0 max(-2.5rem, 0.5rem - var(--pad));
+}
+
+.living-stage .land-scene canvas {
+  cursor: default;
+}
+
+/* Without WebGL, or with motion reduced: the same imagery, flat, in the same place. */
+.living[data-flat] .living-stage .land-flat,
+.living[data-flat] .living-open {
+  position: absolute;
+  left: 50%;
+  /* Sized by height, and lowered as far as the block is, so both leave the tags the same room. */
+  top: calc(50% + 4.25rem);
+  width: auto;
+  height: min(48%, 20rem);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 12px;
+}
+
+.living-stage .land-flat {
+  max-width: none;
+  margin: 0;
+  box-shadow:
+    0 0 0 1px var(--border-strong),
+    0 30px 70px rgba(0, 0, 0, 0.6);
+}
+
+/* The block is one link to the demo parcel. Sized to the block once it is drawn. */
+.living-open {
+  position: absolute;
+  left: 18%;
+  top: 40%;
+  width: 64%;
+  height: 46%;
+  z-index: 1;
+  border-radius: 14px;
+}
+
+/* ---------- Tags pinned to the land ---------- */
+
+/* The layer runs a little past the land's box into the page's margins, so
+   cards have room on a phone. */
+.att-layer {
+  position: absolute;
+  inset: 0 max(-2rem, 0.5rem - var(--pad)) 0 max(-0.75rem, 0.5rem - var(--pad));
+  z-index: 2;
+  pointer-events: none;
+}
+
+.att-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.att-layer [data-tone="signed"] {
+  --tone: var(--green);
+  --tone-text: var(--green-text);
+}
+
+.att-layer [data-tone="pending"] {
+  --tone: var(--gold);
+  --tone-text: var(--gold-text);
+}
+
+.att-layer [data-tone="held"] {
+  --tone: var(--red);
+  --tone-text: var(--red-text);
+}
+
+.att-lines g {
+  opacity: 0;
+}
+
+.att-line {
+  stroke: var(--tone);
+  stroke-width: 1;
+  stroke-opacity: 0.85;
+}
+
+.att-ring {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 1.2;
+}
+
+.att-spot {
+  fill: var(--tone);
+  stroke: rgba(5, 5, 5, 0.7);
+  stroke-width: 1;
+}
+
+/* Placed by transform every frame; see AttestationTags. */
+.att {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: min(15.5rem, 66%);
+  opacity: 0;
+  pointer-events: auto;
+  will-change: transform, opacity;
+}
+
+/* Two lines: who did what, then what it was about. */
+.att-pill {
+  display: grid;
+  gap: 0.08rem;
+  border: 1px solid color-mix(in srgb, var(--tone) 26%, rgba(255, 255, 255, 0.13));
+  border-radius: 0.8rem;
+  padding: 0.42rem 0.8rem 0.46rem 0.7rem;
+  background: rgba(14, 14, 15, 0.86);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: var(--text-2);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition:
+    transform 180ms var(--ease-out),
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.att:hover .att-pill {
+  border-color: color-mix(in srgb, var(--tone) 65%, transparent);
+  background: rgba(20, 20, 22, 0.95);
+  transform: translateY(-2px);
+}
+
+.att-who,
+.att-what {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  min-width: 0;
+}
+
+/* Lined up under the name, past the dot. */
+.att-what {
+  gap: 0.32rem;
+  padding-left: calc(6px + 0.42rem);
+}
+
+.att-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.att-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tone);
+  box-shadow: 0 0 8px var(--tone);
+}
+
+.att-actor {
+  color: #b9b9be;
+  font-size: 0.72rem;
+}
+
+.att-verb {
+  color: var(--text);
+  font-weight: 560;
+}
+
+.att-mark {
+  flex: none;
+  width: 0.72rem;
+  height: 0.72rem;
+  fill: none;
+  stroke: var(--tone-text);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- How it works ---------- */
+
+.how-flow {
+  margin-top: var(--space-m);
+  outline: none;
+}
+
+.stepper {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  --block: clamp(2.5rem, 2rem + 2vw, 3.4rem);
+}
+
+/* The line through the four blocks, with a packet running along it. */
+.stepper-track {
+  position: absolute;
+  left: 12.5%;
+  right: 12.5%;
+  top: calc(var(--block) / 2);
+  height: 1px;
+  background: var(--border-strong);
+}
+
+.stepper-packet {
+  position: absolute;
+  inset: -3px 0;
+  opacity: 0;
+}
+
+.stepper-packet::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 1px rgba(255, 255, 255, 0.85);
+}
+
+.stepper[data-live="true"] .stepper-packet {
+  animation: run-across 3.6s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+@keyframes run-across {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  8%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.stepper-node {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.2rem;
+  min-width: 0;
+  border: 0;
+  padding: 0 0.2rem 1rem;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.step-block {
+  width: var(--block);
+  height: var(--block);
+  margin-bottom: 0.45rem;
+  border-radius: 50%;
+  background: var(--bg);
+  fill: none;
+  stroke: #77777c;
+  stroke-width: 0.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+  transition:
+    stroke 220ms ease,
+    transform 220ms var(--ease-out);
+}
+
+.step-block-shell {
+  fill: rgba(255, 255, 255, 0.015);
+}
+
+.step-block-point {
+  fill: currentColor;
+  stroke: none;
+}
+
+.stepper-node[aria-selected="true"] {
+  color: var(--text);
+}
+
+.stepper-node[aria-selected="true"] .step-block {
+  stroke: var(--gold);
+  transform: scale(1.1);
+}
+
+.stepper-node[aria-selected="true"] .step-block-shell {
+  fill: rgba(196, 161, 90, 0.1);
+}
+
+.stepper-title {
+  font-size: var(--step-0);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.stepper-line {
+  display: none;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+/* The selected step's mark: a short gold bar. */
+.stepper-node::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 1.25rem);
+  bottom: 0;
+  width: 2.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--gold);
+  opacity: 0;
+  transform: scaleX(0.3);
+  transition:
+    opacity 220ms ease,
+    transform 220ms var(--ease-out);
+}
+
+.stepper-node[aria-selected="true"]::after {
+  opacity: 1;
+  transform: none;
+}
+
+/* All four panels share one cell, so choosing a step is a crossfade and the
+   page never changes height. */
+.how-panels {
+  display: grid;
+  margin-top: var(--space-s);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background:
+    radial-gradient(80% 120% at 100% 0%, rgba(196, 161, 90, 0.05), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008));
+}
+
+.how-panel {
+  grid-area: 1 / 1;
+  display: grid;
+  gap: var(--space-m);
+  align-content: start;
+  min-width: 0;
+  padding: clamp(1.1rem, 3.2cqi, 2.75rem);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 380ms var(--ease-out),
+    visibility 0s linear 380ms;
+}
+
+.how-panel[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 380ms var(--ease-out),
+    visibility 0s;
+}
+
+/* Stacked: the picture first, then the words. */
+.how-visual {
+  order: -1;
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.how-art {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: clamp(16rem, 12rem + 14vw, 25rem);
+}
+
+.how-note {
+  margin: 0;
+  color: var(--quiet);
+  font-size: 0.7rem;
+  text-align: right;
+}
+
+.how-lead {
+  margin: 0;
+  max-width: 22ch;
+  font-size: var(--step-2);
+  font-weight: 620;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+
+.how-body {
+  max-width: 34rem;
+  margin: 0.9rem 0 0;
+  color: var(--text-2);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.how-outcome {
+  margin-top: var(--space-m);
+}
+
+.how-outcome .segmented button {
+  min-width: 5.5rem;
+  min-height: 2.5rem;
+}
+
+/* The parcel step's four callouts: the picture lights whichever is on. */
+.callouts {
+  display: grid;
+  gap: 0.2rem;
+  margin: var(--space-m) 0 0 -0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.callouts li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-2);
+  font-size: var(--step-0);
+  transition:
+    color 200ms ease,
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.callouts li::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #77777c;
+  border-radius: 50%;
+  transition:
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.callouts li[data-on] {
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+}
+
+.callouts li[data-on]::before {
+  border-color: var(--gold);
+  background: var(--gold);
+  box-shadow: 0 0 10px var(--gold);
+}
+
+.callouts a {
+  text-decoration: underline;
+  text-decoration-color: var(--text-3);
+  text-underline-offset: 4px;
+}
+
+@container page (min-width: 40rem) {
+  .stepper-line {
+    display: block;
+  }
+}
+
+@container page (min-width: 58rem) {
+  .how-panel {
+    grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
+    align-items: center;
+    align-content: center;
+    column-gap: clamp(1.5rem, 4cqi, 4rem);
+  }
+
+  .how-visual {
+    order: 0;
+  }
+}
+
+/* ---------- How it works: the parcel tile ---------- */
+
+.tile {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.tile-space {
+  display: grid;
+  place-items: center;
+  width: min(100%, 34rem);
+  aspect-ratio: 1.5;
+  perspective: 1400px;
+}
+
+.tile-plane {
+  position: relative;
+  width: 58%;
+  aspect-ratio: 1;
+  transform: rotateX(57deg) rotateZ(-36deg);
+  transform-style: preserve-3d;
+  animation: tile-float 6.5s ease-in-out infinite alternate;
+}
+
+/* Its shadow, a way below it: that distance is what makes it float. */
+.tile-plane::before {
+  content: "";
+  position: absolute;
+  inset: 2%;
+  background: rgba(0, 0, 0, 0.9);
+  filter: blur(26px);
+  transform: translateZ(-110px);
+}
+
+/* The slab under the picture, darker with depth. */
+.tile-soil {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, #7a5a3c, #17110b calc(var(--layer) * 6.5%));
+  transform: translateZ(calc(var(--layer) * -2.5px));
+}
+
+.tile-plane .land-flat {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.tile-plane .land-flat image,
+.tile-plane .land-flat-outline {
+  transition:
+    opacity 320ms ease,
+    stroke-width 320ms ease;
+}
+
+.tile[data-focus="imagery"] .land-flat image:first-of-type {
+  opacity: 0.95;
+}
+
+.tile-plane .land-flat-outline {
+  stroke-width: 2;
+}
+
+.tile[data-focus="boundary"] .land-flat-outline {
+  stroke-width: 4;
+}
+
+.tile[data-focus="boundary"] .land-flat image:first-of-type {
+  opacity: 0.24;
+}
+
+/* The row the elevation profile is read along. */
+.tile-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--row) * 100%);
+  height: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 10px var(--gold);
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+.tile[data-focus="elevation"] .tile-scan {
+  opacity: 1;
+}
+
+@keyframes tile-float {
+  from {
+    transform: rotateX(57deg) rotateZ(-36deg) translateZ(0);
+  }
+  to {
+    transform: rotateX(57deg) rotateZ(-30deg) translateZ(16px);
+  }
+}
+
+.tile-profile {
+  display: grid;
+  gap: 0.15rem;
+  width: min(100%, 22rem);
+  color: var(--quiet);
+  font-size: 0.66rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.tile-profile svg {
+  display: block;
+  width: 100%;
+  height: 2.2rem;
+  overflow: visible;
+}
+
+.tile-profile polyline {
+  fill: none;
+  stroke: #77777c;
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke 320ms ease;
+}
+
+.tile[data-focus="elevation"] .tile-profile polyline {
+  stroke: var(--gold);
+}
+
+.tile-label {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+/* ---------- How it works: the ledger cards ---------- */
+
+.checks-stack {
+  width: min(100%, 31rem);
+  text-align: left;
+}
+
+/* ---------- How it works: the escrow diagram ---------- */
+
+.vault {
+  --tone: var(--gold);
+  --tone-text: var(--gold-text);
+  display: grid;
+  justify-items: center;
+  width: min(100%, 35rem);
+}
+
+.vault[data-mode="held"] {
+  --tone: var(--red);
+  --tone-text: var(--red-text);
+}
+
+.vault[data-mode="cleared"][data-phase="done"] {
+  --tone: var(--green);
+  --tone-text: var(--green-text);
+}
+
+/* The three reviewer slots, each with a short line down toward the escrow. */
+.vault-seals {
+  display: flex;
+  justify-content: center;
+  gap: clamp(0.4rem, 2.5vw, 1.6rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vault-seals li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+  min-width: 4.3rem;
+  padding-bottom: 1.15rem;
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+.vault-seals li::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0.15rem;
+  width: 1px;
+  height: 0.75rem;
+  background: var(--border-strong);
+}
+
+.vault-seal {
+  width: 1.9rem;
+  height: 1.9rem;
+  margin-bottom: 0.2rem;
+  fill: none;
+  stroke: #77777c;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.vault-seal-state {
+  color: var(--text-2);
+  font-size: 0.68rem;
+}
+
+.vault-seals li[data-seal="waiting"] .vault-seal circle {
+  stroke-dasharray: 2.6 2.3;
+}
+
+.vault-seals li[data-seal="signed"] .vault-seal {
+  stroke: var(--green);
+}
+
+.vault-seals li[data-seal="signed"] .vault-seal circle {
+  fill: rgba(63, 168, 106, 0.14);
+}
+
+.vault-seals li[data-seal="signed"] .vault-seal-state {
+  color: var(--green-text);
+}
+
+.vault-seals li[data-seal="held"] .vault-seal {
+  stroke: var(--red);
+}
+
+.vault-seals li[data-seal="held"] .vault-seal circle {
+  fill: rgba(214, 69, 69, 0.14);
+}
+
+.vault-seals li[data-seal="held"] .vault-seal-state {
+  color: var(--red-text);
+}
+
+/* Cleared: the seals sign one after another. */
+.vault[data-mode="cleared"][data-phase="lead"] .vault-seals li,
+.vault[data-mode="cleared"][data-phase="done"] .vault-seals li {
+  animation: seal-sign 380ms var(--ease-out) calc(var(--i) * 280ms) backwards;
+}
+
+@keyframes seal-sign {
+  from {
+    opacity: 0.25;
+    transform: scale(0.82);
+  }
+}
+
+/* Buyer, wire, escrow, wire, seller. Labels hang under their marks, so the
+   wires line up with the middle of the marks. */
+.vault-row {
+  display: grid;
+  grid-template-columns: auto minmax(1.25rem, 1fr) auto minmax(1.25rem, 1fr) auto;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1.6rem;
+}
+
+.vault-party,
+.vault-core {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.vault-party > span,
+.vault-name {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--text-2);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.vault-party .wallet {
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 0.62rem;
+  background: var(--surface-1);
+  stroke: #c3c3c8;
+  stroke-width: 1.1;
+  overflow: visible;
+  transition:
+    border-color 300ms ease,
+    stroke 300ms ease;
+}
+
+.vault[data-mode="cleared"][data-phase="done"] [data-party="seller"] .wallet {
+  border-color: rgba(63, 168, 106, 0.7);
+  stroke: var(--green-text);
+}
+
+.vault-core {
+  width: clamp(5.25rem, 18vw, 8.5rem);
+  aspect-ratio: 1;
+}
+
+.vault-block {
+  width: 100%;
+  height: 100%;
+  fill: rgba(255, 255, 255, 0.02);
+  stroke: var(--tone);
+  stroke-width: 0.3;
+  stroke-linejoin: round;
+  overflow: visible;
+  transition: stroke 300ms ease;
+}
+
+.vault-block-edges {
+  fill: none;
+  stroke-opacity: 0.5;
+}
+
+.vault-lock {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 260ms ease,
+    transform 320ms var(--ease-out);
+}
+
+.vault-lock .lock {
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: var(--bg);
+  stroke: var(--tone-text);
+  stroke-width: 1.15;
+  overflow: visible;
+}
+
+.vault-lock .lock rect {
+  fill: color-mix(in srgb, var(--tone) 18%, transparent);
+}
+
+.lock-shackle {
+  transition: transform 320ms var(--ease-out);
+}
+
+.lock[data-open] .lock-shackle {
+  transform: translate(2.6px, -1.7px);
+}
+
+/* Funding: no seal until the coins are in. */
+.vault[data-mode="lock"]:is([data-phase="idle"], [data-phase="lead"]) .vault-lock {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.vault[data-mode="held"][data-phase="done"] .vault-lock {
+  animation: lock-refuse 2.8s ease-in-out infinite;
+}
+
+@keyframes lock-refuse {
+  0%,
+  36%,
+  58%,
+  100% {
+    transform: none;
+  }
+  40%,
+  48% {
+    transform: translateX(-3px);
+  }
+  44%,
+  52% {
+    transform: translateX(3px);
+  }
+}
+
+.vault-wire {
+  position: relative;
+  height: 1px;
+  background: var(--border-strong);
+}
+
+/* A wire's color wash, for when it carries or refuses something. */
+.vault-wire::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tone);
+  box-shadow: 0 0 8px var(--tone);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+/* A coin: a strip as wide as the wire, with the dot on its left edge, so
+   sliding the strip its own width runs the dot the length of the wire. */
+.vault-wire i {
+  position: absolute;
+  inset: -3px 0;
+  opacity: 0;
+}
+
+.vault-wire i::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tone);
+  box-shadow: 0 0 9px var(--tone);
+}
+
+.vault-wire i:nth-child(2) {
+  animation-delay: 300ms;
+}
+
+.vault-wire i:nth-child(3) {
+  animation-delay: 600ms;
+}
+
+.vault[data-mode="lock"][data-phase="lead"] [data-wire="in"] i,
+.vault[data-mode="cleared"][data-phase="done"] [data-wire="out"] i {
+  animation-name: coin-run;
+  animation-duration: 900ms;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.vault[data-mode="lock"][data-phase="done"] [data-wire="in"]::after,
+.vault[data-mode="cleared"][data-phase="done"] [data-wire="out"]::after {
+  opacity: 0.55;
+}
+
+@keyframes coin-run {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  14%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Held: one coin tries the wire, the wire flashes red, the coin comes back. */
+.vault[data-mode="held"][data-phase="done"] [data-wire="out"] i:first-child {
+  animation: coin-refused 2.8s ease-in-out infinite;
+}
+
+.vault[data-mode="held"][data-phase="done"] [data-wire="out"]::after {
+  animation: wire-refuse 2.8s ease-in-out infinite;
+}
+
+@keyframes coin-refused {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  10% {
+    opacity: 1;
+  }
+  36%,
+  46% {
+    opacity: 1;
+    transform: translateX(44%);
+  }
+  68% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  78%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+
+@keyframes wire-refuse {
+  0%,
+  34%,
+  70%,
+  100% {
+    opacity: 0;
+  }
+  40%,
+  52% {
+    opacity: 1;
+  }
+  46% {
+    opacity: 0.35;
+  }
+}
+
+.vault-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: var(--space-s) 0 0;
+  color: var(--text);
+  font-size: var(--step-1);
+}
+
+.vault-amount .mono {
+  min-width: 6ch;
+  font-size: 1.12em;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.vault-amount .coin {
+  color: var(--gold-text);
+}
+
+.vault-amount-state {
+  color: var(--tone-text);
+  font-size: 0.82em;
+}
+
+.vault-result {
+  min-height: 1.5em;
+  margin: 0.2rem 0 0;
+  color: var(--tone-text);
+  font-size: var(--step-0);
+  font-weight: 560;
+  text-align: center;
+  transition: opacity 300ms ease;
+}
+
+.vault[data-mode="lock"] .vault-result {
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+.vault[data-mode="cleared"]:is([data-phase="idle"], [data-phase="lead"]) .vault-result {
+  opacity: 0;
+}
+
+/* ---------- For reviewers ---------- */
+
+.reviewers > section {
+  display: grid;
+  gap: var(--space-m);
+  align-items: center;
+}
+
+.rv-visual {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.reviewers h2 {
+  max-width: 21ch;
+  font-size: var(--step-2);
+  line-height: 1.12;
+}
+
+.rv-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: var(--space-m) 0 0;
+}
+
+.rv-cta .btn[aria-disabled="true"] {
+  color: var(--text-2);
+  cursor: default;
+}
+
+.rv-cta .btn[aria-disabled="true"]:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-1);
+}
+
+.rv-scene {
+  container: rv-scene / inline-size;
+  position: relative;
+  width: 100%;
+  min-height: 20rem;
+  max-height: 31rem;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background:
+    radial-gradient(90% 70% at 66% 62%, rgba(255, 255, 255, 0.045), transparent 70%),
+    var(--surface-1);
+  overflow: hidden;
+}
+
+.rv-scene canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.rv-seats {
+  position: absolute;
+  inset: 6.5% 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0 3%;
+  list-style: none;
+}
+
+.rv-seats li {
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+  text-align: center;
+}
+
+.rv-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  margin-bottom: 0.3rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-2);
+  transition:
+    border-color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.rv-avatar .wallet {
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke: #c3c3c8;
+  stroke-width: 1.2;
+  transition: stroke 260ms ease;
+}
+
+.rv-seats li[data-state="signed"] .rv-avatar {
+  border-color: rgba(63, 168, 106, 0.75);
+}
+
+.rv-seats li[data-state="signed"] .wallet {
+  stroke: var(--green-text);
+}
+
+.rv-seats li[data-state="held"] .rv-avatar {
+  border-color: rgba(214, 69, 69, 0.8);
+}
+
+.rv-seats li[data-state="held"] .wallet {
+  stroke: var(--red-text);
+}
+
+.rv-seats li[data-signing] .rv-avatar {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 4px rgba(196, 161, 90, 0.16),
+    0 0 20px rgba(196, 161, 90, 0.4);
+}
+
+.rv-role {
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 560;
+  line-height: 1.25;
+}
+
+.rv-wallet {
+  color: var(--text-2);
+  font-size: 0.68rem;
+}
+
+/* Placed under its block by transform every frame; see ReviewerChain. */
+.rv-receipt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  border: 1px solid rgba(63, 168, 106, 0.5);
+  border-radius: 6px;
+  padding: 0.18rem 0.5rem;
+  background: rgba(8, 8, 8, 0.86);
+  color: var(--text);
+  font-size: 0.68rem;
+  white-space: nowrap;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.rv-receipt-mark {
+  color: var(--green-text);
+}
+
+.rv-receipt[data-hold] {
+  border-color: rgba(214, 69, 69, 0.6);
+}
+
+.rv-receipt[data-hold] .rv-receipt-mark {
+  color: var(--red-text);
+}
+
+.rv-escrow {
+  --tone: var(--text-2);
+  position: absolute;
+  left: 50%;
+  bottom: 5%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0.38rem 0.9rem 0.38rem 0.7rem;
+  background: rgba(10, 10, 11, 0.9);
+  color: var(--text-2);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  transition: border-color 260ms ease;
+}
+
+.rv-escrow[data-state="ready"] {
+  --tone: var(--green-text);
+  border-color: rgba(63, 168, 106, 0.6);
+}
+
+.rv-escrow[data-state="held"] {
+  --tone: var(--red-text);
+  border-color: rgba(214, 69, 69, 0.7);
+}
+
+.rv-escrow-mark {
+  display: grid;
+}
+
+.rv-escrow-mark :is(.icon, .lock) {
+  width: 1rem;
+  height: 1rem;
+  stroke: var(--gold);
+  stroke-width: 1.3;
+}
+
+.rv-escrow[data-state="held"] .lock {
+  stroke: var(--red-text);
+}
+
+.rv-escrow-name,
+.rv-count .mono {
+  color: var(--text);
+}
+
+.rv-pips {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.rv-pips i {
+  width: 7px;
+  height: 7px;
+  border: 1px solid #77777c;
+  border-radius: 50%;
+  transition:
+    background-color 260ms ease,
+    border-color 260ms ease;
+}
+
+.rv-pips i[data-on] {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.rv-escrow-state {
+  color: var(--tone);
+  font-weight: 560;
+}
+
+@container rv-scene (max-width: 27rem) {
+  .rv-escrow-name,
+  .rv-count-word {
+    display: none;
+  }
+
+  .rv-escrow {
+    gap: 0.5rem;
+    font-size: 0.74rem;
+  }
+}
+
+@container page (min-width: 60rem) {
+  /* The picture on the left this time; how it works had it on the right. */
+  .reviewers > section {
+    grid-template-columns: minmax(0, 60fr) minmax(0, 40fr);
+    column-gap: clamp(2rem, 5cqi, 5rem);
+  }
+}
+
+/* ---------- Three seats ---------- */
+
+.seats-table {
+  display: grid;
+  justify-items: center;
+  margin-top: var(--space-m);
+}
+
+/* The deal in the middle: the one escrow all three are tied to. */
+.seats-deal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0.5rem 1.2rem 0.5rem 0.75rem;
+  background: var(--surface-1);
+}
+
+.seats-deal svg {
+  width: 1.9rem;
+  height: 1.9rem;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+
+.seats-deal p {
+  display: grid;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.seats-deal strong {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.seats-deal span {
+  color: var(--text-2);
+  font-size: 0.72rem;
+}
+
+.seats-fan {
+  display: none;
+}
+
+.seats-fan path {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: stroke 220ms ease;
+}
+
+.seats-cards {
+  --link: 1.5rem;
+  display: grid;
+  gap: var(--link);
+  width: 100%;
+  margin: var(--link) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seat {
+  --tone: var(--gold);
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1rem 1.2rem 1.35rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+  transition:
+    border-color 220ms ease,
+    transform 220ms var(--ease-out);
+}
+
+.seat[data-seat="seller"] {
+  --tone: var(--green);
+}
+
+.seat[data-seat="reviewer"] {
+  --tone: #e8e8ec;
+}
+
+/* Stacked: each card hangs from the one above, down from the deal. */
+.seat::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 1px;
+  height: var(--link);
+  background: var(--border-strong);
+  transition: background-color 220ms ease;
+}
+
+.seat:hover {
+  border-color: color-mix(in srgb, var(--tone) 55%, transparent);
+  transform: translateY(-2px);
+}
+
+.seat:hover::before {
+  background: var(--tone);
+}
+
+.seat-art {
+  display: grid;
+  place-items: center;
+  height: 6.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.seat-art svg {
+  width: min(100%, 19rem);
+  height: 100%;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.seat h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.3rem;
+  font-size: var(--step-1);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+}
+
+.seat > p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--step-0);
+}
+
+/* The small pictures. Each rests on its final frame and plays a 4.8s loop. */
+.art-rail {
+  stroke: var(--border-strong);
+}
+
+.art-end {
+  stroke: #9a9aa0;
+}
+
+.art-block {
+  fill: rgba(255, 255, 255, 0.02);
+  stroke: #9a9aa0;
+  stroke-width: 0.4;
+}
+
+.art-coin {
+  fill: var(--gold);
+  opacity: 0;
+  animation: art-coin 4.8s linear infinite;
+}
+
+.art-coin:nth-of-type(3) {
+  animation-delay: 0.3s;
+}
+
+.art-coin:nth-of-type(4) {
+  animation-delay: 0.6s;
+}
+
+@keyframes art-coin {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  4%,
+  26% {
+    opacity: 1;
+  }
+  30%,
+  100% {
+    opacity: 0;
+    transform: translateX(94px);
+  }
+}
+
+.art-lock {
+  stroke: var(--gold);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: art-lock 4.8s var(--ease-out) infinite;
+}
+
+.art-lock rect {
+  fill: rgba(196, 161, 90, 0.2);
+}
+
+@keyframes art-lock {
+  0%,
+  42% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  56%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+.art-seal {
+  fill: rgba(63, 168, 106, 0.22);
+  stroke: var(--green);
+  stroke-width: 1.3;
+  animation: art-seal 4.8s ease infinite;
+}
+
+.art-seal:nth-of-type(2) {
+  animation-delay: 0.32s;
+}
+
+.art-seal:nth-of-type(3) {
+  animation-delay: 0.64s;
+}
+
+@keyframes art-seal {
+  0%,
+  6% {
+    fill: transparent;
+    stroke: #77777c;
+  }
+  12%,
+  80% {
+    fill: rgba(63, 168, 106, 0.22);
+    stroke: var(--green);
+  }
+  88%,
+  100% {
+    fill: transparent;
+    stroke: #77777c;
+  }
+}
+
+.art-pay {
+  stroke: var(--green);
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: art-pay 4.8s var(--ease-out) infinite;
+}
+
+@keyframes art-pay {
+  0%,
+  30% {
+    opacity: 1;
+    stroke-dashoffset: 1;
+  }
+  54%,
+  86% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  94%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+.art-payee {
+  stroke: var(--green);
+  animation: art-payee 4.8s ease infinite;
+}
+
+.art-paid {
+  stroke: var(--green-text);
+  stroke-width: 1.5;
+  animation: art-appear 4.8s ease infinite;
+}
+
+@keyframes art-payee {
+  0%,
+  52%,
+  94%,
+  100% {
+    stroke: #77777c;
+  }
+  58%,
+  86% {
+    stroke: var(--green);
+  }
+}
+
+@keyframes art-appear {
+  0%,
+  54%,
+  94%,
+  100% {
+    opacity: 0;
+  }
+  60%,
+  86% {
+    opacity: 1;
+  }
+}
+
+.art-sign {
+  stroke: var(--text);
+  stroke-width: 1.5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: art-sign 4.8s ease-in-out infinite;
+}
+
+@keyframes art-sign {
+  0%,
+  4% {
+    opacity: 1;
+    stroke-dashoffset: 1;
+  }
+  36%,
+  88% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  96%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+.art-drop {
+  fill: var(--gold);
+  opacity: 0;
+  animation: art-drop 4.8s var(--ease-out) infinite;
+}
+
+@keyframes art-drop {
+  0%,
+  36% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  58% {
+    opacity: 1;
+    transform: translate(74px, -4px);
+  }
+  62%,
+  100% {
+    opacity: 0;
+    transform: translate(74px, -4px);
+  }
+}
+
+.art-block-lit {
+  stroke: var(--green);
+  animation: art-payee 4.8s ease infinite;
+}
+
+.art-tick {
+  stroke: var(--green-text);
+  stroke-width: 0.55;
+  animation: art-appear 4.8s ease infinite;
+}
+
+@container page (min-width: 52rem) {
+  .seats-fan {
+    display: block;
+    width: calc(100% + 1.25rem);
+    height: 4.25rem;
+    margin-inline: -0.625rem;
+    overflow: visible;
+  }
+
+  .seats-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin-top: 0;
+  }
+
+  .seat::before {
+    display: none;
+  }
+
+  .seats-table[data-lit="buyer"] .seats-fan [data-seat="buyer"] {
+    stroke: var(--gold);
+  }
+
+  .seats-table[data-lit="seller"] .seats-fan [data-seat="seller"] {
+    stroke: var(--green);
+  }
+
+  .seats-table[data-lit="reviewer"] .seats-fan [data-seat="reviewer"] {
+    stroke: #e8e8ec;
+  }
+}
+
+/* ---------- Proof strip ---------- */
+
+.proof {
+  padding-block: var(--space-l);
+}
+
+.proof-list {
+  display: grid;
+  gap: var(--space-m);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-list li {
+  border-top: 1px solid var(--border-strong);
+  padding-top: 1.1rem;
+}
+
+.proof-stat {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0 0 0.7rem;
+}
+
+.proof-figure {
+  color: var(--text);
+  font-size: clamp(2.5rem, 1.7rem + 3vw, 4.25rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.proof-body {
+  max-width: 30rem;
+  color: var(--text-2);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.proof-body strong {
+  color: var(--text);
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+.proof-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.proof-sources a {
+  color: var(--quiet);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.proof-sources a:hover {
+  color: var(--text);
+}
+
+.proof-fine {
+  margin: var(--space-m) 0 0;
+  color: var(--quiet);
+  font-size: 0.72rem;
+}
+
+@container page (min-width: 56rem) {
+  .proof-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1.5rem, 4cqi, 3.5rem);
+  }
+}
+
+/* ---------- Final call to action ---------- */
+
+.final-cta > section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-m);
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: clamp(1.1rem, 4cqi, 3.5rem);
+  background:
+    radial-gradient(70% 110% at 100% 20%, rgba(196, 161, 90, 0.09), transparent 62%),
+    var(--surface-1);
+  overflow: hidden;
+}
+
+.cta-land {
+  min-width: 0;
+}
+
+.cta-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: var(--space-m);
+  min-width: 0;
+}
+
+.cta-copy h2 {
+  margin: 0;
+}
+
+.cta-copy .search {
+  width: 100%;
+}
+
+@container page (min-width: 56rem) {
+  .final-cta > section {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .cta-land {
+    order: 1;
+  }
+}
+
+/* ---------- Reduced motion: every picture rests on its final frame ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .home *,
+  .home *::before,
+  .home *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  [data-reveal] > section > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  .stepper-packet {
+    display: none;
+  }
+
+  .art-coin,
+  .art-drop {
+    opacity: 0;
+  }
+
+  /* Without their loops, show what each one ends on. */
+  .vault[data-mode="lock"] [data-wire="in"]::after,
+  .vault[data-mode="cleared"] [data-wire="out"]::after {
+    opacity: 0.55;
+  }
+
+  .vault[data-mode="held"] [data-wire="out"]::after {
+    opacity: 0.8;
+  }
+}

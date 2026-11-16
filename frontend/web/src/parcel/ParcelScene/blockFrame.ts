@@ -9,7 +9,9 @@ export const EXAGGERATION = 3;
 /** The block is 2 units wide. Everything else is in the same units. */
 const WIDTH = 2;
 /** Soil shown below the lowest point of the surface. */
-const SOIL_DEPTH = 0.58;
+export const SOIL_DEPTH = 0.58;
+/** The same, where the block rests on a table: a slab, not a core sample. */
+export const TABLE_SOIL_DEPTH = 0.2;
 /** Share of the container the block may fill; the rest is room to float and tilt. */
 const FILL = 0.96;
 
@@ -37,15 +39,15 @@ export interface BlockDims {
   unitsPerMeter: number;
 }
 
-export function blockDims(meta: LandMeta | null): BlockDims {
-  if (!meta) return { width: WIDTH, depth: WIDTH, top: 0.2, base: -SOIL_DEPTH, unitsPerMeter: 0 };
+export function blockDims(meta: LandMeta | null, soilDepth: number = SOIL_DEPTH): BlockDims {
+  if (!meta) return { width: WIDTH, depth: WIDTH, top: 0.2, base: -soilDepth, unitsPerMeter: 0 };
   const unitsPerMeter = WIDTH / meta.groundMeters.width;
   const relief = meta.elevation.maxMeters - meta.elevation.minMeters;
   return {
     width: WIDTH,
     depth: meta.groundMeters.depth * unitsPerMeter,
     top: relief * unitsPerMeter * EXAGGERATION,
-    base: -SOIL_DEPTH,
+    base: -soilDepth,
     unitsPerMeter,
   };
 }
@@ -59,11 +61,19 @@ export function blockCenter(dims: BlockDims): Vec3 {
  * Camera distance at which the block just fills a container of this aspect
  * ratio, seen from this angle above. It is worked out from the block's
  * bounding box, turned through every angle around the vertical axis, so the
- * block stays in frame as it rotates.
+ * block stays in frame as it rotates. `fillX` and `fillY` are the shares of
+ * the container's width and height the block may take.
  */
-export function fitDistance(aspect: number, dims: BlockDims, polar: number = VIEW.polar): number {
-  const tanV = Math.tan((VIEW.fov * Math.PI) / 360) * FILL;
-  const tanH = tanV * aspect;
+export function fitDistance(
+  aspect: number,
+  dims: BlockDims,
+  polar: number = VIEW.polar,
+  fillX: number = FILL,
+  fillY: number = FILL,
+): number {
+  const tan = Math.tan((VIEW.fov * Math.PI) / 360);
+  const tanV = tan * fillY;
+  const tanH = tan * aspect * fillX;
   const radius = Math.hypot(dims.width, dims.depth) / 2;
   const half = (dims.top - dims.base) / 2;
   const sin = Math.sin(polar);

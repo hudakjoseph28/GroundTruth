@@ -27,12 +27,18 @@ export function BlockTransition({
   mode,
   ready,
   meta,
+  origin = null,
   onDone,
 }: {
   mode: RenderMode;
   /** True once the land (or its fallback) is drawn underneath. */
   ready: boolean;
   meta: LandMeta | null;
+  /**
+   * Corners of a land block on the page the visitor just left. When given, the
+   * chain's last block starts there, so that block is seen to become this one.
+   */
+  origin?: Point[] | null;
   onDone: () => void;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -40,10 +46,10 @@ export function BlockTransition({
   const [phase, setPhase] = useState<"chain" | "handoff" | "leaving">("chain");
   const animated = mode === "webgl" || mode === "fallback";
 
-  const live = useRef({ ready, meta, slot, onDone });
+  const live = useRef({ ready, meta, slot, origin, onDone });
   useEffect(() => {
-    live.current = { ready, meta, slot, onDone };
-  }, [ready, meta, slot, onDone]);
+    live.current = { ready, meta, slot, origin, onDone };
+  }, [ready, meta, slot, origin, onDone]);
 
   const finished = useRef(false);
   const leaveTimer = useRef(0);
@@ -128,6 +134,7 @@ export function BlockTransition({
         handoffAt,
         labels: slotLabels(state.slot, chainLayout(width, height)),
         target: handoffAt === null ? null : landingCorners(state.meta),
+        origin: state.origin,
       });
 
       if (handoffAt !== null && now - handoffAt >= HANDOFF_MS) {
