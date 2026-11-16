@@ -7,3 +7,4 @@ target
 *.jpg
 *.md
 !packages/shared/README.md
+backend/test/fixtures/ogrip/*.json

@@ -1,9 +1,13 @@
+import { DEFAULT_OGRIP_TIMEOUT_MS } from "./parcels/ogrip.js";
+
 export interface ServerEnv {
   databaseUrl: string;
   port: number;
   commit: string;
   /** QuickNode Stream security token; the webhook refuses all deliveries without it. */
   quicknodeStreamToken: string | undefined;
+  /** Per-request limit for Ohio OGRIP calls, in milliseconds. */
+  ogripTimeoutMs: number;
 }
 
 export function readServerEnv(
@@ -18,7 +22,21 @@ export function readServerEnv(
     port: readPort(source.PORT),
     commit: readCommit(source.GIT_COMMIT),
     quicknodeStreamToken: source.QUICKNODE_STREAM_TOKEN?.trim() || undefined,
+    ogripTimeoutMs: readOgripTimeout(source.OGRIP_TIMEOUT_MS),
   };
+}
+
+function readOgripTimeout(value: string | undefined): number {
+  if (value === undefined || value.trim() === "")
+    return DEFAULT_OGRIP_TIMEOUT_MS;
+  if (!/^\d+$/.test(value.trim())) {
+    throw new Error("OGRIP_TIMEOUT_MS must be an integer");
+  }
+  const ms = Number(value);
+  if (ms < 500 || ms > 60_000) {
+    throw new Error("OGRIP_TIMEOUT_MS must be between 500 and 60000");
+  }
+  return ms;
 }
 
 function readPort(value: string | undefined): number {

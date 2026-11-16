@@ -1,6 +1,6 @@
 # @groundtruth/backend
 
-Express API for one parcel-report read. Responses use the v1 types from `@groundtruth/shared`.
+Express API: live Ohio parcel search and boundaries (OGRIP), the staged parcel report, staged deals, and the QuickNode webhook. Responses use the v1 types from `@groundtruth/shared`.
 
 ## Local database
 
@@ -24,6 +24,43 @@ pnpm --filter @groundtruth/backend dev
 `GET /api/health` returns `{ "status": "ok", "commit": "..." }`.
 
 `GET /api/parcels/:parcelKey/report` returns a `ParcelReport`. The parcel key is URL-encoded, for example `ohio%3A39049%3ASTAGED-DEMO`.
+
+## Parcel search (live Ohio OGRIP)
+
+These routes query Ohio's statewide parcel layer and address locator from the API. They need no database and no credentials. Code: [src/parcels/](src/parcels/).
+
+| Route | Returns |
+| --- | --- |
+| `GET /api/parcels/search?q=` | `ParcelSearchResult[]`, up to 10. `q` is trimmed and must be 3–120 characters (`400 INVALID_REQUEST` otherwise). `[]` means a valid query with no match. |
+| `GET /api/parcels/:parcelKey` | `Parcel` with the published boundary. `404 NOT_FOUND` if OGRIP has no such parcel in that county; `404 NO_COVERAGE` for a county code outside Ohio's 88. |
+| `GET /api/coverage` | `Coverage[]`: one row per county where OGRIP publishes parcels with IDs, from a live count (cached 1 hour). `evidenceKinds` stays `[]` until an evidence adapter runs on live parcels. |
+
+**How search decides.** A single token containing a digit (`010-042534`) is a parcel ID. It matches `LocalParcelID` exactly, also without dashes or dots (Licking stores the auditor's `001-000006-01.000` as `00100000601000`), and also in the statewide form `39049-010-042534`. Anything else is an address. The [OGRIP locator](https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer) normalizes it, then the API searches a 150 m, 500 m, then 1,500 m box around the located point. It returns only parcels whose **published site address** has the same house number and street name. Locator points are interpolated along street ranges and can land hundreds of meters from the lot (84 W Dodridge St lands about 400 m away), so the point alone never picks a parcel.
+
+**Field mapping.**
+
+| `Parcel` field | OGRIP source |
+| --- | --- |
+| `sourceParcelId` | `LocalParcelID` (only IDs matching `[A-Za-z0-9][A-Za-z0-9._-]*`; placeholders, vacated-road labels, and blanks are skipped) |
+| `county`, `countyFips` | `County`, mapped to its Census FIPS code; must agree with the `StateParcelID` prefix (`39049-…`) |
+| `siteAddress` | `SitusAddressAll`, with whitespace collapsed |
+| `acreage` | `LandArea` when above 0 (it tracks polygon area in acres in every county that fills it) |
+| `centroid` | ArcGIS centroid in search results; area-weighted centroid of the boundary on the parcel route |
+| `geometry.geojson` | Layer geometry in WGS84; a parcel published as several polygons becomes one `MultiPolygon` |
+| `geometry.sourceUrl` | The exact query URL the API fetched |
+| `township` | Not published by OGRIP; omitted |
+
+Owner mailing fields (`MailAddressAll`, `MailCity`, …) are never requested, and the response schema drops them if they arrive.
+
+**Failure.** Each OGRIP request has its own limit (`OGRIP_TIMEOUT_MS`, default 8000), and a whole search has twice that. A timeout returns `504 PROVIDER_TIMEOUT`. An unreachable service, HTTP error, ArcGIS error body, or unexpected shape returns `502 INTERNAL_ERROR`. Both are `retryable: true` and never contain partial or guessed parcels.
+
+**Recorded fixtures.** Route tests replay real OGRIP responses from [test/fixtures/ogrip/](test/fixtures/ogrip/) by exact URL, so they never touch the network. After changing a query, re-record from live OGRIP and review the diff:
+
+```bash
+pnpm --filter @groundtruth/backend record:ogrip
+```
+
+## Deals
 
 `GET /api/deals/:id` returns a `Deal`, and `GET /api/deals/:id/timeline` returns its `TimelineEvent[]`. Only deals seeded as public demos are readable; any other ID returns `404`. `db:seed` upserts the shared `stagedDeal` (`staged-devnet-deal`). Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 

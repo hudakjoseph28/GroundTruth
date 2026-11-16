@@ -6,6 +6,8 @@ import { prisma } from "./db.js";
 import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
 import { getDeal, getDealTimeline } from "./routes/deals.js";
 import { getHealth } from "./routes/health.js";
+import { createOgripClient, type OgripClient } from "./parcels/ogrip.js";
+import { parcelRoutes } from "./routes/parcels.js";
 import {
   quickNodeWebhook,
   type QuickNodeWebhookOptions,
@@ -14,6 +16,8 @@ import { getParcelReport } from "./routes/report.js";
 
 export interface AppOptions {
   quicknode?: Partial<QuickNodeWebhookOptions>;
+  /** Statewide parcel source. Defaults to live OGRIP. */
+  ogrip?: OgripClient;
 }
 
 export function createApp(commit: string, options: AppOptions = {}) {
@@ -27,7 +31,12 @@ export function createApp(commit: string, options: AppOptions = {}) {
     next();
   });
 
+  const parcels = parcelRoutes(options.ogrip ?? createOgripClient());
+
   app.get("/api/health", getHealth(commit));
+  app.get("/api/coverage", parcels.coverage);
+  app.get("/api/parcels/search", parcels.search);
+  app.get("/api/parcels/:parcelKey", parcels.getParcel);
   app.get("/api/parcels/:parcelKey/report", getParcelReport);
   app.get("/api/deals/:id", getDeal);
   app.get("/api/deals/:id/timeline", getDealTimeline);

@@ -1,0 +1,22 @@
+{
+  "scenario": "no-match-address",
+  "path": "/api/parcels/search?q=1600%20Pennsylvania%20Ave%20NW%2C%20Washington%2C%20DC%2020500",
+  "recordedAt": "2026-11-16T23:49:16.905Z",
+  "exchanges": [
+    {
+      "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=1600+Pennsylvania+Ave+NW%2C+Washington%2C+DC+20500&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
+      "status": 200,
+      "body": {
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "candidates": []
+      }
+    }
+  ],
+  "apiResponse": {
+    "status": 200,
+    "body": []
+  }
+}

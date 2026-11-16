@@ -1,16 +1,12 @@
-import { z } from "zod";
 import { prisma } from "../db.js";
 import { asyncRoute } from "../http/asyncRoute.js";
 import { HttpError } from "../http/errors.js";
+import { parseParcelKey } from "../parcels/parcelKey.js";
 import { toParcelReport } from "../reports/mapReport.js";
 
-const parcelKeySchema = z
-  .string()
-  .regex(/^ohio:[0-9]{5}:[A-Za-z0-9][A-Za-z0-9._-]*$/);
-
 export const getParcelReport = asyncRoute(async (req, res) => {
-  const parsed = parcelKeySchema.safeParse(readParcelKey(req.params.parcelKey));
-  if (!parsed.success) {
+  const parcelKey = readParcelKey(req.params.parcelKey);
+  if (!parseParcelKey(parcelKey)) {
     throw new HttpError(
       400,
       "INVALID_REQUEST",
@@ -20,7 +16,7 @@ export const getParcelReport = asyncRoute(async (req, res) => {
   }
 
   const parcel = await prisma.parcelRecord.findUnique({
-    where: { key: parsed.data },
+    where: { key: parcelKey },
     include: {
       report: {
         include: {

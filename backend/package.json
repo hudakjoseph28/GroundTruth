@@ -11,6 +11,7 @@
     "typecheck": "prisma generate && tsc -p tsconfig.typecheck.json",
     "test": "vitest run",
     "test:db": "vitest run --config vitest.db.config.ts",
+    "record:ogrip": "tsx scripts/record-ogrip-fixtures.ts",
     "lint": "pnpm -w exec eslint backend",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
