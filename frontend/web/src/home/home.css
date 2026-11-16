@@ -1300,3 +1300,260 @@
 .vault[data-mode="cleared"]:is([data-phase="idle"], [data-phase="lead"]) .vault-result {
   opacity: 0;
 }
+
+/* ---------- For reviewers ---------- */
+
+.reviewers > section {
+  display: grid;
+  gap: var(--space-m);
+  align-items: center;
+}
+
+.rv-visual {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.reviewers h2 {
+  max-width: 21ch;
+  font-size: var(--step-2);
+  line-height: 1.12;
+}
+
+.rv-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: var(--space-m) 0 0;
+}
+
+.rv-cta .btn[aria-disabled="true"] {
+  color: var(--text-2);
+  cursor: default;
+}
+
+.rv-cta .btn[aria-disabled="true"]:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-1);
+}
+
+.rv-scene {
+  container: rv-scene / inline-size;
+  position: relative;
+  width: 100%;
+  min-height: 20rem;
+  max-height: 31rem;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background:
+    radial-gradient(90% 70% at 66% 62%, rgba(255, 255, 255, 0.045), transparent 70%),
+    var(--surface-1);
+  overflow: hidden;
+}
+
+.rv-scene canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.rv-seats {
+  position: absolute;
+  inset: 6.5% 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 0 3%;
+  list-style: none;
+}
+
+.rv-seats li {
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+  text-align: center;
+}
+
+.rv-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  margin-bottom: 0.3rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-2);
+  transition:
+    border-color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.rv-avatar .wallet {
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke: #c3c3c8;
+  stroke-width: 1.2;
+  transition: stroke 260ms ease;
+}
+
+.rv-seats li[data-state="signed"] .rv-avatar {
+  border-color: rgba(63, 168, 106, 0.75);
+}
+
+.rv-seats li[data-state="signed"] .wallet {
+  stroke: var(--green-text);
+}
+
+.rv-seats li[data-state="held"] .rv-avatar {
+  border-color: rgba(214, 69, 69, 0.8);
+}
+
+.rv-seats li[data-state="held"] .wallet {
+  stroke: var(--red-text);
+}
+
+.rv-seats li[data-signing] .rv-avatar {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 4px rgba(196, 161, 90, 0.16),
+    0 0 20px rgba(196, 161, 90, 0.4);
+}
+
+.rv-role {
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 560;
+  line-height: 1.25;
+}
+
+.rv-wallet {
+  color: var(--text-2);
+  font-size: 0.68rem;
+}
+
+/* Placed under its block by transform every frame; see ReviewerChain. */
+.rv-receipt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  border: 1px solid rgba(63, 168, 106, 0.5);
+  border-radius: 6px;
+  padding: 0.18rem 0.5rem;
+  background: rgba(8, 8, 8, 0.86);
+  color: var(--text);
+  font-size: 0.68rem;
+  white-space: nowrap;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.rv-receipt-mark {
+  color: var(--green-text);
+}
+
+.rv-receipt[data-hold] {
+  border-color: rgba(214, 69, 69, 0.6);
+}
+
+.rv-receipt[data-hold] .rv-receipt-mark {
+  color: var(--red-text);
+}
+
+.rv-escrow {
+  --tone: var(--text-2);
+  position: absolute;
+  left: 50%;
+  bottom: 5%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0.38rem 0.9rem 0.38rem 0.7rem;
+  background: rgba(10, 10, 11, 0.9);
+  color: var(--text-2);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  transition: border-color 260ms ease;
+}
+
+.rv-escrow[data-state="ready"] {
+  --tone: var(--green-text);
+  border-color: rgba(63, 168, 106, 0.6);
+}
+
+.rv-escrow[data-state="held"] {
+  --tone: var(--red-text);
+  border-color: rgba(214, 69, 69, 0.7);
+}
+
+.rv-escrow-mark {
+  display: grid;
+}
+
+.rv-escrow-mark :is(.icon, .lock) {
+  width: 1rem;
+  height: 1rem;
+  stroke: var(--gold);
+  stroke-width: 1.3;
+}
+
+.rv-escrow[data-state="held"] .lock {
+  stroke: var(--red-text);
+}
+
+.rv-escrow-name,
+.rv-count .mono {
+  color: var(--text);
+}
+
+.rv-pips {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.rv-pips i {
+  width: 7px;
+  height: 7px;
+  border: 1px solid #77777c;
+  border-radius: 50%;
+  transition:
+    background-color 260ms ease,
+    border-color 260ms ease;
+}
+
+.rv-pips i[data-on] {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.rv-escrow-state {
+  color: var(--tone);
+  font-weight: 560;
+}
+
+@container rv-scene (max-width: 27rem) {
+  .rv-escrow-name,
+  .rv-count-word {
+    display: none;
+  }
+
+  .rv-escrow {
+    gap: 0.5rem;
+    font-size: 0.74rem;
+  }
+}
+
+@container page (min-width: 60rem) {
+  /* The picture on the left this time; how it works had it on the right. */
+  .reviewers > section {
+    grid-template-columns: minmax(0, 60fr) minmax(0, 40fr);
+    column-gap: clamp(2rem, 5cqi, 5rem);
+  }
+}
