@@ -2046,3 +2046,84 @@
     gap: clamp(1.5rem, 4cqi, 3.5rem);
   }
 }
+
+/* ---------- Final call to action ---------- */
+
+.final-cta > section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-m);
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: clamp(1.1rem, 4cqi, 3.5rem);
+  background:
+    radial-gradient(70% 110% at 100% 20%, rgba(196, 161, 90, 0.09), transparent 62%),
+    var(--surface-1);
+  overflow: hidden;
+}
+
+.cta-land {
+  min-width: 0;
+}
+
+.cta-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: var(--space-m);
+  min-width: 0;
+}
+
+.cta-copy h2 {
+  margin: 0;
+}
+
+.cta-copy .search {
+  width: 100%;
+}
+
+@container page (min-width: 56rem) {
+  .final-cta > section {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .cta-land {
+    order: 1;
+  }
+}
+
+/* ---------- Reduced motion: every picture rests on its final frame ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .home *,
+  .home *::before,
+  .home *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  [data-reveal] > section > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  .stepper-packet {
+    display: none;
+  }
+
+  .art-coin,
+  .art-drop {
+    opacity: 0;
+  }
+
+  /* Without their loops, show what each one ends on. */
+  .vault[data-mode="lock"] [data-wire="in"]::after,
+  .vault[data-mode="cleared"] [data-wire="out"]::after {
+    opacity: 0.55;
+  }
+
+  .vault[data-mode="held"] [data-wire="out"]::after {
+    opacity: 0.8;
+  }
+}

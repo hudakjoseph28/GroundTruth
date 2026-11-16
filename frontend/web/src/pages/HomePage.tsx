@@ -1,3 +1,4 @@
+import { FinalCta } from "../home/FinalCta";
 import { Hero } from "../home/Hero";
 import { HowItWorks } from "../home/HowItWorks";
 import { ProofStrip } from "../home/ProofStrip";
@@ -18,6 +19,7 @@ export function HomePage() {
       <Reviewers />
       <Seats />
       <ProofStrip />
+      <FinalCta />
     </div>
   );
 }
