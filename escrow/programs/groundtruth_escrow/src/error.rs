@@ -16,7 +16,7 @@ pub enum EscrowError {
     TooManyReviewers,
     #[msg("Duplicate reviewer wallet")]
     DuplicateReviewer,
-    #[msg("Invalid reviewer assignment: wallet cannot be default or buyer")]
+    #[msg("Invalid reviewer assignment: wallet cannot be default, buyer, or seller")]
     InvalidReviewerAssignment,
     #[msg("Only the bound buyer can perform this action")]
     UnauthorizedBuyer,
@@ -30,4 +30,12 @@ pub enum EscrowError {
     InvalidSourceOwner,
     #[msg("Vault token balance does not match the expected escrow amount")]
     VaultAmountMismatch,
+    #[msg("Reviewer is not assigned to this deal")]
+    UnassignedReviewer,
+    #[msg("Reviewer role does not match assigned role")]
+    InvalidReviewerRole,
+    #[msg("Reviewer has already approved this deal")]
+    DuplicateApproval,
+    #[msg("Deal must have at least one required reviewer")]
+    NoRequiredReviewers,
 }

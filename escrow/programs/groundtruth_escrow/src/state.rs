@@ -84,6 +84,23 @@ pub struct DealFunded {
     pub amount: u64,
 }
 
+#[event]
+pub struct ApprovalSigned {
+    pub deal: Pubkey,
+    pub deal_id: [u8; 32],
+    pub reviewer: Pubkey,
+    pub role: ReviewerRole,
+}
+
+#[event]
+pub struct HoldPlaced {
+    pub deal: Pubkey,
+    pub deal_id: [u8; 32],
+    pub reviewer: Pubkey,
+    pub role: ReviewerRole,
+    pub reason_code: HoldReason,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
