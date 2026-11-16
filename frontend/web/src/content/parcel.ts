@@ -27,12 +27,23 @@ export const LAND = {
   flat: {
     reduced: "Shown flat because motion is reduced.",
     fallback: "Shown flat because WebGL is unavailable.",
+    chosen: "Flat aerial view of the parcel.",
   },
   loading: "Loading the land…",
   /** What the land block says when it has keyboard focus. */
   stage: {
     turning: "Land block. Arrow keys turn it. Enter opens Explore the area.",
     still: "Aerial image of the parcel. Enter opens Explore the area.",
+  },
+  view: {
+    label: "Land view",
+    three: "3D",
+    two: "2D",
+    noWebgl: "3D needs WebGL, which this browser does not provide.",
+    reduced: "3D is off while motion is reduced.",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    reset: "Reset view",
   },
 } as const;
 

@@ -89,6 +89,95 @@
 
 /* ---------- Land block ---------- */
 
+.land-frame {
+  position: relative;
+}
+
+.land-view {
+  position: absolute;
+  z-index: 2;
+  top: 0.65rem;
+  right: 0.65rem;
+}
+
+.land-swap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.land-pane {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms var(--ease-out, ease);
+}
+
+.land-pane:not([hidden]) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.flat-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #050505;
+}
+
+.flat-view-stage {
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.flat-view .land-flat {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+.flat-zoom {
+  position: absolute;
+  z-index: 2;
+  left: 0.65rem;
+  bottom: 0.65rem;
+  display: inline-flex;
+  gap: 0.25rem;
+  border: 1px solid var(--border-strong, #333);
+  border-radius: 6px;
+  padding: 2px;
+  background: rgba(11, 11, 12, 0.82);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.flat-zoom button {
+  min-width: 2rem;
+  min-height: 2rem;
+  border: 0;
+  border-radius: 4px;
+  padding: 0;
+  background: none;
+  color: var(--text, #f5f5f7);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.flat-zoom button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .land-pane {
+    transition: none;
+  }
+}
+
 .land {
   margin: 0;
   min-width: 0;
