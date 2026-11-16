@@ -21,9 +21,16 @@ export interface ChainFrame {
   labels: readonly string[] | null;
   /** Where the land block's eight corners sit on screen, when there is one. */
   target: readonly Point[] | null;
+  /**
+   * Where the land block was on the page the visitor came from, as eight
+   * corners in boxCorners order. The chain's last block starts there.
+   */
+  origin: Point[] | null;
 }
 
 export const HANDOFF_MS = 620;
+/** A block arriving from elsewhere on the previous page takes this long to join the chain. */
+export const ARRIVE_MS = 560;
 
 const CUBE: BlockDims = { width: 1.5, depth: 1.5, top: 0.75, base: -0.75, unitsPerMeter: 0 };
 const WHITE: readonly [number, number, number] = [1, 1, 1];
@@ -49,7 +56,7 @@ export function chainLayout(width: number, height: number) {
 let cubeCache: { size: number; corners: Point[] } | null = null;
 
 /** A cube's corners around its center, seen from the land block's camera. */
-function cubeCorners(size: number): Point[] {
+export function cubeCorners(size: number): Point[] {
   if (cubeCache?.size !== size) {
     const project = stageProjector(size, size, CUBE);
     cubeCache = {
@@ -63,7 +70,8 @@ function cubeCorners(size: number): Point[] {
   return cubeCache.corners;
 }
 
-function drawBox(
+/** One wireframe block: twelve edges and a glowing point on each corner. */
+export function drawBox(
   context: CanvasRenderingContext2D,
   corners: readonly Point[],
   stroke: string,
@@ -98,7 +106,7 @@ function drawBox(
 }
 
 export function drawChain(context: CanvasRenderingContext2D, frame: ChainFrame): void {
-  const { width, height, now, handoffAt, labels, target } = frame;
+  const { width, height, now, handoffAt, labels, target, origin } = frame;
   const { count, spacing, size, centers } = chainLayout(width, height);
   const offsets = cubeCorners(size);
   const last = count - 1;
@@ -141,14 +149,24 @@ export function drawChain(context: CanvasRenderingContext2D, frame: ChainFrame):
   }
 
   centers.forEach((center, index) => {
-    const appear = easeOut((now - index * APPEAR_STEP) / APPEAR_MS);
-    if (appear <= 0) return;
     const isLast = index === last;
+    // A block carried over from the previous page is there from the first frame.
+    const carried = isLast && origin !== null;
+    const appear = carried ? 1 : easeOut((now - index * APPEAR_STEP) / APPEAR_MS);
+    if (appear <= 0) return;
     const scale = 0.7 + 0.3 * appear;
     let corners = offsets.map((offset) => ({
       x: center.x + offset.x * scale,
       y: center.y + offset.y * scale,
     }));
+    // It flies in from where it was, gold, and settles into the chain as white.
+    const arrive = carried ? easeInOut(now / ARRIVE_MS) : 1;
+    if (carried && arrive < 1) {
+      corners = corners.map((corner, at) => {
+        const from = origin[at] ?? corner;
+        return { x: mix(from.x, corner.x, arrive), y: mix(from.y, corner.y, arrive) };
+      });
+    }
     const lit = pulseX === null ? 0 : clamp(1 - Math.abs(pulseX - center.x) / (spacing * 0.55));
 
     if (isLast && handoff !== null) {
@@ -173,6 +191,15 @@ export function drawChain(context: CanvasRenderingContext2D, frame: ChainFrame):
         1.1 + 0.9 * flash,
         4 + 14 * flash,
       );
+    } else if (arrive < 1) {
+      drawBox(
+        context,
+        corners,
+        color(GOLD, WHITE, arrive, 0.95 - 0.45 * arrive),
+        color(GOLD, WHITE, arrive, 1),
+        1 + 0.6 * (1 - arrive),
+        2 + 12 * (1 - arrive),
+      );
     } else {
       const alpha = appear * (isLast ? 1 : rest);
       drawBox(
@@ -186,7 +213,7 @@ export function drawChain(context: CanvasRenderingContext2D, frame: ChainFrame):
     }
 
     const label = labels?.[index];
-    const labelAlpha = appear * rest;
+    const labelAlpha = appear * rest * (carried ? clamp((now - ARRIVE_MS * 0.6) / 200) : 1);
     if (label && labelAlpha > 0) {
       context.font = `${spacing < 130 ? 10 : 11}px ui-monospace, SFMono-Regular, Menlo, monospace`;
       context.textAlign = "center";
