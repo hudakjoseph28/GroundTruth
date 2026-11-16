@@ -1557,3 +1557,415 @@
     column-gap: clamp(2rem, 5cqi, 5rem);
   }
 }
+
+/* ---------- Three seats ---------- */
+
+.seats-table {
+  display: grid;
+  justify-items: center;
+  margin-top: var(--space-m);
+}
+
+/* The deal in the middle: the one escrow all three are tied to. */
+.seats-deal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0.5rem 1.2rem 0.5rem 0.75rem;
+  background: var(--surface-1);
+}
+
+.seats-deal svg {
+  width: 1.9rem;
+  height: 1.9rem;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+
+.seats-deal p {
+  display: grid;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.seats-deal strong {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.seats-deal span {
+  color: var(--text-2);
+  font-size: 0.72rem;
+}
+
+.seats-fan {
+  display: none;
+}
+
+.seats-fan path {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: stroke 220ms ease;
+}
+
+.seats-cards {
+  --link: 1.5rem;
+  display: grid;
+  gap: var(--link);
+  width: 100%;
+  margin: var(--link) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seat {
+  --tone: var(--gold);
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1rem 1.2rem 1.35rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+  transition:
+    border-color 220ms ease,
+    transform 220ms var(--ease-out);
+}
+
+.seat[data-seat="seller"] {
+  --tone: var(--green);
+}
+
+.seat[data-seat="reviewer"] {
+  --tone: #e8e8ec;
+}
+
+/* Stacked: each card hangs from the one above, down from the deal. */
+.seat::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 1px;
+  height: var(--link);
+  background: var(--border-strong);
+  transition: background-color 220ms ease;
+}
+
+.seat:hover {
+  border-color: color-mix(in srgb, var(--tone) 55%, transparent);
+  transform: translateY(-2px);
+}
+
+.seat:hover::before {
+  background: var(--tone);
+}
+
+.seat-art {
+  display: grid;
+  place-items: center;
+  height: 6.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+
+.seat-art svg {
+  width: min(100%, 19rem);
+  height: 100%;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.seat h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.3rem;
+  font-size: var(--step-1);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+}
+
+.seat > p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--step-0);
+}
+
+/* The small pictures. Each rests on its final frame and plays a 4.8s loop. */
+.art-rail {
+  stroke: var(--border-strong);
+}
+
+.art-end {
+  stroke: #9a9aa0;
+}
+
+.art-block {
+  fill: rgba(255, 255, 255, 0.02);
+  stroke: #9a9aa0;
+  stroke-width: 0.4;
+}
+
+.art-coin {
+  fill: var(--gold);
+  opacity: 0;
+  animation: art-coin 4.8s linear infinite;
+}
+
+.art-coin:nth-of-type(3) {
+  animation-delay: 0.3s;
+}
+
+.art-coin:nth-of-type(4) {
+  animation-delay: 0.6s;
+}
+
+@keyframes art-coin {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  4%,
+  26% {
+    opacity: 1;
+  }
+  30%,
+  100% {
+    opacity: 0;
+    transform: translateX(94px);
+  }
+}
+
+.art-lock {
+  stroke: var(--gold);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: art-lock 4.8s var(--ease-out) infinite;
+}
+
+.art-lock rect {
+  fill: rgba(196, 161, 90, 0.2);
+}
+
+@keyframes art-lock {
+  0%,
+  42% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  56%,
+  92% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+.art-seal {
+  fill: rgba(63, 168, 106, 0.22);
+  stroke: var(--green);
+  stroke-width: 1.3;
+  animation: art-seal 4.8s ease infinite;
+}
+
+.art-seal:nth-of-type(2) {
+  animation-delay: 0.32s;
+}
+
+.art-seal:nth-of-type(3) {
+  animation-delay: 0.64s;
+}
+
+@keyframes art-seal {
+  0%,
+  6% {
+    fill: transparent;
+    stroke: #77777c;
+  }
+  12%,
+  80% {
+    fill: rgba(63, 168, 106, 0.22);
+    stroke: var(--green);
+  }
+  88%,
+  100% {
+    fill: transparent;
+    stroke: #77777c;
+  }
+}
+
+.art-pay {
+  stroke: var(--green);
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: art-pay 4.8s var(--ease-out) infinite;
+}
+
+@keyframes art-pay {
+  0%,
+  30% {
+    opacity: 1;
+    stroke-dashoffset: 1;
+  }
+  54%,
+  86% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  94%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+.art-payee {
+  stroke: var(--green);
+  animation: art-payee 4.8s ease infinite;
+}
+
+.art-paid {
+  stroke: var(--green-text);
+  stroke-width: 1.5;
+  animation: art-appear 4.8s ease infinite;
+}
+
+@keyframes art-payee {
+  0%,
+  52%,
+  94%,
+  100% {
+    stroke: #77777c;
+  }
+  58%,
+  86% {
+    stroke: var(--green);
+  }
+}
+
+@keyframes art-appear {
+  0%,
+  54%,
+  94%,
+  100% {
+    opacity: 0;
+  }
+  60%,
+  86% {
+    opacity: 1;
+  }
+}
+
+.art-sign {
+  stroke: var(--text);
+  stroke-width: 1.5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: art-sign 4.8s ease-in-out infinite;
+}
+
+@keyframes art-sign {
+  0%,
+  4% {
+    opacity: 1;
+    stroke-dashoffset: 1;
+  }
+  36%,
+  88% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  96%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+
+.art-drop {
+  fill: var(--gold);
+  opacity: 0;
+  animation: art-drop 4.8s var(--ease-out) infinite;
+}
+
+@keyframes art-drop {
+  0%,
+  36% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  58% {
+    opacity: 1;
+    transform: translate(74px, -4px);
+  }
+  62%,
+  100% {
+    opacity: 0;
+    transform: translate(74px, -4px);
+  }
+}
+
+.art-block-lit {
+  stroke: var(--green);
+  animation: art-payee 4.8s ease infinite;
+}
+
+.art-tick {
+  stroke: var(--green-text);
+  stroke-width: 0.55;
+  animation: art-appear 4.8s ease infinite;
+}
+
+@container page (min-width: 52rem) {
+  .seats-fan {
+    display: block;
+    width: calc(100% + 1.25rem);
+    height: 4.25rem;
+    margin-inline: -0.625rem;
+    overflow: visible;
+  }
+
+  .seats-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin-top: 0;
+  }
+
+  .seat::before {
+    display: none;
+  }
+
+  .seats-table[data-lit="buyer"] .seats-fan [data-seat="buyer"] {
+    stroke: var(--gold);
+  }
+
+  .seats-table[data-lit="seller"] .seats-fan [data-seat="seller"] {
+    stroke: var(--green);
+  }
+
+  .seats-table[data-lit="reviewer"] .seats-fan [data-seat="reviewer"] {
+    stroke: #e8e8ec;
+  }
+}
