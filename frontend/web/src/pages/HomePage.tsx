@@ -1,5 +1,6 @@
 import { Hero } from "../home/Hero";
 import { HowItWorks } from "../home/HowItWorks";
+import { ProofStrip } from "../home/ProofStrip";
 import { Reviewers } from "../home/Reviewers";
 import { Seats } from "../home/Seats";
 import "../home/home.css";
@@ -7,7 +8,7 @@ import "../home/home.css";
 /**
  * The product homepage. The first screen is the search beside a parcel whose
  * record rises out of it; under it, how a purchase runs, what reviewers do,
- * and who it is for.
+ * who it is for, and the sourced numbers behind it.
  */
 export function HomePage() {
   return (
@@ -16,6 +17,7 @@ export function HomePage() {
       <HowItWorks />
       <Reviewers />
       <Seats />
+      <ProofStrip />
     </div>
   );
 }

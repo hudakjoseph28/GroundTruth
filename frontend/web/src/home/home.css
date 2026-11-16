@@ -1969,3 +1969,80 @@
     stroke: #e8e8ec;
   }
 }
+
+/* ---------- Proof strip ---------- */
+
+.proof {
+  padding-block: var(--space-l);
+}
+
+.proof-list {
+  display: grid;
+  gap: var(--space-m);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-list li {
+  border-top: 1px solid var(--border-strong);
+  padding-top: 1.1rem;
+}
+
+.proof-stat {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0 0 0.7rem;
+}
+
+.proof-figure {
+  color: var(--text);
+  font-size: clamp(2.5rem, 1.7rem + 3vw, 4.25rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.proof-body {
+  max-width: 30rem;
+  color: var(--text-2);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.proof-body strong {
+  color: var(--text);
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+.proof-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.proof-sources a {
+  color: var(--quiet);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.proof-sources a:hover {
+  color: var(--text);
+}
+
+.proof-fine {
+  margin: var(--space-m) 0 0;
+  color: var(--quiet);
+  font-size: 0.72rem;
+}
+
+@container page (min-width: 56rem) {
+  .proof-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1.5rem, 4cqi, 3.5rem);
+  }
+}
