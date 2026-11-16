@@ -91,7 +91,8 @@ export function explorerAddressUrl(address: string): string {
   return `https://explorer.solana.com/address/${encodeURIComponent(address)}?cluster=devnet`;
 }
 
-function stepsFor(check: Check, signature: string | undefined): LedgerRecord["steps"] {
+/** How far a check has come: evidence, review, on-chain. */
+export function stepsFor(check: Check, signature: string | undefined): LedgerRecord["steps"] {
   if (signature) return ["done", "done", "done"];
   switch (check.status) {
     case "unknown":

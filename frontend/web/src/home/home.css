@@ -447,3 +447,856 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ---------- How it works ---------- */
+
+.how-flow {
+  margin-top: var(--space-m);
+  outline: none;
+}
+
+.stepper {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  --block: clamp(2.5rem, 2rem + 2vw, 3.4rem);
+}
+
+/* The line through the four blocks, with a packet running along it. */
+.stepper-track {
+  position: absolute;
+  left: 12.5%;
+  right: 12.5%;
+  top: calc(var(--block) / 2);
+  height: 1px;
+  background: var(--border-strong);
+}
+
+.stepper-packet {
+  position: absolute;
+  inset: -3px 0;
+  opacity: 0;
+}
+
+.stepper-packet::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 1px rgba(255, 255, 255, 0.85);
+}
+
+.stepper[data-live="true"] .stepper-packet {
+  animation: run-across 3.6s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+@keyframes run-across {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  8%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.stepper-node {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.2rem;
+  min-width: 0;
+  border: 0;
+  padding: 0 0.2rem 1rem;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.step-block {
+  width: var(--block);
+  height: var(--block);
+  margin-bottom: 0.45rem;
+  border-radius: 50%;
+  background: var(--bg);
+  fill: none;
+  stroke: #77777c;
+  stroke-width: 0.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+  transition:
+    stroke 220ms ease,
+    transform 220ms var(--ease-out);
+}
+
+.step-block-shell {
+  fill: rgba(255, 255, 255, 0.015);
+}
+
+.step-block-point {
+  fill: currentColor;
+  stroke: none;
+}
+
+.stepper-node[aria-selected="true"] {
+  color: var(--text);
+}
+
+.stepper-node[aria-selected="true"] .step-block {
+  stroke: var(--gold);
+  transform: scale(1.1);
+}
+
+.stepper-node[aria-selected="true"] .step-block-shell {
+  fill: rgba(196, 161, 90, 0.1);
+}
+
+.stepper-title {
+  font-size: var(--step-0);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.stepper-line {
+  display: none;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+/* The selected step's mark: a short gold bar. */
+.stepper-node::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 1.25rem);
+  bottom: 0;
+  width: 2.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--gold);
+  opacity: 0;
+  transform: scaleX(0.3);
+  transition:
+    opacity 220ms ease,
+    transform 220ms var(--ease-out);
+}
+
+.stepper-node[aria-selected="true"]::after {
+  opacity: 1;
+  transform: none;
+}
+
+/* All four panels share one cell, so choosing a step is a crossfade and the
+   page never changes height. */
+.how-panels {
+  display: grid;
+  margin-top: var(--space-s);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background:
+    radial-gradient(80% 120% at 100% 0%, rgba(196, 161, 90, 0.05), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.008));
+}
+
+.how-panel {
+  grid-area: 1 / 1;
+  display: grid;
+  gap: var(--space-m);
+  align-content: start;
+  min-width: 0;
+  padding: clamp(1.1rem, 3.2cqi, 2.75rem);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 380ms var(--ease-out),
+    visibility 0s linear 380ms;
+}
+
+.how-panel[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 380ms var(--ease-out),
+    visibility 0s;
+}
+
+/* Stacked: the picture first, then the words. */
+.how-visual {
+  order: -1;
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.how-art {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: clamp(16rem, 12rem + 14vw, 25rem);
+}
+
+.how-note {
+  margin: 0;
+  color: var(--quiet);
+  font-size: 0.7rem;
+  text-align: right;
+}
+
+.how-lead {
+  margin: 0;
+  max-width: 22ch;
+  font-size: var(--step-2);
+  font-weight: 620;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+
+.how-body {
+  max-width: 34rem;
+  margin: 0.9rem 0 0;
+  color: var(--text-2);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.how-outcome {
+  margin-top: var(--space-m);
+}
+
+.how-outcome .segmented button {
+  min-width: 5.5rem;
+  min-height: 2.5rem;
+}
+
+/* The parcel step's four callouts: the picture lights whichever is on. */
+.callouts {
+  display: grid;
+  gap: 0.2rem;
+  margin: var(--space-m) 0 0 -0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.callouts li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-2);
+  font-size: var(--step-0);
+  transition:
+    color 200ms ease,
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.callouts li::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #77777c;
+  border-radius: 50%;
+  transition:
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.callouts li[data-on] {
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+}
+
+.callouts li[data-on]::before {
+  border-color: var(--gold);
+  background: var(--gold);
+  box-shadow: 0 0 10px var(--gold);
+}
+
+.callouts a {
+  text-decoration: underline;
+  text-decoration-color: var(--text-3);
+  text-underline-offset: 4px;
+}
+
+@container page (min-width: 40rem) {
+  .stepper-line {
+    display: block;
+  }
+}
+
+@container page (min-width: 58rem) {
+  .how-panel {
+    grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
+    align-items: center;
+    align-content: center;
+    column-gap: clamp(1.5rem, 4cqi, 4rem);
+  }
+
+  .how-visual {
+    order: 0;
+  }
+}
+
+/* ---------- How it works: the parcel tile ---------- */
+
+.tile {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.tile-space {
+  display: grid;
+  place-items: center;
+  width: min(100%, 34rem);
+  aspect-ratio: 1.5;
+  perspective: 1400px;
+}
+
+.tile-plane {
+  position: relative;
+  width: 58%;
+  aspect-ratio: 1;
+  transform: rotateX(57deg) rotateZ(-36deg);
+  transform-style: preserve-3d;
+  animation: tile-float 6.5s ease-in-out infinite alternate;
+}
+
+/* Its shadow, a way below it: that distance is what makes it float. */
+.tile-plane::before {
+  content: "";
+  position: absolute;
+  inset: 2%;
+  background: rgba(0, 0, 0, 0.9);
+  filter: blur(26px);
+  transform: translateZ(-110px);
+}
+
+/* The slab under the picture, darker with depth. */
+.tile-soil {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, #7a5a3c, #17110b calc(var(--layer) * 6.5%));
+  transform: translateZ(calc(var(--layer) * -2.5px));
+}
+
+.tile-plane .land-flat {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.tile-plane .land-flat image,
+.tile-plane .land-flat-outline {
+  transition:
+    opacity 320ms ease,
+    stroke-width 320ms ease;
+}
+
+.tile[data-focus="imagery"] .land-flat image:first-of-type {
+  opacity: 0.95;
+}
+
+.tile-plane .land-flat-outline {
+  stroke-width: 2;
+}
+
+.tile[data-focus="boundary"] .land-flat-outline {
+  stroke-width: 4;
+}
+
+.tile[data-focus="boundary"] .land-flat image:first-of-type {
+  opacity: 0.24;
+}
+
+/* The row the elevation profile is read along. */
+.tile-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--row) * 100%);
+  height: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 10px var(--gold);
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+.tile[data-focus="elevation"] .tile-scan {
+  opacity: 1;
+}
+
+@keyframes tile-float {
+  from {
+    transform: rotateX(57deg) rotateZ(-36deg) translateZ(0);
+  }
+  to {
+    transform: rotateX(57deg) rotateZ(-30deg) translateZ(16px);
+  }
+}
+
+.tile-profile {
+  display: grid;
+  gap: 0.15rem;
+  width: min(100%, 22rem);
+  color: var(--quiet);
+  font-size: 0.66rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.tile-profile svg {
+  display: block;
+  width: 100%;
+  height: 2.2rem;
+  overflow: visible;
+}
+
+.tile-profile polyline {
+  fill: none;
+  stroke: #77777c;
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke 320ms ease;
+}
+
+.tile[data-focus="elevation"] .tile-profile polyline {
+  stroke: var(--gold);
+}
+
+.tile-label {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+/* ---------- How it works: the ledger cards ---------- */
+
+.checks-stack {
+  width: min(100%, 31rem);
+  text-align: left;
+}
+
+/* ---------- How it works: the escrow diagram ---------- */
+
+.vault {
+  --tone: var(--gold);
+  --tone-text: var(--gold-text);
+  display: grid;
+  justify-items: center;
+  width: min(100%, 35rem);
+}
+
+.vault[data-mode="held"] {
+  --tone: var(--red);
+  --tone-text: var(--red-text);
+}
+
+.vault[data-mode="cleared"][data-phase="done"] {
+  --tone: var(--green);
+  --tone-text: var(--green-text);
+}
+
+/* The three reviewer slots, each with a short line down toward the escrow. */
+.vault-seals {
+  display: flex;
+  justify-content: center;
+  gap: clamp(0.4rem, 2.5vw, 1.6rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vault-seals li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+  min-width: 4.3rem;
+  padding-bottom: 1.15rem;
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+.vault-seals li::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0.15rem;
+  width: 1px;
+  height: 0.75rem;
+  background: var(--border-strong);
+}
+
+.vault-seal {
+  width: 1.9rem;
+  height: 1.9rem;
+  margin-bottom: 0.2rem;
+  fill: none;
+  stroke: #77777c;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.vault-seal-state {
+  color: var(--text-2);
+  font-size: 0.68rem;
+}
+
+.vault-seals li[data-seal="waiting"] .vault-seal circle {
+  stroke-dasharray: 2.6 2.3;
+}
+
+.vault-seals li[data-seal="signed"] .vault-seal {
+  stroke: var(--green);
+}
+
+.vault-seals li[data-seal="signed"] .vault-seal circle {
+  fill: rgba(63, 168, 106, 0.14);
+}
+
+.vault-seals li[data-seal="signed"] .vault-seal-state {
+  color: var(--green-text);
+}
+
+.vault-seals li[data-seal="held"] .vault-seal {
+  stroke: var(--red);
+}
+
+.vault-seals li[data-seal="held"] .vault-seal circle {
+  fill: rgba(214, 69, 69, 0.14);
+}
+
+.vault-seals li[data-seal="held"] .vault-seal-state {
+  color: var(--red-text);
+}
+
+/* Cleared: the seals sign one after another. */
+.vault[data-mode="cleared"][data-phase="lead"] .vault-seals li,
+.vault[data-mode="cleared"][data-phase="done"] .vault-seals li {
+  animation: seal-sign 380ms var(--ease-out) calc(var(--i) * 280ms) backwards;
+}
+
+@keyframes seal-sign {
+  from {
+    opacity: 0.25;
+    transform: scale(0.82);
+  }
+}
+
+/* Buyer, wire, escrow, wire, seller. Labels hang under their marks, so the
+   wires line up with the middle of the marks. */
+.vault-row {
+  display: grid;
+  grid-template-columns: auto minmax(1.25rem, 1fr) auto minmax(1.25rem, 1fr) auto;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1.6rem;
+}
+
+.vault-party,
+.vault-core {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.vault-party > span,
+.vault-name {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--text-2);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.vault-party .wallet {
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 0.62rem;
+  background: var(--surface-1);
+  stroke: #c3c3c8;
+  stroke-width: 1.1;
+  overflow: visible;
+  transition:
+    border-color 300ms ease,
+    stroke 300ms ease;
+}
+
+.vault[data-mode="cleared"][data-phase="done"] [data-party="seller"] .wallet {
+  border-color: rgba(63, 168, 106, 0.7);
+  stroke: var(--green-text);
+}
+
+.vault-core {
+  width: clamp(5.25rem, 18vw, 8.5rem);
+  aspect-ratio: 1;
+}
+
+.vault-block {
+  width: 100%;
+  height: 100%;
+  fill: rgba(255, 255, 255, 0.02);
+  stroke: var(--tone);
+  stroke-width: 0.3;
+  stroke-linejoin: round;
+  overflow: visible;
+  transition: stroke 300ms ease;
+}
+
+.vault-block-edges {
+  fill: none;
+  stroke-opacity: 0.5;
+}
+
+.vault-lock {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 260ms ease,
+    transform 320ms var(--ease-out);
+}
+
+.vault-lock .lock {
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: var(--bg);
+  stroke: var(--tone-text);
+  stroke-width: 1.15;
+  overflow: visible;
+}
+
+.vault-lock .lock rect {
+  fill: color-mix(in srgb, var(--tone) 18%, transparent);
+}
+
+.lock-shackle {
+  transition: transform 320ms var(--ease-out);
+}
+
+.lock[data-open] .lock-shackle {
+  transform: translate(2.6px, -1.7px);
+}
+
+/* Funding: no seal until the coins are in. */
+.vault[data-mode="lock"]:is([data-phase="idle"], [data-phase="lead"]) .vault-lock {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.vault[data-mode="held"][data-phase="done"] .vault-lock {
+  animation: lock-refuse 2.8s ease-in-out infinite;
+}
+
+@keyframes lock-refuse {
+  0%,
+  36%,
+  58%,
+  100% {
+    transform: none;
+  }
+  40%,
+  48% {
+    transform: translateX(-3px);
+  }
+  44%,
+  52% {
+    transform: translateX(3px);
+  }
+}
+
+.vault-wire {
+  position: relative;
+  height: 1px;
+  background: var(--border-strong);
+}
+
+/* A wire's color wash, for when it carries or refuses something. */
+.vault-wire::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tone);
+  box-shadow: 0 0 8px var(--tone);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+/* A coin: a strip as wide as the wire, with the dot on its left edge, so
+   sliding the strip its own width runs the dot the length of the wire. */
+.vault-wire i {
+  position: absolute;
+  inset: -3px 0;
+  opacity: 0;
+}
+
+.vault-wire i::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tone);
+  box-shadow: 0 0 9px var(--tone);
+}
+
+.vault-wire i:nth-child(2) {
+  animation-delay: 300ms;
+}
+
+.vault-wire i:nth-child(3) {
+  animation-delay: 600ms;
+}
+
+.vault[data-mode="lock"][data-phase="lead"] [data-wire="in"] i,
+.vault[data-mode="cleared"][data-phase="done"] [data-wire="out"] i {
+  animation-name: coin-run;
+  animation-duration: 900ms;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.vault[data-mode="lock"][data-phase="done"] [data-wire="in"]::after,
+.vault[data-mode="cleared"][data-phase="done"] [data-wire="out"]::after {
+  opacity: 0.55;
+}
+
+@keyframes coin-run {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  14%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* Held: one coin tries the wire, the wire flashes red, the coin comes back. */
+.vault[data-mode="held"][data-phase="done"] [data-wire="out"] i:first-child {
+  animation: coin-refused 2.8s ease-in-out infinite;
+}
+
+.vault[data-mode="held"][data-phase="done"] [data-wire="out"]::after {
+  animation: wire-refuse 2.8s ease-in-out infinite;
+}
+
+@keyframes coin-refused {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  10% {
+    opacity: 1;
+  }
+  36%,
+  46% {
+    opacity: 1;
+    transform: translateX(44%);
+  }
+  68% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  78%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+
+@keyframes wire-refuse {
+  0%,
+  34%,
+  70%,
+  100% {
+    opacity: 0;
+  }
+  40%,
+  52% {
+    opacity: 1;
+  }
+  46% {
+    opacity: 0.35;
+  }
+}
+
+.vault-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: var(--space-s) 0 0;
+  color: var(--text);
+  font-size: var(--step-1);
+}
+
+.vault-amount .mono {
+  min-width: 6ch;
+  font-size: 1.12em;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.vault-amount .coin {
+  color: var(--gold-text);
+}
+
+.vault-amount-state {
+  color: var(--tone-text);
+  font-size: 0.82em;
+}
+
+.vault-result {
+  min-height: 1.5em;
+  margin: 0.2rem 0 0;
+  color: var(--tone-text);
+  font-size: var(--step-0);
+  font-weight: 560;
+  text-align: center;
+  transition: opacity 300ms ease;
+}
+
+.vault[data-mode="lock"] .vault-result {
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+.vault[data-mode="cleared"]:is([data-phase="idle"], [data-phase="lead"]) .vault-result {
+  opacity: 0;
+}
