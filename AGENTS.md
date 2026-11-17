@@ -39,7 +39,7 @@ On your first task, skim **every Markdown file in this repository once**; the fu
 
 ## Where code goes
 
-`frontend/web` has the homepage, staged search, and parcel view. `backend` serves the staged parcel report from Postgres. `frontend/mobile` and `escrow` are still empty. Put new files in the folder that matches the surface.
+`frontend/web` has the homepage, search over the two fixture parcels (golden `ohio:39049:230-000918` and Licking `ohio:39089:00500729609000`), and the parcel view. `backend` searches live Ohio OGRIP parcels, builds live parcel reports with a FEMA flood check, and serves the two seeded reports from Postgres; see [Coverage](docs/phases/02-parcel-research/Coverage.md). `frontend/mobile` and `escrow` are still empty. Put new files in the folder that matches the surface.
 
 | Folder | What belongs here |
 | --- | --- |

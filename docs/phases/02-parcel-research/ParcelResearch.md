@@ -31,6 +31,10 @@ Terra-Zone's drawn stand-in polygon, its preference for a frontend-supplied area
 - **An incomplete report** in another county: zoning or another local check unresolved, map still opens.
 - Track two numbers separately: counties returning a searchable boundary, and checks returning usable evidence. If time is tight, keep broad discovery and shorten the list of local evidence types. The staged closing parcel is one of the mapped parcels.
 
+## Coverage
+
+What was tested, where each check returns evidence, sources with retrieval times, forced-timeout results, and known limits: [Coverage.md](Coverage.md).
+
 ## Acceptance checks
 
 1. Search returns mapped parcels from at least two Ohio counties, and each boundary shows where the geometry came from and when it was checked.
