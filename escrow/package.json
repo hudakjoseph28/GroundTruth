@@ -6,17 +6,24 @@
   "scripts": {
     "test": "node scripts/prepare-test-fixture.mjs && anchor test --validator legacy",
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "demo:deals": "tsx scripts/demo-deals.ts",
+    "typecheck": "tsc -p tsconfig.scripts.json"
   },
   "dependencies": {
-    "@anchor-lang/core": "^1.2.2"
+    "@anchor-lang/core": "^1.2.2",
+    "@groundtruth/shared": "workspace:*",
+    "@solana/web3.js": "1.99.0"
   },
   "devDependencies": {
+    "@solana/kit": "8.6.0",
     "@solana/spl-token": "^0.4.9",
     "@types/bn.js": "^5.1.0",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^10.0.0",
+    "@types/node": "26.6.6",
     "chai": "^4.3.4",
+    "litesvm": "1.6.2",
     "mocha": "^11.1.0",
     "prettier": "^2.6.2",
     "tsx": "^4.19.0",
