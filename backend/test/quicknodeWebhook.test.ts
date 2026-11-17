@@ -3,6 +3,7 @@ import { gzipSync } from "node:zlib";
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.js";
+import { dealKeys, events, invocation, PROGRAM } from "./support/escrowLogs.js";
 import type { ApplyResult } from "../src/chain/applyEvent.js";
 import type {
   ConfirmedEvent,
@@ -226,11 +227,52 @@ describe("POST /api/webhooks/quicknode", () => {
     },
   );
 
-  it("answers 500 without applying anything while the program IDL is missing", async () => {
+  // Uses IDL-encoded test data (test/support/escrowLogs.ts), not devnet logs.
+  it("decodes GroundTruth events with the default IDL decoder and applies them", async () => {
+    const keys = dealKeys();
+    const e = events(keys);
+    const apply = vi.fn<(event: ConfirmedEvent) => Promise<ApplyResult>>(
+      async () => "applied",
+    );
+    const app = createApp("test", { quicknode: { token: TOKEN, apply } });
+    const body = JSON.stringify({
+      transactions: [
+        {
+          ...payload.transactions[0],
+          logMessages: invocation(PROGRAM, [e.init, e.fund]),
+        },
+      ],
+    });
+
+    const res = await post(app, body).set(sign(body));
+
+    expect(res.status).toBe(204);
+    expect(apply.mock.calls.map(([event]) => event.event.name)).toEqual([
+      "DealInitialized",
+      "DealFunded",
+    ]);
+    expect(apply.mock.calls[1]?.[0].eventIndex).toBe(1);
+  });
+
+  it("answers 500 and applies nothing when any transaction in the delivery is unreadable", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
+    const e = events(dealKeys());
     const apply = vi.fn();
     const app = createApp("test", { quicknode: { token: TOKEN, apply } });
-    const body = JSON.stringify(payload);
+    const body = JSON.stringify({
+      transactions: [
+        {
+          ...payload.transactions[0],
+          logMessages: invocation(PROGRAM, [e.fund]),
+        },
+        {
+          ...payload.transactions[1],
+          logMessages: invocation(PROGRAM, [
+            `Program data: ${Buffer.from([9, 9, 9, 9, 9, 9, 9, 9, 1]).toString("base64")}`,
+          ]),
+        },
+      ],
+    });
 
     const res = await post(app, body).set(sign(body));
 

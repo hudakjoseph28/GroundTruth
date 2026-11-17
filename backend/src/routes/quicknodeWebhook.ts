@@ -17,18 +17,33 @@ export interface QuickNodeWebhookOptions {
   apply: (event: ConfirmedEvent) => Promise<ApplyResult>;
 }
 
+const base58Key = z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
+
 /**
- * The body our Stream filter returns: confirmed transactions that touched
- * the GroundTruth program, in block order.
+ * The body our Stream filter returns, in block order: successful
+ * transactions that touched the GroundTruth program, and failed ones whose
+ * failing instruction was a GroundTruth `release` (with that instruction's
+ * accounts, so the deal can be found). Keep in sync with
+ * quicknode/groundtruth-filter.js and backend/README.md.
  */
 const payloadSchema = z.object({
   transactions: z.array(
-    z.object({
-      signature: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{64,90}$/),
-      slot: z.number().int().nonnegative(),
-      blockTime: z.number().int().positive(),
-      logMessages: z.array(z.string()),
-    }),
+    z
+      .object({
+        signature: z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{64,90}$/),
+        slot: z.number().int().nonnegative(),
+        blockTime: z.number().int().positive(),
+        logMessages: z.array(z.string()),
+        err: z.unknown().optional(),
+        releaseAccounts: z.array(base58Key).min(2).optional(),
+      })
+      .refine(
+        (tx) =>
+          tx.err === undefined || tx.err === null
+            ? tx.releaseAccounts === undefined
+            : tx.releaseAccounts !== undefined,
+        "A failed transaction carries its release accounts; a successful one does not",
+      ),
   ),
 });
 
@@ -83,16 +98,19 @@ export function quickNodeWebhook(
         );
       }
 
+      // Decode the whole delivery first: a transaction the decoder cannot
+      // read fails the delivery (500) before anything in it is applied.
+      const events = parsed.data.transactions.flatMap((tx) =>
+        toConfirmedEvents(tx, options.decode),
+      );
       // Sequential on purpose: events must apply in chain order.
-      for (const tx of parsed.data.transactions) {
-        for (const event of toConfirmedEvents(tx, options.decode)) {
-          const result = await options.apply(event);
-          // Public chain data only. Railway's log timestamp is the receipt
-          // time the Phase 3 proof records.
-          console.log(
-            `quicknode ${result} ${event.event.name} ${event.signature}:${event.eventIndex}`,
-          );
-        }
+      for (const event of events) {
+        const result = await options.apply(event);
+        // Public chain data only. Railway's log timestamp is the receipt
+        // time the Phase 3 proof records.
+        console.log(
+          `quicknode ${result} ${event.event.name} ${event.signature}:${event.eventIndex}`,
+        );
       }
       res.status(204).end();
     }),
