@@ -1,7 +1,7 @@
 {
   "scenario": "franklin-outside",
   "parcelKey": "ohio:39049:010-042534",
-  "recordedAt": "2026-11-17T01:19:09.438Z",
+  "recordedAt": "2026-11-17T04:55:15.003Z",
   "exchanges": [
     {
       "method": "POST",
@@ -166,6 +166,35 @@
       }
     },
     {
+      "method": "POST",
+      "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEDP_Zoning_Districts_2025_View/FeatureServer/0/query",
+      "requestBody": "where=ZONING+IS+NULL+OR+ZONING+NOT+LIKE+%27NOT+IN+JURISDICTION%25%27&geometry=%7B%22rings%22%3A%5B%5B%5B-83.0142782%2C40.0164132%5D%2C%5B-83.014393%2C40.0163945%5D%2C%5B-83.0144793%2C40.0167287%5D%2C%5B-83.014367%2C40.0167465%5D%2C%5B-83.0143261%2C40.016593%5D%2C%5B-83.0142782%2C40.0164132%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=ZONING%2CZoning_Class&returnGeometry=true&outSR=4326&geometryPrecision=7&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "FID",
+        "uniqueIdField": {
+          "name": "FID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "geometryProperties": {
+          "shapeAreaFieldName": "Shape__Area",
+          "shapeLengthFieldName": "Shape__Length",
+          "units": "esriMeters"
+        },
+        "features": []
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEDP_Zoning_Districts_2025_View/FeatureServer/0/query",
+      "requestBody": "where=ZONING+LIKE+%27NOT+IN+JURISDICTION%25%27&geometry=%7B%22rings%22%3A%5B%5B%5B-83.0142782%2C40.0164132%5D%2C%5B-83.014393%2C40.0163945%5D%2C%5B-83.0144793%2C40.0167287%5D%2C%5B-83.014367%2C40.0167465%5D%2C%5B-83.0143261%2C40.016593%5D%2C%5B-83.0142782%2C40.0164132%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&returnCountOnly=true&f=json",
+      "status": 200,
+      "body": {
+        "count": 1
+      }
+    },
+    {
       "method": "GET",
       "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27010-042534%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
       "status": 200,
@@ -184,12 +213,30 @@
               "type": "Polygon",
               "coordinates": [
                 [
-                  [-83.0142782, 40.0164132],
-                  [-83.014393, 40.0163945],
-                  [-83.0144793, 40.0167287],
-                  [-83.014367, 40.0167465],
-                  [-83.0143261, 40.016593],
-                  [-83.0142782, 40.0164132]
+                  [
+                    -83.0142782,
+                    40.0164132
+                  ],
+                  [
+                    -83.014393,
+                    40.0163945
+                  ],
+                  [
+                    -83.0144793,
+                    40.0167287
+                  ],
+                  [
+                    -83.014367,
+                    40.0167465
+                  ],
+                  [
+                    -83.0143261,
+                    40.016593
+                  ],
+                  [
+                    -83.0142782,
+                    40.0164132
+                  ]
                 ]
               ]
             },
@@ -209,22 +256,27 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39049:010-042534",
-      "generatedAt": "2026-11-17T01:19:09.438Z",
+      "generatedAt": "2026-11-17T04:55:15.003Z",
       "coverage": "partial",
       "biggestOpenQuestion": "access",
       "checks": [
         {
           "kind": "zoning",
           "status": "unknown",
-          "sources": [],
-          "finding": "No zoning record has been checked for this lot yet.",
-          "limitation": "GroundTruth has no zoning source for Franklin County, so it cannot say which district applies or what may be built here.",
+          "finding": "Franklin County's zoning map does not cover this parcel. The county zones only the unincorporated parts of the townships under county zoning, so a city, village, or township with its own zoning decides here.",
+          "limitation": "No zoning conclusion either way. The county map leaving a lot out does not say which district applies.",
+          "sources": [
+            {
+              "authority": "Franklin County Economic Development & Planning",
+              "title": "FCEDP Zoning Districts 2025: districts under the parcel",
+              "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEDP_Zoning_Districts_2025_View/FeatureServer/0",
+              "retrievedAt": "2026-11-17T04:55:15.003Z"
+            }
+          ],
           "responsibleParty": {
-            "role": "Zoning office for the township, city, or village that contains the lot",
-            "organization": "Franklin County Planning & Zoning (unincorporated areas)",
-            "publicContactUrl": "https://www.franklincountyohio.gov/Business-Development/Development-Planning/Planning-Zoning"
+            "role": "Zoning office for the city, village, or township that contains the lot"
           },
-          "nextAction": "Ask the zoning office that covers this lot which district applies and whether it allows what you plan to build."
+          "nextAction": "Ask the zoning office for the city, village, or township that contains the lot which district applies."
         },
         {
           "kind": "flood",
@@ -236,34 +288,34 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-17T01:19:09.438Z"
+              "retrievedAt": "2026-11-17T04:55:15.003Z"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39049C0169K",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-17T01:19:09.438Z",
+              "retrievedAt": "2026-11-17T04:55:15.003Z",
               "effectiveDate": "2008-06-17"
             },
             {
               "authority": "FEMA",
               "title": "Letter of Map Revision 13-05-6825P",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1",
-              "retrievedAt": "2026-11-17T01:19:09.438Z",
+              "retrievedAt": "2026-11-17T04:55:15.003Z",
               "effectiveDate": "2014-04-17"
             },
             {
               "authority": "FEMA",
               "title": "Letter of Map Revision 15-05-0192X",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1",
-              "retrievedAt": "2026-11-17T01:19:09.438Z",
+              "retrievedAt": "2026-11-17T04:55:15.003Z",
               "effectiveDate": "2015-05-14"
             },
             {
               "authority": "FEMA",
               "title": "Letter of Map Revision 15-05-3155P",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1",
-              "retrievedAt": "2026-11-17T01:19:09.438Z",
+              "retrievedAt": "2026-11-17T04:55:15.003Z",
               "effectiveDate": "2016-04-20"
             }
           ],

@@ -1,5 +1,8 @@
 import { DEFAULT_OGRIP_TIMEOUT_MS } from "./parcels/ogrip.js";
-import { DEFAULT_FEMA_TIMEOUT_MS } from "./reports/pipeline.js";
+import {
+  DEFAULT_FEMA_TIMEOUT_MS,
+  DEFAULT_ZONING_TIMEOUT_MS,
+} from "./reports/pipeline.js";
 
 export interface ServerEnv {
   databaseUrl: string;
@@ -11,6 +14,8 @@ export interface ServerEnv {
   ogripTimeoutMs: number;
   /** Limit for a report's FEMA flood check, in milliseconds. */
   femaTimeoutMs: number;
+  /** Limit for a Franklin report's county zoning check, in milliseconds. */
+  zoningTimeoutMs: number;
 }
 
 export function readServerEnv(
@@ -30,6 +35,11 @@ export function readServerEnv(
       "FEMA_TIMEOUT_MS",
       source.FEMA_TIMEOUT_MS,
       DEFAULT_FEMA_TIMEOUT_MS,
+    ),
+    zoningTimeoutMs: readTimeout(
+      "ZONING_TIMEOUT_MS",
+      source.ZONING_TIMEOUT_MS,
+      DEFAULT_ZONING_TIMEOUT_MS,
     ),
   };
 }

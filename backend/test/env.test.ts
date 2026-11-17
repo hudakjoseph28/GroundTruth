@@ -11,6 +11,7 @@ describe("readServerEnv", () => {
       commit: "unknown",
       ogripTimeoutMs: 8000,
       femaTimeoutMs: 6000,
+      zoningTimeoutMs: 6000,
     });
   });
 
