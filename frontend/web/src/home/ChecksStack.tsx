@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { goldenParcel, type CheckKind } from "@groundtruth/shared";
+import { goldenParcel, goldenReport, type CheckKind } from "@groundtruth/shared";
 import { HOW } from "../content/home";
 import { getParcelLedger, stepsFor, type LedgerRecord } from "../data/ledger";
 import { RecordCard } from "../parcel/Ledger/RecordCard";
@@ -17,7 +17,9 @@ const ignore = () => {};
  */
 export function ChecksStack({ running, still }: { running: boolean; still: boolean }) {
   const base = useMemo(() => {
-    const records = getParcelLedger(goldenParcel.key).records;
+    // The homepage illustrates the golden parcel from its bundled report, so
+    // it never waits on the API.
+    const records = getParcelLedger(goldenParcel.key, goldenReport).records;
     return C.kinds
       .map((kind) => records.find((record) => record.check.kind === kind))
       .filter((record): record is LedgerRecord => record !== undefined);

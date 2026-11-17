@@ -13,8 +13,8 @@ export const PARCEL_PAGE = {
   county: (name: string) => `${name} County`,
   acres: (value: number) => `${value} acres`,
   missing: {
-    title: "Parcel not in the staged catalog",
-    body: "That parcel ID is not in the staged fixture. Live Ohio records are not connected.",
+    title: "Parcel not found",
+    body: "That link does not name an Ohio parcel. Search by parcel ID or street address instead.",
   },
 } as const;
 

@@ -9,7 +9,6 @@ import {
   type ReviewerRole,
 } from "@groundtruth/shared";
 import { CHAIN_FINDINGS, ESCROW } from "../content/parcel";
-import { getParcelReport } from "./parcelSource";
 import { stagedLedger, type Reference } from "./stagedLedger";
 
 // The parcel ledger's view model. It reads the report and the deal, in that
@@ -247,8 +246,11 @@ export function buildLedger(
   };
 }
 
-/** The ledger for a parcel, from the same seams the rest of the page reads. */
-export function getParcelLedger(parcelKey: string): ParcelLedger {
+/**
+ * The ledger for a parcel: its report (from the API, or null while it is
+ * unavailable) with the staged deal when the deal closes on this parcel.
+ */
+export function getParcelLedger(parcelKey: string, report: ParcelReport | null): ParcelLedger {
   const deal: Deal | null = stagedDeal.parcelKey === parcelKey ? stagedDeal : null;
-  return buildLedger(parcelKey, getParcelReport(parcelKey), deal);
+  return buildLedger(parcelKey, report, deal);
 }

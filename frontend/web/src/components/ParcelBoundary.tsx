@@ -7,22 +7,16 @@ export function ParcelBoundary({ geometry }: { geometry: Parcel["geometry"] }) {
   return (
     <figure className="boundary">
       {points ? (
-        <svg
-          viewBox="0 0 100 100"
-          role="img"
-          aria-label="Staged parcel boundary"
-        >
+        <svg viewBox="0 0 100 100" role="img" aria-label="Parcel boundary">
           <polygon points={points} />
         </svg>
       ) : (
-        <p>This fixture has no drawable boundary.</p>
+        <p>This parcel has no drawable boundary.</p>
       )}
       <figcaption>
-        <span>
-          Staged boundary from the shared fixture. Not a retrieved survey.
-        </span>
+        <span>Published parcel boundary. Not a survey.</span>
         <a href={geometry.sourceUrl}>{geometry.authority}</a>
-        <span>Retrieved {geometry.retrievedAt}</span>
+        <span>Retrieved {calendarDate(geometry.retrievedAt)}</span>
       </figcaption>
     </figure>
   );
@@ -55,4 +49,16 @@ function toPoints(ring: number[][]): string {
       return `${x},${y}`;
     })
     .join(" ");
+}
+
+function calendarDate(iso: string): string {
+  const parsed = new Date(iso);
+  return Number.isNaN(parsed.getTime())
+    ? iso
+    : parsed.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      });
 }
