@@ -30,3 +30,33 @@ export {
   secondCountyReport,
   stagedDeal,
 } from "./fixtures.js";
+
+export {
+  GROUNDTRUTH_PROGRAM_ID,
+  USDC_MINT_DEVNET,
+  DEAL_SEED,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  GROUNDTRUTH_ESCROW_IDL,
+  ESCROW_INSTRUCTION_NAMES,
+  ESCROW_EVENT_NAMES,
+  getDealPdaSeeds,
+  deriveDealPda,
+  deriveVaultPda,
+  deriveDealAccounts,
+} from "./escrow.js";
+
+export type {
+  GroundtruthEscrowIdl,
+  EscrowInstructionName,
+  EscrowEventName,
+  DealInitializedEventData,
+  DealFundedEventData,
+  ApprovalSignedEventData,
+  HoldPlacedEventData,
+  DealReleasedEventData,
+  DealRefundedEventData,
+  Web3DerivationContext,
+  DeriveDealAccountsArgs,
+  DerivedDealAccounts,
+} from "./escrow.js";

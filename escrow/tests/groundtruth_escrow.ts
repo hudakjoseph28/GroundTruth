@@ -4,6 +4,8 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
+  createCloseAccountInstruction,
+  createMint,
   createTransferCheckedInstruction,
   getAccount,
   getAssociatedTokenAddressSync,
@@ -2142,5 +2144,1569 @@ describe("groundtruth_escrow sprint 1", () => {
     const accountInfo = await provider.connection.getAccountInfo(setup.dealPda);
     expect(accountInfo).to.not.equal(null);
     expect(accountInfo!.data.length).to.equal(537);
+  });
+
+  // -------------------------------------------------------------------------
+  // D. SPRINT 3: SETTLEMENT — RELEASE TESTS
+  // -------------------------------------------------------------------------
+
+  async function createAta(owner: PublicKey, ata: PublicKey): Promise<void> {
+    const tx = new Transaction().add(
+      createAssociatedTokenAccountInstruction(
+        provider.wallet.publicKey,
+        ata,
+        owner,
+        USDC_MINT
+      )
+    );
+    await provider.sendAndConfirm(tx, []);
+  }
+
+  it("49. Valid cleared deal release: transfers exact amount to seller, closes vault, emits DealReleased", async () => {
+    const titleReviewer = Keypair.generate();
+    const surveyReviewer = Keypair.generate();
+    await Promise.all([
+      airdropSol(titleReviewer.publicKey, 1),
+      airdropSol(surveyReviewer.publicKey, 1),
+    ]);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+      { wallet: surveyReviewer.publicKey, role: { survey: {} }, required: true },
+    ]);
+
+    // Ensure seller ATA exists
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+
+    // Both required reviewers approve
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    await program.methods
+      .signApproval({ survey: {} })
+      .accountsPartial({
+        reviewer: surveyReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([surveyReviewer])
+      .rpc();
+
+    const buyerBalBefore = (await getAccount(provider.connection, setup.buyerAta)).amount;
+    const sellerBalBefore = (await getAccount(provider.connection, setup.sellerAta)).amount;
+    const vaultBalBefore = (await getAccount(provider.connection, setup.vault)).amount;
+    expect(sellerBalBefore).to.equal(0n);
+    expect(vaultBalBefore).to.equal(25_000_000n);
+
+    // Any fee payer calls release
+    const feePayer = Keypair.generate();
+    await airdropSol(feePayer.publicKey, 2);
+
+    const txSig = await program.methods
+      .release()
+      .accountsPartial({
+        payer: feePayer.publicKey,
+        deal: setup.dealPda,
+        seller: setup.seller.publicKey,
+        sellerTokenAccount: setup.sellerAta,
+        buyer: setup.buyer.publicKey,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([feePayer])
+      .rpc();
+
+    // Verify balances
+    const buyerBalAfter = (await getAccount(provider.connection, setup.buyerAta)).amount;
+    const sellerBalAfter = (await getAccount(provider.connection, setup.sellerAta)).amount;
+    expect(buyerBalAfter).to.equal(buyerBalBefore);
+    expect(sellerBalAfter).to.equal(25_000_000n);
+
+    // Verify vault account is closed (balance was 0)
+    const vaultInfo = await provider.connection.getAccountInfo(setup.vault);
+    expect(vaultInfo).to.equal(null);
+
+    // Verify state transition
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ released: {} });
+
+    // Verify event
+    const events = await parseEventsFromTx(txSig);
+    const event = findEvent(events, "DealReleased");
+    expect(event).to.not.equal(undefined);
+    expect(event!.data.deal.toBase58()).to.equal(setup.dealPda.toBase58());
+    expect(Buffer.from(event!.data.dealId ?? event!.data.deal_id)).to.deep.equal(Buffer.from(setup.dealId));
+    expect(event!.data.amount.toNumber()).to.equal(25_000_000);
+    expect((event!.data.destinationTokenAccount ?? event!.data.destination_token_account).toBase58()).to.equal(setup.sellerAta.toBase58());
+  });
+
+  it("50. Optional reviewers do not block release", async () => {
+    const titleReviewer = Keypair.generate();
+    const optionalSeptic = Keypair.generate();
+    await Promise.all([
+      airdropSol(titleReviewer.publicKey, 1),
+      airdropSol(optionalSeptic.publicKey, 1),
+    ]);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+      { wallet: optionalSeptic.publicKey, role: { septic: {} }, required: false },
+    ]);
+
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+
+    // Only required title reviewer approves; optional reviewer does not
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    // Release succeeds
+    await program.methods
+      .release()
+      .accountsPartial({
+        payer: provider.wallet.publicKey,
+        deal: setup.dealPda,
+        seller: setup.seller.publicKey,
+        sellerTokenAccount: setup.sellerAta,
+        buyer: setup.buyer.publicKey,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc();
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ released: {} });
+    const sellerBal = (await getAccount(provider.connection, setup.sellerAta)).amount;
+    expect(sellerBal).to.equal(25_000_000n);
+  });
+
+  it("51. Any fee payer can initiate release", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    const independentFeePayer = Keypair.generate();
+    await airdropSol(independentFeePayer.publicKey, 2);
+
+    await program.methods
+      .release()
+      .accountsPartial({
+        payer: independentFeePayer.publicKey,
+        deal: setup.dealPda,
+        seller: setup.seller.publicKey,
+        sellerTokenAccount: setup.sellerAta,
+        buyer: setup.buyer.publicKey,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([independentFeePayer])
+      .rpc();
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ released: {} });
+  });
+
+  it("52. Release rejected if required reviewer has not approved", async () => {
+    const titleReviewer = Keypair.generate();
+    const surveyReviewer = Keypair.generate();
+    await Promise.all([
+      airdropSol(titleReviewer.publicKey, 1),
+      airdropSol(surveyReviewer.publicKey, 1),
+    ]);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+      { wallet: surveyReviewer.publicKey, role: { survey: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+
+    // Only Title approves; Survey missing
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have failed to release with missing required approval");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/MissingRequiredApprovals/i);
+    }
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ funded: {} });
+    const sellerBal = (await getAccount(provider.connection, setup.sellerAta)).amount;
+    expect(sellerBal).to.equal(0n);
+  });
+
+  it("53. Release rejected before funding (Draft state)", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected release on Draft deal");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState/i);
+    }
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ draft: {} });
+  });
+
+  it("54. Release rejected after active hold (Held state)", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+
+    // Reviewer places hold
+    await program.methods
+      .placeHold({ title: {} }, { titleException: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected release on Held deal");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState|DealHeld/i);
+    }
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ held: {} });
+  });
+
+  it("55. Release rejected with incorrect seller token account", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    const otherWallet = Keypair.generate();
+    const fakeSellerAta = getAssociatedTokenAddressSync(USDC_MINT, otherWallet.publicKey);
+    await createAta(otherWallet.publicKey, fakeSellerAta);
+
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: fakeSellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected release with wrong seller token account");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidSellerTokenAccount|has_one/i);
+    }
+  });
+
+  it("56. Release rejected with incorrect seller account", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    const attacker = Keypair.generate();
+
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: attacker.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected release with mismatched seller");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidSeller|has_one/i);
+    }
+  });
+
+  it("57. Release rejected with incorrect mint", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    const fakeMint = await createMint(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      provider.wallet.publicKey,
+      null,
+      6
+    );
+
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: fakeMint,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected release with wrong mint");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidMint|has_one/i);
+    }
+  });
+
+  it("58. Release rejected with incorrect vault account", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    const fakeVaultOwner = Keypair.generate();
+    const fakeVault = getAssociatedTokenAddressSync(USDC_MINT, fakeVaultOwner.publicKey);
+    await createAta(fakeVaultOwner.publicKey, fakeVault);
+
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: fakeVault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected release with wrong vault");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidVault|has_one/i);
+    }
+  });
+
+  it("58b. Release rejected with incorrect buyer rent recipient account", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    const attacker = Keypair.generate();
+
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: attacker.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected release with wrong buyer rent destination");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/UnauthorizedBuyer/i);
+    }
+  });
+
+  it("59. Cross-deal release attack rejected", async () => {
+    const r1 = Keypair.generate();
+    const r2 = Keypair.generate();
+    await Promise.all([airdropSol(r1.publicKey, 1), airdropSol(r2.publicKey, 1)]);
+
+    const dealA = await initializeAndFundStagedDeal([
+      { wallet: r1.publicKey, role: { title: {} }, required: true },
+    ]);
+    const dealB = await initializeAndFundStagedDeal([
+      { wallet: r2.publicKey, role: { title: {} }, required: true },
+    ]);
+
+    await createAta(dealA.seller.publicKey, dealA.sellerAta);
+    await createAta(dealB.seller.publicKey, dealB.sellerAta);
+
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({ reviewer: r1.publicKey, deal: dealA.dealPda })
+      .signers([r1])
+      .rpc();
+
+    // Attempt to release deal A using deal B's seller ATA
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: dealA.dealPda,
+          seller: dealA.seller.publicKey,
+          sellerTokenAccount: dealB.sellerAta,
+          buyer: dealA.buyer.publicKey,
+          vault: dealA.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected cross-deal release");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidSellerTokenAccount|has_one/i);
+    }
+  });
+
+  it("60. Duplicate release rejected", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    // First release succeeds
+    await program.methods
+      .release()
+      .accountsPartial({
+        payer: provider.wallet.publicKey,
+        deal: setup.dealPda,
+        seller: setup.seller.publicKey,
+        sellerTokenAccount: setup.sellerAta,
+        buyer: setup.buyer.publicKey,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc();
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ released: {} });
+
+    // Second release attempt fails
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected second release attempt");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState|AccountNotInitialized|does not exist/i);
+    }
+  });
+
+  it("61. Release with unsolicited surplus tokens in vault: seller receives exact agreed amount, settlement succeeds", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    // Third party sends 5 USDC unsolicited surplus tokens to vault
+    const thirdParty = Keypair.generate();
+    const thirdPartyAta = await setupBuyerWithUsdc(thirdParty, 10_000_000n);
+    const surplusTx = new Transaction().add(
+      createTransferCheckedInstruction(
+        thirdPartyAta,
+        USDC_MINT,
+        setup.vault,
+        thirdParty.publicKey,
+        5_000_000n,
+        6
+      )
+    );
+    await provider.sendAndConfirm(surplusTx, [thirdParty]);
+
+    // Vault now has 30 USDC (25 agreed + 5 surplus)
+    const vaultPreRelease = await getAccount(provider.connection, setup.vault);
+    expect(vaultPreRelease.amount).to.equal(30_000_000n);
+
+    // Release executes
+    await program.methods
+      .release()
+      .accountsPartial({
+        payer: provider.wallet.publicKey,
+        deal: setup.dealPda,
+        seller: setup.seller.publicKey,
+        sellerTokenAccount: setup.sellerAta,
+        buyer: setup.buyer.publicKey,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc();
+
+    // Seller receives EXACTLY agreed 25 USDC, NOT 30 USDC
+    const sellerBal = (await getAccount(provider.connection, setup.sellerAta)).amount;
+    expect(sellerBal).to.equal(25_000_000n);
+
+    // Vault remains open holding remaining 5 USDC surplus (no revert)
+    const vaultPostRelease = await getAccount(provider.connection, setup.vault);
+    expect(vaultPostRelease.amount).to.equal(5_000_000n);
+
+    // Deal state is Released
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ released: {} });
+  });
+
+  // -------------------------------------------------------------------------
+  // E. SPRINT 3: SETTLEMENT — REFUND TESTS
+  // -------------------------------------------------------------------------
+
+  it("62. Valid held deal refund: returns agreed escrow amount to buyer, closes vault, emits DealRefunded", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+
+    // Reviewer places hold
+    await program.methods
+      .placeHold({ title: {} }, { sellerIdentityDisputed: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    const buyerBalBefore = (await getAccount(provider.connection, setup.buyerAta)).amount;
+    const vaultBalBefore = (await getAccount(provider.connection, setup.vault)).amount;
+    expect(vaultBalBefore).to.equal(25_000_000n);
+
+    const txSig = await program.methods
+      .refund()
+      .accountsPartial({
+        buyer: setup.buyer.publicKey,
+        deal: setup.dealPda,
+        buyerTokenAccount: setup.buyerAta,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([setup.buyer])
+      .rpc();
+
+    // Verify buyer received 25 USDC back
+    const buyerBalAfter = (await getAccount(provider.connection, setup.buyerAta)).amount;
+    expect(buyerBalAfter - buyerBalBefore).to.equal(25_000_000n);
+
+    // Verify vault is closed
+    const vaultInfo = await provider.connection.getAccountInfo(setup.vault);
+    expect(vaultInfo).to.equal(null);
+
+    // Verify deal state is Refunded
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ refunded: {} });
+
+    // Verify event
+    const events = await parseEventsFromTx(txSig);
+    const event = findEvent(events, "DealRefunded");
+    expect(event).to.not.equal(undefined);
+    expect(event!.data.deal.toBase58()).to.equal(setup.dealPda.toBase58());
+    expect(Buffer.from(event!.data.dealId ?? event!.data.deal_id)).to.deep.equal(Buffer.from(setup.dealId));
+    expect(event!.data.amount.toNumber()).to.equal(25_000_000);
+    expect((event!.data.destinationTokenAccount ?? event!.data.destination_token_account).toBase58()).to.equal(setup.buyerAta.toBase58());
+  });
+
+  it("63. Refund rejected without active hold (Funded state)", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: setup.buyer.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: setup.buyerAta,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([setup.buyer])
+        .rpc();
+      expect.fail("Should have rejected refund on Funded deal without hold");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState/i);
+    }
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ funded: {} });
+  });
+
+  it("64. Refund rejected on Draft state", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: setup.buyer.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: setup.buyerAta,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([setup.buyer])
+        .rpc();
+      expect.fail("Should have rejected refund on Draft deal");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState/i);
+    }
+  });
+
+  it("65. Unauthorized signer cannot authorize refund", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await program.methods
+      .placeHold({ title: {} }, { other: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    const attacker = Keypair.generate();
+    await airdropSol(attacker.publicKey, 1);
+
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: attacker.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: setup.buyerAta,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([attacker])
+        .rpc();
+      expect.fail("Should have rejected unauthorized signer from refunding");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/UnauthorizedBuyer|has_one/i);
+    }
+  });
+
+  it("66. Refund rejected with incorrect buyer token account", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await program.methods
+      .placeHold({ title: {} }, { other: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    const fakeWallet = Keypair.generate();
+    const fakeBuyerAta = getAssociatedTokenAddressSync(USDC_MINT, fakeWallet.publicKey);
+    await createAta(fakeWallet.publicKey, fakeBuyerAta);
+
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: setup.buyer.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: fakeBuyerAta,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([setup.buyer])
+        .rpc();
+      expect.fail("Should have rejected refund with wrong buyer token account");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidBuyerTokenAccount|InvalidSourceOwner/i);
+    }
+  });
+
+  it("67. Refund rejected with incorrect mint", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await program.methods
+      .placeHold({ title: {} }, { other: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    const fakeMint = await createMint(
+      provider.connection,
+      (provider.wallet as anchor.Wallet).payer,
+      provider.wallet.publicKey,
+      null,
+      6
+    );
+
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: setup.buyer.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: setup.buyerAta,
+          vault: setup.vault,
+          mint: fakeMint,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([setup.buyer])
+        .rpc();
+      expect.fail("Should have rejected refund with wrong mint");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidMint|has_one/i);
+    }
+  });
+
+  it("68. Refund rejected with incorrect vault", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await program.methods
+      .placeHold({ title: {} }, { other: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    const fakeOwner = Keypair.generate();
+    const fakeVault = getAssociatedTokenAddressSync(USDC_MINT, fakeOwner.publicKey);
+    await createAta(fakeOwner.publicKey, fakeVault);
+
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: setup.buyer.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: setup.buyerAta,
+          vault: fakeVault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([setup.buyer])
+        .rpc();
+      expect.fail("Should have rejected refund with wrong vault");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidVault|has_one/i);
+    }
+  });
+
+  it("69. Cross-deal refund attack rejected", async () => {
+    const r1 = Keypair.generate();
+    const r2 = Keypair.generate();
+    await Promise.all([airdropSol(r1.publicKey, 1), airdropSol(r2.publicKey, 1)]);
+
+    const dealA = await initializeAndFundStagedDeal([
+      { wallet: r1.publicKey, role: { title: {} }, required: true },
+    ]);
+    const dealB = await initializeAndFundStagedDeal([
+      { wallet: r2.publicKey, role: { title: {} }, required: true },
+    ]);
+
+    await program.methods
+      .placeHold({ title: {} }, { other: {} })
+      .accountsPartial({ reviewer: r1.publicKey, deal: dealA.dealPda })
+      .signers([r1])
+      .rpc();
+
+    // Buyer of deal B attempts to refund deal A
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: dealB.buyer.publicKey,
+          deal: dealA.dealPda,
+          buyerTokenAccount: dealB.buyerAta,
+          vault: dealA.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([dealB.buyer])
+        .rpc();
+      expect.fail("Should have rejected cross-deal refund");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/UnauthorizedBuyer|has_one/i);
+    }
+  });
+
+  it("70. Duplicate refund rejected", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await program.methods
+      .placeHold({ title: {} }, { other: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    // First refund succeeds
+    await program.methods
+      .refund()
+      .accountsPartial({
+        buyer: setup.buyer.publicKey,
+        deal: setup.dealPda,
+        buyerTokenAccount: setup.buyerAta,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([setup.buyer])
+      .rpc();
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ refunded: {} });
+
+    // Second refund fails
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: setup.buyer.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: setup.buyerAta,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([setup.buyer])
+        .rpc();
+      expect.fail("Should have rejected second refund");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState|AccountNotInitialized|does not exist/i);
+    }
+  });
+
+  it("71. Refund after release rejected", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({
+        reviewer: titleReviewer.publicKey,
+        deal: setup.dealPda,
+      })
+      .signers([titleReviewer])
+      .rpc();
+
+    await program.methods
+      .release()
+      .accountsPartial({
+        payer: provider.wallet.publicKey,
+        deal: setup.dealPda,
+        seller: setup.seller.publicKey,
+        sellerTokenAccount: setup.sellerAta,
+        buyer: setup.buyer.publicKey,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc();
+
+    // Buyer attempts refund on released deal
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: setup.buyer.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: setup.buyerAta,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([setup.buyer])
+        .rpc();
+      expect.fail("Should have rejected refund on released deal");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState|AccountNotInitialized|does not exist/i);
+    }
+  });
+
+  it("72. Release after refund rejected", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+
+    // Place hold and refund
+    await program.methods
+      .placeHold({ title: {} }, { other: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    await program.methods
+      .refund()
+      .accountsPartial({
+        buyer: setup.buyer.publicKey,
+        deal: setup.dealPda,
+        buyerTokenAccount: setup.buyerAta,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([setup.buyer])
+      .rpc();
+
+    // Fee payer attempts release on refunded deal
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      expect.fail("Should have rejected release on refunded deal");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState|AccountNotInitialized|does not exist/i);
+    }
+  });
+
+  it("73. Refund with unsolicited surplus tokens in vault: buyer receives exact refund, settlement succeeds", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await program.methods
+      .placeHold({ title: {} }, { other: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    // Send 3 USDC surplus to vault
+    const thirdParty = Keypair.generate();
+    const thirdPartyAta = await setupBuyerWithUsdc(thirdParty, 10_000_000n);
+    const surplusTx = new Transaction().add(
+      createTransferCheckedInstruction(
+        thirdPartyAta,
+        USDC_MINT,
+        setup.vault,
+        thirdParty.publicKey,
+        3_000_000n,
+        6
+      )
+    );
+    await provider.sendAndConfirm(surplusTx, [thirdParty]);
+
+    const buyerBalBefore = (await getAccount(provider.connection, setup.buyerAta)).amount;
+
+    // Refund executes
+    await program.methods
+      .refund()
+      .accountsPartial({
+        buyer: setup.buyer.publicKey,
+        deal: setup.dealPda,
+        buyerTokenAccount: setup.buyerAta,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([setup.buyer])
+      .rpc();
+
+    // Buyer receives exactly agreed 25 USDC
+    const buyerBalAfter = (await getAccount(provider.connection, setup.buyerAta)).amount;
+    expect(buyerBalAfter - buyerBalBefore).to.equal(25_000_000n);
+
+    // Vault remains open holding remaining 3 USDC surplus
+    const vaultPost = await getAccount(provider.connection, setup.vault);
+    expect(vaultPost.amount).to.equal(3_000_000n);
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ refunded: {} });
+  });
+
+  it("74. Approvals and holds rejected on Released and Refunded deals", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    await program.methods
+      .release()
+      .accountsPartial({
+        payer: provider.wallet.publicKey,
+        deal: setup.dealPda,
+        seller: setup.seller.publicKey,
+        sellerTokenAccount: setup.sellerAta,
+        buyer: setup.buyer.publicKey,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc();
+
+    // Reviewer attempts hold on released deal
+    try {
+      await program.methods
+        .placeHold({ title: {} }, { other: {} })
+        .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+        .signers([titleReviewer])
+        .rpc();
+      expect.fail("Should have rejected hold on released deal");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState/i);
+    }
+  });
+
+  it("75. Failed settlement transactions atomically preserve balances and state", async () => {
+    const titleReviewer = Keypair.generate();
+    const surveyReviewer = Keypair.generate();
+    await Promise.all([
+      airdropSol(titleReviewer.publicKey, 1),
+      airdropSol(surveyReviewer.publicKey, 1),
+    ]);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+      { wallet: surveyReviewer.publicKey, role: { survey: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+
+    // Only Title approves; Survey missing
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    const buyerBalBefore = (await getAccount(provider.connection, setup.buyerAta)).amount;
+    const sellerBalBefore = (await getAccount(provider.connection, setup.sellerAta)).amount;
+    const vaultBalBefore = (await getAccount(provider.connection, setup.vault)).amount;
+
+    // Release fails
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+    } catch {
+      // Expected
+    }
+
+    const buyerBalAfter = (await getAccount(provider.connection, setup.buyerAta)).amount;
+    const sellerBalAfter = (await getAccount(provider.connection, setup.sellerAta)).amount;
+    const vaultBalAfter = (await getAccount(provider.connection, setup.vault)).amount;
+
+    expect(buyerBalAfter).to.equal(buyerBalBefore);
+    expect(sellerBalAfter).to.equal(sellerBalBefore);
+    expect(vaultBalAfter).to.equal(vaultBalBefore);
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ funded: {} });
+  });
+
+  it("76. Missing seller ATA blocks release until created; atomic creation by payer allows release to succeed", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    // Initialize & fund deal, but intentionally do NOT create seller ATA yet
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    const feePayer = Keypair.generate();
+    await airdropSol(feePayer.publicKey, 2);
+
+    // Step A: Calling release directly without seller ATA fails
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: feePayer.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([feePayer])
+        .rpc();
+      expect.fail("Should have failed because seller ATA does not exist");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/AccountNotInitialized|does not exist/i);
+    }
+
+    // Step B: Atomic transaction with ATA creation + release succeeds
+    const releaseIx = await program.methods
+      .release()
+      .accountsPartial({
+        payer: feePayer.publicKey,
+        deal: setup.dealPda,
+        seller: setup.seller.publicKey,
+        sellerTokenAccount: setup.sellerAta,
+        buyer: setup.buyer.publicKey,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction();
+
+    const atomicTx = new Transaction().add(
+      createAssociatedTokenAccountInstruction(
+        feePayer.publicKey,
+        setup.sellerAta,
+        setup.seller.publicKey,
+        USDC_MINT
+      ),
+      releaseIx
+    );
+
+    await provider.sendAndConfirm(atomicTx, [feePayer]);
+
+    const sellerBal = (await getAccount(provider.connection, setup.sellerAta)).amount;
+    expect(sellerBal).to.equal(25_000_000n);
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ released: {} });
+  });
+
+  it("77. Missing buyer ATA blocks refund until created; atomic re-creation allows refund to succeed", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+
+    await program.methods
+      .placeHold({ title: {} }, { titleException: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    // Buyer drains remaining 25 USDC to a sink account and closes their ATA
+    const sink = Keypair.generate();
+    const sinkAta = getAssociatedTokenAddressSync(USDC_MINT, sink.publicKey);
+    await createAta(sink.publicKey, sinkAta);
+    const drainAndCloseTx = new Transaction().add(
+      createTransferCheckedInstruction(
+        setup.buyerAta,
+        USDC_MINT,
+        sinkAta,
+        setup.buyer.publicKey,
+        25_000_000n,
+        6
+      ),
+      createCloseAccountInstruction(
+        setup.buyerAta,
+        setup.buyer.publicKey,
+        setup.buyer.publicKey
+      )
+    );
+    await provider.sendAndConfirm(drainAndCloseTx, [setup.buyer]);
+
+    // Direct refund fails with closed ATA
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: setup.buyer.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: setup.buyerAta,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([setup.buyer])
+        .rpc();
+      expect.fail("Should have failed because buyer ATA does not exist");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/AccountNotInitialized|does not exist/i);
+    }
+
+    // Atomic transaction: create ATA + refund
+    const refundIx = await program.methods
+      .refund()
+      .accountsPartial({
+        buyer: setup.buyer.publicKey,
+        deal: setup.dealPda,
+        buyerTokenAccount: setup.buyerAta,
+        vault: setup.vault,
+        mint: USDC_MINT,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction();
+
+    const atomicTx = new Transaction().add(
+      createAssociatedTokenAccountInstruction(
+        setup.buyer.publicKey,
+        setup.buyerAta,
+        setup.buyer.publicKey,
+        USDC_MINT
+      ),
+      refundIx
+    );
+
+    await provider.sendAndConfirm(atomicTx, [setup.buyer]);
+
+    const buyerBal = (await getAccount(provider.connection, setup.buyerAta)).amount;
+    expect(buyerBal).to.equal(25_000_000n);
+
+    const deal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(deal.state).to.deep.equal({ refunded: {} });
+  });
+
+  it("78. Release rejected if an invalid token program is provided", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+    await createAta(setup.seller.publicKey, setup.sellerAta);
+
+    await program.methods
+      .signApproval({ title: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    try {
+      await program.methods
+        .release()
+        .accountsPartial({
+          payer: provider.wallet.publicKey,
+          deal: setup.dealPda,
+          seller: setup.seller.publicKey,
+          sellerTokenAccount: setup.sellerAta,
+          buyer: setup.buyer.publicKey,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: SystemProgram.programId,
+        })
+        .rpc();
+      expect.fail("Should have rejected invalid token program");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidProgramId|ProgramAccountMismatch|IncorrectProgramId/i);
+    }
+  });
+
+  it("79. Hold state immutability: stored hold cannot be altered or overwritten by other reviewers", async () => {
+    const titleReviewer = Keypair.generate();
+    const surveyReviewer = Keypair.generate();
+    await Promise.all([
+      airdropSol(titleReviewer.publicKey, 1),
+      airdropSol(surveyReviewer.publicKey, 1),
+    ]);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+      { wallet: surveyReviewer.publicKey, role: { survey: {} }, required: true },
+    ]);
+
+    await program.methods
+      .placeHold({ title: {} }, { titleException: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    const dealAfterHold = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(dealAfterHold.hold).to.not.equal(null);
+    const originalPlacedBy = dealAfterHold.hold!.placedBy.toBase58();
+    const originalReason = dealAfterHold.hold!.reasonCode;
+
+    // Survey reviewer attempts approval on held deal: fails
+    try {
+      await program.methods
+        .signApproval({ survey: {} })
+        .accountsPartial({ reviewer: surveyReviewer.publicKey, deal: setup.dealPda })
+        .signers([surveyReviewer])
+        .rpc();
+      expect.fail("Should have rejected approval after hold");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState/i);
+    }
+
+    // Survey reviewer attempts second hold: fails
+    try {
+      await program.methods
+        .placeHold({ survey: {} }, { siteReviewFailed: {} })
+        .accountsPartial({ reviewer: surveyReviewer.publicKey, deal: setup.dealPda })
+        .signers([surveyReviewer])
+        .rpc();
+      expect.fail("Should have rejected second hold");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidDealState/i);
+    }
+
+    // Verify stored hold state has not been corrupted or altered
+    const finalDeal = await program.account.dealAccount.fetch(setup.dealPda);
+    expect(finalDeal.hold!.placedBy.toBase58()).to.equal(originalPlacedBy);
+    expect(finalDeal.hold!.reasonCode).to.deep.equal(originalReason);
+    expect(finalDeal.reviewers[1].approved).to.equal(false);
+  });
+
+  it("80. Refund rejected if an invalid token program is provided", async () => {
+    const titleReviewer = Keypair.generate();
+    await airdropSol(titleReviewer.publicKey, 1);
+
+    const setup = await initializeAndFundStagedDeal([
+      { wallet: titleReviewer.publicKey, role: { title: {} }, required: true },
+    ]);
+
+    await program.methods
+      .placeHold({ title: {} }, { titleException: {} })
+      .accountsPartial({ reviewer: titleReviewer.publicKey, deal: setup.dealPda })
+      .signers([titleReviewer])
+      .rpc();
+
+    try {
+      await program.methods
+        .refund()
+        .accountsPartial({
+          buyer: setup.buyer.publicKey,
+          deal: setup.dealPda,
+          buyerTokenAccount: setup.buyerAta,
+          vault: setup.vault,
+          mint: USDC_MINT,
+          tokenProgram: SystemProgram.programId,
+        })
+        .signers([setup.buyer])
+        .rpc();
+      expect.fail("Should have rejected invalid token program on refund");
+    } catch (err: unknown) {
+      expect((err as Error).message).to.match(/InvalidProgramId|ProgramAccountMismatch|IncorrectProgramId/i);
+    }
   });
 });

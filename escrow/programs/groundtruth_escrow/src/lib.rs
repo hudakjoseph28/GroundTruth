@@ -39,4 +39,12 @@ pub mod groundtruth_escrow {
     ) -> Result<()> {
         instructions::place_hold::handle_place_hold(ctx, role, reason_code)
     }
+
+    pub fn release(ctx: Context<Release>) -> Result<()> {
+        instructions::release::handle_release(ctx)
+    }
+
+    pub fn refund(ctx: Context<Refund>) -> Result<()> {
+        instructions::refund::handle_refund(ctx)
+    }
 }

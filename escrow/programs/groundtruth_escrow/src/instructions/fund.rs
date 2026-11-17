@@ -70,11 +70,7 @@ pub fn handle_fund(ctx: Context<Fund>) -> Result<()> {
         .checked_sub(vault_balance_before)
         .ok_or(EscrowError::VaultAmountMismatch)?;
 
-    require_eq!(
-        balance_increase,
-        amount,
-        EscrowError::VaultAmountMismatch
-    );
+    require_eq!(balance_increase, amount, EscrowError::VaultAmountMismatch);
 
     let deal = &mut ctx.accounts.deal;
     deal.state = DealState::Funded;
