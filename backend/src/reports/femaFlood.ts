@@ -1,5 +1,6 @@
 import type { GeoJsonMultiPolygon, GeoJsonPolygon } from "@groundtruth/shared";
 import { z } from "zod";
+import { effectiveDateString } from "./mapReport.js";
 
 /**
  * FEMA's National Flood Hazard Layer (NFHL), queried only from the API.
@@ -71,7 +72,7 @@ export interface FloodZone {
 export interface DatedRecord {
   /** FIRM panel number or LOMR case number. */
   id: string;
-  /** UTC midnight of FEMA's `EFF_DATE`, when published. */
+  /** FEMA's `EFF_DATE` as `YYYY-MM-DD`, when published. */
   effectiveDate?: string;
 }
 
@@ -359,7 +360,7 @@ function dated(
       id,
       effectiveDate:
         typeof row.effectiveDate === "number"
-          ? new Date(row.effectiveDate).toISOString()
+          ? effectiveDateString(new Date(row.effectiveDate))
           : undefined,
     });
   }

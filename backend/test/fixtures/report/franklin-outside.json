@@ -1,7 +1,7 @@
 {
   "scenario": "franklin-outside",
   "parcelKey": "ohio:39049:010-042534",
-  "recordedAt": "2026-11-17T00:51:30.162Z",
+  "recordedAt": "2026-11-17T01:19:09.438Z",
   "exchanges": [
     {
       "method": "POST",
@@ -209,7 +209,7 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39049:010-042534",
-      "generatedAt": "2026-11-17T00:51:30.162Z",
+      "generatedAt": "2026-11-17T01:19:09.438Z",
       "coverage": "partial",
       "biggestOpenQuestion": "access",
       "checks": [
@@ -236,35 +236,35 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-17T00:51:30.162Z"
+              "retrievedAt": "2026-11-17T01:19:09.438Z"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39049C0169K",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-17T00:51:30.162Z",
-              "effectiveDate": "2008-06-17T00:00:00.000Z"
+              "retrievedAt": "2026-11-17T01:19:09.438Z",
+              "effectiveDate": "2008-06-17"
             },
             {
               "authority": "FEMA",
               "title": "Letter of Map Revision 13-05-6825P",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1",
-              "retrievedAt": "2026-11-17T00:51:30.162Z",
-              "effectiveDate": "2014-04-17T00:00:00.000Z"
+              "retrievedAt": "2026-11-17T01:19:09.438Z",
+              "effectiveDate": "2014-04-17"
             },
             {
               "authority": "FEMA",
               "title": "Letter of Map Revision 15-05-0192X",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1",
-              "retrievedAt": "2026-11-17T00:51:30.162Z",
-              "effectiveDate": "2015-05-14T00:00:00.000Z"
+              "retrievedAt": "2026-11-17T01:19:09.438Z",
+              "effectiveDate": "2015-05-14"
             },
             {
               "authority": "FEMA",
               "title": "Letter of Map Revision 15-05-3155P",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1",
-              "retrievedAt": "2026-11-17T00:51:30.162Z",
-              "effectiveDate": "2016-04-20T00:00:00.000Z"
+              "retrievedAt": "2026-11-17T01:19:09.438Z",
+              "effectiveDate": "2016-04-20"
             }
           ],
           "responsibleParty": {

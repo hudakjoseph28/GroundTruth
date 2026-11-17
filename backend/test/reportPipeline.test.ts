@@ -10,6 +10,7 @@ import {
   type FloodOutcome,
 } from "../src/reports/femaFlood.js";
 import { zoneLabel } from "../src/reports/floodCheck.js";
+import { effectiveDateString } from "../src/reports/mapReport.js";
 import {
   biggestOpenQuestion,
   reportCoverage,
@@ -239,7 +240,7 @@ describe("FEMA outcome classification (synthetic NFHL answers)", () => {
     expect(outcome).toMatchObject({
       outcome: "found",
       zones: [{ zone: "AE", specialFloodHazardArea: true }],
-      lomrs: [{ id: "15-05-3155P", effectiveDate: "2016-04-20T00:00:00.000Z" }],
+      lomrs: [{ id: "15-05-3155P", effectiveDate: "2016-04-20" }],
     });
   });
 });
@@ -276,6 +277,18 @@ describe("OHIO_COUNTIES_WITHOUT_NFHL", () => {
     ]);
     expect(new Set(without.map((c) => c.fips))).toEqual(
       OHIO_COUNTIES_WITHOUT_NFHL,
+    );
+  });
+});
+
+describe("effectiveDateString", () => {
+  it("writes a midnight-UTC effective date as a calendar date", () => {
+    expect(effectiveDateString(new Date(1213660800000))).toBe("2008-06-17");
+  });
+
+  it("keeps the full timestamp for any other time", () => {
+    expect(effectiveDateString(new Date("2026-11-16T15:30:00.000Z"))).toBe(
+      "2026-11-16T15:30:00.000Z",
     );
   });
 });

@@ -1,7 +1,7 @@
 {
   "scenario": "licking-outside",
   "parcelKey": "ohio:39089:00100000601000",
-  "recordedAt": "2026-11-17T00:51:31.979Z",
+  "recordedAt": "2026-11-17T01:19:09.774Z",
   "exchanges": [
     {
       "method": "POST",
@@ -193,7 +193,7 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39089:00100000601000",
-      "generatedAt": "2026-11-17T00:51:31.979Z",
+      "generatedAt": "2026-11-17T01:19:09.774Z",
       "coverage": "partial",
       "biggestOpenQuestion": "access",
       "checks": [
@@ -218,14 +218,14 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-17T00:51:31.979Z"
+              "retrievedAt": "2026-11-17T01:19:09.774Z"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39089C0155J",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-17T00:51:31.979Z",
-              "effectiveDate": "2015-03-16T00:00:00.000Z"
+              "retrievedAt": "2026-11-17T01:19:09.774Z",
+              "effectiveDate": "2015-03-16"
             }
           ],
           "responsibleParty": {

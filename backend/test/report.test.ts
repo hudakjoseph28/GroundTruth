@@ -171,12 +171,12 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
       title: "Flood Insurance Rate Map panel 39049C0169K",
       url: `${NFHL_SERVICE}/3`,
       retrievedAt: recording.recordedAt,
-      effectiveDate: "2008-06-17T00:00:00.000Z",
+      effectiveDate: "2008-06-17",
     });
     expect(flood.sources).toContainEqual(
       expect.objectContaining({
         title: "Letter of Map Revision 15-05-3155P",
-        effectiveDate: "2016-04-20T00:00:00.000Z",
+        effectiveDate: "2016-04-20",
       }),
     );
 
@@ -207,7 +207,7 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
     expect(flood.status).toBe("evidenceFound");
     expect(flood.finding).toContain("Zone X (area of minimal flood hazard)");
     expect(flood.sources.map((source) => source.effectiveDate)).toContain(
-      "2015-03-16T00:00:00.000Z",
+      "2015-03-16",
     );
     expect(checkOf(report, "easements").responsibleParty).toEqual({
       role: "Title reviewer",
@@ -625,7 +625,7 @@ describe("Prisma report store behind the route", () => {
         title: "National Flood Hazard Layer",
         url: "https://msc.fema.gov/portal/home",
         retrievedAt: "2026-11-12T09:30:00.000Z",
-        effectiveDate: "2008-06-17T00:00:00.000Z",
+        effectiveDate: "2008-06-17",
       },
     ]);
     expect(notInOgrip).not.toHaveBeenCalled();

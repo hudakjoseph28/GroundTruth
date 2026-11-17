@@ -119,7 +119,7 @@ The parcel's OGRIP geometry, with rings re-wound the way Esri reads them, is sen
 | `conflict` | FEMA lists a study but no zone covers the parcel, or a zone's SFHA flag contradicts its letter (A/V must be SFHA, X/D must not) | `unknown`, no zone stated |
 | `timeout` | Out of time, HTTP error, ArcGIS error body, or unexpected shape | `unknown`, no sources. Says whether FEMA timed out or could not be reached. |
 
-`effectiveDate` is FEMA's `EFF_DATE`, a calendar date, sent as UTC midnight (`2008-06-17T00:00:00.000Z`). Format it in UTC, or a US time zone shows the day before.
+`effectiveDate` is FEMA's `EFF_DATE`, a calendar date, sent as `YYYY-MM-DD` (`2008-06-17`). Any stored effective date at midnight UTC is served the same way ([`effectiveDateString()`](src/reports/mapReport.ts)), so a seeded report written with calendar dates is served exactly as written. An effective date with any other time keeps the full ISO timestamp.
 
 **NFHL coverage in Ohio, measured 2026-11-16:** 83 of 88 counties have a study. Fayette (39047), Henry (39069), Vinton (39163), Williams (39171), and Wyandot (39175) have none, so every parcel there gets a `missing` flood check.
 

@@ -1,7 +1,7 @@
 {
   "scenario": "franklin-floodway",
   "parcelKey": "ohio:39049:185-002765",
-  "recordedAt": "2026-11-17T00:51:32.919Z",
+  "recordedAt": "2026-11-17T01:19:10.101Z",
   "exchanges": [
     {
       "method": "POST",
@@ -198,7 +198,7 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39049:185-002765",
-      "generatedAt": "2026-11-17T00:51:32.919Z",
+      "generatedAt": "2026-11-17T01:19:10.101Z",
       "coverage": "partial",
       "biggestOpenQuestion": "access",
       "checks": [
@@ -225,21 +225,21 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-17T00:51:32.919Z"
+              "retrievedAt": "2026-11-17T01:19:10.101Z"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39049C0431K",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-17T00:51:32.919Z",
-              "effectiveDate": "2008-06-17T00:00:00.000Z"
+              "retrievedAt": "2026-11-17T01:19:10.101Z",
+              "effectiveDate": "2008-06-17"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39129C0075J",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-17T00:51:32.919Z",
-              "effectiveDate": "2010-07-22T00:00:00.000Z"
+              "retrievedAt": "2026-11-17T01:19:10.101Z",
+              "effectiveDate": "2010-07-22"
             }
           ],
           "responsibleParty": {
