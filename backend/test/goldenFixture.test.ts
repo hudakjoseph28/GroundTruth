@@ -8,6 +8,13 @@ import {
 } from "@groundtruth/shared";
 import { describe, expect, it } from "vitest";
 import { toParcelReport } from "../src/reports/mapReport.js";
+import { biggestOpenQuestion } from "../src/reports/pipeline.js";
+import {
+  SEEDED_TEMPLATE_OVERRIDES,
+  seededReport,
+} from "../src/reports/seededReports.js";
+import { isTemplateKind, templateCheck } from "../src/reports/templates.js";
+import { floodEvidence } from "./support/floodEvidence.js";
 
 const check = (kind: string) => {
   const found = goldenReport.checks.find((entry) => entry.kind === kind);
@@ -255,38 +262,13 @@ describe("unknown checks in the shared fixtures (Phase 2)", () => {
 });
 
 /**
- * #9's rule (backend/src/reports/pipeline.ts, biggestOpenQuestion): a held
- * check first, then the first unresolved check in this priority order.
- * Copied here until #9 is on main; then import it instead.
+ * Whether a seeded flood check names a Special Flood Hazard Area zone:
+ * FEMA's A and V zones are SFHAs, X and D are not.
  */
-const OPEN_QUESTION_PRIORITY = [
-  "access",
-  "septic",
-  "zoning",
-  "flood",
-  "utilities",
-  "easements",
-  "sellerAuthority",
-  "survey",
-  "closing",
-] as const;
-
-function expectedBiggestOpenQuestion(report: ParcelReport): string {
-  const rank = (kind: string) => {
-    const index = OPEN_QUESTION_PRIORITY.indexOf(
-      kind as (typeof OPEN_QUESTION_PRIORITY)[number],
-    );
-    return index === -1 ? OPEN_QUESTION_PRIORITY.length : index;
-  };
-  const ordered = [...report.checks].sort(
-    (a, b) => rank(a.kind) - rank(b.kind),
-  );
-  const held = ordered.find((entry) => entry.status === "held");
-  if (held) return held.kind;
-  const open = ordered.find(
-    (entry) => entry.status === "unknown" || entry.status === "needsReview",
-  );
-  return open?.kind ?? ordered[0]?.kind ?? "access";
+function floodInSfha(report: ParcelReport): boolean {
+  const flood = report.checks.find((entry) => entry.kind === "flood");
+  if (!flood || flood.status === "unknown") return false;
+  return floodEvidence(flood).zones.some((zone) => /^[AV]/.test(zone));
 }
 
 describe("seeded report rules", () => {
@@ -297,8 +279,11 @@ describe("seeded report rules", () => {
     "%s: biggestOpenQuestion follows #9's rule (%s)",
     (_label, report, expected) => {
       expect(report.biggestOpenQuestion).toBe(expected);
+      expect(floodInSfha(report)).toBe(false);
       expect(report.biggestOpenQuestion).toBe(
-        expectedBiggestOpenQuestion(report),
+        biggestOpenQuestion(report.checks, {
+          floodInSfha: floodInSfha(report),
+        }),
       );
     },
   );
@@ -318,6 +303,66 @@ describe("seeded report rules", () => {
     );
     expect(zoning?.responsibleParty.organization).toBe(
       "Bowling Green Township, Licking County",
+    );
+  });
+});
+
+describe("seeded unknown checks come from templateCheck()", () => {
+  it.each([
+    ["golden", goldenParcel, goldenReport],
+    ["second county", secondCountyParcel, secondCountyReport],
+  ] as const)(
+    "%s: the seeded report is the shared fixture, unchanged",
+    (_label, parcel, fixture) => {
+      expect(seededReport(parcel, fixture)).toEqual(fixture);
+    },
+  );
+
+  it.each([
+    ["golden", goldenParcel, goldenReport],
+    ["second county", secondCountyParcel, secondCountyReport],
+  ] as const)(
+    "%s: every unknown template-kind check is templateCheck() output, except a documented override",
+    (_label, parcel, fixture) => {
+      const overrides = SEEDED_TEMPLATE_OVERRIDES[parcel.key] ?? [];
+      const seeded = seededReport(parcel, fixture);
+      let templated = 0;
+      for (const entry of seeded.checks) {
+        if (entry.status !== "unknown" || !isTemplateKind(entry.kind)) continue;
+        if (overrides.includes(entry.kind)) {
+          expect(entry).not.toEqual(templateCheck(entry.kind, parcel));
+        } else {
+          expect(entry).toEqual(templateCheck(entry.kind, parcel));
+          templated += 1;
+        }
+      }
+      expect(templated).toBeGreaterThan(0);
+    },
+  );
+
+  it("keeps the Licking zoning override as written in the fixture", () => {
+    expect(SEEDED_TEMPLATE_OVERRIDES).toEqual({
+      "ohio:39089:00500729609000": ["zoning"],
+    });
+    const seeded = seededReport(secondCountyParcel, secondCountyReport);
+    const zoning = seeded.checks.find((entry) => entry.kind === "zoning");
+    expect(zoning?.finding).toBe(
+      "GroundTruth doesn't check zoning in Licking County yet.",
+    );
+  });
+
+  it("keeps sourced checks exactly as verified", () => {
+    const seeded = seededReport(goldenParcel, goldenReport);
+    for (const kind of ["access", "zoning", "flood"] as const) {
+      expect(seeded.checks.find((entry) => entry.kind === kind)).toBe(
+        goldenReport.checks.find((entry) => entry.kind === kind),
+      );
+    }
+  });
+
+  it("refuses a report for another parcel", () => {
+    expect(() => seededReport(secondCountyParcel, goldenReport)).toThrow(
+      "Report does not belong to the parcel",
     );
   });
 });

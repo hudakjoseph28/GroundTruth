@@ -10,6 +10,7 @@ import {
 } from "@groundtruth/shared";
 import { prisma } from "./db.js";
 import { seedDeal } from "./deals/seedDeal.js";
+import { seededReport } from "./reports/seededReports.js";
 
 /**
  * The old made-up stand-in parcel. Its report, checks, and sources cascade
@@ -19,8 +20,16 @@ const RETIRED_FIXTURE_KEYS = ["ohio:39049:STAGED-DEMO"];
 
 async function main(): Promise<void> {
   await prisma.$transaction(async (tx) => {
-    await seedParcelReport(tx, goldenParcel, goldenReport);
-    await seedParcelReport(tx, secondCountyParcel, secondCountyReport);
+    await seedParcelReport(
+      tx,
+      goldenParcel,
+      seededReport(goldenParcel, goldenReport),
+    );
+    await seedParcelReport(
+      tx,
+      secondCountyParcel,
+      seededReport(secondCountyParcel, secondCountyReport),
+    );
     await seedDeal(tx, stagedDeal);
     await tx.parcelRecord.deleteMany({
       where: { key: { in: RETIRED_FIXTURE_KEYS } },

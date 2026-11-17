@@ -313,6 +313,23 @@ describe("a parcel on two FIRM panels (golden parcel 230-000918)", () => {
     ]);
   });
 
+  it("matches the seeded golden report on zone and the set of panels with dates", async () => {
+    const { app } = scenario("franklin-golden");
+
+    const res = await request(app).get(reportPath(goldenParcel.key));
+
+    expect(res.status).toBe(200);
+    const live = floodEvidence(checkOf(res.body as ParcelReport, "flood"));
+    const seeded = floodEvidence(checkOf(goldenReport, "flood"));
+    expect(live).toEqual(seeded);
+    // Both panels, so dropping either one on either side fails above.
+    expect(seeded).toEqual({
+      status: "evidenceFound",
+      zones: ["X: area of minimal flood hazard"],
+      panels: ["39049C0290K@2008-06-17", "39097C0190E@2023-11-16"],
+    });
+  });
+
   it("compares flood checks on zone and the set of panels, not wording or order", () => {
     const base: Check = {
       kind: "flood",
