@@ -18,6 +18,7 @@ import {
   MAX_PLACE_COUNTIES,
   parseAddressQuery,
   placeCounties,
+  siteAddressAgrees,
   sitePlace,
   type AddressQuery,
 } from "./addressQuery.js";
@@ -42,11 +43,14 @@ const MAX_LOCATOR_CANDIDATES = 3;
 /**
  * Half-widths of the box searched around a locator point. The points are
  * interpolated along street ranges and can land hundreds of meters from the
- * lot (84 W Dodridge St lands about 400 m away). Widen only while the area
- * is sparse: once the service hits its record limit, a wider box would be
- * incomplete and slower.
+ * lot (84 W Dodridge St lands about 400 m away). Boxes are filtered by house
+ * number on the server, so each returns a handful of rows. 500 m answers
+ * most addresses in one request; the 1,500 m box, slower in dense areas
+ * (0.3 to 7.8 s downtown vs 0.2 to 1.6 s at 500 m, measured 2026-11-17),
+ * runs only when 500 m finds nothing. Before the filter, a 150/500/1,500 m
+ * ladder returned up to 2,000 rows (426 KB) per box.
  */
-const SEARCH_RADII_METERS = [150, 500, 1_500] as const;
+const SEARCH_RADII_METERS = [500, 1_500] as const;
 const METERS_PER_DEGREE_LATITUDE = 111_320;
 const COVERAGE_CACHE_MS = 60 * 60 * 1_000;
 
@@ -80,8 +84,21 @@ export interface OgripClientOptions {
   fetch?: typeof fetch;
   /** Per-request limit. A whole search may use twice this. */
   timeoutMs?: number;
+  /**
+   * If a request has not answered after this long, send one identical
+   * request and use whichever answers first. Only used when it is less
+   * than half of `timeoutMs`. Default 2,500 ms.
+   */
+  hedgeAfterMs?: number;
   now?: () => Date;
 }
+
+/**
+ * OGRIP's statewide layer stalls now and then: the same query that usually
+ * answers in under 1 s took 8 s once and 0.7 s right after (measured
+ * 2026-11-17). A stall is per request, so a second copy usually wins.
+ */
+export const DEFAULT_OGRIP_HEDGE_MS = 2_500;
 
 const attributesSchema = z.object({
   County: z.string().nullish(),
@@ -167,6 +184,8 @@ export function createOgripClient(
   const fetchImpl = options.fetch ?? globalThis.fetch;
   const timeoutMs = options.timeoutMs ?? DEFAULT_OGRIP_TIMEOUT_MS;
   const now = options.now ?? (() => new Date());
+  const hedgeAfterMs = options.hedgeAfterMs ?? DEFAULT_OGRIP_HEDGE_MS;
+  const hedging = hedgeAfterMs * 2 < timeoutMs;
   let coverageCache: { at: number; rows: Coverage[] } | undefined;
 
   async function getJson<T>(
@@ -178,12 +197,9 @@ export function createOgripClient(
     const signal = budget ? AbortSignal.any([perRequest, budget]) : perRequest;
     let body: unknown;
     try {
-      const response = await fetchImpl(url, {
-        signal,
-        headers: { accept: "application/json" },
-      });
-      if (!response.ok) throw new OgripError("unavailable");
-      body = await response.json();
+      body = hedging
+        ? await hedgedGet(url, signal)
+        : await readJson(url, signal);
     } catch (error) {
       if (error instanceof OgripError) throw error;
       if (signal.aborted) throw new OgripError("timeout");
@@ -193,6 +209,41 @@ export function createOgripClient(
     const parsed = schema.safeParse(body);
     if (!parsed.success) throw new OgripError("unavailable");
     return parsed.data;
+  }
+
+  async function readJson(url: string, signal: AbortSignal): Promise<unknown> {
+    const response = await fetchImpl(url, {
+      signal,
+      headers: { accept: "application/json" },
+    });
+    if (!response.ok) throw new OgripError("unavailable");
+    return response.json();
+  }
+
+  /** One request, plus a second identical one if the first stalls. */
+  async function hedgedGet(url: string, signal: AbortSignal): Promise<unknown> {
+    const first = new AbortController();
+    const second = new AbortController();
+    const attempt = (own: AbortController) =>
+      readJson(url, AbortSignal.any([signal, own.signal]));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const backup = new Promise<unknown>((resolve, reject) => {
+      timer = setTimeout(() => {
+        attempt(second).then(resolve, reject);
+      }, hedgeAfterMs);
+      signal.addEventListener("abort", () => reject(signal.reason), {
+        once: true,
+      });
+    });
+    try {
+      return await Promise.any([attempt(first), backup]);
+    } catch (error) {
+      throw error instanceof AggregateError ? error.errors[0] : error;
+    } finally {
+      clearTimeout(timer);
+      first.abort();
+      second.abort();
+    }
   }
 
   function searchBudget(): AbortSignal {
@@ -252,13 +303,31 @@ export function createOgripClient(
         results.filter((result) => placeConsistent(result, parsed, counties)),
       ).slice(0, MAX_RESULTS);
 
+    // As typed; then with spelled-out directions and suffixes abbreviated
+    // (the locator reads "South" in "37 South High Street" as a street
+    // name); then number + street only.
     const attempts = [query];
-    if (parsed && parsed.streetOnly !== query.trim().toUpperCase()) {
+    if (parsed?.abbreviated) attempts.push(parsed.abbreviated);
+    if (
+      parsed &&
+      !attempts.some((a) => a.trim().toUpperCase() === parsed.streetOnly)
+    ) {
       attempts.push(parsed.streetOnly);
     }
+    const wanted = {
+      ...(parsed?.direction ? { direction: parsed.direction } : {}),
+      ...(parsed?.suffix ? { suffix: parsed.suffix } : {}),
+    };
     let locatorFailure: OgripError | undefined;
     let locatorFoundStreet = false;
+    let locatedTypedStreet = false;
     for (const text of attempts) {
+      // Retries are for a locator that misread the query: it rejected the
+      // typed city and located nothing, or read a spelled-out "South" as
+      // the street. Once it has located the typed street, a retry finds
+      // the same candidates, so a miss is final.
+      if (locatedTypedStreet) break;
+      if (text === parsed?.streetOnly && locatorFoundStreet) break;
       let located: LocatedAddress[];
       try {
         located = await locate(text, budget);
@@ -268,8 +337,14 @@ export function createOgripClient(
         break;
       }
       if (located.length > 0) locatorFoundStreet = true;
+      if (
+        parsed &&
+        located.some((address) => address.streetName === parsed.streetName)
+      ) {
+        locatedTypedStreet = true;
+      }
       const perCandidate = await Promise.all(
-        located.map((address) => parcelsAtAddress(address, budget)),
+        located.map((address) => parcelsAtAddress(address, wanted, budget)),
       );
       const results = keep(perCandidate.flat());
       if (results.length > 0) return results;
@@ -308,12 +383,18 @@ export function createOgripClient(
     });
     const result = await getJson(url, featureQuerySchema, budget);
     return result.features
-      .filter((feature) =>
-        siteAddressMatches(
-          feature.attributes.SitusAddressAll,
-          address.houseNumber,
-          address.streetName,
-        ),
+      .filter(
+        (feature) =>
+          siteAddressMatches(
+            feature.attributes.SitusAddressAll,
+            address.houseNumber,
+            address.streetName,
+          ) &&
+          siteAddressAgrees(
+            feature.attributes.SitusAddressAll ?? "",
+            address.streetName,
+            address,
+          ),
       )
       .flatMap((feature) => {
         const summary = summaryFromFeature(feature);
@@ -360,11 +441,12 @@ export function createOgripClient(
 
   async function parcelsAtAddress(
     address: LocatedAddress,
+    wanted: Pick<AddressQuery, "direction" | "suffix">,
     budget: AbortSignal,
   ): Promise<ParcelSearchResult[]> {
     for (const radius of SEARCH_RADII_METERS) {
       const url = layerQueryUrl({
-        where: "LocalParcelID IS NOT NULL",
+        where: `LocalParcelID IS NOT NULL AND ${houseNumberWhere(address.houseNumber)}`,
         // An explicit WGS84 box: with outSR=4326 the service shrinks a
         // point-plus-distance search (821 parcels without outSR, 99 with).
         geometry: envelopeAround(address, radius),
@@ -379,12 +461,18 @@ export function createOgripClient(
       });
       const result = await getJson(url, featureQuerySchema, budget);
       const matches = result.features
-        .filter((feature) =>
-          siteAddressMatches(
-            feature.attributes.SitusAddressAll,
-            address.houseNumber,
-            address.streetName,
-          ),
+        .filter(
+          (feature) =>
+            siteAddressMatches(
+              feature.attributes.SitusAddressAll,
+              address.houseNumber,
+              address.streetName,
+            ) &&
+            siteAddressAgrees(
+              feature.attributes.SitusAddressAll ?? "",
+              address.streetName,
+              wanted,
+            ),
         )
         .flatMap((feature) => {
           const summary = summaryFromFeature(feature);
@@ -393,8 +481,8 @@ export function createOgripClient(
         .sort((a, b) => distance(a, address) - distance(b, address))
         .map((parcel) => ({ parcel, matchedOn: "siteAddress" as const }));
       if (matches.length > 0) return matches;
-      // The service stopped at its record limit: this area is too dense for
-      // a wider ring to be complete, so a miss here stays a miss.
+      // The service stopped at its record limit: this box is incomplete,
+      // so a miss here stays a miss rather than widening.
       if (result.exceededTransferLimit) return [];
     }
     return [];
@@ -526,6 +614,16 @@ function summaryFromFeature(feature: QueryFeature): ParcelSummary | null {
     latitude: feature.centroid.y,
     longitude: feature.centroid.x,
   });
+}
+
+/**
+ * Server-side filter on the published house number, so a box returns a
+ * handful of rows instead of up to 2,000. The second pattern keeps site
+ * addresses with leading spaces (Delaware and Licking publish some), so the
+ * matcher sees every row it saw before. `houseNumber` is digits only.
+ */
+function houseNumberWhere(houseNumber: string): string {
+  return `(SitusAddressAll LIKE ${sqlString(`${houseNumber} %`)} OR SitusAddressAll LIKE ${sqlString(` %${houseNumber} %`)})`;
 }
 
 function layerQueryUrl(params: Record<string, string>): string {

@@ -1,7 +1,7 @@
 {
   "scenario": "locator-down-with-city",
   "path": "/api/parcels/search?q=57%20S%20Main%20St%2C%20Johnstown",
-  "recordedAt": "2026-11-17T00:11:57.328Z",
+  "recordedAt": "2026-11-17T04:13:25.406Z",
   "exchanges": [
     {
       "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=57+S+Main+St%2C+Johnstown&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",

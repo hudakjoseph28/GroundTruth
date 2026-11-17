@@ -12,6 +12,7 @@ import {
 import {
   parseAddressQuery,
   placeCounties,
+  siteAddressAgrees,
   sitePlace,
 } from "../src/parcels/addressQuery.js";
 import {
@@ -309,5 +310,90 @@ describe("polygonCentroid on real Ohio coordinates", () => {
     expect(c?.longitude).toBeLessThan(-83.0142782);
     expect(c?.latitude).toBeGreaterThan(40.0163945);
     expect(c?.latitude).toBeLessThan(40.0167465);
+  });
+});
+
+describe("typed direction and suffix", () => {
+  it.each([
+    [
+      "1739 N High St, Columbus",
+      {
+        streetName: "HIGH",
+        direction: "N",
+        suffix: "ST",
+        streetOnly: "1739 N HIGH ST",
+      },
+    ],
+    [
+      "1739 North High Street, Columbus",
+      {
+        streetName: "HIGH",
+        direction: "N",
+        suffix: "ST",
+        streetOnly: "1739 N HIGH ST",
+        abbreviated: "1739 N HIGH ST, COLUMBUS",
+      },
+    ],
+    [
+      "37 South High Street, Columbus",
+      { direction: "S", suffix: "ST", abbreviated: "37 S HIGH ST, COLUMBUS" },
+    ],
+    [
+      "7738 State Route 257 N, Prospect",
+      { streetName: "STATE ROUTE 257", direction: "N" },
+    ],
+    ["100 North St, Columbus", { streetName: "NORTH", suffix: "ST" }],
+    ["1739 High Avenue", { streetName: "HIGH", suffix: "AVE" }],
+  ])("%s", (query, expected) => {
+    expect(parseAddressQuery(query)).toMatchObject(expected);
+  });
+
+  it("leaves direction and suffix unset when none was typed", () => {
+    const parsed = parseAddressQuery("1739 High, Columbus");
+    expect(parsed?.direction).toBeUndefined();
+    expect(parsed?.suffix).toBeUndefined();
+    expect(parseAddressQuery("100 North St")?.direction).toBeUndefined();
+    expect(parseAddressQuery("84 W Dodridge St")?.abbreviated).toBeUndefined();
+  });
+
+  it("requires the published direction to equal a typed one", () => {
+    expect(
+      siteAddressAgrees("1739 S HIGH ST", "HIGH", { direction: "N" }),
+    ).toBe(false);
+    expect(
+      siteAddressAgrees("1739 N HIGH ST", "HIGH", { direction: "N" }),
+    ).toBe(true);
+    expect(siteAddressAgrees("1739 HIGH ST", "HIGH", { direction: "N" })).toBe(
+      false,
+    );
+    expect(
+      siteAddressAgrees(
+        "7738  STATE ROUTE 257 N  PROSPECT",
+        "STATE ROUTE 257",
+        { direction: "N" },
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts any direction when none was typed", () => {
+    for (const situs of ["750 N HIGH ST", "750 S HIGH ST", "750 HIGH ST"]) {
+      expect(siteAddressAgrees(situs, "HIGH", {})).toBe(true);
+      expect(siteAddressAgrees(situs, "HIGH", { suffix: "ST" })).toBe(true);
+    }
+  });
+
+  it("checks the suffix the same way, across spellings", () => {
+    expect(siteAddressAgrees("1739 S HIGH ST", "HIGH", { suffix: "AVE" })).toBe(
+      false,
+    );
+    expect(
+      siteAddressAgrees("10034 APPLETON RD JOHNSTOWN, OH 43031", "APPLETON", {
+        suffix: "RD",
+      }),
+    ).toBe(true);
+    expect(siteAddressAgrees("25 MAIN AV", "MAIN", { suffix: "AVE" })).toBe(
+      true,
+    );
+    expect(siteAddressAgrees("25 MAIN", "MAIN", { suffix: "ST" })).toBe(false);
   });
 });

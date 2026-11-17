@@ -59,6 +59,43 @@ const DIRECTIONS = new Set([
   "EAST",
   "WEST",
 ]);
+/** Spelled-out and abbreviated directions, to the USPS abbreviation. */
+const DIRECTION_CANON: Readonly<Record<string, string>> = {
+  N: "N",
+  NORTH: "N",
+  S: "S",
+  SOUTH: "S",
+  E: "E",
+  EAST: "E",
+  W: "W",
+  WEST: "W",
+  NE: "NE",
+  NORTHEAST: "NE",
+  NW: "NW",
+  NORTHWEST: "NW",
+  SE: "SE",
+  SOUTHEAST: "SE",
+  SW: "SW",
+  SOUTHWEST: "SW",
+};
+/** Street suffixes that have more than one spelling, to the USPS form. */
+const SUFFIX_CANON: Readonly<Record<string, string>> = {
+  AV: "AVE",
+  AVENUE: "AVE",
+  BOULEVARD: "BLVD",
+  CIRCLE: "CIR",
+  COURT: "CT",
+  DRIVE: "DR",
+  HIGHWAY: "HWY",
+  LANE: "LN",
+  PARKWAY: "PKWY",
+  PK: "PIKE",
+  PLACE: "PL",
+  ROAD: "RD",
+  STREET: "ST",
+  TERRACE: "TER",
+  TRAIL: "TRL",
+};
 const OHIO = new Set(["OH", "OHIO"]);
 const UNIT_WORDS = new Set([
   "APT",
@@ -85,8 +122,21 @@ export interface AddressQuery {
   houseNumber: string;
   /** Street name without house number, direction, or suffix: `MAIN`. */
   streetName: string;
-  /** `57 S MAIN ST`: the query without city, state, or ZIP. */
+  /**
+   * `57 S MAIN ST`: the query without city, state, or ZIP, with spelled-out
+   * directions and suffixes abbreviated (`North High Street` → `N HIGH ST`).
+   */
   streetOnly: string;
+  /** Typed direction, abbreviated (`N`), before or after the street name. */
+  direction?: string;
+  /** Typed street suffix, in USPS form (`ST`, `AVE`, `RD`). */
+  suffix?: string;
+  /**
+   * The street and place with directions and suffixes abbreviated, for the
+   * locator, which reads a spelled-out `South` as a street named SOUTH. Set
+   * only when it differs from what was typed.
+   */
+  abbreviated?: string;
   /** City, village, or township as typed, normalized: `JOHNSTOWN`. */
   place?: string;
   /** The query names a state other than Ohio. */
@@ -141,29 +191,112 @@ export function parseAddressQuery(query: string): AddressQuery | null {
     }
   }
 
-  const core = coreStreet(street);
+  const parts = streetParts(street);
+  const core = parts.core.filter((word) => /^[A-Z0-9][A-Z0-9'-]*$/.test(word));
   if (core.length === 0) return null;
   const place =
     rest.length > 0 ? normalizePlaceName(rest.join(" ")) : undefined;
+  const direction = parts.predir ?? parts.postdir;
+  const streetOnly = [
+    houseNumber,
+    parts.predir,
+    ...parts.core,
+    parts.suffix,
+    parts.postdir,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const typed = [houseNumber, ...street].join(" ");
   return {
     houseNumber,
     streetName: core.join(" "),
-    streetOnly: [houseNumber, ...street].join(" "),
+    streetOnly,
     ...(place ? { place } : {}),
     outOfState,
+    ...(direction ? { direction } : {}),
+    ...(parts.suffix ? { suffix: parts.suffix } : {}),
+    ...(streetOnly !== typed
+      ? { abbreviated: place ? `${streetOnly}, ${place}` : streetOnly }
+      : {}),
   };
 }
 
-function coreStreet(street: string[]): string[] {
-  let core = [...street];
-  if (core.length > 1 && DIRECTIONS.has(core[0] ?? "")) core = core.slice(1);
-  if (core.length > 1 && DIRECTIONS.has(core[core.length - 1] ?? "")) {
-    core = core.slice(0, -1);
+interface StreetParts {
+  predir?: string;
+  core: string[];
+  suffix?: string;
+  postdir?: string;
+}
+
+/**
+ * Splits street words into direction, name, suffix, and trailing direction,
+ * in canonical form. A word is a direction or suffix only if a name word
+ * remains: `NORTH ST` is a street named NORTH, not a direction.
+ */
+function streetParts(street: string[]): StreetParts {
+  const core = [...street];
+  const parts: StreetParts = { core };
+  const last = () => core[core.length - 1] ?? "";
+  if (core.length > 1 && DIRECTIONS.has(last())) {
+    parts.postdir = canonicalDirection(core.pop() ?? "");
   }
-  if (core.length > 1 && STREET_SUFFIXES.has(core[core.length - 1] ?? "")) {
-    core = core.slice(0, -1);
+  if (core.length > 1 && STREET_SUFFIXES.has(last())) {
+    parts.suffix = canonicalSuffix(core.pop() ?? "");
   }
-  return core.filter((word) => /^[A-Z0-9][A-Z0-9'-]*$/.test(word));
+  if (core.length > 1 && DIRECTIONS.has(core[0] ?? "")) {
+    parts.predir = canonicalDirection(core.shift() ?? "");
+  }
+  return parts;
+}
+
+function canonicalDirection(word: string): string {
+  return DIRECTION_CANON[word] ?? word;
+}
+
+function canonicalSuffix(word: string): string {
+  return SUFFIX_CANON[word] ?? word;
+}
+
+/**
+ * Whether a published site address agrees with the direction and suffix a
+ * buyer typed. A typed direction must equal the published one, before or
+ * after the street name (`1739 N HIGH ST` is not `1739 S HIGH ST`); a typed
+ * suffix must equal the published suffix. With nothing typed, any direction
+ * or suffix is accepted, so `1739 High St` matches both N and S High.
+ */
+export function siteAddressAgrees(
+  siteAddress: string,
+  streetName: string,
+  wanted: Pick<AddressQuery, "direction" | "suffix">,
+): boolean {
+  if (!wanted.direction && !wanted.suffix) return true;
+  const tokens = words(siteAddress.toUpperCase().replace(/,/g, " "));
+  const street = words(streetName.toUpperCase());
+  let at = -1;
+  for (let i = 1; i + street.length <= tokens.length; i += 1) {
+    if (street.every((word, k) => tokens[i + k] === word)) {
+      at = i;
+      break;
+    }
+  }
+  if (at < 0) return false;
+  const before = tokens[at - 1] ?? "";
+  const predir =
+    at >= 2 && DIRECTIONS.has(before) ? canonicalDirection(before) : undefined;
+  let next = at + street.length;
+  let suffix: string | undefined;
+  let postdir: string | undefined;
+  if (STREET_SUFFIXES.has(tokens[next] ?? "")) {
+    suffix = canonicalSuffix(tokens[next] ?? "");
+    next += 1;
+  }
+  if (DIRECTIONS.has(tokens[next] ?? "")) {
+    postdir = canonicalDirection(tokens[next] ?? "");
+  }
+  if (wanted.direction && (predir ?? postdir) !== wanted.direction)
+    return false;
+  if (wanted.suffix && suffix !== wanted.suffix) return false;
+  return true;
 }
 
 function words(value: string): string[] {

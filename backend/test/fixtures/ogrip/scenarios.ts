@@ -19,6 +19,14 @@ export const OGRIP_SCENARIOS = {
   "johnstown-no-such-address": `/api/parcels/search?q=${encodeURIComponent("123 Main St Johnstown OH")}`,
   "locator-down-with-city": `/api/parcels/search?q=${encodeURIComponent("57 S Main St, Johnstown")}`,
   "locator-down-without-city": `/api/parcels/search?q=${encodeURIComponent("84 W Dodridge St")}`,
+  /** OGRIP publishes 1739 S High St only; N must not return it. */
+  "high-1739-north": `/api/parcels/search?q=${encodeURIComponent("1739 N High St, Columbus")}`,
+  "high-1739-south": `/api/parcels/search?q=${encodeURIComponent("1739 S High St, Columbus")}`,
+  "high-1739-north-spelled": `/api/parcels/search?q=${encodeURIComponent("1739 North High Street, Columbus")}`,
+  /** 750 N High St and 750 S High St both exist in Columbus. */
+  "high-750-no-direction": `/api/parcels/search?q=${encodeURIComponent("750 High St, Columbus")}`,
+  "high-750-north": `/api/parcels/search?q=${encodeURIComponent("750 N High St, Columbus")}`,
+  "high-750-north-spelled": `/api/parcels/search?q=${encodeURIComponent("750 North High Street, Columbus")}`,
 } as const;
 
 /**

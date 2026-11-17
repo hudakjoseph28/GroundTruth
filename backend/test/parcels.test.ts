@@ -363,19 +363,22 @@ describe("OGRIP failures", () => {
 
   it("times out a search whose later requests would run past the budget", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    const recorded = load("franklin-address").exchanges;
+    const recorded = load("johnstown-no-such-address").exchanges;
     const slow = vi.fn<typeof fetch>(async (input, init) => {
       const exchange = recorded.find((e) => e.url === String(input));
       await new Promise((resolve) => setTimeout(resolve, 35));
       if (init?.signal?.aborted) throw init.signal.reason;
       return new Response(JSON.stringify(exchange?.body));
     });
-    // Each request fits in 40 ms, but three in a row exceed the 80 ms budget.
+    // Locator, 500 m box, then 1,500 m box: each fits in 40 ms, but three
+    // in a row exceed the 80 ms budget.
     const app = createApp("test-commit", {
       ogrip: createOgripClient({ fetch: slow, timeoutMs: 40 }),
     });
 
-    const res = await request(app).get(OGRIP_SCENARIOS["franklin-address"]);
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["johnstown-no-such-address"],
+    );
 
     expect(res.status).toBe(504);
     expect(res.body.error.code).toBe("PROVIDER_TIMEOUT");
@@ -497,9 +500,11 @@ describe("address search fallbacks", () => {
       const params = new URL(url).searchParams;
       if (url.startsWith(OGRIP_LOCATOR))
         return `locator:${params.get("SingleLine")}`;
+      // Box queries also filter on SitusAddressAll, by house number.
+      if (params.has("geometry")) return "box";
       if (params.get("where")?.includes("SitusAddressAll LIKE"))
         return "siteAddress";
-      return params.has("geometry") ? "box" : "other";
+      return "other";
     });
 
   it.each([
@@ -652,5 +657,130 @@ describe("coverage claims only what was measured", () => {
     expect(cached[0]?.lastVerifiedAt).toBe("2026-11-17T00:00:00.000Z");
     expect(remeasured[0]?.lastVerifiedAt).toBe("2026-11-17T01:01:00.000Z");
     expect(stats).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("street direction in address search (recorded live)", () => {
+  const keys = (body: unknown) =>
+    (body as ParcelSearchResult[]).map((r) => r.parcel.key).sort();
+  const N750 = "ohio:39049:010-028040";
+  const S750 = "ohio:39049:010-020912";
+
+  it("does not answer 1739 N High St with 1739 S High St", async () => {
+    const { app } = scenarioApp("high-1739-north");
+    const res = await request(app).get(OGRIP_SCENARIOS["high-1739-north"]);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("finds 1739 S High St when S is typed", async () => {
+    const { app } = scenarioApp("high-1739-south");
+    const res = await request(app).get(OGRIP_SCENARIOS["high-1739-south"]);
+    expect(keys(res.body)).toEqual(["ohio:39049:010-026093"]);
+    expect(res.body[0].parcel.siteAddress).toBe("1739 S HIGH ST");
+  });
+
+  it("treats a spelled-out North like N", async () => {
+    const { app } = scenarioApp("high-1739-north-spelled");
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["high-1739-north-spelled"],
+    );
+    expect(res.body).toEqual([]);
+
+    const spelled = scenarioApp("high-750-north-spelled");
+    const found = await request(spelled.app).get(
+      OGRIP_SCENARIOS["high-750-north-spelled"],
+    );
+    expect(keys(found.body)).toEqual([N750]);
+  });
+
+  it("returns both N and S when no direction is typed", async () => {
+    const { app } = scenarioApp("high-750-no-direction");
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["high-750-no-direction"],
+    );
+    expect(keys(res.body)).toEqual([N750, S750].sort());
+  });
+
+  it("returns only N when N is typed and both exist", async () => {
+    const { app } = scenarioApp("high-750-north");
+    const res = await request(app).get(OGRIP_SCENARIOS["high-750-north"]);
+    expect(keys(res.body)).toEqual([N750]);
+  });
+
+  it("filters box queries by house number and asks for no geometry", () => {
+    for (const name of [
+      "high-1739-north",
+      "high-750-no-direction",
+      "franklin-address",
+    ] as const) {
+      for (const { url } of load(name).exchanges) {
+        const params = new URL(url).searchParams;
+        if (!params.has("geometry")) continue;
+        expect(params.get("where")).toMatch(/SitusAddressAll LIKE '\d+ %'/);
+        expect(params.get("returnGeometry")).toBe("false");
+        expect(params.get("returnCentroid")).toBe("true");
+      }
+    }
+  });
+});
+
+describe("hedged OGRIP requests", () => {
+  it("sends a second copy of a stalled request and uses whichever answers", async () => {
+    const recorded = load("franklin-parcel-id").exchanges[0];
+    let calls = 0;
+    const aborted: boolean[] = [];
+    const stallFirst = vi.fn<typeof fetch>(async (_input, init) => {
+      calls += 1;
+      if (calls === 1) {
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            aborted.push(true);
+            reject(init.signal?.reason);
+          });
+        });
+      }
+      return new Response(JSON.stringify(recorded?.body));
+    });
+    const app = createApp("test-commit", {
+      ogrip: createOgripClient({
+        fetch: stallFirst,
+        timeoutMs: 2_000,
+        hedgeAfterMs: 30,
+      }),
+    });
+
+    const started = Date.now();
+    const res = await request(app).get(searchUrl("010-042534"));
+
+    expect(res.status).toBe(200);
+    expect(res.body[0].parcel.key).toBe("ohio:39049:010-042534");
+    expect(Date.now() - started).toBeLessThan(1_000);
+    expect(stallFirst).toHaveBeenCalledTimes(2);
+    expect(aborted).toEqual([true]);
+  });
+
+  it("does not hedge when the per-request limit is too short to allow it", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const hang = vi.fn<typeof fetch>(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason),
+          );
+        }),
+    );
+    const app = createApp("test-commit", {
+      ogrip: createOgripClient({
+        fetch: hang,
+        timeoutMs: 50,
+        hedgeAfterMs: 30,
+      }),
+    });
+
+    const res = await request(app).get(searchUrl("010-042534"));
+
+    expect(res.status).toBe(504);
+    expect(hang).toHaveBeenCalledTimes(1);
   });
 });
