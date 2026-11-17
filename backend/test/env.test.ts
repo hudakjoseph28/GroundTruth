@@ -9,7 +9,25 @@ describe("readServerEnv", () => {
       databaseUrl: DATABASE_URL,
       port: 3001,
       commit: "unknown",
+      ogripTimeoutMs: 8000,
     });
+  });
+
+  it("reads OGRIP_TIMEOUT_MS", () => {
+    expect(
+      readServerEnv({ DATABASE_URL, OGRIP_TIMEOUT_MS: "2500" }).ogripTimeoutMs,
+    ).toBe(2500);
+  });
+
+  it.each([
+    ["1.5", "OGRIP_TIMEOUT_MS must be an integer"],
+    ["fast", "OGRIP_TIMEOUT_MS must be an integer"],
+    ["100", "OGRIP_TIMEOUT_MS must be between 500 and 60000"],
+    ["600000", "OGRIP_TIMEOUT_MS must be between 500 and 60000"],
+  ])("rejects OGRIP_TIMEOUT_MS %s", (OGRIP_TIMEOUT_MS, message) => {
+    expect(() => readServerEnv({ DATABASE_URL, OGRIP_TIMEOUT_MS })).toThrow(
+      message,
+    );
   });
 
   it("reads PORT and GIT_COMMIT", () => {

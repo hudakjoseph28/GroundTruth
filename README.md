@@ -62,7 +62,7 @@ docs/
 packages/shared/          `@groundtruth/shared` v1 types and staged fixtures
 frontend/web/             Vite app: homepage, staged search, parcel view
 frontend/mobile/          reserved; native app is out of core scope
-backend/                  Express API: health and staged parcel report
+backend/                  Express API: live OGRIP parcel search, staged report and deals
 escrow/                   Anchor program (empty until scaffold)
 ```
 

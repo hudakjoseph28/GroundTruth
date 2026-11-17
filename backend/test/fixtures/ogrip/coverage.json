@@ -1,0 +1,753 @@
+{
+  "scenario": "coverage",
+  "path": "/api/coverage",
+  "recordedAt": "2026-11-17T00:11:55.403Z",
+  "exchanges": [
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL&outStatistics=%5B%7B%22statisticType%22%3A%22count%22%2C%22onStatisticField%22%3A%22OBJECTID%22%2C%22outStatisticFieldName%22%3A%22parcels%22%7D%5D&groupByFieldsForStatistics=County&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
+        "globalIdFieldName": "GlobalID",
+        "geometryProperties": {
+          "shapeAreaFieldName": "Shape__Area",
+          "shapeLengthFieldName": "Shape__Length",
+          "units": "esriFeet"
+        },
+        "geometryType": "esriGeometryPolygon",
+        "spatialReference": { "wkid": 102723, "latestWkid": 3735 },
+        "fields": [
+          {
+            "name": "parcels",
+            "type": "esriFieldTypeInteger",
+            "alias": "parcels",
+            "sqlType": "sqlTypeInteger",
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "County",
+            "type": "esriFieldTypeString",
+            "alias": "County",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          { "attributes": { "parcels": 21557, "County": "Adams" } },
+          { "attributes": { "parcels": 52684, "County": "Allen" } },
+          { "attributes": { "parcels": 35636, "County": "Ashland" } },
+          { "attributes": { "parcels": 74787, "County": "Ashtabula" } },
+          { "attributes": { "parcels": 42355, "County": "Athens" } },
+          { "attributes": { "parcels": 28715, "County": "Auglaize" } },
+          { "attributes": { "parcels": 65583, "County": "Belmont" } },
+          { "attributes": { "parcels": 37682, "County": "Brown" } },
+          { "attributes": { "parcels": 166357, "County": "Butler" } },
+          { "attributes": { "parcels": 28521, "County": "Carroll" } },
+          { "attributes": { "parcels": 26626, "County": "Champaign" } },
+          { "attributes": { "parcels": 69903, "County": "Clark" } },
+          { "attributes": { "parcels": 98507, "County": "Clermont" } },
+          { "attributes": { "parcels": 26962, "County": "Clinton" } },
+          { "attributes": { "parcels": 74627, "County": "Columbiana" } },
+          { "attributes": { "parcels": 27602, "County": "Coshocton" } },
+          { "attributes": { "parcels": 33643, "County": "Crawford" } },
+          { "attributes": { "parcels": 483784, "County": "Cuyahoga" } },
+          { "attributes": { "parcels": 31368, "County": "Darke" } },
+          { "attributes": { "parcels": 26864, "County": "Defiance" } },
+          { "attributes": { "parcels": 95456, "County": "Delaware" } },
+          { "attributes": { "parcels": 45909, "County": "Erie" } },
+          { "attributes": { "parcels": 73062, "County": "Fairfield" } },
+          { "attributes": { "parcels": 18144, "County": "Fayette" } },
+          { "attributes": { "parcels": 448741, "County": "Franklin" } },
+          { "attributes": { "parcels": 23485, "County": "Fulton" } },
+          { "attributes": { "parcels": 27074, "County": "Gallia" } },
+          { "attributes": { "parcels": 50769, "County": "Geauga" } },
+          { "attributes": { "parcels": 76213, "County": "Greene" } },
+          { "attributes": { "parcels": 40669, "County": "Guernsey" } },
+          { "attributes": { "parcels": 354521, "County": "Hamilton" } },
+          { "attributes": { "parcels": 38844, "County": "Hancock" } },
+          { "attributes": { "parcels": 26221, "County": "Hardin" } },
+          { "attributes": { "parcels": 17822, "County": "Harrison" } },
+          { "attributes": { "parcels": 19614, "County": "Henry" } },
+          { "attributes": { "parcels": 32159, "County": "Highland" } },
+          { "attributes": { "parcels": 22731, "County": "Hocking" } },
+          { "attributes": { "parcels": 28271, "County": "Holmes" } },
+          { "attributes": { "parcels": 40354, "County": "Huron" } },
+          { "attributes": { "parcels": 32702, "County": "Jackson" } },
+          { "attributes": { "parcels": 58475, "County": "Jefferson" } },
+          { "attributes": { "parcels": 41757, "County": "Knox" } },
+          { "attributes": { "parcels": 114372, "County": "Lake" } },
+          { "attributes": { "parcels": 56373, "County": "Lawrence" } },
+          { "attributes": { "parcels": 95308, "County": "Licking" } },
+          { "attributes": { "parcels": 36915, "County": "Logan" } },
+          { "attributes": { "parcels": 169011, "County": "Lorain" } },
+          { "attributes": { "parcels": 204468, "County": "Lucas" } },
+          { "attributes": { "parcels": 24745, "County": "Madison" } },
+          { "attributes": { "parcels": 160975, "County": "Mahoning" } },
+          { "attributes": { "parcels": 37768, "County": "Marion" } },
+          { "attributes": { "parcels": 132618, "County": "Medina" } },
+          { "attributes": { "parcels": 29921, "County": "Meigs" } },
+          { "attributes": { "parcels": 25560, "County": "Mercer" } },
+          { "attributes": { "parcels": 53974, "County": "Miami" } },
+          { "attributes": { "parcels": 17369, "County": "Monroe" } },
+          { "attributes": { "parcels": 273127, "County": "Montgomery" } },
+          { "attributes": { "parcels": 19080, "County": "Morgan" } },
+          { "attributes": { "parcels": 28218, "County": "Morrow" } },
+          { "attributes": { "parcels": 57480, "County": "Muskingum" } },
+          { "attributes": { "parcels": 16449, "County": "Noble" } },
+          { "attributes": { "parcels": 53751, "County": "Ottawa" } },
+          { "attributes": { "parcels": 17865, "County": "Paulding" } },
+          { "attributes": { "parcels": 30153, "County": "Perry" } },
+          { "attributes": { "parcels": 30926, "County": "Pickaway" } },
+          { "attributes": { "parcels": 24058, "County": "Pike" } },
+          { "attributes": { "parcels": 101867, "County": "Portage" } },
+          { "attributes": { "parcels": 38252, "County": "Preble" } },
+          { "attributes": { "parcels": 30160, "County": "Putnam" } },
+          { "attributes": { "parcels": 75592, "County": "Richland" } },
+          { "attributes": { "parcels": 44710, "County": "Ross" } },
+          { "attributes": { "parcels": 33412, "County": "Sandusky" } },
+          { "attributes": { "parcels": 58630, "County": "Scioto" } },
+          { "attributes": { "parcels": 45893, "County": "Seneca" } },
+          { "attributes": { "parcels": 31528, "County": "Shelby" } },
+          { "attributes": { "parcels": 201244, "County": "Stark" } },
+          { "attributes": { "parcels": 262494, "County": "Summit" } },
+          { "attributes": { "parcels": 134339, "County": "Trumbull" } },
+          { "attributes": { "parcels": 60413, "County": "Tuscarawas" } },
+          { "attributes": { "parcels": 33625, "County": "Union" } },
+          { "attributes": { "parcels": 19688, "County": "Van Wert" } },
+          { "attributes": { "parcels": 13218, "County": "Vinton" } },
+          { "attributes": { "parcels": 106237, "County": "Warren" } },
+          { "attributes": { "parcels": 62009, "County": "Washington" } },
+          { "attributes": { "parcels": 57191, "County": "Wayne" } },
+          { "attributes": { "parcels": 26260, "County": "Williams" } },
+          { "attributes": { "parcels": 73196, "County": "Wood" } },
+          { "attributes": { "parcels": 20280, "County": "Wyandot" } }
+        ]
+      }
+    }
+  ],
+  "apiResponse": {
+    "status": 200,
+    "body": [
+      {
+        "county": "Adams",
+        "countyFips": "39001",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Allen",
+        "countyFips": "39003",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Ashland",
+        "countyFips": "39005",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Ashtabula",
+        "countyFips": "39007",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Athens",
+        "countyFips": "39009",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Auglaize",
+        "countyFips": "39011",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Belmont",
+        "countyFips": "39013",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Brown",
+        "countyFips": "39015",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Butler",
+        "countyFips": "39017",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Carroll",
+        "countyFips": "39019",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Champaign",
+        "countyFips": "39021",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Clark",
+        "countyFips": "39023",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Clermont",
+        "countyFips": "39025",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Clinton",
+        "countyFips": "39027",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Columbiana",
+        "countyFips": "39029",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Coshocton",
+        "countyFips": "39031",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Crawford",
+        "countyFips": "39033",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Cuyahoga",
+        "countyFips": "39035",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Darke",
+        "countyFips": "39037",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Defiance",
+        "countyFips": "39039",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Delaware",
+        "countyFips": "39041",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Erie",
+        "countyFips": "39043",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Fairfield",
+        "countyFips": "39045",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Fayette",
+        "countyFips": "39047",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Franklin",
+        "countyFips": "39049",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Fulton",
+        "countyFips": "39051",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Gallia",
+        "countyFips": "39053",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Geauga",
+        "countyFips": "39055",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Greene",
+        "countyFips": "39057",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Guernsey",
+        "countyFips": "39059",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Hamilton",
+        "countyFips": "39061",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Hancock",
+        "countyFips": "39063",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Hardin",
+        "countyFips": "39065",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Harrison",
+        "countyFips": "39067",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Henry",
+        "countyFips": "39069",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Highland",
+        "countyFips": "39071",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Hocking",
+        "countyFips": "39073",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Holmes",
+        "countyFips": "39075",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Huron",
+        "countyFips": "39077",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Jackson",
+        "countyFips": "39079",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Jefferson",
+        "countyFips": "39081",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Knox",
+        "countyFips": "39083",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Lake",
+        "countyFips": "39085",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Lawrence",
+        "countyFips": "39087",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Licking",
+        "countyFips": "39089",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Logan",
+        "countyFips": "39091",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Lorain",
+        "countyFips": "39093",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Lucas",
+        "countyFips": "39095",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Madison",
+        "countyFips": "39097",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Mahoning",
+        "countyFips": "39099",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Marion",
+        "countyFips": "39101",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Medina",
+        "countyFips": "39103",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Meigs",
+        "countyFips": "39105",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Mercer",
+        "countyFips": "39107",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Miami",
+        "countyFips": "39109",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Monroe",
+        "countyFips": "39111",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Montgomery",
+        "countyFips": "39113",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Morgan",
+        "countyFips": "39115",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Morrow",
+        "countyFips": "39117",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Muskingum",
+        "countyFips": "39119",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Noble",
+        "countyFips": "39121",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Ottawa",
+        "countyFips": "39123",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Paulding",
+        "countyFips": "39125",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Perry",
+        "countyFips": "39127",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Pickaway",
+        "countyFips": "39129",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Pike",
+        "countyFips": "39131",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Portage",
+        "countyFips": "39133",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Preble",
+        "countyFips": "39135",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Putnam",
+        "countyFips": "39137",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Richland",
+        "countyFips": "39139",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Ross",
+        "countyFips": "39141",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Sandusky",
+        "countyFips": "39143",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Scioto",
+        "countyFips": "39145",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Seneca",
+        "countyFips": "39147",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Shelby",
+        "countyFips": "39149",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Stark",
+        "countyFips": "39151",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Summit",
+        "countyFips": "39153",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Trumbull",
+        "countyFips": "39155",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Tuscarawas",
+        "countyFips": "39157",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Union",
+        "countyFips": "39159",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Van Wert",
+        "countyFips": "39161",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Vinton",
+        "countyFips": "39163",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Warren",
+        "countyFips": "39165",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Washington",
+        "countyFips": "39167",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Wayne",
+        "countyFips": "39169",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Williams",
+        "countyFips": "39171",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Wood",
+        "countyFips": "39173",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      },
+      {
+        "county": "Wyandot",
+        "countyFips": "39175",
+        "boundarySearchable": true,
+        "evidenceKinds": [],
+        "lastVerifiedAt": "2026-11-17T00:11:55.403Z"
+      }
+    ]
+  }
+}
