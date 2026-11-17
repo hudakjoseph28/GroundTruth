@@ -26,6 +26,7 @@ import {
   type ReportRecording,
   type ReportScenario,
 } from "./fixtures/report/scenarios.js";
+import { floodEvidence } from "./support/floodEvidence.js";
 
 function load(name: ReportScenario): ReportRecording {
   return JSON.parse(
@@ -282,6 +283,78 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
         retrievedAt: recording.recordedAt,
       }),
     ]);
+  });
+});
+
+describe("a parcel on two FIRM panels (golden parcel 230-000918)", () => {
+  it("cites both panels, Franklin and Madison, each with its own effective date", async () => {
+    const { app, recording } = scenario("franklin-golden");
+
+    const res = await request(app).get(
+      reportPath(REPORT_SCENARIOS["franklin-golden"]),
+    );
+
+    expect(res.status).toBe(200);
+    const flood = checkOf(res.body as ParcelReport, "flood");
+    // The values hand-verified for the golden report in #8.
+    expect(floodEvidence(flood)).toEqual({
+      status: "evidenceFound",
+      zones: ["X: area of minimal flood hazard"],
+      panels: ["39049C0290K@2008-06-17", "39097C0190E@2023-11-16"],
+    });
+
+    // FEMA lists Madison's panel first; the report does not depend on it.
+    const panelAnswer = recording.exchanges.find((e) =>
+      e.url.endsWith("/MapServer/3/query"),
+    )?.body as { features: { attributes: { FIRM_PAN: string } }[] };
+    expect(panelAnswer.features.map((f) => f.attributes.FIRM_PAN)).toEqual([
+      "39097C0190E",
+      "39049C0290K",
+    ]);
+  });
+
+  it("compares flood checks on zone and the set of panels, not wording or order", () => {
+    const base: Check = {
+      kind: "flood",
+      status: "evidenceFound",
+      finding:
+        "FEMA's National Flood Hazard Layer maps the whole parcel in Zone X, area of minimal flood hazard.",
+      limitation: "",
+      sources: [
+        {
+          authority: "FEMA",
+          title: "FIRM panel 39097C0190E (Madison County)",
+          url: "",
+          retrievedAt: "",
+          effectiveDate: "2023-11-16",
+        },
+        {
+          authority: "FEMA",
+          title: "FIRM panel 39049C0290K (Franklin County)",
+          url: "",
+          retrievedAt: "",
+          effectiveDate: "2008-06-17",
+        },
+      ],
+      responsibleParty: { role: "" },
+      nextAction: "",
+    };
+    const live = load("franklin-golden").apiResponse.body as ParcelReport;
+    expect(floodEvidence(base)).toEqual(floodEvidence(checkOf(live, "flood")));
+
+    // A missing panel, a different date, or a different zone all differ.
+    const onePanel = { ...base, sources: base.sources.slice(1) };
+    const redated = {
+      ...base,
+      sources: [
+        { ...base.sources[0]!, effectiveDate: "2008-06-17" },
+        base.sources[1]!,
+      ],
+    };
+    const otherZone = { ...base, finding: "The lot is in Zone AE." };
+    for (const changed of [onePanel, redated, otherZone]) {
+      expect(floodEvidence(changed)).not.toEqual(floodEvidence(base));
+    }
   });
 });
 

@@ -14,6 +14,12 @@ export const REPORT_SCENARIOS = {
   "franklin-crossing": "ohio:39049:152-001927",
   /** 17859 Township Hwy 148: Wyandot County has no NFHL study. */
   "wyandot-missing": "ohio:39175:010025000000",
+  /**
+   * The golden parcel (#8), Seaman Rd rear lot by the Madison County line:
+   * FEMA has two FIRM panels here, Franklin 39049C0290K and Madison
+   * 39097C0190E. Recorded live to compare with the seeded golden report.
+   */
+  "franklin-golden": "ohio:39049:230-000918",
   /** A well-formed Franklin key OGRIP does not publish. */
   "missing-parcel": "ohio:39049:999-999999",
 } as const;
