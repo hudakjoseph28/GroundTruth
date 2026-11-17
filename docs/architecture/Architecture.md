@@ -102,7 +102,7 @@ sequenceDiagram
     end
 ```
 
-Every deal binds buyer, seller token account, mint, amount, and reviewer wallets before funding. Any fee payer may trigger `release`; the program controls the outcome and can send funds only to the bound seller token account. An assigned reviewer may place a terminal hold. The buyer may call `refund` only while that hold is active. Both `release` and `refund` are one-time terminal settlements.
+Every deal binds buyer, seller token account, mint, amount, and reviewer wallets before funding. Any fee payer may trigger `release`; the program controls the outcome and can send funds only to the bound seller token account once all required reviewers approve and no holds exist. An assigned reviewer may place a terminal hold. The buyer may call `refund` only while that hold is active. Both `release` and `refund` transfer the exact agreed escrow amount (`deal.amount`) and conditionally close the vault if zero surplus remains; unsolicited surplus tokens remain permanently locked in the vault PDA to ensure settlement cannot be blocked by griefing deposits. Both settlements are one-time terminal settlements. Any surplus token recovery requires a future contract upgrade or migration. Staged closings are associated with the golden parcel (`ohio:39049:230-000918`).
 
 The demo uses two independent deals rather than mutating one deal between outcomes. This makes the story reproducible and keeps the held receipt available after the successful payout.
 

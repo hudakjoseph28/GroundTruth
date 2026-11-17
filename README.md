@@ -10,7 +10,9 @@ Built for the [UBC 2026 Hackathon](docs/ubc/UBC-Hackathon.md). **Main track: Con
 
 By the first end-to-end checkpoint, a judge can open the public site, search real Ohio parcels, inspect one honest source-backed report, and run two staged closings: one payout rejected because a title hold is active and one payout released to the bound seller after every required approval. The result is not a marketplace, legal opinion, title product, or deed-transfer system. It is a polished decision-and-payment prototype with verifiable evidence.
 
-**Repository status on Nov 12:** `@groundtruth/shared` is the v1 contract. `@groundtruth/web` can search the staged parcel and open it. `@groundtruth/backend` serves `GET /api/health` and `GET /api/parcels/:parcelKey/report` from a local Postgres seed. `escrow` is still empty.
+**Repository status on Nov 12:** `@groundtruth/shared` is the v1 contract. `@groundtruth/web` can search the staged parcel and open it. `@groundtruth/backend` serves `GET /api/health` and `GET /api/parcels/:parcelKey/report` from a local Postgres seed.
+
+**Escrow status on Nov 17:** Anchor escrow program implements all 6 instructions (`initialize_deal`, `fund`, `sign_approval`, `place_hold`, `release`, `refund`) and 6 on-chain events on Solana devnet. Tested with 78 Anchor integration tests covering authorization, reviewer quorum, blocking holds, exact USDC settlement, and conditional vault closure. Shared IDL and PDA derivation helpers checked into `@groundtruth/shared`.
 
 **Parcel data on Nov 17:** `GET /api/parcels/search`, `GET /api/parcels/:parcelKey`, and `GET /api/coverage` query live Ohio OGRIP parcels in all 88 counties. `GET /api/parcels/:parcelKey/report` builds live reports with a FEMA flood check, and serves seeded reports for the golden parcel `ohio:39049:230-000918` (Franklin) and the second-county parcel `ohio:39089:00500729609000` (Licking). The web still searches those two fixture parcels; switching it to the live search route is open. What was tested and where checks return evidence: [Coverage](docs/phases/02-parcel-research/Coverage.md).
 
@@ -65,7 +67,7 @@ packages/shared/          `@groundtruth/shared` v1 types, golden and second-coun
 frontend/web/             Vite app: homepage, search over the two fixture parcels, parcel view
 frontend/mobile/          reserved; native app is out of core scope
 backend/                  Express API: live OGRIP search, live and seeded parcel reports, staged deals
-escrow/                   Anchor program (empty until scaffold)
+escrow/                   Anchor program: 6 instructions, USDC vault, reviewer holds, release, and refund
 ```
 
 ## Quickstart

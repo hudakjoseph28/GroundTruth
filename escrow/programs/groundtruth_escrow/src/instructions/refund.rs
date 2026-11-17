@@ -1,0 +1,112 @@
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, Token, TokenAccount};
+
+use crate::{
+    constants::{DEAL_SEED, USDC_DECIMALS},
+    error::EscrowError,
+    state::{DealAccount, DealRefunded, DealState},
+};
+
+#[derive(Accounts)]
+pub struct Refund<'info> {
+    #[account(mut)]
+    pub buyer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [DEAL_SEED, deal.buyer.as_ref(), deal.deal_id.as_ref()],
+        bump = deal.bump,
+        has_one = buyer @ EscrowError::UnauthorizedBuyer,
+        has_one = mint @ EscrowError::InvalidMint,
+        has_one = vault @ EscrowError::InvalidVault,
+    )]
+    pub deal: Account<'info, DealAccount>,
+
+    #[account(
+        mut,
+        constraint = buyer_token_account.owner == buyer.key() @ EscrowError::InvalidSourceOwner,
+        constraint = buyer_token_account.mint == deal.mint @ EscrowError::InvalidMint,
+    )]
+    pub buyer_token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        constraint = vault.key() == deal.vault @ EscrowError::InvalidVault,
+        constraint = vault.owner == deal.key() @ EscrowError::InvalidVaultAuthority,
+        constraint = vault.mint == deal.mint @ EscrowError::InvalidMint,
+    )]
+    pub vault: Account<'info, TokenAccount>,
+
+    #[account(
+        address = deal.mint @ EscrowError::InvalidMint
+    )]
+    pub mint: Account<'info, Mint>,
+
+    pub token_program: Program<'info, Token>,
+}
+
+pub fn handle_refund(ctx: Context<Refund>) -> Result<()> {
+    require!(
+        ctx.accounts.deal.state == DealState::Held,
+        EscrowError::InvalidDealState
+    );
+    require!(ctx.accounts.deal.hold.is_some(), EscrowError::NoActiveHold);
+
+    let expected_buyer_ata = anchor_spl::associated_token::get_associated_token_address(
+        &ctx.accounts.buyer.key(),
+        &ctx.accounts.mint.key(),
+    );
+    require_keys_eq!(
+        ctx.accounts.buyer_token_account.key(),
+        expected_buyer_ata,
+        EscrowError::InvalidBuyerTokenAccount
+    );
+
+    let amount = ctx.accounts.deal.amount;
+    require!(
+        ctx.accounts.vault.amount >= amount,
+        EscrowError::InsufficientVaultBalance
+    );
+
+    let buyer_key = ctx.accounts.deal.buyer;
+    let deal_id = ctx.accounts.deal.deal_id;
+    let bump = ctx.accounts.deal.bump;
+    let signer_seeds: &[&[&[u8]]] = &[&[DEAL_SEED, buyer_key.as_ref(), deal_id.as_ref(), &[bump]]];
+
+    let cpi_accounts = anchor_spl::token::TransferChecked {
+        from: ctx.accounts.vault.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
+        to: ctx.accounts.buyer_token_account.to_account_info(),
+        authority: ctx.accounts.deal.to_account_info(),
+    };
+    let cpi_ctx =
+        CpiContext::new_with_signer(ctx.accounts.token_program.key(), cpi_accounts, signer_seeds);
+    anchor_spl::token::transfer_checked(cpi_ctx, amount, USDC_DECIMALS)?;
+
+    ctx.accounts.vault.reload()?;
+    if ctx.accounts.vault.amount == 0 {
+        let close_accounts = anchor_spl::token::CloseAccount {
+            account: ctx.accounts.vault.to_account_info(),
+            destination: ctx.accounts.buyer.to_account_info(),
+            authority: ctx.accounts.deal.to_account_info(),
+        };
+        let close_cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.key(),
+            close_accounts,
+            signer_seeds,
+        );
+        anchor_spl::token::close_account(close_cpi_ctx)?;
+    }
+
+    let deal = &mut ctx.accounts.deal;
+    deal.state = DealState::Refunded;
+
+    emit!(DealRefunded {
+        deal: deal.key(),
+        deal_id,
+        amount,
+        destination_token_account: ctx.accounts.buyer_token_account.key(),
+    });
+
+    Ok(())
+}

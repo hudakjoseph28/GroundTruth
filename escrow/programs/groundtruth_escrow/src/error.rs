@@ -38,4 +38,14 @@ pub enum EscrowError {
     DuplicateApproval,
     #[msg("Deal must have at least one required reviewer")]
     NoRequiredReviewers,
+    #[msg("Not all required reviewers have approved the deal")]
+    MissingRequiredApprovals,
+    #[msg("Cannot release funds while deal is under active hold")]
+    DealHeld,
+    #[msg("Cannot refund buyer: deal does not have an active hold")]
+    NoActiveHold,
+    #[msg("Vault balance is insufficient to complete settlement")]
+    InsufficientVaultBalance,
+    #[msg("Invalid buyer associated token account for bound buyer and mint")]
+    InvalidBuyerTokenAccount,
 }

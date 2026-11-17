@@ -1,0 +1,1186 @@
+{
+  "address": "2ox43XbbztcxCt7LDZaF9fSaRezwTbCNxWBKf89uVHP1",
+  "metadata": {
+    "name": "groundtruth_escrow",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "fund",
+      "discriminator": [
+        218,
+        188,
+        111,
+        221,
+        152,
+        113,
+        174,
+        7
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "deal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deal.buyer",
+                "account": "DealAccount"
+              },
+              {
+                "kind": "account",
+                "path": "deal.deal_id",
+                "account": "DealAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "buyer_token_account",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_deal",
+      "discriminator": [
+        100,
+        154,
+        180,
+        148,
+        120,
+        1,
+        196,
+        122
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "deal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "buyer"
+              },
+              {
+                "kind": "arg",
+                "path": "deal_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "seller"
+        },
+        {
+          "name": "seller_token_account"
+        },
+        {
+          "name": "mint",
+          "address": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "deal"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": [
+        {
+          "name": "deal_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "reviewers",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "ReviewerInput"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "place_hold",
+      "discriminator": [
+        26,
+        142,
+        195,
+        169,
+        37,
+        133,
+        174,
+        185
+      ],
+      "accounts": [
+        {
+          "name": "reviewer",
+          "signer": true
+        },
+        {
+          "name": "deal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deal.buyer",
+                "account": "DealAccount"
+              },
+              {
+                "kind": "account",
+                "path": "deal.deal_id",
+                "account": "DealAccount"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "role",
+          "type": {
+            "defined": {
+              "name": "ReviewerRole"
+            }
+          }
+        },
+        {
+          "name": "reason_code",
+          "type": {
+            "defined": {
+              "name": "HoldReason"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "refund",
+      "discriminator": [
+        2,
+        96,
+        183,
+        251,
+        63,
+        208,
+        46,
+        46
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "deal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deal.buyer",
+                "account": "DealAccount"
+              },
+              {
+                "kind": "account",
+                "path": "deal.deal_id",
+                "account": "DealAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "buyer_token_account",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "release",
+      "discriminator": [
+        253,
+        249,
+        15,
+        206,
+        28,
+        127,
+        193,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "deal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deal.buyer",
+                "account": "DealAccount"
+              },
+              {
+                "kind": "account",
+                "path": "deal.deal_id",
+                "account": "DealAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "seller",
+          "writable": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "seller_token_account",
+          "writable": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "buyer",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "deal"
+          ]
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "sign_approval",
+      "discriminator": [
+        114,
+        215,
+        190,
+        137,
+        240,
+        0,
+        26,
+        194
+      ],
+      "accounts": [
+        {
+          "name": "reviewer",
+          "signer": true
+        },
+        {
+          "name": "deal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deal.buyer",
+                "account": "DealAccount"
+              },
+              {
+                "kind": "account",
+                "path": "deal.deal_id",
+                "account": "DealAccount"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "role",
+          "type": {
+            "defined": {
+              "name": "ReviewerRole"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DealAccount",
+      "discriminator": [
+        121,
+        84,
+        14,
+        206,
+        117,
+        140,
+        94,
+        21
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ApprovalSigned",
+      "discriminator": [
+        218,
+        61,
+        5,
+        75,
+        40,
+        143,
+        81,
+        224
+      ]
+    },
+    {
+      "name": "DealFunded",
+      "discriminator": [
+        64,
+        84,
+        19,
+        153,
+        179,
+        255,
+        127,
+        144
+      ]
+    },
+    {
+      "name": "DealInitialized",
+      "discriminator": [
+        169,
+        84,
+        21,
+        98,
+        184,
+        104,
+        52,
+        60
+      ]
+    },
+    {
+      "name": "DealRefunded",
+      "discriminator": [
+        1,
+        108,
+        122,
+        221,
+        101,
+        137,
+        102,
+        17
+      ]
+    },
+    {
+      "name": "DealReleased",
+      "discriminator": [
+        126,
+        163,
+        205,
+        68,
+        14,
+        83,
+        90,
+        226
+      ]
+    },
+    {
+      "name": "HoldPlaced",
+      "discriminator": [
+        188,
+        90,
+        170,
+        2,
+        166,
+        153,
+        108,
+        121
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ZeroAmount",
+      "msg": "Escrow amount must be greater than zero"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidMint",
+      "msg": "Invalid token mint: must be Circle Devnet USDC"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidSeller",
+      "msg": "Invalid seller address"
+    },
+    {
+      "code": 6003,
+      "name": "BuyerSellerSame",
+      "msg": "Buyer and seller cannot be the same address"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidSellerTokenAccount",
+      "msg": "Invalid seller associated token account for bound seller and mint"
+    },
+    {
+      "code": 6005,
+      "name": "TooManyReviewers",
+      "msg": "Maximum 8 reviewers allowed"
+    },
+    {
+      "code": 6006,
+      "name": "DuplicateReviewer",
+      "msg": "Duplicate reviewer wallet"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidReviewerAssignment",
+      "msg": "Invalid reviewer assignment: wallet cannot be default, buyer, or seller"
+    },
+    {
+      "code": 6008,
+      "name": "UnauthorizedBuyer",
+      "msg": "Only the bound buyer can perform this action"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidDealState",
+      "msg": "Deal is not in the required state"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidVault",
+      "msg": "Invalid vault token account"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidVaultAuthority",
+      "msg": "Invalid vault authority: must be the Deal PDA"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidSourceOwner",
+      "msg": "Source token account must be owned by the buyer"
+    },
+    {
+      "code": 6013,
+      "name": "VaultAmountMismatch",
+      "msg": "Vault token balance does not match the expected escrow amount"
+    },
+    {
+      "code": 6014,
+      "name": "UnassignedReviewer",
+      "msg": "Reviewer is not assigned to this deal"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidReviewerRole",
+      "msg": "Reviewer role does not match assigned role"
+    },
+    {
+      "code": 6016,
+      "name": "DuplicateApproval",
+      "msg": "Reviewer has already approved this deal"
+    },
+    {
+      "code": 6017,
+      "name": "NoRequiredReviewers",
+      "msg": "Deal must have at least one required reviewer"
+    },
+    {
+      "code": 6018,
+      "name": "MissingRequiredApprovals",
+      "msg": "Not all required reviewers have approved the deal"
+    },
+    {
+      "code": 6019,
+      "name": "DealHeld",
+      "msg": "Cannot release funds while deal is under active hold"
+    },
+    {
+      "code": 6020,
+      "name": "NoActiveHold",
+      "msg": "Cannot refund buyer: deal does not have an active hold"
+    },
+    {
+      "code": 6021,
+      "name": "InsufficientVaultBalance",
+      "msg": "Vault balance is insufficient to complete settlement"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidBuyerTokenAccount",
+      "msg": "Invalid buyer associated token account for bound buyer and mint"
+    }
+  ],
+  "types": [
+    {
+      "name": "ApprovalSigned",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "deal_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "reviewer",
+            "type": "pubkey"
+          },
+          {
+            "name": "role",
+            "type": {
+              "defined": {
+                "name": "ReviewerRole"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "seller_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "state",
+            "type": {
+              "defined": {
+                "name": "DealState"
+              }
+            }
+          },
+          {
+            "name": "reviewers",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "ReviewerAssignment"
+                }
+              }
+            }
+          },
+          {
+            "name": "hold",
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "HoldState"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealFunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "deal_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "deal_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealRefunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "deal_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "destination_token_account",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealReleased",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "deal_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "destination_token_account",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DealState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Draft"
+          },
+          {
+            "name": "Funded"
+          },
+          {
+            "name": "Held"
+          },
+          {
+            "name": "Released"
+          },
+          {
+            "name": "Refunded"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HoldPlaced",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deal",
+            "type": "pubkey"
+          },
+          {
+            "name": "deal_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "reviewer",
+            "type": "pubkey"
+          },
+          {
+            "name": "role",
+            "type": {
+              "defined": {
+                "name": "ReviewerRole"
+              }
+            }
+          },
+          {
+            "name": "reason_code",
+            "type": {
+              "defined": {
+                "name": "HoldReason"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "HoldReason",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "SellerIdentityDisputed"
+          },
+          {
+            "name": "TitleException"
+          },
+          {
+            "name": "SiteReviewFailed"
+          },
+          {
+            "name": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HoldState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "placed_by",
+            "type": "pubkey"
+          },
+          {
+            "name": "role",
+            "type": {
+              "defined": {
+                "name": "ReviewerRole"
+              }
+            }
+          },
+          {
+            "name": "reason_code",
+            "type": {
+              "defined": {
+                "name": "HoldReason"
+              }
+            }
+          },
+          {
+            "name": "placed_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReviewerAssignment",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "role",
+            "type": {
+              "defined": {
+                "name": "ReviewerRole"
+              }
+            }
+          },
+          {
+            "name": "required",
+            "type": "bool"
+          },
+          {
+            "name": "approved",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReviewerInput",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "role",
+            "type": {
+              "defined": {
+                "name": "ReviewerRole"
+              }
+            }
+          },
+          {
+            "name": "required",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReviewerRole",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Title"
+          },
+          {
+            "name": "Survey"
+          },
+          {
+            "name": "Septic"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "DEAL_SEED",
+      "type": "bytes",
+      "value": "[100, 101, 97, 108]"
+    },
+    {
+      "name": "USDC_DECIMALS",
+      "type": "u8",
+      "value": "6"
+    },
+    {
+      "name": "USDC_MINT_DEVNET",
+      "type": "pubkey",
+      "value": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+    }
+  ]
+}

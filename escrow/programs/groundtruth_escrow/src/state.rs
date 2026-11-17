@@ -1,7 +1,9 @@
-use anchor_lang::prelude::*;
 use crate::constants::MAX_REVIEWERS;
+use anchor_lang::prelude::*;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug, Default)]
+#[derive(
+    AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug, Default,
+)]
 pub enum DealState {
     #[default]
     Draft,
@@ -101,6 +103,22 @@ pub struct HoldPlaced {
     pub reason_code: HoldReason,
 }
 
+#[event]
+pub struct DealReleased {
+    pub deal: Pubkey,
+    pub deal_id: [u8; 32],
+    pub amount: u64,
+    pub destination_token_account: Pubkey,
+}
+
+#[event]
+pub struct DealRefunded {
+    pub deal: Pubkey,
+    pub deal_id: [u8; 32],
+    pub amount: u64,
+    pub destination_token_account: Pubkey,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -192,4 +210,3 @@ mod tests {
         assert!(deserialized.hold.is_none());
     }
 }
-

@@ -8,16 +8,25 @@
 
 ## Deliverables
 
-- Anchor workspace in `escrow/`, program in `escrow/programs/groundtruth_escrow`, and tests in `escrow/tests`.
-- Checked-in IDL copied or generated into `packages/shared`, plus one client helper that derives the deal PDA and token accounts.
+- Anchor workspace in `escrow/`, program in `escrow/programs/groundtruth_escrow` (implementing 6 instructions and 6 events), and tests in `escrow/tests` (78 integration tests).
+- Checked-in IDL copied or generated into `packages/shared`, plus typed client helpers in `packages/shared/src/escrow.ts` (`deriveDealAccounts`, `deriveDealPda`, `deriveVaultPda`, `getDealPdaSeeds`).
 - Program events and rules exactly matching [Escrow v1](../../architecture/DataContract.md#escrow-v1).
+- Staged deals aligned with the Franklin County golden parcel (`ohio:39049:230-000918`).
 - A `docs/proof/` or README proof block containing program ID, cluster, held release signature/error, cleared release signature, and balance table. Never include a private key.
 
 ## Build this
 
 - **One deal-scoped SPL token vault per deal.** Bind buyer, seller payout wallet, assigned reviewers, USDC mint, and amount **before** funding. Amounts are integer base units so the UI, vault, and recipient account compare directly. Reviewer wallets must be independent (neither buyer nor seller), and at least one reviewer must be required.
+- **Six on-chain instructions:**
+  1. `initialize_deal`: Creates Deal PDA, registers buyer, seller, reviewers, USDC mint, and escrow amount. Signer: buyer.
+  2. `fund`: Transfers `deal.amount` from buyer ATA to vault; transitions deal state from `Draft` to `Funded`. Signer: buyer.
+  3. `sign_approval`: Verifies reviewer assignment and role; records unique reviewer approval. Signer: assigned reviewer.
+  4. `place_hold`: Places blocking hold with reason code; transitions deal to `Held`. Signer: assigned reviewer.
+  5. `release`: Verifies all required reviewers approved and no hold active; transfers exactly `deal.amount` to bound seller ATA; conditionally closes vault if zero surplus remains; transitions deal to `Released`. Signer: any fee payer.
+  6. `refund`: Verifies active hold; transfers exactly `deal.amount` to bound buyer ATA; conditionally closes vault if zero surplus remains; transitions deal to `Refunded`. Signer: bound buyer.
+- **Six on-chain events:** `DealInitialized`, `DealFunded`, `ApprovalSigned`, `HoldPlaced`, `DealReleased`, and `DealRefunded`.
 - **Devnet mint:** Circle test USDC `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`. The program checks it on every transfer.
-- **Release** may be submitted by any fee payer, but succeeds only from `funded` with every required approval, no hold, exact mint/amount, and the bound seller ATA. **Refund** requires the buyer's signature and an active hold. Both pay the full vault and become terminal; a second settlement fails.
+- **Settlement & Surplus Token Policy:** Both `release` and `refund` transfer exactly the agreed escrow amount (`deal.amount`). If the post-transfer vault balance is zero, the vault account closes and rent lamports return to the buyer. If unsolicited surplus tokens exist, the vault remains open to prevent settlement lockout (`NonNativeHasBalance` revert); surplus USDC and vault rent lamports remain permanently locked in the vault PDA as terminal deals cannot be mutated. Resolving surplus token recovery requires a future contract upgrade or migration.
 - Buyer-visible states: evidence received → reviewer decision signed → funds held or settled. The UI explains readiness; **Solana decides whether funds move.**
 
 ## Leave out
@@ -33,8 +42,8 @@ Accord's 1% fee, referral split, payment tranches, jury, and grace-period auto-r
 ## Acceptance checks
 
 1. Record vault, buyer, and seller balances. Submit release on the held deal. The program rejects it and all three balances are unchanged.
-2. On the cleared deal, the seller balance rises by the agreed amount and the vault is zero. Submit release again: the second settlement fails.
-3. An authorized refund returns the vault balance to the buyer and leaves the seller unchanged.
+2. On the cleared deal, the seller balance rises by the agreed amount and the vault is closed (or retains only unsolicited surplus tokens if deposited). Submit release again: the second settlement fails.
+3. An authorized refund returns the agreed escrow amount to the buyer ATA and leaves the seller unchanged.
 
 Run and report:
 
