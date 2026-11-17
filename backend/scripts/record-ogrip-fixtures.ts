@@ -58,6 +58,8 @@ async function record(name: OgripScenario, path: string): Promise<void> {
       fetch: recordingFetch,
       now: () => recordedAt,
       timeoutMs: 30_000,
+      // One response per request in a recording: no hedged duplicates.
+      hedgeAfterMs: 60_000,
     }),
   });
 

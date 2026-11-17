@@ -1,0 +1,357 @@
+{
+  "scenario": "high-1739-north",
+  "path": "/api/parcels/search?q=1739%20N%20High%20St%2C%20Columbus",
+  "recordedAt": "2026-11-17T04:13:46.578Z",
+  "exchanges": [
+    {
+      "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=1739+N+High+St%2C+Columbus&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
+      "status": 200,
+      "body": {
+        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
+        "candidates": [
+          {
+            "address": "1739 HIGH, COLUMBUS, 43207",
+            "location": { "x": -82.995675883868, "y": 39.926423853164 },
+            "score": 97.44,
+            "attributes": {
+              "Addr_type": "StreetAddress",
+              "AddNum": "1739",
+              "StName": "HIGH"
+            },
+            "extent": {
+              "xmin": -82.996675883868,
+              "ymin": 39.925423853164,
+              "xmax": -82.994675883868,
+              "ymax": 39.927423853164
+            }
+          },
+          {
+            "address": "1739 HIGH, COLUMBUS, 43210",
+            "location": { "x": -83.007712752756, "y": 39.997844400779 },
+            "score": 97.44,
+            "attributes": {
+              "Addr_type": "StreetAddress",
+              "AddNum": "1739",
+              "StName": "HIGH"
+            },
+            "extent": {
+              "xmin": -83.008712752756,
+              "ymin": 39.996844400779,
+              "xmax": -83.006712752756,
+              "ymax": 39.998844400779
+            }
+          },
+          {
+            "address": "N HIGH, COLUMBUS, 43235",
+            "location": { "x": -83.01602665341, "y": 40.128458631502 },
+            "score": 88.95,
+            "attributes": {
+              "Addr_type": "StreetName",
+              "AddNum": "",
+              "StName": "N HIGH"
+            },
+            "extent": {
+              "xmin": -83.01702665341,
+              "ymin": 40.127458631502,
+              "xmax": -83.01502665341,
+              "ymax": 40.129458631502
+            }
+          },
+          {
+            "address": "HIGH, COLUMBUS, 43235",
+            "location": { "x": -83.016680360783, "y": 40.132156303014 },
+            "score": 87.11,
+            "attributes": {
+              "Addr_type": "StreetName",
+              "AddNum": "",
+              "StName": "HIGH"
+            },
+            "extent": {
+              "xmin": -83.017680360783,
+              "ymin": 40.131156303014,
+              "xmax": -83.015680360783,
+              "ymax": 40.133156303014
+            }
+          },
+          {
+            "address": "HIGH, COLUMBUS, 43137",
+            "location": { "x": -83.002339707572, "y": 39.85111104327 },
+            "score": 87.11,
+            "attributes": {
+              "Addr_type": "StreetName",
+              "AddNum": "",
+              "StName": "HIGH"
+            },
+            "extent": {
+              "xmin": -83.003339707572,
+              "ymin": 39.85011104327,
+              "xmax": -83.001339707572,
+              "ymax": 39.85211104327
+            }
+          }
+        ]
+      }
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%271739+%25%27+OR+SitusAddressAll+LIKE+%27+%251739+%25%27%29&geometry=-83.013576%2C39.993353%2C-83.001850%2C40.002336&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
+        "globalIdFieldName": "GlobalID",
+        "features": []
+      }
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%271739+%25%27+OR+SitusAddressAll+LIKE+%27+%251739+%25%27%29&geometry=-83.001533%2C39.921932%2C-82.989819%2C39.930915&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
+        "globalIdFieldName": "GlobalID",
+        "geometryType": "esriGeometryPolygon",
+        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
+        "fields": [
+          {
+            "name": "County",
+            "type": "esriFieldTypeString",
+            "alias": "County",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "LocalParcelID",
+            "type": "esriFieldTypeString",
+            "alias": "LocalParcelID",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "StateParcelID",
+            "type": "esriFieldTypeString",
+            "alias": "StateParcelID",
+            "sqlType": "sqlTypeOther",
+            "length": 50,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "SitusAddressAll",
+            "type": "esriFieldTypeString",
+            "alias": "Situs Address All",
+            "sqlType": "sqlTypeOther",
+            "length": 255,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "LandArea",
+            "type": "esriFieldTypeDouble",
+            "alias": "LandArea",
+            "sqlType": "sqlTypeOther",
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "County": "Franklin",
+              "LocalParcelID": "010-037806",
+              "StateParcelID": "39049-010-037806",
+              "SitusAddressAll": "1739  FIFTH ST   ",
+              "LandArea": 0
+            },
+            "centroid": { "x": -82.99199562258731, "y": 39.926946681102706 }
+          },
+          {
+            "attributes": {
+              "County": "Franklin",
+              "LocalParcelID": "010-026093",
+              "StateParcelID": "39049-010-026093",
+              "SitusAddressAll": "1739 S HIGH ST   ",
+              "LandArea": 0
+            },
+            "centroid": { "x": -82.99602176215772, "y": 39.92641672081868 }
+          }
+        ]
+      }
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%271739+%25%27+OR+SitusAddressAll+LIKE+%27+%251739+%25%27%29&geometry=-83.025302%2C39.984370%2C-82.990123%2C40.011319&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
+        "globalIdFieldName": "GlobalID",
+        "geometryType": "esriGeometryPolygon",
+        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
+        "fields": [
+          {
+            "name": "County",
+            "type": "esriFieldTypeString",
+            "alias": "County",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "LocalParcelID",
+            "type": "esriFieldTypeString",
+            "alias": "LocalParcelID",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "StateParcelID",
+            "type": "esriFieldTypeString",
+            "alias": "StateParcelID",
+            "sqlType": "sqlTypeOther",
+            "length": 50,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "SitusAddressAll",
+            "type": "esriFieldTypeString",
+            "alias": "Situs Address All",
+            "sqlType": "sqlTypeOther",
+            "length": 255,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "LandArea",
+            "type": "esriFieldTypeDouble",
+            "alias": "LandArea",
+            "sqlType": "sqlTypeOther",
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "County": "Franklin",
+              "LocalParcelID": "010-055614",
+              "StateParcelID": "39049-010-055614",
+              "SitusAddressAll": "1739 N FOURTH ST   ",
+              "LandArea": 0
+            },
+            "centroid": { "x": -82.99921503340236, "y": 39.99876871188292 }
+          }
+        ]
+      }
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%271739+%25%27+OR+SitusAddressAll+LIKE+%27+%251739+%25%27%29&geometry=-83.013247%2C39.912949%2C-82.978105%2C39.939899&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
+        "globalIdFieldName": "GlobalID",
+        "geometryType": "esriGeometryPolygon",
+        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
+        "fields": [
+          {
+            "name": "County",
+            "type": "esriFieldTypeString",
+            "alias": "County",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "LocalParcelID",
+            "type": "esriFieldTypeString",
+            "alias": "LocalParcelID",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "StateParcelID",
+            "type": "esriFieldTypeString",
+            "alias": "StateParcelID",
+            "sqlType": "sqlTypeOther",
+            "length": 50,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "SitusAddressAll",
+            "type": "esriFieldTypeString",
+            "alias": "Situs Address All",
+            "sqlType": "sqlTypeOther",
+            "length": 255,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "LandArea",
+            "type": "esriFieldTypeDouble",
+            "alias": "LandArea",
+            "sqlType": "sqlTypeOther",
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "County": "Franklin",
+              "LocalParcelID": "010-037806",
+              "StateParcelID": "39049-010-037806",
+              "SitusAddressAll": "1739  FIFTH ST   ",
+              "LandArea": 0
+            },
+            "centroid": { "x": -82.99199562258731, "y": 39.926946681102706 }
+          },
+          {
+            "attributes": {
+              "County": "Franklin",
+              "LocalParcelID": "010-061484",
+              "StateParcelID": "39049-010-061484",
+              "SitusAddressAll": "1739  EIGHTH ST   ",
+              "LandArea": 0
+            },
+            "centroid": { "x": -82.9884545449267, "y": 39.92727081551033 }
+          },
+          {
+            "attributes": {
+              "County": "Franklin",
+              "LocalParcelID": "010-014438",
+              "StateParcelID": "39049-010-014438",
+              "SitusAddressAll": "1739 S PARSONS AV   ",
+              "LandArea": 0
+            },
+            "centroid": { "x": -82.9845840318652, "y": 39.92773689440069 }
+          },
+          {
+            "attributes": {
+              "County": "Franklin",
+              "LocalParcelID": "010-026093",
+              "StateParcelID": "39049-010-026093",
+              "SitusAddressAll": "1739 S HIGH ST   ",
+              "LandArea": 0
+            },
+            "centroid": { "x": -82.99602176215772, "y": 39.92641672081868 }
+          }
+        ]
+      }
+    }
+  ],
+  "apiResponse": {
+    "status": 200,
+    "body": []
+  }
+}

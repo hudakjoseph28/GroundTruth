@@ -1,7 +1,7 @@
 {
   "scenario": "locator-down-without-city",
   "path": "/api/parcels/search?q=84%20W%20Dodridge%20St",
-  "recordedAt": "2026-11-17T00:12:00.086Z",
+  "recordedAt": "2026-11-17T04:13:46.574Z",
   "exchanges": [
     {
       "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=84+W+Dodridge+St&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
@@ -16,7 +16,7 @@
       "error": {
         "code": "INTERNAL_ERROR",
         "message": "Ohio's parcel service could not be reached. Try again in a moment.",
-        "requestId": "56239192-eea6-43af-aa0d-831ba6f86e49",
+        "requestId": "06173ca0-6ecf-4183-9481-270f8c117723",
         "retryable": true
       }
     }
