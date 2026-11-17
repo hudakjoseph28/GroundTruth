@@ -6,6 +6,7 @@ const env = readServerEnv();
 const app = createApp(env.commit, {
   quicknode: { token: env.quicknodeStreamToken },
   ogrip: createOgripClient({ timeoutMs: env.ogripTimeoutMs }),
+  report: { floodTimeoutMs: env.femaTimeoutMs },
 });
 
 app.listen(env.port, () => {

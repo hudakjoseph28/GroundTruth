@@ -1,0 +1,363 @@
+{
+  "scenario": "franklin-crossing",
+  "parcelKey": "ohio:39049:152-001927",
+  "recordedAt": "2026-11-17T00:51:33.893Z",
+  "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.9317105%2C39.8709444%5D%2C%5B-82.931951%2C39.8678833%5D%2C%5B-82.9319534%2C39.8678521%5D%2C%5B-82.9319751%2C39.8678913%5D%2C%5B-82.9322354%2C39.8683624%5D%2C%5B-82.9328001%2C39.8698057%5D%2C%5B-82.9328388%2C39.8701257%5D%2C%5B-82.9329327%2C39.8704898%5D%2C%5B-82.9329206%2C39.8705913%5D%2C%5B-82.9325821%2C39.8709354%5D%2C%5B-82.9324647%2C39.8710498%5D%2C%5B-82.9323413%2C39.8711604%5D%2C%5B-82.932212%2C39.871267%5D%2C%5B-82.9320772%2C39.8713694%5D%2C%5B-82.931937%2C39.8714674%5D%2C%5B-82.9317916%2C39.8715609%5D%2C%5B-82.9316414%2C39.8716496%5D%2C%5B-82.9316803%2C39.8713298%5D%2C%5B-82.9317105%2C39.8709444%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=STUDY_ID&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "STUDY_ID",
+        "fieldAliases": {
+          "STUDY_ID": "STUDY_ID"
+        },
+        "fields": [
+          {
+            "name": "STUDY_ID",
+            "type": "esriFieldTypeString",
+            "alias": "STUDY_ID",
+            "length": 6
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "STUDY_ID": "39049C"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.9317105%2C39.8709444%5D%2C%5B-82.931951%2C39.8678833%5D%2C%5B-82.9319534%2C39.8678521%5D%2C%5B-82.9319751%2C39.8678913%5D%2C%5B-82.9322354%2C39.8683624%5D%2C%5B-82.9328001%2C39.8698057%5D%2C%5B-82.9328388%2C39.8701257%5D%2C%5B-82.9329327%2C39.8704898%5D%2C%5B-82.9329206%2C39.8705913%5D%2C%5B-82.9325821%2C39.8709354%5D%2C%5B-82.9324647%2C39.8710498%5D%2C%5B-82.9323413%2C39.8711604%5D%2C%5B-82.932212%2C39.871267%5D%2C%5B-82.9320772%2C39.8713694%5D%2C%5B-82.931937%2C39.8714674%5D%2C%5B-82.9317916%2C39.8715609%5D%2C%5B-82.9316414%2C39.8716496%5D%2C%5B-82.9316803%2C39.8713298%5D%2C%5B-82.9317105%2C39.8709444%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=CASE_NO%2CEFF_DATE%2CSTATUS&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "CASE_NO",
+        "fieldAliases": {
+          "CASE_NO": "CASE_NO",
+          "EFF_DATE": "EFF_DATE",
+          "STATUS": "STATUS"
+        },
+        "fields": [
+          {
+            "name": "CASE_NO",
+            "type": "esriFieldTypeString",
+            "alias": "CASE_NO",
+            "length": 13
+          },
+          {
+            "name": "EFF_DATE",
+            "type": "esriFieldTypeDate",
+            "alias": "EFF_DATE",
+            "length": 8
+          },
+          {
+            "name": "STATUS",
+            "type": "esriFieldTypeString",
+            "alias": "STATUS",
+            "length": 12
+          }
+        ],
+        "features": []
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.9317105%2C39.8709444%5D%2C%5B-82.931951%2C39.8678833%5D%2C%5B-82.9319534%2C39.8678521%5D%2C%5B-82.9319751%2C39.8678913%5D%2C%5B-82.9322354%2C39.8683624%5D%2C%5B-82.9328001%2C39.8698057%5D%2C%5B-82.9328388%2C39.8701257%5D%2C%5B-82.9329327%2C39.8704898%5D%2C%5B-82.9329206%2C39.8705913%5D%2C%5B-82.9325821%2C39.8709354%5D%2C%5B-82.9324647%2C39.8710498%5D%2C%5B-82.9323413%2C39.8711604%5D%2C%5B-82.932212%2C39.871267%5D%2C%5B-82.9320772%2C39.8713694%5D%2C%5B-82.931937%2C39.8714674%5D%2C%5B-82.9317916%2C39.8715609%5D%2C%5B-82.9316414%2C39.8716496%5D%2C%5B-82.9316803%2C39.8713298%5D%2C%5B-82.9317105%2C39.8709444%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=FLD_ZONE%2CZONE_SUBTY%2CSFHA_TF&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "FLD_AR_ID",
+        "fieldAliases": {
+          "FLD_ZONE": "FLD_ZONE",
+          "ZONE_SUBTY": "ZONE_SUBTY",
+          "SFHA_TF": "SFHA_TF"
+        },
+        "fields": [
+          {
+            "name": "FLD_ZONE",
+            "type": "esriFieldTypeString",
+            "alias": "FLD_ZONE",
+            "length": 17
+          },
+          {
+            "name": "ZONE_SUBTY",
+            "type": "esriFieldTypeString",
+            "alias": "ZONE_SUBTY",
+            "length": 76
+          },
+          {
+            "name": "SFHA_TF",
+            "type": "esriFieldTypeString",
+            "alias": "SFHA_TF",
+            "length": 1
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "FLD_ZONE": "AE",
+              "ZONE_SUBTY": null,
+              "SFHA_TF": "T"
+            }
+          },
+          {
+            "attributes": {
+              "FLD_ZONE": "AE",
+              "ZONE_SUBTY": null,
+              "SFHA_TF": "T"
+            }
+          },
+          {
+            "attributes": {
+              "FLD_ZONE": "X",
+              "ZONE_SUBTY": "0.2 PCT ANNUAL CHANCE FLOOD HAZARD",
+              "SFHA_TF": "F"
+            }
+          },
+          {
+            "attributes": {
+              "FLD_ZONE": "X",
+              "ZONE_SUBTY": "AREA OF MINIMAL FLOOD HAZARD",
+              "SFHA_TF": "F"
+            }
+          },
+          {
+            "attributes": {
+              "FLD_ZONE": "AE",
+              "ZONE_SUBTY": "FLOODWAY",
+              "SFHA_TF": "T"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.9317105%2C39.8709444%5D%2C%5B-82.931951%2C39.8678833%5D%2C%5B-82.9319534%2C39.8678521%5D%2C%5B-82.9319751%2C39.8678913%5D%2C%5B-82.9322354%2C39.8683624%5D%2C%5B-82.9328001%2C39.8698057%5D%2C%5B-82.9328388%2C39.8701257%5D%2C%5B-82.9329327%2C39.8704898%5D%2C%5B-82.9329206%2C39.8705913%5D%2C%5B-82.9325821%2C39.8709354%5D%2C%5B-82.9324647%2C39.8710498%5D%2C%5B-82.9323413%2C39.8711604%5D%2C%5B-82.932212%2C39.871267%5D%2C%5B-82.9320772%2C39.8713694%5D%2C%5B-82.931937%2C39.8714674%5D%2C%5B-82.9317916%2C39.8715609%5D%2C%5B-82.9316414%2C39.8716496%5D%2C%5B-82.9316803%2C39.8713298%5D%2C%5B-82.9317105%2C39.8709444%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=FIRM_PAN%2CEFF_DATE&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "DFIRM_ID",
+        "fieldAliases": {
+          "FIRM_PAN": "FIRM_PAN",
+          "EFF_DATE": "EFF_DATE"
+        },
+        "fields": [
+          {
+            "name": "FIRM_PAN",
+            "type": "esriFieldTypeString",
+            "alias": "FIRM_PAN",
+            "length": 11
+          },
+          {
+            "name": "EFF_DATE",
+            "type": "esriFieldTypeDate",
+            "alias": "EFF_DATE",
+            "length": 8
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "FIRM_PAN": "39049C0431K",
+              "EFF_DATE": 1213660800000
+            }
+          },
+          {
+            "attributes": {
+              "FIRM_PAN": "39129C0075J",
+              "EFF_DATE": 1279756800000
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27152-001927%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "status": 200,
+      "body": {
+        "type": "FeatureCollection",
+        "crs": {
+          "type": "name",
+          "properties": {
+            "name": "EPSG:4326"
+          }
+        },
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [-82.9317105, 39.8709444],
+                  [-82.931951, 39.8678833],
+                  [-82.9319534, 39.8678521],
+                  [-82.9319751, 39.8678913],
+                  [-82.9322354, 39.8683624],
+                  [-82.9328001, 39.8698057],
+                  [-82.9328388, 39.8701257],
+                  [-82.9329327, 39.8704898],
+                  [-82.9329206, 39.8705913],
+                  [-82.9325821, 39.8709354],
+                  [-82.9324647, 39.8710498],
+                  [-82.9323413, 39.8711604],
+                  [-82.932212, 39.871267],
+                  [-82.9320772, 39.8713694],
+                  [-82.931937, 39.8714674],
+                  [-82.9317916, 39.8715609],
+                  [-82.9316414, 39.8716496],
+                  [-82.9316803, 39.8713298],
+                  [-82.9317105, 39.8709444]
+                ]
+              ]
+            },
+            "properties": {
+              "County": "Franklin",
+              "LocalParcelID": "152-001927",
+              "StateParcelID": "39049-152-001927",
+              "SitusAddressAll": "0  GROVEPORT RD   ",
+              "LandArea": 5.98
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "apiResponse": {
+    "status": 200,
+    "body": {
+      "parcelKey": "ohio:39049:152-001927",
+      "generatedAt": "2026-11-17T00:51:33.893Z",
+      "coverage": "partial",
+      "biggestOpenQuestion": "access",
+      "checks": [
+        {
+          "kind": "zoning",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No zoning record has been checked for this lot yet.",
+          "limitation": "GroundTruth has no zoning source for Franklin County, so it cannot say which district applies or what may be built here.",
+          "responsibleParty": {
+            "role": "Zoning office for the township, city, or village that contains the lot",
+            "organization": "Franklin County Planning & Zoning (unincorporated areas)",
+            "publicContactUrl": "https://www.franklincountyohio.gov/Business-Development/Development-Planning/Planning-Zoning"
+          },
+          "nextAction": "Ask the zoning office that covers this lot which district applies and whether it allows what you plan to build."
+        },
+        {
+          "kind": "flood",
+          "status": "evidenceFound",
+          "finding": "The lot crosses 4 FEMA flood zones: Zone AE, Zone AE (regulatory floodway), Zone X (0.2% annual chance flood hazard), and Zone X (area of minimal flood hazard). Part of it is in a Special Flood Hazard Area (FEMA's 1%-annual-chance floodplain).",
+          "limitation": "GroundTruth has not measured how much of the lot lies in each zone, and FEMA's zone lines and the parcel lines come from different maps. A flood zone is not a flood-insurance determination or a building permit.",
+          "sources": [
+            {
+              "authority": "FEMA",
+              "title": "National Flood Hazard Layer: flood hazard zones",
+              "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+              "retrievedAt": "2026-11-17T00:51:33.893Z"
+            },
+            {
+              "authority": "FEMA",
+              "title": "Flood Insurance Rate Map panel 39049C0431K",
+              "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
+              "retrievedAt": "2026-11-17T00:51:33.893Z",
+              "effectiveDate": "2008-06-17T00:00:00.000Z"
+            },
+            {
+              "authority": "FEMA",
+              "title": "Flood Insurance Rate Map panel 39129C0075J",
+              "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
+              "retrievedAt": "2026-11-17T00:51:33.893Z",
+              "effectiveDate": "2010-07-22T00:00:00.000Z"
+            }
+          ],
+          "responsibleParty": {
+            "role": "Community floodplain administrator (city, village, or county)"
+          },
+          "nextAction": "Ask your lender whether flood insurance will be required, and ask the community floodplain administrator what building in the floodway requires."
+        },
+        {
+          "kind": "access",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No record of legal road access has been checked for this lot.",
+          "limitation": "A boundary that touches a road does not prove a legal right to use it, and a driveway needs its own approval.",
+          "responsibleParty": {
+            "role": "Title reviewer, then surveyor",
+            "organization": "Franklin County Recorder",
+            "publicContactUrl": "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs"
+          },
+          "nextAction": "Ask a title company to search recorded access rights, and ask the road authority what a driveway permit needs."
+        },
+        {
+          "kind": "utilities",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No utility record has been checked for this lot.",
+          "limitation": "No conclusion either way: public water and sewer may reach the lot, or it may need a well and a septic system.",
+          "responsibleParty": {
+            "role": "Water and sewer utility for this area"
+          },
+          "nextAction": "Ask the utility that serves this area whether water and sewer reach the lot, and what connecting would cost."
+        },
+        {
+          "kind": "easements",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No search of recorded easements or restrictions is attached.",
+          "limitation": "Recorded easements, covenants, or restrictions can limit where and what you build. None are ruled in or out.",
+          "responsibleParty": {
+            "role": "Title reviewer",
+            "organization": "Franklin County Recorder",
+            "publicContactUrl": "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs"
+          },
+          "nextAction": "Ask a title company to search the recorded documents for this parcel."
+        },
+        {
+          "kind": "sellerAuthority",
+          "status": "unknown",
+          "sources": [],
+          "finding": "The seller's right to sell this lot has not been verified.",
+          "limitation": "This report does not check ownership records or the seller's identity. Sellers who impersonate the real owner often target vacant land (see the linked ALTA guidance).",
+          "responsibleParty": {
+            "role": "Title reviewer",
+            "organization": "American Land Title Association (guidance)",
+            "publicContactUrl": "https://www.alta.org/file/ALTA-Seller-Impersonation-Handout"
+          },
+          "nextAction": "Have a title company confirm the owner of record and reach the owner through contact details it finds independently, not ones the seller supplied."
+        },
+        {
+          "kind": "survey",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No survey of this lot is attached.",
+          "limitation": "The boundary shown comes from Ohio's statewide parcel map (OGRIP), which is not a survey. The real corners and lines can differ.",
+          "responsibleParty": {
+            "role": "Licensed Ohio surveyor"
+          },
+          "nextAction": "Hire a licensed Ohio surveyor to locate the boundary before you close."
+        },
+        {
+          "kind": "septic",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No septic site review is on file for this lot.",
+          "limitation": "If public sewer does not reach the lot, a septic system needs a site and soil evaluation before anyone can say one will work.",
+          "responsibleParty": {
+            "role": "Local health district (sewage treatment systems)",
+            "organization": "Franklin County Public Health",
+            "publicContactUrl": "https://myfcph.org/forms-permits/"
+          },
+          "nextAction": "If the lot has no sewer, ask the health district for a site and soil evaluation before you close."
+        }
+      ]
+    }
+  }
+}

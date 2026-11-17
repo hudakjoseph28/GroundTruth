@@ -12,12 +12,14 @@ import {
   quickNodeWebhook,
   type QuickNodeWebhookOptions,
 } from "./routes/quicknodeWebhook.js";
-import { getParcelReport } from "./routes/report.js";
+import { reportRoute, type ReportRouteOptions } from "./routes/report.js";
 
 export interface AppOptions {
   quicknode?: Partial<QuickNodeWebhookOptions>;
   /** Statewide parcel source. Defaults to live OGRIP. */
   ogrip?: OgripClient;
+  /** FEMA client, report store, flood limit, and clock for live reports. */
+  report?: Omit<ReportRouteOptions, "ogrip">;
 }
 
 export function createApp(commit: string, options: AppOptions = {}) {
@@ -31,13 +33,17 @@ export function createApp(commit: string, options: AppOptions = {}) {
     next();
   });
 
-  const parcels = parcelRoutes(options.ogrip ?? createOgripClient());
+  const ogrip = options.ogrip ?? createOgripClient();
+  const parcels = parcelRoutes(ogrip);
 
   app.get("/api/health", getHealth(commit));
   app.get("/api/coverage", parcels.coverage);
   app.get("/api/parcels/search", parcels.search);
   app.get("/api/parcels/:parcelKey", parcels.getParcel);
-  app.get("/api/parcels/:parcelKey/report", getParcelReport);
+  app.get(
+    "/api/parcels/:parcelKey/report",
+    reportRoute({ ...options.report, ogrip }),
+  );
   app.get("/api/deals/:id", getDeal);
   app.get("/api/deals/:id/timeline", getDealTimeline);
   app.post(

@@ -1,4 +1,5 @@
 import { DEFAULT_OGRIP_TIMEOUT_MS } from "./parcels/ogrip.js";
+import { DEFAULT_FEMA_TIMEOUT_MS } from "./reports/pipeline.js";
 
 export interface ServerEnv {
   databaseUrl: string;
@@ -8,6 +9,8 @@ export interface ServerEnv {
   quicknodeStreamToken: string | undefined;
   /** Per-request limit for Ohio OGRIP calls, in milliseconds. */
   ogripTimeoutMs: number;
+  /** Limit for a report's FEMA flood check, in milliseconds. */
+  femaTimeoutMs: number;
 }
 
 export function readServerEnv(
@@ -23,6 +26,11 @@ export function readServerEnv(
     commit: readCommit(source.GIT_COMMIT),
     quicknodeStreamToken: source.QUICKNODE_STREAM_TOKEN?.trim() || undefined,
     ogripTimeoutMs: readOgripTimeout(source.OGRIP_TIMEOUT_MS),
+    femaTimeoutMs: readTimeout(
+      "FEMA_TIMEOUT_MS",
+      source.FEMA_TIMEOUT_MS,
+      DEFAULT_FEMA_TIMEOUT_MS,
+    ),
   };
 }
 
@@ -35,6 +43,22 @@ function readOgripTimeout(value: string | undefined): number {
   const ms = Number(value);
   if (ms < 500 || ms > 60_000) {
     throw new Error("OGRIP_TIMEOUT_MS must be between 500 and 60000");
+  }
+  return ms;
+}
+
+function readTimeout(
+  name: string,
+  value: string | undefined,
+  fallback: number,
+): number {
+  if (value === undefined || value.trim() === "") return fallback;
+  if (!/^\d+$/.test(value.trim())) {
+    throw new Error(`${name} must be an integer`);
+  }
+  const ms = Number(value);
+  if (ms < 500 || ms > 60_000) {
+    throw new Error(`${name} must be between 500 and 60000`);
   }
   return ms;
 }
