@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "parcelKey": "ohio:39049:STAGED-DEMO",
-  "sourceParcelId": "STAGED-DEMO",
-  "retrievedAt": "2026-11-15T19:33:33.400Z",
+  "parcelKey": "ohio:39049:230-000918",
+  "sourceParcelId": "230-000918",
+  "retrievedAt": "2026-11-17T01:01:37.695Z",
   "bbox": {
-    "west": -83.00259999999999,
-    "south": 39.95900712559888,
-    "east": -82.99740000000001,
-    "north": 39.96299283094401
+    "west": -83.25012190183946,
+    "south": 39.88268067508428,
+    "east": -83.24677289816056,
+    "north": 39.88525051508427
   },
   "groundMeters": {
-    "width": 443.68668949770046,
-    "depth": 443.68668949770046
+    "width": 286.07328022627496,
+    "depth": 286.07328022627496
   },
   "imagery": {
     "file": "imagery.jpg",
@@ -20,14 +20,14 @@
     "source": "USGS NAIP Imagery (The National Map)",
     "attribution": "Aerial imagery: USDA NAIP via USGS National Map",
     "sourceUrl": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer",
-    "metersPerPixel": 0.2888585218083987
+    "metersPerPixel": 0.18624562514731444
   },
   "elevation": {
     "file": "height.png",
     "width": 257,
     "height": 257,
-    "minMeters": 218.40283203125,
-    "maxMeters": 237.8270721435547,
+    "minMeters": 283.20440673828125,
+    "maxMeters": 286.47711181640625,
     "source": "AWS Terrain Tiles (Terrarium)",
     "attribution": "Elevation: AWS Terrain Tiles",
     "sourceUrl": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium"

@@ -1,11 +1,11 @@
-import { stagedParcel, type Check, type CheckKind, type DealState } from "@groundtruth/shared";
+import { goldenParcel, type Check, type CheckKind, type DealState } from "@groundtruth/shared";
 
-// Frontend-only demo layer for the parcel ledger. The shared fixture has a
-// parcel and a draft deal but no report, so these checks show how a held
-// closing reads. Every one is marked staged, carries no source, and has no
-// signature: nothing here was retrieved for a real lot or signed on-chain.
-// A real report from getParcelReport(), or confirmed state on the deal,
-// replaces these check by check (see ledger.ts).
+// Frontend-only demo layer for the staged closing on the golden parcel. The
+// golden report (packages/shared) answers access, zoning, flood, utilities,
+// and easements with real sources. These checks tell the reviewer side of a
+// held closing: each is marked staged, carries no source, and has no
+// signature. Confirmed state on the deal replaces them check by check
+// (see ledger.ts).
 
 /** A public office or guide that explains who confirms a check. Not evidence. */
 export interface Reference {
@@ -20,25 +20,10 @@ export interface StagedCheck extends Check {
 }
 
 const REFERENCES = {
-  zoning: {
-    authority: "Franklin County",
-    title: "Planning and zoning",
-    url: "https://www.franklincountyohio.gov/Business-Development/Development-Planning/Planning-Zoning",
-  },
-  recorder: {
-    authority: "Franklin County Recorder",
-    title: "Recording FAQs",
-    url: "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs",
-  },
   health: {
     authority: "Franklin County Public Health",
     title: "Forms and permits",
     url: "https://myfcph.org/forms-permits/",
-  },
-  flood: {
-    authority: "Ohio DNR",
-    title: "Flood maps and studies",
-    url: "https://ohiodnr.gov/business-and-industry/municipalities-and-public-entities/floodplains/floodplain-mapping",
   },
   alta: {
     authority: "ALTA",
@@ -79,55 +64,10 @@ export const stagedLedger: {
   dealState: DealState;
   checks: readonly StagedCheck[];
 } = {
-  parcelKey: stagedParcel.key,
+  parcelKey: goldenParcel.key,
   biggestOpenQuestion: "access",
   dealState: "held",
   checks: [
-    check(
-      "access",
-      "needsReview",
-      "Title reviewer, then surveyor",
-      "The boundary appears to touch a mapped road.",
-      "Touching a road is not a legal right to use it, and a driveway needs its own approval.",
-      "The title team checks recorded access, the surveyor reviews the boundary, and the road authority covers driveways.",
-      [REFERENCES.recorder],
-    ),
-    check(
-      "zoning",
-      "evidenceFound",
-      "Township or county zoning office",
-      "The zoning record lists a residential district. The lot may be suitable for a home, pending access and septic review.",
-      "A zoning record is not a permit or a legal opinion on what you can build.",
-      "Confirm the district and its permitted uses with the zoning office that covers this township.",
-      [REFERENCES.zoning],
-    ),
-    check(
-      "flood",
-      "evidenceFound",
-      "FEMA flood maps",
-      "The lot sits outside the mapped special flood hazard area.",
-      "Flood maps carry an effective date and can change. This is not a flood-insurance determination.",
-      "Check the current FEMA map for the lot before closing.",
-      [REFERENCES.flood],
-    ),
-    check(
-      "utilities",
-      "unknown",
-      "Utility or local public health office",
-      "We couldn't confirm public sewer or water service for this lot.",
-      "No conclusion either way. Service may reach the lot, or it may need a well and septic.",
-      "Ask the utility whether service reaches the lot.",
-      [REFERENCES.health],
-    ),
-    check(
-      "easements",
-      "unknown",
-      "Title reviewer",
-      "No search of recorded documents is attached yet.",
-      "Recorded rights or restrictions can limit where and what you build.",
-      "The title team searches recorded easements and restrictions.",
-      [REFERENCES.recorder],
-    ),
     check(
       "sellerAuthority",
       "held",

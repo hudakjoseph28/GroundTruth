@@ -1,4 +1,4 @@
-import { stagedParcel, type CheckKind, type CheckStatus, type ReviewerRole } from "@groundtruth/shared";
+import { goldenParcel, type CheckKind, type CheckStatus, type ReviewerRole } from "@groundtruth/shared";
 
 // Homepage copy. Claims follow docs/context/Problem.md: a public record, a
 // professional's sign-off, and an escrow receipt stay separate, and every
@@ -36,7 +36,7 @@ export const HERO = {
   headline: ["Know the land", "before the money", "moves."],
   subhead: "Records checked. Approvals signed on-chain. Your USDC in escrow until both clear.",
   searchLabel: "Search for a parcel",
-  demo: { before: "Try a demo parcel:", parcelId: stagedParcel.sourceParcelId },
+  demo: { before: "Try a demo parcel:", parcelId: goldenParcel.sourceParcelId },
   trust: [
     { icon: "record", label: "Public records cited" },
     { icon: "signature", label: "Licensed reviewers sign" },

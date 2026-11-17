@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { stagedParcel, type CheckKind } from "@groundtruth/shared";
+import { goldenParcel, type CheckKind } from "@groundtruth/shared";
 import { HOW } from "../content/home";
 import { getParcelLedger, stepsFor, type LedgerRecord } from "../data/ledger";
 import { RecordCard } from "../parcel/Ledger/RecordCard";
@@ -17,7 +17,7 @@ const ignore = () => {};
  */
 export function ChecksStack({ running, still }: { running: boolean; still: boolean }) {
   const base = useMemo(() => {
-    const records = getParcelLedger(stagedParcel.key).records;
+    const records = getParcelLedger(goldenParcel.key).records;
     return C.kinds
       .map((kind) => records.find((record) => record.check.kind === kind))
       .filter((record): record is LedgerRecord => record !== undefined);

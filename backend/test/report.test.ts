@@ -9,7 +9,7 @@ vi.mock("../src/db.js", () => ({
 const { createApp } = await import("../src/app.js");
 const app = createApp("test-commit");
 
-const PARCEL_KEY = "ohio:39049:STAGED-DEMO";
+const PARCEL_KEY = "ohio:39049:230-000918";
 const reportUrl = (key: string) =>
   `/api/parcels/${encodeURIComponent(key)}/report`;
 
@@ -56,8 +56,8 @@ afterEach(() => {
 
 describe("GET /api/parcels/:parcelKey/report", () => {
   it.each([
-    ["no ohio prefix", "39049:STAGED-DEMO"],
-    ["short county code", "ohio:3904:STAGED-DEMO"],
+    ["no ohio prefix", "39049:230-000918"],
+    ["short county code", "ohio:3904:230-000918"],
     ["empty parcel id", "ohio:39049:"],
     ["path characters", "ohio:39049:../etc"],
     ["leading punctuation", "ohio:39049:-DEMO"],

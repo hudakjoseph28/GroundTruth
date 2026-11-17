@@ -19,11 +19,11 @@ pnpm --filter @groundtruth/backend db:seed
 pnpm --filter @groundtruth/backend dev
 ```
 
-`db:seed` can be run again. It upserts the shared staged parcel `ohio:39049:STAGED-DEMO` and replaces that parcel's checks. The seeded report is `boundaryOnly`: the shared fixture has no evidence, so every check is `unknown`.
+`db:seed` can be run again. It upserts the golden parcel `ohio:39049:230-000918` (Franklin County, Seaman Rd rear lot) from `packages/shared/src/fixtures/golden-parcel.json` and replaces that report's checks and sources. The report is `partial`: access `needsReview`, zoning and flood `evidenceFound` with dated sources, utilities and easements `unknown`. The seed also deletes the retired stand-in parcel `ohio:39049:STAGED-DEMO` and its report, if present.
 
 `GET /api/health` returns `{ "status": "ok", "commit": "..." }`.
 
-`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`. The parcel key is URL-encoded, for example `ohio%3A39049%3ASTAGED-DEMO`.
+`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`. The parcel key is URL-encoded, for example `ohio%3A39049%3A230-000918`.
 
 `GET /api/deals/:id` returns a `Deal`, and `GET /api/deals/:id/timeline` returns its `TimelineEvent[]`. Only deals seeded as public demos are readable; any other ID returns `404`. `db:seed` upserts the shared `stagedDeal` (`staged-devnet-deal`). Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 

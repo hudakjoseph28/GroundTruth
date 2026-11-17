@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { stagedParcel, type Parcel } from "@groundtruth/shared";
+import type { Parcel } from "@groundtruth/shared";
 import { PARCEL_PAGE } from "../content/parcel";
 import { getParcelLedger } from "../data/ledger";
 import { getParcel } from "../data/parcelSource";
@@ -58,8 +58,9 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
   useEffect(() => {
     if (revealed) heading.current?.focus({ preventScroll: true });
   }, [revealed]);
-  // Only the shared fixture's parcel is a stand-in; real parcels carry no such label.
-  const staged = parcel.key === stagedParcel.key;
+  // Every catalog parcel draws its published OGRIP boundary, so none is a
+  // stand-in. Staged closing data is labeled in the ledger instead.
+  const staged = false;
   const place = [
     PARCEL_PAGE.county(parcel.county),
     parcel.township,

@@ -9,7 +9,7 @@ import {
   type MouseEvent,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { stagedParcel } from "@groundtruth/shared";
+import { goldenParcel } from "@groundtruth/shared";
 import { ATTESTATION_COPY, ATTESTATIONS, STILL_ATTESTATIONS } from "../content/attestations";
 import { HERO } from "../content/home";
 import { sampleParcelPath } from "../data/parcelSource";
@@ -68,8 +68,8 @@ const HIT_PAD = 6;
 export function LivingParcel({ variant }: { variant: "hero" | "compact" }) {
   const navigate = useNavigate();
   const mode = useRenderMode();
-  const assets = useLandAssets(stagedParcel.sourceParcelId);
-  const ring = useMemo(() => outerRing(stagedParcel.geometry.geojson), []);
+  const assets = useLandAssets(goldenParcel.sourceParcelId);
+  const ring = useMemo(() => outerRing(goldenParcel.geometry.geojson), []);
   const spots = useMemo(() => {
     if (!assets) return [];
     return spotsInside(ring.map((pair) => regionUV(assets.meta.bbox, pair[0] ?? 0, pair[1] ?? 0)));
