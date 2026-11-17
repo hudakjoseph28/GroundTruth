@@ -2,8 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import type { Parcel } from "@groundtruth/shared";
 import { PARCEL_PAGE } from "../content/parcel";
+import { PARCEL_LOAD } from "../content/search";
 import { getParcelLedger } from "../data/ledger";
-import { getParcel } from "../data/parcelSource";
+import {
+  getParcel,
+  getParcelReport,
+  type FailedOutcome,
+  type ParcelOutcome,
+  type ReportOutcome,
+} from "../data/parcelSource";
 import { BlockTransition } from "../parcel/BlockTransition/BlockTransition";
 import { readBlockOrigin } from "../parcel/BlockTransition/origin";
 import { Ledger } from "../parcel/Ledger/Ledger";
@@ -15,22 +22,96 @@ import "../parcel/parcel.css";
 export function ParcelPage() {
   const params = useParams();
   const parcelKey = params.parcelKey ? decodeURIComponent(params.parcelKey) : "";
-  const parcel = parcelKey ? getParcel(parcelKey) : null;
+  const { outcome, retry } = useLoaded(parcelKey, getParcel);
 
-  if (!parcel) {
+  if (!parcelKey || outcome?.status === "missing") {
     return (
       <section className="sheet">
         <h1>{PARCEL_PAGE.missing.title}</h1>
         <p className="notice" role="status">
-          {PARCEL_PAGE.missing.body}
+          {outcome?.status === "missing"
+            ? outcome.message
+            : PARCEL_PAGE.missing.body}
         </p>
+        <BackLink />
+      </section>
+    );
+  }
+  if (outcome === null) {
+    return (
+      <section className="sheet">
+        <h1>{parcelKey}</h1>
+        <p className="notice" role="status">
+          {PARCEL_LOAD.loading}
+        </p>
+        <BackLink />
+      </section>
+    );
+  }
+  if (outcome.status === "error") {
+    return (
+      <section className="sheet">
+        <h1>{parcelKey}</h1>
+        <LoadFailure failure={outcome} onRetry={retry} />
         <BackLink />
       </section>
     );
   }
 
   // Keyed, so moving between parcels starts from a clean slate.
-  return <ParcelView key={parcel.key} parcel={parcel} />;
+  return <ParcelView key={outcome.parcel.key} parcel={outcome.parcel} />;
+}
+
+/**
+ * Loads one thing for a parcel key, again on retry. `outcome` is null while
+ * the request for the current key and attempt is in flight.
+ */
+function useLoaded<T extends ParcelOutcome | ReportOutcome>(
+  parcelKey: string,
+  load: (key: string, signal: AbortSignal) => Promise<T>,
+): { outcome: T | null; retry: () => void } {
+  const [attempt, setAttempt] = useState(0);
+  const [settled, setSettled] = useState<{
+    key: string;
+    attempt: number;
+    outcome: T;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!parcelKey) return;
+    const controller = new AbortController();
+    load(parcelKey, controller.signal).then(
+      (outcome) => setSettled({ key: parcelKey, attempt, outcome }),
+      () => {
+        // Aborted: the key changed or the page closed.
+      },
+    );
+    return () => controller.abort();
+  }, [parcelKey, attempt, load]);
+
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  const current =
+    settled && settled.key === parcelKey && settled.attempt === attempt;
+  return { outcome: current ? settled.outcome : null, retry };
+}
+
+function LoadFailure({
+  failure,
+  onRetry,
+}: {
+  failure: FailedOutcome;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="notice notice-error" role="alert">
+      <p>{failure.message}</p>
+      {failure.retryable ? (
+        <button type="button" className="btn btn-small" onClick={onRetry}>
+          {PARCEL_LOAD.retry}
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 function BackLink() {
@@ -44,7 +125,16 @@ function BackLink() {
 function ParcelView({ parcel }: { parcel: Parcel }) {
   const assets = useLandAssets(parcel.sourceParcelId);
   const mode = useRenderMode();
-  const ledger = useMemo(() => getParcelLedger(parcel.key), [parcel.key]);
+  const { outcome: reportOutcome, retry: retryReport } = useLoaded(
+    parcel.key,
+    getParcelReport,
+  );
+  const report =
+    reportOutcome?.status === "found" ? reportOutcome.report : null;
+  const ledger = useMemo(
+    () => getParcelLedger(parcel.key, report),
+    [parcel.key, report],
+  );
   // A block carried over from the page the visitor came from, read once.
   const location = useLocation();
   const [origin] = useState(() => readBlockOrigin(location.state));
@@ -93,7 +183,27 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
           </header>
           <LandBlock parcel={parcel} assets={assets} mode={mode} staged={staged} revealed={revealed} onReady={markLandReady} />
         </div>
-        <Ledger ledger={ledger} revealed={revealed} animated={mode !== "reduced"} />
+        {reportOutcome?.status === "found" ? (
+          <Ledger
+            ledger={ledger}
+            revealed={revealed}
+            animated={mode !== "reduced"}
+          />
+        ) : (
+          <section className="ledger ledger-pending" aria-live="polite">
+            {reportOutcome === null ? (
+              <p className="notice" role="status">
+                {PARCEL_LOAD.reportLoading}
+              </p>
+            ) : reportOutcome.status === "error" ? (
+              <LoadFailure failure={reportOutcome} onRetry={retryReport} />
+            ) : (
+              <p className="notice" role="status">
+                {reportOutcome.message}
+              </p>
+            )}
+          </section>
+        )}
       </div>
     </>
   );

@@ -1,8 +1,6 @@
 import {
   goldenParcel,
-  goldenReport,
-  secondCountyParcel,
-  secondCountyReport,
+  type ApiError,
   type Parcel,
   type ParcelReport,
   type ParcelSearchResult,
@@ -12,21 +10,45 @@ const MIN_QUERY = 3;
 const MAX_QUERY = 120;
 
 /**
- * Staged catalog behind the UI.
- * Satya: replace these three functions with the v1 routes. Keep the return shapes.
- * GET /api/parcels/search?q=
- * GET /api/parcels/:parcelKey
- * GET /api/parcels/:parcelKey/report
+ * Parcel data from the GroundTruth API (v1 routes). The browser calls
+ * relative `/api/...` paths: Vercel forwards them to the API in production,
+ * and Vite does the same in dev and preview (vite.config.ts).
+ *
+ *   GET /api/parcels/search?q=
+ *   GET /api/parcels/:parcelKey
+ *   GET /api/parcels/:parcelKey/report
+ *
+ * Every function resolves to an outcome and never throws, except when the
+ * caller aborts it (an AbortError the caller ignores).
  */
-const catalog: readonly Parcel[] = [goldenParcel, secondCountyParcel];
-const reports: readonly ParcelReport[] = [goldenReport, secondCountyReport];
+
+/** A request that failed. `retryable` comes from the API's ApiError. */
+export interface FailedOutcome {
+  status: "error";
+  message: string;
+  retryable: boolean;
+}
 
 export type SearchOutcome =
   | { status: "invalid"; message: string }
   | { status: "empty"; message: string }
-  | { status: "results"; results: ParcelSearchResult[] };
+  | { status: "results"; results: ParcelSearchResult[] }
+  | FailedOutcome;
 
-export function searchParcels(rawQuery: string): SearchOutcome {
+export type ParcelOutcome =
+  | { status: "found"; parcel: Parcel }
+  | { status: "missing"; message: string }
+  | FailedOutcome;
+
+export type ReportOutcome =
+  | { status: "found"; report: ParcelReport }
+  | { status: "missing"; message: string }
+  | FailedOutcome;
+
+/** The answer for a query the API would reject, or null if it is valid. */
+export function invalidQuery(
+  rawQuery: string,
+): Extract<SearchOutcome, { status: "invalid" }> | null {
   const query = rawQuery.trim();
   if (query.length < MIN_QUERY) {
     return {
@@ -36,36 +58,65 @@ export function searchParcels(rawQuery: string): SearchOutcome {
     };
   }
   if (query.length > MAX_QUERY) {
-    return {
-      status: "invalid",
-      message: "Use 120 characters or fewer.",
-    };
+    return { status: "invalid", message: "Use 120 characters or fewer." };
   }
+  return null;
+}
 
-  const needle = query.toLowerCase();
-  const results: ParcelSearchResult[] = [];
-  for (const parcel of catalog) {
-    const matchedOn = matchParcel(parcel, needle);
-    if (!matchedOn) continue;
-    results.push({ parcel: withoutGeometry(parcel), matchedOn });
+export async function searchParcels(
+  rawQuery: string,
+  signal?: AbortSignal,
+): Promise<SearchOutcome> {
+  const invalid = invalidQuery(rawQuery);
+  if (invalid) return invalid;
+  const query = rawQuery.trim();
+
+  const response = await request(
+    `/api/parcels/search?q=${encodeURIComponent(query)}`,
+    signal,
+  );
+  if (response.status === "failed") return response.failure;
+  if (response.status === "rejected") {
+    return { status: "invalid", message: response.error.error.message };
   }
-
+  const results = response.body as ParcelSearchResult[];
   if (results.length === 0) {
     return {
       status: "empty",
-      message:
-        "No sample parcel matched. Live Ohio search is not connected here yet. Try the sample parcel ID 230-000918.",
+      message: `No Ohio parcel matched “${query}”. Try a parcel ID such as 230-000918, or a street address that starts with a house number.`,
     };
   }
   return { status: "results", results };
 }
 
-export function getParcel(parcelKey: string): Parcel | null {
-  return catalog.find((parcel) => parcel.key === parcelKey) ?? null;
+export async function getParcel(
+  parcelKey: string,
+  signal?: AbortSignal,
+): Promise<ParcelOutcome> {
+  const response = await request(
+    `/api/parcels/${encodeURIComponent(parcelKey)}`,
+    signal,
+  );
+  if (response.status === "failed") return response.failure;
+  if (response.status === "rejected") {
+    return { status: "missing", message: response.error.error.message };
+  }
+  return { status: "found", parcel: response.body as Parcel };
 }
 
-export function getParcelReport(parcelKey: string): ParcelReport | null {
-  return reports.find((report) => report.parcelKey === parcelKey) ?? null;
+export async function getParcelReport(
+  parcelKey: string,
+  signal?: AbortSignal,
+): Promise<ReportOutcome> {
+  const response = await request(
+    `/api/parcels/${encodeURIComponent(parcelKey)}/report`,
+    signal,
+  );
+  if (response.status === "failed") return response.failure;
+  if (response.status === "rejected") {
+    return { status: "missing", message: response.error.error.message };
+  }
+  return { status: "found", report: response.body as ParcelReport };
 }
 
 export function sampleParcelPath(): string {
@@ -76,38 +127,63 @@ export function parcelPath(parcelKey: string): string {
   return `/parcels/${encodeURIComponent(parcelKey)}`;
 }
 
-function withoutGeometry(parcel: Parcel): ParcelSearchResult["parcel"] {
+type ApiResponse =
+  | { status: "ok"; body: unknown }
+  /** A 4xx ApiError: the request itself was not answerable (bad key, no such parcel). */
+  | { status: "rejected"; error: ApiError }
+  /** A 5xx, an unreadable body, or no connection. */
+  | { status: "failed"; failure: FailedOutcome };
+
+const UNREACHABLE: FailedOutcome = {
+  status: "error",
+  message:
+    "GroundTruth could not be reached. Check your connection and try again.",
+  retryable: true,
+};
+
+async function request(
+  path: string,
+  signal?: AbortSignal,
+): Promise<ApiResponse> {
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      signal,
+      headers: { accept: "application/json" },
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return { status: "failed", failure: UNREACHABLE };
+  }
+
+  const body: unknown = await response.json().catch(() => undefined);
+  if (response.ok && body !== undefined) return { status: "ok", body };
+
+  const apiError = isApiError(body) ? body : null;
+  if (apiError && response.status >= 400 && response.status < 500) {
+    return { status: "rejected", error: apiError };
+  }
   return {
-    key: parcel.key,
-    sourceParcelId: parcel.sourceParcelId,
-    county: parcel.county,
-    countyFips: parcel.countyFips,
-    township: parcel.township,
-    siteAddress: parcel.siteAddress,
-    acreage: parcel.acreage,
-    centroid: parcel.centroid,
+    status: "failed",
+    failure: {
+      status: "error",
+      message: apiError?.error.message ?? UNREACHABLE.message,
+      // 502 and 504 from OGRIP or FEMA say retryable: true. A gateway page
+      // with no ApiError body is a transient failure too.
+      retryable: apiError?.error.retryable ?? true,
+    },
   };
 }
 
-function matchParcel(
-  parcel: Parcel,
-  needle: string,
-): ParcelSearchResult["matchedOn"] | null {
-  const address = parcel.siteAddress?.toLowerCase();
-  if (address?.includes(needle)) return "siteAddress";
-  // Parcel IDs match with or without punctuation: 230-000918 or 230000918.
-  const compactNeedle = compactId(needle);
-  if (
-    parcel.sourceParcelId.toLowerCase().includes(needle) ||
-    parcel.key.toLowerCase().includes(needle) ||
-    (compactNeedle.length >= 3 &&
-      compactId(parcel.sourceParcelId).includes(compactNeedle))
-  ) {
-    return "parcelId";
+function isApiError(value: unknown): value is ApiError {
+  if (typeof value !== "object" || value === null || !("error" in value)) {
+    return false;
   }
-  return null;
-}
-
-function compactId(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const error = (value as { error: unknown }).error;
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    typeof (error as { message?: unknown }).message === "string" &&
+    typeof (error as { retryable?: unknown }).retryable === "boolean"
+  );
 }

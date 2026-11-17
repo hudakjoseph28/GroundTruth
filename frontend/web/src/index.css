@@ -489,8 +489,10 @@ section[tabindex="-1"]:focus {
 }
 
 .boundary svg {
+  display: block;
   width: 100%;
   height: auto;
+  max-height: min(60vh, 28rem);
   background: #111;
   border-radius: 8px;
 }
@@ -515,5 +517,50 @@ section[tabindex="-1"]:focus {
   .search-row,
   .results a {
     transition: none;
+  }
+}
+
+/* ---------- Live search: loading and failure ---------- */
+
+.search-loading {
+  display: grid;
+  gap: 10px;
+}
+
+.result-skeleton {
+  display: block;
+  height: 74px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, var(--surface-1) 0%, var(--surface-2) 50%, var(--surface-1) 100%);
+  background-size: 200% 100%;
+  animation: result-skeleton 1.4s ease-in-out infinite;
+}
+
+@keyframes result-skeleton {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.notice-error {
+  margin: 1em 0;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  border-color: rgba(214, 69, 69, 0.45);
+}
+
+.notice-error p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-skeleton {
+    animation: none;
   }
 }
