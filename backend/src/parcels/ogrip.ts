@@ -25,6 +25,7 @@ import {
 import { parcelIdWhere, sqlString } from "./parcelIdSearch.js";
 import { isKeyableParcelId } from "./parcelKey.js";
 import { hasNfhlStudy } from "../reports/femaFlood.js";
+import { FRANKLIN_COUNTY_FIPS } from "../reports/franklinZoning.js";
 
 /** Ohio's statewide parcel layer (OGRIP), queried only from the API. */
 export const OGRIP_PARCELS_LAYER =
@@ -539,7 +540,8 @@ export function createOgripClient(
    * report depth. `evidenceKinds` lists the checks a live report can back
    * with a source in that county: `flood` wherever FEMA has an NFHL study
    * (83 counties; see OHIO_COUNTIES_WITHOUT_NFHL for the five without,
-   * measured 2026-11-16). Every other check has no adapter yet. Counties
+   * measured 2026-11-16), and `zoning` in Franklin County, where the
+   * county's zoning map is read live. Every other check has no adapter yet. Counties
    * missing from the count get no row.
    */
   async function getCoverage(): Promise<Coverage[]> {
@@ -574,7 +576,11 @@ export function createOgripClient(
       county: county.name,
       countyFips: county.fips,
       boundarySearchable: (counts.get(county.fips) ?? 0) > 0,
-      evidenceKinds: hasNfhlStudy(county.fips) ? ["flood"] : [],
+      evidenceKinds: [
+        // Franklin County's zoning map (src/reports/franklinZoning.ts).
+        ...(county.fips === FRANKLIN_COUNTY_FIPS ? (["zoning"] as const) : []),
+        ...(hasNfhlStudy(county.fips) ? (["flood"] as const) : []),
+      ],
       lastVerifiedAt: measuredAt,
     }));
     coverageCache = { at: nowMs, rows };

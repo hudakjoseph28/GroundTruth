@@ -20,6 +20,12 @@ export const REPORT_SCENARIOS = {
    * 39097C0190E. Recorded live to compare with the seeded golden report.
    */
   "franklin-golden": "ohio:39049:230-000918",
+  /**
+   * 6948 Harrisburg Pike, Pleasant Township: Franklin County's zoning map
+   * splits it about 53% Rural (R) and 47% Neighborhood Commercial (NC).
+   * Found 2026-11-17 by scanning parcels along district boundaries.
+   */
+  "franklin-split": "ohio:39049:230-000397",
   /** A well-formed Franklin key OGRIP does not publish. */
   "missing-parcel": "ohio:39049:999-999999",
 } as const;

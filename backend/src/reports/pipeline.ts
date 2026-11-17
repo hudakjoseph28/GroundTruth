@@ -8,9 +8,15 @@ import {
 } from "@groundtruth/shared";
 import type { FemaFloodClient, FloodOutcome } from "./femaFlood.js";
 import { floodCheck } from "./floodCheck.js";
+import {
+  FRANKLIN_COUNTY_FIPS,
+  type FranklinZoningClient,
+} from "./franklinZoning.js";
+import { zoningCheck } from "./zoningCheck.js";
 import { TEMPLATE_KINDS, templateCheck } from "./templates.js";
 
 export const DEFAULT_FEMA_TIMEOUT_MS = 6_000;
+export const DEFAULT_ZONING_TIMEOUT_MS = 6_000;
 /** Template checks do no I/O; the limit only guards against a bug. */
 const TEMPLATE_TIMEOUT_MS = 1_000;
 
@@ -18,6 +24,13 @@ export interface ReportPipelineOptions {
   fema: FemaFloodClient;
   /** Limit for the whole flood check (all FEMA queries together). */
   floodTimeoutMs: number;
+  /**
+   * Franklin County's zoning map. When set, Franklin parcels get a live
+   * zoning check; every other county keeps the zoning template.
+   */
+  zoning?: FranklinZoningClient;
+  /** Limit for the zoning check. */
+  zoningTimeoutMs?: number;
   now: () => Date;
 }
 
@@ -74,7 +87,32 @@ export async function buildReport(
       transient: true,
     }),
   };
-  const templates = TEMPLATE_KINDS.map(
+  const zoningClient =
+    parcel.countyFips === FRANKLIN_COUNTY_FIPS ? options.zoning : undefined;
+  const zoningTimeoutMs = options.zoningTimeoutMs ?? DEFAULT_ZONING_TIMEOUT_MS;
+  const zoning: CheckRunner | null = zoningClient
+    ? {
+        kind: "zoning",
+        timeoutMs: zoningTimeoutMs,
+        async run(signal) {
+          const outcome = await zoningClient.zoning(
+            parcel.geometry.geojson,
+            signal,
+          );
+          return {
+            check: zoningCheck(outcome, zoningTimeoutMs),
+            transient: outcome.outcome === "timeout",
+          };
+        },
+        failed: (cause) => ({
+          check: zoningCheck({ outcome: "timeout", cause }, zoningTimeoutMs),
+          transient: true,
+        }),
+      }
+    : null;
+  const templates = TEMPLATE_KINDS.filter(
+    (kind) => !(zoning && kind === "zoning"),
+  ).map(
     (kind): CheckRunner => ({
       kind,
       timeoutMs: TEMPLATE_TIMEOUT_MS,
@@ -86,7 +124,7 @@ export async function buildReport(
     }),
   );
 
-  const runners = [flood, ...templates].sort(
+  const runners = [flood, ...(zoning ? [zoning] : []), ...templates].sort(
     (a, b) => CHECK_KINDS.indexOf(a.kind) - CHECK_KINDS.indexOf(b.kind),
   );
   const settled = await Promise.allSettled(runners.map(runWithTimeout));
