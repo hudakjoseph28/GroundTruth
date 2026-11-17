@@ -23,6 +23,7 @@ import {
 } from "./addressQuery.js";
 import { parcelIdWhere, sqlString } from "./parcelIdSearch.js";
 import { isKeyableParcelId } from "./parcelKey.js";
+import { hasNfhlStudy } from "../reports/femaFlood.js";
 
 /** Ohio's statewide parcel layer (OGRIP), queried only from the API. */
 export const OGRIP_PARCELS_LAYER =
@@ -447,9 +448,11 @@ export function createOgripClient(
    * One row per county in a live count of OGRIP parcels with published IDs.
    * `boundarySearchable` means only that the count was above zero when it
    * was taken (`lastVerifiedAt`, kept while cached); it says nothing about
-   * report depth. No evidence adapter runs on live parcels yet, so
-   * `evidenceKinds` is `[]` for every county. Counties missing from the
-   * count get no row.
+   * report depth. `evidenceKinds` lists the checks a live report can back
+   * with a source in that county: `flood` wherever FEMA has an NFHL study
+   * (83 counties; see OHIO_COUNTIES_WITHOUT_NFHL for the five without,
+   * measured 2026-11-16). Every other check has no adapter yet. Counties
+   * missing from the count get no row.
    */
   async function getCoverage(): Promise<Coverage[]> {
     const nowMs = now().getTime();
@@ -483,7 +486,7 @@ export function createOgripClient(
       county: county.name,
       countyFips: county.fips,
       boundarySearchable: (counts.get(county.fips) ?? 0) > 0,
-      evidenceKinds: [],
+      evidenceKinds: hasNfhlStudy(county.fips) ? ["flood"] : [],
       lastVerifiedAt: measuredAt,
     }));
     coverageCache = { at: nowMs, rows };

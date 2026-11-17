@@ -9,6 +9,11 @@
  * to test/fixtures/report/<name>.json, with the API's own response for
  * review. Tests replay those exact requests, so a changed query shows up as
  * a missing recording, not as made-up data.
+ *
+ *   pnpm --filter @groundtruth/backend record:report nfhl-ohio-studies
+ *
+ * records FEMA's list of Ohio NFHL studies, which backs
+ * OHIO_COUNTIES_WITHOUT_NFHL and the `flood` entry in /api/coverage.
  */
 import { writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -16,7 +21,10 @@ import { fileURLToPath } from "node:url";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 import { createOgripClient } from "../src/parcels/ogrip.js";
-import { createFemaFloodClient } from "../src/reports/femaFlood.js";
+import {
+  createFemaFloodClient,
+  NFHL_OHIO_STUDIES_QUERY,
+} from "../src/reports/femaFlood.js";
 import {
   REPORT_SCENARIOS,
   reportPath,
@@ -89,11 +97,38 @@ async function record(name: ReportScenario): Promise<void> {
   );
 }
 
+const NFHL_STUDIES = "nfhl-ohio-studies";
+
+async function recordNfhlStudies(): Promise<void> {
+  const response = await fetch(NFHL_OHIO_STUDIES_QUERY, {
+    headers: { accept: "application/json" },
+  });
+  const body = (await response.json()) as unknown;
+  await writeFile(
+    join(fixtureDir, `${NFHL_STUDIES}.json`),
+    `${JSON.stringify(
+      {
+        recordedAt: new Date().toISOString(),
+        url: NFHL_OHIO_STUDIES_QUERY,
+        status: response.status,
+        body,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  console.log(`${NFHL_STUDIES}: ${response.status}`);
+}
+
 const requested = process.argv.slice(2);
+if (requested.length === 0 || requested.includes(NFHL_STUDIES)) {
+  await recordNfhlStudies();
+}
 const names = (
   requested.length > 0 ? requested : Object.keys(REPORT_SCENARIOS)
 ) as ReportScenario[];
 for (const name of names) {
+  if ((name as string) === NFHL_STUDIES) continue;
   if (!(name in REPORT_SCENARIOS)) {
     throw new Error(`unknown scenario ${name}`);
   }

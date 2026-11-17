@@ -1,7 +1,11 @@
+import { readFileSync } from "node:fs";
 import type { Check, CheckKind, CheckStatus } from "@groundtruth/shared";
 import { describe, expect, it, vi } from "vitest";
+import { OHIO_COUNTIES } from "../src/parcels/ohioCounties.js";
 import {
   createFemaFloodClient,
+  NFHL_OHIO_STUDIES_QUERY,
+  OHIO_COUNTIES_WITHOUT_NFHL,
   toEsriPolygon,
   type FloodOutcome,
 } from "../src/reports/femaFlood.js";
@@ -237,5 +241,41 @@ describe("FEMA outcome classification (synthetic NFHL answers)", () => {
       zones: [{ zone: "AE", specialFloodHazardArea: true }],
       lomrs: [{ id: "15-05-3155P", effectiveDate: "2016-04-20T00:00:00.000Z" }],
     });
+  });
+});
+
+describe("OHIO_COUNTIES_WITHOUT_NFHL", () => {
+  const recording = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/report/nfhl-ohio-studies.json", import.meta.url),
+      "utf8",
+    ),
+  ) as {
+    url: string;
+    status: number;
+    body: { features: { attributes: { STUDY_ID: string } }[] };
+  };
+
+  it("matches FEMA's recorded list of Ohio studies exactly", () => {
+    expect(recording.url).toBe(NFHL_OHIO_STUDIES_QUERY);
+    expect(recording.status).toBe(200);
+    const studied = new Set(
+      recording.body.features.map(({ attributes }) =>
+        attributes.STUDY_ID.slice(0, 5),
+      ),
+    );
+    const without = OHIO_COUNTIES.filter((c) => !studied.has(c.fips));
+
+    expect(studied.size).toBe(83);
+    expect(without.map((c) => c.name)).toEqual([
+      "Fayette",
+      "Henry",
+      "Vinton",
+      "Williams",
+      "Wyandot",
+    ]);
+    expect(new Set(without.map((c) => c.fips))).toEqual(
+      OHIO_COUNTIES_WITHOUT_NFHL,
+    );
   });
 });

@@ -52,6 +52,9 @@ async function main(): Promise<void> {
         generatedAt: new Date(stagedReport.generatedAt),
         coverage: stagedReport.coverage,
         biggestOpenQuestion: stagedReport.biggestOpenQuestion,
+        // A seeded report never expires. Clearing it here also takes back a
+        // key that a live report was cached under (src/reports/store.ts).
+        expiresAt: null,
       },
     });
 

@@ -28,6 +28,37 @@ export const FEMA_MAP_SERVICE_CENTER = "https://msc.fema.gov/portal/home";
 /** FEMA's value for parts of a study area it did not map. */
 const AREA_NOT_INCLUDED = "AREA NOT INCLUDED";
 
+/**
+ * Ohio counties with no NFHL study. Measured 2026-11-16: the availability
+ * layer's distinct `STUDY_ID`s starting `39` covered 83 of 88 counties,
+ * all countywide (`39xxxC`); these five had none. The recorded answer is in
+ * test/fixtures/report/nfhl-ohio-studies.json, and a test checks this list
+ * against it. Re-record with `pnpm record:report nfhl-ohio-studies`.
+ */
+export const OHIO_COUNTIES_WITHOUT_NFHL: ReadonlySet<string> = new Set([
+  "39047", // Fayette
+  "39069", // Henry
+  "39163", // Vinton
+  "39171", // Williams
+  "39175", // Wyandot
+]);
+
+/** The availability query behind OHIO_COUNTIES_WITHOUT_NFHL. */
+export const NFHL_OHIO_STUDIES_QUERY = `${NFHL_SERVICE}/${NFHL_LAYERS.availability}/query?${new URLSearchParams(
+  {
+    where: "STUDY_ID LIKE '39%'",
+    outFields: "STUDY_ID",
+    returnDistinctValues: "true",
+    returnGeometry: "false",
+    f: "json",
+  },
+).toString()}`;
+
+/** True when FEMA has a digital flood study for this Ohio county. */
+export function hasNfhlStudy(countyFips: string): boolean {
+  return !OHIO_COUNTIES_WITHOUT_NFHL.has(countyFips);
+}
+
 export interface FloodZone {
   /** FEMA `FLD_ZONE`, e.g. `AE`, `X`. */
   zone: string;
