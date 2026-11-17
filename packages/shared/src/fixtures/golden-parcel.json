@@ -31,7 +31,7 @@
   },
   "report": {
     "parcelKey": "ohio:39049:230-000918",
-    "generatedAt": "2026-11-17T00:54:52.000Z",
+    "generatedAt": "2026-11-17T01:21:56.000Z",
     "coverage": "partial",
     "biggestOpenQuestion": "access",
     "checks": [
@@ -55,7 +55,7 @@
           },
           {
             "authority": "Franklin County Economic Development & Planning",
-            "title": "Zoning Resolution 2026, §302.0391 Private Streets (Lanes), p. 43",
+            "title": "Zoning Resolution 2026, §302.042 Minimum Lot Width (PDF p. 46) and §302.0391 Private Streets (Lanes) (PDF p. 43)",
             "url": "https://www.franklincountyohio.gov/files/assets/public/v/1/edp/documents/zoning-resolution/zoning-resolution-2026.pdf",
             "retrievedAt": "2026-11-17T00:54:52.000Z"
           }
@@ -63,13 +63,13 @@
         "responsibleParty": {
           "role": "Title reviewer, then county zoning office"
         },
-        "nextAction": "Legal access, for example through a recorded easement or a private lane under §302.0391, needs title review and Franklin County zoning review."
+        "nextAction": "Title review should look for recorded legal access to Seaman Rd, such as an easement. Franklin County zoning should confirm how the lot could meet road frontage: §302.042 requires 150 feet on a public street or frontage on an approved private street, and §302.0391 lets a private lane count only for back land without public water or sewer, dedicated on a subdivision plat approved by the Franklin County Planning Commission, with a homeowners' association to maintain it."
       },
       {
         "kind": "zoning",
         "status": "evidenceFound",
-        "finding": "Franklin County's zoning map places the whole parcel in the Rural (R) district. The parcel is in unincorporated Pleasant Township, where the county administers zoning. The Rural District permits one-family dwellings (§302.021) with at least 2.5 acres per dwelling (§302.041); the Franklin County Auditor lists 3.015 legal acres. About 5% of the parcel lies inside the Big Darby Creek Watershed riparian setback in the county's stream-buffer layer.",
-        "limitation": "A zoning map and a lot size are not a zoning certificate or a building permit. Road frontage (see access), setbacks, and the Big Darby riparian setback still have to be reviewed for any building plan.",
+        "finding": "Franklin County's zoning map places the whole parcel in the Rural (R) district. The parcel is in unincorporated Pleasant Township, where the county administers zoning. The Rural District permits one-family dwellings (§302.021) with at least 2.5 acres per dwelling (§302.041); the Franklin County Auditor lists 3.015 legal acres. A dwelling lot must also abut an improved, dedicated, publicly maintained street right-of-way for at least 150 feet, or front on an approved private street (§302.042).",
+        "limitation": "A zoning map and a lot size are not a zoning certificate or a building permit. The county's right-of-way layer shows no road touching this parcel (see access), so whether it meets the §302.042 frontage requirement needs county zoning review. If a building, driveway, or septic system would go near the stream, the Big Darby Creek Watershed riparian setback, which covers about 5% of the parcel in the county's stream-buffer layer, would also apply.",
         "sources": [
           {
             "authority": "Franklin County Economic Development & Planning",
@@ -79,7 +79,7 @@
           },
           {
             "authority": "Franklin County Economic Development & Planning",
-            "title": "Zoning Resolution 2026, §302.021 (p. 40) and §302.041 (p. 46)",
+            "title": "Zoning Resolution 2026, §302.021 (PDF p. 40), §302.041 and §302.042 (PDF p. 46)",
             "url": "https://www.franklincountyohio.gov/files/assets/public/v/1/edp/documents/zoning-resolution/zoning-resolution-2026.pdf",
             "retrievedAt": "2026-11-17T00:54:52.000Z"
           },
@@ -112,7 +112,7 @@
       {
         "kind": "flood",
         "status": "evidenceFound",
-        "finding": "FEMA's National Flood Hazard Layer maps the whole parcel in Zone X, area of minimal flood hazard, on FIRM panel 39049C0290K, effective June 17, 2008.",
+        "finding": "FEMA's National Flood Hazard Layer maps the whole parcel in Zone X, area of minimal flood hazard. The zone comes from Franklin County's FIRM panel 39049C0290K, effective June 17, 2008. Madison County's panel 39097C0190E, effective November 16, 2023, also covers this location.",
         "limitation": "Zone X is not a guarantee against flooding or a flood-insurance determination, and FEMA can revise the map after this date.",
         "sources": [
           {
@@ -124,10 +124,17 @@
           },
           {
             "authority": "FEMA",
-            "title": "FIRM panel 39049C0290K",
-            "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query?geometry=-83.248572451%2C39.883872187&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=FIRM_PAN%2CEFF_DATE&returnGeometry=false&f=json",
-            "retrievedAt": "2026-11-17T00:54:51.000Z",
+            "title": "FIRM panel 39049C0290K (Franklin County)",
+            "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query?where=FIRM_PAN%3D%2739049C0290K%27&outFields=FIRM_PAN%2CDFIRM_ID%2CEFF_DATE%2CPANEL_TYP&returnGeometry=false&f=json",
+            "retrievedAt": "2026-11-17T01:21:55.000Z",
             "effectiveDate": "2008-06-17"
+          },
+          {
+            "authority": "FEMA",
+            "title": "FIRM panel 39097C0190E (Madison County)",
+            "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query?where=FIRM_PAN%3D%2739097C0190E%27&outFields=FIRM_PAN%2CDFIRM_ID%2CEFF_DATE%2CPANEL_TYP&returnGeometry=false&f=json",
+            "retrievedAt": "2026-11-17T01:21:56.000Z",
+            "effectiveDate": "2023-11-16"
           }
         ],
         "responsibleParty": {
@@ -140,26 +147,26 @@
       {
         "kind": "utilities",
         "status": "unknown",
-        "finding": "No water, sewer, or septic record has been checked for this parcel.",
-        "limitation": "No conclusion either way. A home here may need a well and an approved septic system.",
+        "finding": "No utility record has been checked for this lot.",
+        "limitation": "No conclusion either way: public water and sewer may reach the lot, or it may need a well and a septic system.",
         "sources": [],
         "responsibleParty": {
-          "role": "Local public health office",
-          "organization": "Franklin County Public Health",
-          "publicContactUrl": "https://myfcph.org/forms-permits/"
+          "role": "Water and sewer utility for this area"
         },
-        "nextAction": "Ask whether public water or sewer reaches the lot, and what a septic permit would require."
+        "nextAction": "Ask the utility that serves this area whether water and sewer reach the lot, and what connecting would cost."
       },
       {
         "kind": "easements",
         "status": "unknown",
         "finding": "No search of recorded easements or restrictions is attached.",
-        "limitation": "Recorded rights or restrictions can limit where and what you build, and an access easement would not appear in the county map layers.",
+        "limitation": "Recorded easements, covenants, or restrictions can limit where and what you build. None are ruled in or out.",
         "sources": [],
         "responsibleParty": {
-          "role": "Title reviewer"
+          "role": "Title reviewer",
+          "organization": "Franklin County Recorder",
+          "publicContactUrl": "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs"
         },
-        "nextAction": "The title team searches recorded easements, including any easement that reaches Seaman Rd."
+        "nextAction": "Ask a title company to search the recorded documents for this parcel."
       }
     ]
   }

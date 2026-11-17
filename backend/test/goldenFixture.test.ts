@@ -51,6 +51,35 @@ describe("golden parcel fixture", () => {
     );
     expect(access.finding).toContain("about 107 m");
     expect(access.nextAction).toContain("§302.0391");
+    // §302.0391 private lanes: platted, Planning Commission-approved, HOA-kept.
+    expect(access.nextAction).toMatch(/subdivision plat/);
+    expect(access.nextAction).toMatch(/Franklin County Planning Commission/);
+    expect(access.nextAction).toMatch(/homeowners' association/);
+    expect(access.nextAction).toContain("§302.042");
+  });
+
+  it("states the §302.042 frontage condition on the zoning check", () => {
+    const zoning = check("zoning");
+    expect(zoning.finding).toContain("§302.042");
+    expect(zoning.finding).toContain("at least 150 feet");
+    expect(zoning.limitation).toMatch(
+      /frontage requirement needs county zoning review/,
+    );
+    // The riparian setback is conditional on where something would be built.
+    expect(zoning.limitation).toMatch(
+      /^.*If a building, driveway, or septic system would go near the stream/s,
+    );
+  });
+
+  it("cites both FIRM panels that cover the parcel", () => {
+    const flood = check("flood");
+    expect(flood.finding).toContain("39049C0290K");
+    expect(flood.finding).toContain("39097C0190E");
+    expect(flood.sources.map((source) => source.effectiveDate)).toEqual([
+      "2008-06-17",
+      "2008-06-17",
+      "2023-11-16",
+    ]);
   });
 
   it("cites the Franklin County Auditor's legal acreage on the zoning check", () => {
@@ -161,7 +190,9 @@ describe("second-county parcel fixture", () => {
     expect(flood?.sources.map((source) => source.effectiveDate)).toEqual([
       "2015-03-16",
       "2015-03-16",
+      "2011-04-18",
     ]);
+    expect(flood?.finding).toContain("39127C0050D");
   });
 
   it("leaves every other check unknown, and sets coverage from the results", () => {
@@ -182,3 +213,43 @@ function coverageOf(report: ParcelReport): ParcelReport["coverage"] {
   }
   return statuses.has("unknown") ? "partial" : "deep";
 }
+
+describe("unknown checks in the shared fixtures (Phase 2)", () => {
+  it.each([
+    ["golden", goldenReport],
+    ["second county", secondCountyReport],
+  ] as const)(
+    "%s: every unknown check names who resolves it and a concrete next action",
+    (_label, report) => {
+      const unknowns = report.checks.filter(
+        (entry) => entry.status === "unknown",
+      );
+      expect(unknowns.length).toBeGreaterThan(0);
+      for (const entry of unknowns) {
+        expect(entry.responsibleParty.role).not.toMatch(/unassigned/i);
+        expect(entry.nextAction).not.toMatch(/no next action/i);
+        expect(entry.finding).not.toMatch(
+          /has not checked this for this parcel/i,
+        );
+      }
+      const actions = report.checks.map((entry) => entry.nextAction);
+      expect(new Set(actions).size).toBe(actions.length);
+    },
+  );
+
+  it("points septic at the health district and easements at a title search", () => {
+    const septic = secondCountyReport.checks.find(
+      (entry) => entry.kind === "septic",
+    );
+    expect(septic?.responsibleParty.role).toMatch(/health district/i);
+    expect(septic?.nextAction).toMatch(/site and soil evaluation/);
+    for (const report of [goldenReport, secondCountyReport]) {
+      const easements = report.checks.find(
+        (entry) => entry.kind === "easements",
+      );
+      expect(easements?.nextAction).toMatch(
+        /title company to search the recorded documents/,
+      );
+    }
+  });
+});

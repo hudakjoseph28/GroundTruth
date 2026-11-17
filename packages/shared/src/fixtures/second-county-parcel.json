@@ -31,7 +31,7 @@
   },
   "report": {
     "parcelKey": "ohio:39089:00500729609000",
-    "generatedAt": "2026-11-17T01:07:57.000Z",
+    "generatedAt": "2026-11-17T01:21:56.000Z",
     "coverage": "partial",
     "biggestOpenQuestion": "zoning",
     "checks": [
@@ -51,7 +51,7 @@
       {
         "kind": "flood",
         "status": "evidenceFound",
-        "finding": "FEMA's National Flood Hazard Layer maps the whole parcel in Zone X, area of minimal flood hazard, on FIRM panel 39089C0505J, effective March 16, 2015.",
+        "finding": "FEMA's National Flood Hazard Layer maps the whole parcel in Zone X, area of minimal flood hazard. The zone comes from Licking County's FIRM panel 39089C0505J, effective March 16, 2015. Perry County's panel 39127C0050D, effective April 18, 2011, also covers this location.",
         "limitation": "Zone X is not a guarantee against flooding or a flood-insurance determination, and FEMA can revise the map after this date.",
         "sources": [
           {
@@ -63,10 +63,17 @@
           },
           {
             "authority": "FEMA",
-            "title": "FIRM panel 39089C0505J",
-            "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query?geometry=-82.354917458%2C39.953658358&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=FIRM_PAN%2CEFF_DATE&returnGeometry=false&f=json",
-            "retrievedAt": "2026-11-17T01:07:57.000Z",
+            "title": "FIRM panel 39089C0505J (Licking County)",
+            "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query?where=FIRM_PAN%3D%2739089C0505J%27&outFields=FIRM_PAN%2CDFIRM_ID%2CEFF_DATE%2CPANEL_TYP&returnGeometry=false&f=json",
+            "retrievedAt": "2026-11-17T01:21:56.000Z",
             "effectiveDate": "2015-03-16"
+          },
+          {
+            "authority": "FEMA",
+            "title": "FIRM panel 39127C0050D (Perry County)",
+            "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query?where=FIRM_PAN%3D%2739127C0050D%27&outFields=FIRM_PAN%2CDFIRM_ID%2CEFF_DATE%2CPANEL_TYP&returnGeometry=false&f=json",
+            "retrievedAt": "2026-11-17T01:21:56.000Z",
+            "effectiveDate": "2011-04-18"
           }
         ],
         "responsibleParty": {
@@ -79,79 +86,83 @@
       {
         "kind": "access",
         "status": "unknown",
-        "finding": "GroundTruth has not checked this for this parcel yet.",
-        "limitation": "No conclusion either way.",
+        "finding": "No record of legal road access has been checked for this lot.",
+        "limitation": "A boundary that touches a road does not prove a legal right to use it, and a driveway needs its own approval.",
         "sources": [],
         "responsibleParty": {
-          "role": "Unassigned"
+          "role": "Title reviewer, then surveyor",
+          "organization": "Licking County Recorder"
         },
-        "nextAction": "No next action is recorded yet."
+        "nextAction": "Ask a title company to search recorded access rights, and ask the road authority what a driveway permit needs."
       },
       {
         "kind": "utilities",
         "status": "unknown",
-        "finding": "GroundTruth has not checked this for this parcel yet.",
-        "limitation": "No conclusion either way.",
+        "finding": "No utility record has been checked for this lot.",
+        "limitation": "No conclusion either way: public water and sewer may reach the lot, or it may need a well and a septic system.",
         "sources": [],
         "responsibleParty": {
-          "role": "Unassigned"
+          "role": "Water and sewer utility for this area"
         },
-        "nextAction": "No next action is recorded yet."
+        "nextAction": "Ask the utility that serves this area whether water and sewer reach the lot, and what connecting would cost."
       },
       {
         "kind": "easements",
         "status": "unknown",
-        "finding": "GroundTruth has not checked this for this parcel yet.",
-        "limitation": "No conclusion either way.",
+        "finding": "No search of recorded easements or restrictions is attached.",
+        "limitation": "Recorded easements, covenants, or restrictions can limit where and what you build. None are ruled in or out.",
         "sources": [],
         "responsibleParty": {
-          "role": "Unassigned"
+          "role": "Title reviewer",
+          "organization": "Licking County Recorder"
         },
-        "nextAction": "No next action is recorded yet."
+        "nextAction": "Ask a title company to search the recorded documents for this parcel."
       },
       {
         "kind": "sellerAuthority",
         "status": "unknown",
-        "finding": "GroundTruth has not checked this for this parcel yet.",
-        "limitation": "No conclusion either way.",
+        "finding": "The seller's right to sell this lot has not been verified.",
+        "limitation": "This report does not check ownership records or the seller's identity. Sellers who impersonate the real owner often target vacant land (see the linked ALTA guidance).",
         "sources": [],
         "responsibleParty": {
-          "role": "Unassigned"
+          "role": "Title reviewer",
+          "organization": "American Land Title Association (guidance)",
+          "publicContactUrl": "https://www.alta.org/file/ALTA-Seller-Impersonation-Handout"
         },
-        "nextAction": "No next action is recorded yet."
+        "nextAction": "Have a title company confirm the owner of record and reach the owner through contact details it finds independently, not ones the seller supplied."
       },
       {
         "kind": "survey",
         "status": "unknown",
-        "finding": "GroundTruth has not checked this for this parcel yet.",
-        "limitation": "No conclusion either way.",
+        "finding": "No survey of this lot is attached.",
+        "limitation": "The boundary shown comes from Ohio's statewide parcel map (OGRIP), which is not a survey. The real corners and lines can differ.",
         "sources": [],
         "responsibleParty": {
-          "role": "Unassigned"
+          "role": "Licensed Ohio surveyor"
         },
-        "nextAction": "No next action is recorded yet."
+        "nextAction": "Hire a licensed Ohio surveyor to locate the boundary before you close."
       },
       {
         "kind": "septic",
         "status": "unknown",
-        "finding": "GroundTruth has not checked this for this parcel yet.",
-        "limitation": "No conclusion either way.",
+        "finding": "No septic site review is on file for this lot.",
+        "limitation": "If public sewer does not reach the lot, a septic system needs a site and soil evaluation before anyone can say one will work.",
         "sources": [],
         "responsibleParty": {
-          "role": "Unassigned"
+          "role": "Local health district (sewage treatment systems)"
         },
-        "nextAction": "No next action is recorded yet."
+        "nextAction": "If the lot has no sewer, ask the health district for a site and soil evaluation before you close."
       },
       {
         "kind": "closing",
         "status": "unknown",
-        "finding": "GroundTruth has not checked this for this parcel yet.",
-        "limitation": "No conclusion either way.",
+        "finding": "No closing is open on this parcel.",
+        "limitation": "Nothing has been funded, approved, or held. No conclusion either way.",
         "sources": [],
         "responsibleParty": {
-          "role": "Unassigned"
+          "role": "Title or closing professional"
         },
-        "nextAction": "No next action is recorded yet."
+        "nextAction": "If you go under contract, ask a title or closing company to run the closing and collect every required sign-off before any payment moves."
       }
     ]
   }
