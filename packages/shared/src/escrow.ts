@@ -4,7 +4,7 @@ import idlJson from "./idl/groundtruth_escrow.json" with { type: "json" };
  * Escrow Program ID deployed on Solana devnet.
  */
 export const GROUNDTRUTH_PROGRAM_ID =
-  "2ox43XbbztcxCt7LDZaF9fSaRezwTbCNxWBKf89uVHP1" as const;
+  "ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG" as const;
 
 /**
  * Circle Test USDC Mint address on Solana devnet.

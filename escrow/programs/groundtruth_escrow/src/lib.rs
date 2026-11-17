@@ -9,7 +9,7 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("2ox43XbbztcxCt7LDZaF9fSaRezwTbCNxWBKf89uVHP1");
+declare_id!("ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG");
 
 #[program]
 pub mod groundtruth_escrow {

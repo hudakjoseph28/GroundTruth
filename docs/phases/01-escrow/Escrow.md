@@ -58,6 +58,20 @@ The local suite also covers wrong mint, wrong destination, unassigned signer, du
 
 The local state machine and balance assertions are non-negotiable. If devnet test USDC or RPC access is unstable, keep retry tooling and a screen recording of the last real pass; do not replace the program with a UI-only status. Fees, tranches, admin recovery, hold clearing, and production legal terms stay out.
 
+## Devnet Deployment Record
+
+- **Cluster:** Solana Devnet (`https://api.devnet.solana.com`)
+- **Program ID:** `ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`
+- **ProgramData Address:** `6cUeMZrSocYM3wHKQDZCHS7Y4MzycousGCydE23VGBLc`
+- **Upgrade Authority:** `EqtDJg52HbodFtGReKrXkceQxwqC7Sbdu7m7Ege6cghn`
+- **Initial Deploy Slot:** `523173401`
+- **Deployment Transaction Signature:** `4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU`
+- **Anchor IDL Metadata Account:** `uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma`
+- **Solana Explorer (Program):** [ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet)
+- **Solana Explorer (Deploy Tx):** [4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU](https://explorer.solana.com/tx/4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU?cluster=devnet)
+- **Solana Explorer (IDL):** [uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)
+- **Circle Test USDC Mint:** `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`
+
 ## Depends on
 
 Voice callback and second-device updates are [phase 3](../03-connect-surfaces/ConnectSurfaces.md); use staged signatures until then. Share the deal fixture with [phase 2](../02-parcel-research/ParcelResearch.md) so report and closing point at the same parcel.
