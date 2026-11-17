@@ -177,26 +177,43 @@ Timeline rows are ordered by time, then chain slot, then event index. A confirme
 
 ## QuickNode Stream webhook
 
-`POST /api/webhooks/quicknode` turns confirmed GroundTruth program events into deal state and timeline rows.
+`POST /api/webhooks/quicknode` turns confirmed GroundTruth program events, and rejected payouts, into deal state and timeline rows.
 
 1. **Signature.** QuickNode signs `nonce + timestamp + body` with HMAC-SHA256, keyed by the Stream's security token (`QUICKNODE_STREAM_TOKEN`), and sends hex in `X-QN-Signature` with `X-QN-Nonce` and `X-QN-Timestamp`. The route checks it against the raw decompressed body (gzip deliveries are inflated first). With no token set, every delivery gets `503`.
-2. **Payload.** The Stream filter must return exactly this shape (one entry per confirmed transaction that touched the program, in block order), or `null` to skip a block:
+2. **Payload.** The Stream filter must return exactly this shape, in block order, or `null` to skip a block. There are two kinds of entry:
+   - a **successful** transaction that touched the program, directly or by CPI;
+   - a **failed** transaction whose failing instruction (the index in `err.InstructionError`) is a top-level GroundTruth `release`, with that instruction's accounts in IDL order.
 
    ```json
-   { "transactions": [{ "signature": "<base58>", "slot": 123, "blockTime": 1794700800, "logMessages": ["Program log: ..."] }] }
+   { "transactions": [
+     { "signature": "<base58>", "slot": 123, "blockTime": 1794700800, "logMessages": ["Program log: ..."] },
+     { "signature": "<base58>", "slot": 124, "blockTime": 1794700801, "logMessages": ["..."],
+       "err": { "InstructionError": [0, { "Custom": 6019 }] },
+       "releaseAccounts": ["<payer>", "<deal PDA>", "<seller>", "..."] }
+   ] }
    ```
 
-3. **Decode.** `logMessages` → program events needs the escrow IDL. Until it lands, the decoder throws, so the route answers `500` instead of acknowledging events it cannot read. QuickNode retries and then pauses the Stream; nothing is lost.
-4. **Apply.** Each event is matched to a deal by its PDA (`escrowAddress`) and applied in one database transaction: timeline row, reviewer approval or hold, and the deal state change. Events for unknown PDAs are skipped. An event the stored deal cannot accept (approval after a hold, a second release, a payout to someone other than the bound seller, an unbound reviewer, a different amount) throws `ChainDriftError` and writes nothing.
+   A failed entry must carry `releaseAccounts` and a successful one must not, or the delivery gets `400`. The filter, [src/routes/quicknodeWebhook.ts](src/routes/quicknodeWebhook.ts) and `quicknodeFilters.test.ts` change together.
+
+3. **Decode.** [src/chain/escrowDecoder.ts](src/chain/escrowDecoder.ts) reads events with the checked-in IDL's own Borsh coder (`@anchor-lang/core` 1.2.2, the client for the program's Anchor 1.2.2).
+   - Anchor's `emit!` writes `Program data: <base64>`. Only lines written while the GroundTruth program is running count: the decoder tracks the `Program <id> invoke` / `success` / `failed` stack against `GROUNDTRUTH_PROGRAM_ID`, so another program's logs cannot pass as GroundTruth events.
+   - All six events map to the API's shapes. `HoldReason` becomes the contract's codes (`SellerIdentityDisputed` → `SELLER_IDENTITY_DISPUTED`, and so on).
+   - An unknown discriminator, data that does not decode exactly (truncated or with extra bytes), an unbalanced invoke stack, or `Log truncated` throws. The whole delivery is decoded before anything is applied, so one unreadable transaction answers `500` and nothing in that delivery is half-applied. QuickNode retries and then pauses the Stream; nothing is lost.
+   - **A failed release** emits no event; its logged events, if any, were rolled back and are ignored. It becomes one `ReleaseRejected` with the deal PDA (`releaseAccounts[1]`) and the program's error from its `AnchorError` log line, for example `DealHeld` (6019). If that line is missing, the name comes from the IDL by the `Custom` number. If the logs and `err` disagree, the decoder throws.
+4. **Apply.** Each event is matched to a deal by its PDA (`escrowAddress`) and applied in one database transaction: timeline row, reviewer approval or hold, and the deal state change. Events for unknown PDAs are skipped.
+   - An event the stored deal cannot accept throws `ChainDriftError` and writes nothing: an approval after a hold, a second release, a payout to someone other than the bound seller, an unbound reviewer, or a different amount.
+   - A `ReleaseRejected` writes a `releaseRejected` timeline row with the real signature and the program's error, in any state, and **never changes deal state**.
 
 | Response | Meaning | QuickNode does |
 | --- | --- | --- |
 | `204` | Applied, or already applied | Moves to the next block |
 | `400` | Signed body is not the filter shape | Retries, then pauses: fix the filter |
 | `401` | Signature missing or wrong | Retries, then pauses: check the token |
-| `500` / `503` | Decoder missing, drift, database error, or no token | Retries, then pauses |
+| `500` / `503` | An unreadable transaction (unknown event, malformed data, truncated logs), drift, database error, or no token | Retries, then pauses |
 
-Replays are harmless: a timeline row is unique by transaction signature + event index, and re-applying finds it and does nothing. The timestamp is not checked against a window. QuickNode does not document its format, and deduplication already makes a replayed delivery a no-op.
+Replays are harmless: a timeline row is unique by transaction signature + event index (a rejected release is index 0 of its transaction), and re-applying finds it and does nothing. The timestamp is not checked against a window. QuickNode does not document its format, and deduplication already makes a replayed delivery a no-op.
+
+**Test data.** The decoder, filter, webhook, and database tests use **IDL-encoded** logs built with the IDL's own coder ([test/support/escrowLogs.ts](test/support/escrowLogs.ts)), not logs recorded from devnet. The escrow program is not deployed yet. Once it is, record real devnet transactions for a held flow (init → fund → hold → rejected release → refund) and a released flow, and replay them in these tests too.
 
 ### Filters
 
@@ -205,7 +222,7 @@ Filters live in [quicknode/](quicknode/) and are pasted into the Stream's filter
 | File | Use |
 | --- | --- |
 | `heartbeat-filter.js` | `{ "transactions": [] }` for every block. Proves signing and delivery before the program exists. |
-| `groundtruth-filter.js` | The real filter. Set `PROGRAM_ID` to the deployed escrow program. Until the IDL decoder exists, deliveries it produces get `500`. |
+| `groundtruth-filter.js` | The real filter. Set `PROGRAM_ID` to the deployed escrow program (`2ox43XbbztcxCt7LDZaF9fSaRezwTbCNxWBKf89uVHP1`, once deployed). Sends successful program transactions and failed `release` attempts; `RELEASE_IX_DATA` is the `release` discriminator in base58, checked against the IDL by `quicknodeFilters.test.ts`. |
 | `inspect-filter.js` | Preview only. Reports the Block payload's field layout. |
 
 `quicknodeFilters.test.ts` runs the filter files and posts their output to the webhook, so a shape change on either side fails a test.

@@ -187,6 +187,9 @@ importers:
 
   backend:
     dependencies:
+      '@anchor-lang/core':
+        specifier: 1.2.2
+        version: 1.2.2(bufferutil@4.2.0)(typescript@5.9.3)
       '@groundtruth/shared':
         specifier: workspace:*
         version: link:../packages/shared

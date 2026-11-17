@@ -26,6 +26,7 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
+    "@anchor-lang/core": "1.2.2",
     "@groundtruth/shared": "workspace:*",
     "@prisma/client": "6.19.3",
     "express": "5.3.0",

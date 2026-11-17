@@ -8,9 +8,12 @@ export type ApplyResult = "applied" | "duplicate" | "unknownDeal";
  * The state a deal must be in for each event, mirroring Escrow v1. A
  * confirmed event that arrives in any other state means the API's copy has
  * drifted from the chain; that fails loudly instead of being papered over.
+ *
+ * A rejected release has no entry: the program refused it, so it records a
+ * timeline row in whatever state the deal is in and changes nothing.
  */
 const TRANSITIONS: Record<
-  ProgramEvent["name"],
+  Exclude<ProgramEvent["name"], "ReleaseRejected">,
   { from: DealState; to: DealState }
 > = {
   DealInitialized: { from: "draft", to: "draft" },
@@ -81,7 +84,10 @@ async function applyInTransaction(
   });
   if (!deal) return "unknownDeal";
 
-  const transition = TRANSITIONS[event.name];
+  const transition =
+    event.name === "ReleaseRejected"
+      ? { from: deal.state as DealState, to: deal.state as DealState }
+      : TRANSITIONS[event.name];
   if (deal.state !== transition.from) {
     throw new ChainDriftError(
       `${event.name} arrived while the stored deal is ${deal.state}`,
@@ -148,6 +154,10 @@ async function applyInTransaction(
       actorRole = "buyer";
       buyerMessage = `${formatUsdc(amount)} test USDC was returned to the buyer.`;
       break;
+    case "ReleaseRejected":
+      actorRole = "escrow program";
+      buyerMessage = rejectionMessage(event.errorName, event.errorNumber);
+      break;
   }
 
   await tx.timelineEventRecord.create({
@@ -181,7 +191,28 @@ const TIMELINE_TYPES = {
   HoldPlaced: "holdPlaced",
   DealReleased: "released",
   DealRefunded: "refunded",
+  ReleaseRejected: "releaseRejected",
 } as const satisfies Record<ProgramEvent["name"], string>;
+
+/** Why the program refused a release, in the program's own error terms. */
+const REJECTION_REASONS: Record<string, string> = {
+  DealHeld: "a reviewer's hold is active",
+  MissingRequiredApprovals: "not every required reviewer has approved",
+  InvalidDealState: "the deal is not in a state that can be paid out",
+};
+
+function rejectionMessage(
+  errorName: string | null,
+  errorNumber: number | null,
+): string {
+  const reason = errorName ? REJECTION_REASONS[errorName] : undefined;
+  const code = errorName
+    ? ` Program error: ${errorName}${errorNumber === null ? "" : ` (${errorNumber})`}.`
+    : "";
+  return reason
+    ? `A release was rejected on-chain because ${reason}. No funds moved.${code}`
+    : `A release was rejected on-chain. No funds moved.${code}`;
+}
 
 function requireReviewer<T extends { wallet: string; role: string }>(
   reviewers: T[],

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { applyConfirmedEvent } from "./chain/applyEvent.js";
-import { decoderPendingIdl } from "./chain/programEvents.js";
+import { createEscrowDecoder } from "./chain/escrowDecoder.js";
 import { prisma } from "./db.js";
 import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
 import { getDeal, getDealTimeline } from "./routes/deals.js";
@@ -50,7 +50,7 @@ export function createApp(commit: string, options: AppOptions = {}) {
     "/api/webhooks/quicknode",
     ...quickNodeWebhook({
       token: options.quicknode?.token,
-      decode: options.quicknode?.decode ?? decoderPendingIdl,
+      decode: options.quicknode?.decode ?? createEscrowDecoder(),
       apply:
         options.quicknode?.apply ??
         ((event) => applyConfirmedEvent(prisma, event)),

@@ -3,10 +3,13 @@ import type { Hold, ReviewerRole } from "@groundtruth/shared";
 /**
  * GroundTruth escrow program events after decoding, in the API's own shape.
  *
- * Names and the dealPda / dealId / amount / destination fields come from
- * Escrow v1 in DataContract.md. The reviewer wallet, role, and reason code
- * on ApprovalSigned and HoldPlaced are the minimum the API needs to project
- * them; confirm the field set against the program IDL when it lands.
+ * The six program events come from the checked-in IDL
+ * (packages/shared/src/idl/groundtruth_escrow.json) via escrowDecoder.ts.
+ * `dealId` is the 32-byte deal ID as lowercase hex.
+ *
+ * `ReleaseRejected` is not a program event: a failed `release` emits
+ * nothing, so the decoder builds it from the failed transaction itself
+ * (the deal PDA from the instruction's accounts, the error from the logs).
  */
 export type ProgramEvent =
   | { name: "DealInitialized"; dealPda: string; dealId: string }
@@ -44,6 +47,14 @@ export type ProgramEvent =
       dealId: string;
       amountBaseUnits: string;
       destinationTokenAccount: string;
+    }
+  | {
+      name: "ReleaseRejected";
+      dealPda: string;
+      /** Anchor error name from the program's logs, e.g. `DealHeld`. */
+      errorName: string | null;
+      /** Anchor error number, e.g. 6019. */
+      errorNumber: number | null;
     };
 
 /** One confirmed transaction as delivered by the QuickNode Stream filter. */
@@ -53,6 +64,13 @@ export interface ConfirmedTransaction {
   /** Unix seconds. */
   blockTime: number;
   logMessages: string[];
+  /**
+   * The transaction error, for a failed `release` only (the filter sends
+   * no other failed transactions). Absent or null for a successful one.
+   */
+  err?: unknown;
+  /** Accounts of the failed `release` instruction, in IDL order. */
+  releaseAccounts?: string[];
 }
 
 /** A decoded event with its position among the transaction's events. */
@@ -66,15 +84,6 @@ export interface ConfirmedEvent {
 
 /** Turns a transaction's logs into GroundTruth program events, in order. */
 export type TransactionDecoder = (tx: ConfirmedTransaction) => ProgramEvent[];
-
-/**
- * Placeholder until the escrow program's IDL exists. It fails instead of
- * returning no events: the webhook then answers 500, QuickNode retries and
- * pauses the Stream, and no confirmed event is acknowledged and lost.
- */
-export const decoderPendingIdl: TransactionDecoder = () => {
-  throw new Error("GroundTruth program IDL is not configured");
-};
 
 export function toConfirmedEvents(
   tx: ConfirmedTransaction,
