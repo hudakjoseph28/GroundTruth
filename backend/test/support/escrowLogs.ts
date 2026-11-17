@@ -7,9 +7,10 @@
  * checked-in IDL's own Borsh coder, so they match what the program built
  * from the same IDL would emit.
  *
- * TODO(devnet): once the escrow program is deployed (README, "Escrow"),
- * record real devnet transactions for the held and released flows and
- * replay those here alongside these encoded ones.
+ * Real devnet data lives in test/fixtures/devnet (devnetRecorded.test.ts).
+ * TODO(devnet): the program is deployed (#22) but no deal has run on devnet
+ * yet. After the held and released demo deals run, `record:devnet` and add
+ * their transactions to that test's EXPECTED_SENT.
  */
 import { BN, BorshCoder, web3, type Idl } from "@anchor-lang/core";
 import {

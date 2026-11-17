@@ -3,8 +3,8 @@
  * and applyConfirmedEvent, against PostgreSQL.
  *
  * IDL-ENCODED TEST DATA (test/support/escrowLogs.ts), not recorded from
- * devnet. TODO(devnet): replay recorded devnet transactions for these two
- * flows once the escrow program is deployed.
+ * devnet. TODO(devnet): the program is deployed (#22); replay the recorded
+ * devnet transactions for these two flows once the demo deals have run.
  */
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import { utils, web3 } from "@anchor-lang/core";

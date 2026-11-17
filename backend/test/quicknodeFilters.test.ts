@@ -28,15 +28,11 @@ const PROGRAM = GROUNDTRUTH_PROGRAM_ID;
 const OTHER = "SigDHT99hPznk4d9SAxWLoBnKWT8jcob5pV8X7ti8SM";
 const TOKEN = "filter-test-token";
 
-function loadFilter(file: string, programId?: string): Filter {
-  let source = readFileSync(
-    new URL(`../quicknode/${file}`, import.meta.url),
-    "utf8",
-  );
-  if (programId) {
-    source = source.replace("REPLACE_WITH_ESCROW_PROGRAM_ID", programId);
-  }
-  return new Function(`${source}\nreturn main;`)() as Filter;
+const filterSource = (file: string) =>
+  readFileSync(new URL(`../quicknode/${file}`, import.meta.url), "utf8");
+
+function loadFilter(file: string): Filter {
+  return new Function(`${filterSource(file)}\nreturn main;`)() as Filter;
 }
 
 interface Ix {
@@ -157,7 +153,7 @@ async function deliver(
 }
 
 describe("groundtruth-filter.js", () => {
-  const filter = loadFilter("groundtruth-filter.js", PROGRAM);
+  const filter = loadFilter("groundtruth-filter.js");
   const block = stream([
     tx({ sig: sigs.direct, top: [PROGRAM] }),
     tx({
@@ -197,8 +193,10 @@ describe("groundtruth-filter.js", () => {
     expect(filter(stream([]))).toBeNull();
   });
 
-  it("matches nothing until the program ID is filled in", () => {
-    expect(loadFilter("groundtruth-filter.js")(block)).toBeNull();
+  it("targets the deployed program, the same ID the decoder uses", () => {
+    expect(filterSource("groundtruth-filter.js")).toContain(
+      `const PROGRAM_ID = "${GROUNDTRUTH_PROGRAM_ID}";`,
+    );
   });
 
   it("produces a body the webhook accepts", async () => {
@@ -245,15 +243,13 @@ describe("groundtruth-filter.js: failed releases", () => {
   const held = { InstructionError: [0, { Custom: 6019 }] };
 
   it("matches release by the IDL's discriminator", () => {
-    const source = readFileSync(
-      new URL("../quicknode/groundtruth-filter.js", import.meta.url),
-      "utf8",
+    expect(filterSource("groundtruth-filter.js")).toContain(
+      `const RELEASE_IX_DATA = "${RELEASE}";`,
     );
-    expect(source).toContain(`const RELEASE_IX_DATA = "${RELEASE}";`);
   });
 
   it("sends a failed release with its error and accounts, and no other failure", () => {
-    const filter = loadFilter("groundtruth-filter.js", PROGRAM);
+    const filter = loadFilter("groundtruth-filter.js");
     const body = filter(
       stream([
         tx({
@@ -292,7 +288,7 @@ describe("groundtruth-filter.js: failed releases", () => {
   });
 
   it("round-trips through the webhook and the real decoder into a rejection and events", async () => {
-    const filter = loadFilter("groundtruth-filter.js", PROGRAM);
+    const filter = loadFilter("groundtruth-filter.js");
     const e = events(keys);
     const body = filter(
       stream([
