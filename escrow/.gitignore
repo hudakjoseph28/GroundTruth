@@ -6,3 +6,8 @@ node_modules
 test-ledger
 .yarn
 .surfpool
+
+# demo-deals.ts: generated devnet demo keypairs (private keys) and local
+# simulation output. Never commit either; devnet proof files are committed.
+.demo-wallets/
+demo-results/simulation.*

@@ -72,6 +72,28 @@ The local state machine and balance assertions are non-negotiable. If devnet tes
 - **Solana Explorer (IDL):** [uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)
 - **Circle Test USDC Mint:** `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`
 
+## Demo closings script
+
+[`escrow/scripts/demo-deals.ts`](../../../escrow/scripts/demo-deals.ts) runs both staged closings on devnet against the deployed program. It uses `@solana/web3.js` and the checked-in IDL and needs no Solana CLI.
+
+```bash
+pnpm --filter @groundtruth/shared build                 # once, for the IDL and fixtures
+pnpm --filter @groundtruth/escrow demo:deals            # check: wallets, balances, what to fund
+pnpm --filter @groundtruth/escrow demo:deals simulate   # both closings in LiteSVM on the deployed bytecode
+pnpm --filter @groundtruth/escrow demo:deals run        # devnet; refuses unless funded and the rehearsal passes
+```
+
+- **Wallets:** buyer, seller, and title/survey/septic reviewer keypairs are generated into `escrow/.demo-wallets/` (gitignored, mode 0600). Only public keys are printed or recorded.
+- **Funding:** the buyer pays every fee and rent, about 0.02 SOL ([faucet.solana.com](https://faucet.solana.com)). It also needs the deal amount in Circle devnet USDC ([faucet.circle.com](https://faucet.circle.com)), once: the held deal refunds before the released deal is funded.
+  - Circle's faucet gives 20 USDC per request, once every 2 hours per address. The default 25 USDC (the fixture amount) therefore takes two requests. `--amount 20` fits one request, but `fixtures.ts` would have to match, or the API rejects the chain events.
+- **Flows:**
+  - held: initialize → fund → title hold → rejected release → refund;
+  - released: initialize → fund → three approvals → release.
+
+  The parcel is `ohio:39049:230-000918`, and each deal ID is the sha256 of a string naming that parcel. The script checks the deal state and the buyer, vault and seller balances at every settlement.
+- **Output:** `escrow/demo-results/devnet-<runId>.json` and `.md`, with Explorer links. They are rewritten after every transaction, so a partial run is still recorded. Simulation output is gitignored.
+- **Held release error:** the spec says DealHeld (6019), and that is the script's default. On the deployed program, `release` checks `state == Funded` before it checks for a hold, and `place_hold` sets the state to `Held`. So a held release fails with **InvalidDealState (6009)**, and 6019 is unreachable; `simulate` shows this. Either reorder those two checks in `release` and upgrade the program, or run with `--held-error InvalidDealState`.
+
 ## Depends on
 
 Voice callback and second-device updates are [phase 3](../03-connect-surfaces/ConnectSurfaces.md); use staged signatures until then. Share the deal fixture with [phase 2](../02-parcel-research/ParcelResearch.md) so report and closing point at the same parcel.
