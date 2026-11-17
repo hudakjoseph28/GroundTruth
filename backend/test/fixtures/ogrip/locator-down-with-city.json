@@ -1,0 +1,142 @@
+{
+  "scenario": "locator-down-with-city",
+  "path": "/api/parcels/search?q=57%20S%20Main%20St%2C%20Johnstown",
+  "recordedAt": "2026-11-17T00:11:57.328Z",
+  "exchanges": [
+    {
+      "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=57+S+Main+St%2C+Johnstown&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
+      "status": 503,
+      "body": { "forcedOutage": "recorder answered 503 for the locator" },
+      "forcedFailure": true
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County+IN+%28%27Licking%27%29+AND+SitusAddressAll+LIKE+%2757+%25MAIN%25%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=50&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
+        "globalIdFieldName": "GlobalID",
+        "geometryType": "esriGeometryPolygon",
+        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
+        "fields": [
+          {
+            "name": "County",
+            "type": "esriFieldTypeString",
+            "alias": "County",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "LocalParcelID",
+            "type": "esriFieldTypeString",
+            "alias": "LocalParcelID",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "StateParcelID",
+            "type": "esriFieldTypeString",
+            "alias": "StateParcelID",
+            "sqlType": "sqlTypeOther",
+            "length": 50,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "SitusAddressAll",
+            "type": "esriFieldTypeString",
+            "alias": "Situs Address All",
+            "sqlType": "sqlTypeOther",
+            "length": 255,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "LandArea",
+            "type": "esriFieldTypeDouble",
+            "alias": "LandArea",
+            "sqlType": "sqlTypeOther",
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "County": "Licking",
+              "LocalParcelID": "02808521200000",
+              "StateParcelID": "39089-02808521200000",
+              "SitusAddressAll": "57 S MAIN ST CROTON, OH 43013 CROTON 43013",
+              "LandArea": 0.12
+            },
+            "centroid": { "x": -82.6866055543703, "y": 40.237881640062646 }
+          },
+          {
+            "attributes": {
+              "County": "Licking",
+              "LocalParcelID": "05317758800000",
+              "StateParcelID": "39089-05317758800000",
+              "SitusAddressAll": "57 S MAIN ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+              "LandArea": 0.23
+            },
+            "centroid": { "x": -82.68419179163179, "y": 40.15280515728641 }
+          },
+          {
+            "attributes": {
+              "County": "Licking",
+              "LocalParcelID": "05317758800000",
+              "StateParcelID": "39089-05317758800000",
+              "SitusAddressAll": "57 S MAIN ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+              "LandArea": 0.23
+            },
+            "centroid": { "x": -82.68440496026946, "y": 40.152680288366874 }
+          },
+          {
+            "attributes": {
+              "County": "Licking",
+              "LocalParcelID": "05420232000000",
+              "StateParcelID": "39089-05420232000000",
+              "SitusAddressAll": "57 E MAIN ST NEWARK, OH 43055 NEWARK 43055",
+              "LandArea": 0.08
+            },
+            "centroid": { "x": -82.39992574707348, "y": 40.058109651157544 }
+          },
+          {
+            "attributes": {
+              "County": "Licking",
+              "LocalParcelID": "06732345400000",
+              "StateParcelID": "39089-06732345400000",
+              "SitusAddressAll": "57 W MAIN ST ALEXANDRIA, OH 43001 ALEXANDRIA 43001",
+              "LandArea": 0.28
+            },
+            "centroid": { "x": -82.61374293751774, "y": 40.089309801942996 }
+          }
+        ]
+      }
+    }
+  ],
+  "apiResponse": {
+    "status": 200,
+    "body": [
+      {
+        "parcel": {
+          "key": "ohio:39089:05317758800000",
+          "sourceParcelId": "05317758800000",
+          "county": "Licking",
+          "countyFips": "39089",
+          "centroid": {
+            "latitude": 40.15280515728641,
+            "longitude": -82.68419179163179
+          },
+          "siteAddress": "57 S MAIN ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+          "acreage": 0.23
+        },
+        "matchedOn": "siteAddress"
+      }
+    ]
+  }
+}

@@ -13,10 +13,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import request from "supertest";
 import { createApp } from "../src/app.js";
-import { createOgripClient } from "../src/parcels/ogrip.js";
+import { createOgripClient, OGRIP_LOCATOR } from "../src/parcels/ogrip.js";
 import {
+  LOCATOR_DOWN,
   OGRIP_SCENARIOS,
   type OgripRecording,
+  type OgripScenario,
 } from "../test/fixtures/ogrip/scenarios.js";
 
 const fixtureDir = join(
@@ -24,9 +26,20 @@ const fixtureDir = join(
   "../test/fixtures/ogrip",
 );
 
-async function record(name: string, path: string): Promise<void> {
+async function record(name: OgripScenario, path: string): Promise<void> {
   const exchanges: OgripRecording["exchanges"] = [];
+  const locatorDown = LOCATOR_DOWN.has(name);
   const recordingFetch: typeof fetch = async (input, init) => {
+    if (locatorDown && String(input).startsWith(OGRIP_LOCATOR)) {
+      const body = { forcedOutage: "recorder answered 503 for the locator" };
+      exchanges.push({
+        url: String(input),
+        status: 503,
+        body,
+        forcedFailure: true,
+      });
+      return new Response(JSON.stringify(body), { status: 503 });
+    }
     const response = await fetch(input, init);
     const text = await response.text();
     exchanges.push({
@@ -58,16 +71,28 @@ async function record(name: string, path: string): Promise<void> {
     exchanges,
     apiResponse: { status: res.status, body: res.body as unknown },
   };
-  await writeFile(
-    join(fixtureDir, `${name}.json`),
-    `${JSON.stringify(recording, null, 2)}\n`,
-  );
+  // Bodies stay compact: they are large and only ever replayed.
+  const bodies = recording.exchanges.map((e) => JSON.stringify(e.body));
+  const framed = JSON.stringify(
+    {
+      ...recording,
+      exchanges: recording.exchanges.map((e, i) => ({
+        ...e,
+        body: `@body${i}@`,
+      })),
+    },
+    null,
+    2,
+  ).replace(/"@body(\d+)@"/g, (_, i: string) => bodies[Number(i)] ?? "null");
+  await writeFile(join(fixtureDir, `${name}.json`), `${framed}\n`);
   console.log(
     `${name}: ${res.status} in ${elapsedMs} ms, ${exchanges.length} OGRIP request(s)`,
   );
 }
 
 await mkdir(fixtureDir, { recursive: true });
+const only = process.argv.slice(2);
 for (const [name, path] of Object.entries(OGRIP_SCENARIOS)) {
-  await record(name, path);
+  if (only.length > 0 && !only.includes(name)) continue;
+  await record(name as OgripScenario, path);
 }

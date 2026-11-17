@@ -1,23 +1,17 @@
 {
   "scenario": "licking-address",
   "path": "/api/parcels/search?q=10034%20Appleton%20Rd%20Johnstown%2043031",
-  "recordedAt": "2026-11-16T23:49:15.812Z",
+  "recordedAt": "2026-11-17T00:11:54.482Z",
   "exchanges": [
     {
       "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=10034+Appleton+Rd+Johnstown+43031&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
       "status": 200,
       "body": {
-        "spatialReference": {
-          "wkid": 4326,
-          "latestWkid": 4326
-        },
+        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
         "candidates": [
           {
             "address": "10034 APPLETON, 43031",
-            "location": {
-              "x": -82.601140329917,
-              "y": 40.195916133823
-            },
+            "location": { "x": -82.601140329917, "y": 40.195916133823 },
             "score": 96.21,
             "attributes": {
               "Addr_type": "StreetAddress",
@@ -33,10 +27,7 @@
           },
           {
             "address": "10034 JOHNSTOWN, 43054",
-            "location": {
-              "x": -82.777590925853,
-              "y": 40.104862482639
-            },
+            "location": { "x": -82.777590925853, "y": 40.104862482639 },
             "score": 90.02,
             "attributes": {
               "Addr_type": "StreetAddress",
@@ -52,10 +43,7 @@
           },
           {
             "address": "10034 JOHNSTOWN, 43054",
-            "location": {
-              "x": -82.778614756739,
-              "y": 40.102765089367
-            },
+            "location": { "x": -82.778614756739, "y": 40.102765089367 },
             "score": 90.02,
             "attributes": {
               "Addr_type": "StreetAddress",
@@ -71,10 +59,7 @@
           },
           {
             "address": "10034 JOHNSTOWN, NEW ALBANY, 43054",
-            "location": {
-              "x": -82.788884351152,
-              "y": 40.092472179019
-            },
+            "location": { "x": -82.788884351152, "y": 40.092472179019 },
             "score": 90.02,
             "attributes": {
               "Addr_type": "StreetAddress",
@@ -96,16 +81,10 @@
       "status": 200,
       "body": {
         "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": {
-          "name": "OBJECTID",
-          "isSystemMaintained": true
-        },
+        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
         "globalIdFieldName": "GlobalID",
         "geometryType": "esriGeometryPolygon",
-        "spatialReference": {
-          "wkid": 4326,
-          "latestWkid": 4326
-        },
+        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
         "fields": [
           {
             "name": "County",
@@ -156,54 +135,22 @@
           {
             "attributes": {
               "County": "Licking",
-              "LocalParcelID": "00100062400001",
-              "StateParcelID": "39089-00100062400001",
-              "SitusAddressAll": "9961 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 5.86
-            },
-            "centroid": {
-              "x": -82.60132817083,
-              "y": 40.19422590559569
-            }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
               "LocalParcelID": "00100000601000",
               "StateParcelID": "39089-00100000601000",
               "SitusAddressAll": "10034 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
               "LandArea": 5.61
             },
-            "centroid": {
-              "x": -82.60208500209575,
-              "y": 40.19757017255763
-            }
+            "centroid": { "x": -82.60208500209575, "y": 40.19757017255763 }
           },
           {
             "attributes": {
               "County": "Licking",
-              "LocalParcelID": "00100062400000",
-              "StateParcelID": "39089-00100062400000",
-              "SitusAddressAll": "9969 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 10.13
+              "LocalParcelID": "00100062400001",
+              "StateParcelID": "39089-00100062400001",
+              "SitusAddressAll": "9961 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+              "LandArea": 5.86
             },
-            "centroid": {
-              "x": -82.60223394423541,
-              "y": 40.19531902899416
-            }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "00100000600000",
-              "StateParcelID": "39089-00100000600000",
-              "SitusAddressAll": "APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 150.01
-            },
-            "centroid": {
-              "x": -82.59889430185655,
-              "y": 40.199760914405246
-            }
+            "centroid": { "x": -82.60132817083, "y": 40.19422590559569 }
           },
           {
             "attributes": {
@@ -213,10 +160,27 @@
               "SitusAddressAll": "9921 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
               "LandArea": 4.06
             },
-            "centroid": {
-              "x": -82.59998974736898,
-              "y": 40.19379928067492
-            }
+            "centroid": { "x": -82.59998974736898, "y": 40.19379928067492 }
+          },
+          {
+            "attributes": {
+              "County": "Licking",
+              "LocalParcelID": "00100000600000",
+              "StateParcelID": "39089-00100000600000",
+              "SitusAddressAll": "APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+              "LandArea": 150.01
+            },
+            "centroid": { "x": -82.59889430185655, "y": 40.199760914405246 }
+          },
+          {
+            "attributes": {
+              "County": "Licking",
+              "LocalParcelID": "00100062400000",
+              "StateParcelID": "39089-00100062400000",
+              "SitusAddressAll": "9969 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+              "LandArea": 10.13
+            },
+            "centroid": { "x": -82.60223394423541, "y": 40.19531902899416 }
           }
         ]
       }

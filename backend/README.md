@@ -33,9 +33,21 @@ These routes query Ohio's statewide parcel layer and address locator from the AP
 | --- | --- |
 | `GET /api/parcels/search?q=` | `ParcelSearchResult[]`, up to 10. `q` is trimmed and must be 3–120 characters (`400 INVALID_REQUEST` otherwise). `[]` means a valid query with no match. |
 | `GET /api/parcels/:parcelKey` | `Parcel` with the published boundary. `404 NOT_FOUND` if OGRIP has no such parcel in that county; `404 NO_COVERAGE` for a county code outside Ohio's 88. |
-| `GET /api/coverage` | `Coverage[]`: one row per county where OGRIP publishes parcels with IDs, from a live count (cached 1 hour). `evidenceKinds` stays `[]` until an evidence adapter runs on live parcels. |
+| `GET /api/coverage` | `Coverage[]`: one row per county in a live count of OGRIP parcels with published IDs (cached 1 hour). `boundarySearchable` means only that the count was above zero at `lastVerifiedAt`, the time of that count. `evidenceKinds` is `[]` for every county until an evidence adapter runs on live parcels. A row says nothing about report depth. |
 
-**How search decides.** A single token containing a digit (`010-042534`) is a parcel ID. It matches `LocalParcelID` exactly, also without dashes or dots (Licking stores the auditor's `001-000006-01.000` as `00100000601000`), and also in the statewide form `39049-010-042534`. Anything else is an address. The [OGRIP locator](https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer) normalizes it, then the API searches a 150 m, 500 m, then 1,500 m box around the located point. It returns only parcels whose **published site address** has the same house number and street name. Locator points are interpolated along street ranges and can land hundreds of meters from the lot (84 W Dodridge St lands about 400 m away), so the point alone never picks a parcel.
+**Parcel key rule.** `ohio:<countyFips>:<LocalParcelID exactly as published>`. No punctuation is added or removed, so keys differ by county the way OGRIP does: Franklin publishes `010-042534` (`ohio:39049:010-042534`), Licking publishes `00100000601000` (`ohio:39089:00100000601000`). Published IDs that do not match `[A-Za-z0-9][A-Za-z0-9._-]*`, or are all zeros, get no key.
+
+**Parcel ID search.** A query is a parcel ID when every space-separated part has a digit (`010-042534`, `010042534`, `010 042534`). The typed ID is tried as typed, without separators, and re-punctuated in every separator layout measured in the live layer ([src/parcels/parcelIdFormats.ts](src/parcels/parcelIdFormats.ts), e.g. Franklin's `3-6`), all in one indexed `LocalParcelID IN (...)` query. So `010042534` finds `010-042534`, and `001-000006-01.000` finds `00100000601000`. The statewide form `39049-010-042534` also works. Regenerate the layouts with `pnpm --filter @groundtruth/backend generate:id-formats`.
+
+**Address search.** It needs a house number. It stops at the first step that finds a match:
+
+1. The [OGRIP locator](https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer) normalizes the query as typed. The API then searches a 150 m, 500 m, then 1,500 m box around each located point, and keeps only parcels whose **published site address** has the same house number and street name. Locator points are interpolated along street ranges and can land hundreds of meters from the lot (84 W Dodridge St lands about 400 m away), so the point alone never picks a parcel.
+2. If that finds nothing, the locator is retried with only house number + street. It rejects some city names it does not hold for a street: `10034 Appleton Rd Johnstown OH` fails, `10034 Appleton Rd` works.
+3. If the locator is down or knows no such street, `SitusAddressAll` is matched directly in the counties the typed city lies in, using Census 2020 place and township names ([src/parcels/ohioPlaces.ts](src/parcels/ohioPlaces.ts), regenerated with `generate:places`). This step is slow because the field is not indexed (0.5–40 s per county), so it runs only when a city narrows it to at most three counties. Without a city, a locator outage is reported as `502`.
+
+If a city is typed, every step drops parcels whose published address names a different city: `123 Main St Johnstown OH` returns `[]` and does not offer `123 MAIN ST PATASKALA`. Counties that publish no city (Franklin) are kept when the city lies in that county. Postal cities are not always Census places: OGRIP's Delaware County `7511 DAVIS-KIRK RD PROSPECT` uses the postal city Prospect, while the Census village of Prospect is in Marion County. Steps 1–2 still find it, because the published address names Prospect. Step 3 would search Marion only.
+
+An address naming another state (`…, Washington, DC 20500`) returns `[]` without calling OGRIP.
 
 **Field mapping.**
 
@@ -57,8 +69,11 @@ Owner mailing fields (`MailAddressAll`, `MailCity`, …) are never requested, an
 **Recorded fixtures.** Route tests replay real OGRIP responses from [test/fixtures/ogrip/](test/fixtures/ogrip/) by exact URL, so they never touch the network. After changing a query, re-record from live OGRIP and review the diff:
 
 ```bash
-pnpm --filter @groundtruth/backend record:ogrip
+pnpm --filter @groundtruth/backend record:ogrip               # every scenario
+pnpm --filter @groundtruth/backend record:ogrip franklin-address  # one scenario
 ```
+
+Scenarios live in [test/fixtures/ogrip/scenarios.ts](test/fixtures/ogrip/scenarios.ts). Those listed in `LOCATOR_DOWN` are recorded with the recorder answering HTTP 503 for the locator (marked `forcedFailure`), so the fallback runs against real parcel-layer responses.
 
 ## Deals
 

@@ -9,7 +9,17 @@ import {
   countyByName,
   OHIO_COUNTIES,
 } from "../src/parcels/ohioCounties.js";
-import { parcelIdWhere } from "../src/parcels/ogrip.js";
+import {
+  parseAddressQuery,
+  placeCounties,
+  sitePlace,
+} from "../src/parcels/addressQuery.js";
+import {
+  applyIdFormat,
+  idFormat,
+  parcelIdCandidates,
+  parcelIdWhere,
+} from "../src/parcels/parcelIdSearch.js";
 import { isKeyableParcelId, parseParcelKey } from "../src/parcels/parcelKey.js";
 
 const centroid = { latitude: 40, longitude: -83 };
@@ -57,25 +67,120 @@ describe("parcel IDs and keys", () => {
   });
 });
 
-describe("parcelIdWhere", () => {
-  it("matches the typed ID, its upper case, and the punctuation-free form", () => {
-    expect(parcelIdWhere("001-000006-01.000")).toBe(
-      "LocalParcelID IN ('001-000006-01.000','00100000601000')",
-    );
-    expect(parcelIdWhere("d12-017")).toBe(
-      "LocalParcelID IN ('d12-017','D12-017','D12017')",
-    );
+describe("parcel ID candidates", () => {
+  it("re-punctuates a compact ID into every measured county layout", () => {
+    expect(idFormat("010-042534")).toBe("3-6");
+    expect(idFormat("45-03349.000")).toBe("2-5.3");
+    expect(applyIdFormat("010042534", "3-6")).toBe("010-042534");
+    expect(applyIdFormat("01004253", "3-6")).toBeNull();
   });
 
-  it("also reads the statewide form as county + local ID", () => {
-    expect(parcelIdWhere("39049-010-042534")).toBe(
-      "LocalParcelID IN ('39049-010-042534','39049010042534') OR (County='Franklin' AND LocalParcelID='010-042534')",
+  it.each([
+    ["010-042534", "010-042534"],
+    ["010042534", "010-042534"],
+    ["010 042534", "010-042534"],
+    ["00100000601000", "00100000601000"],
+    ["001-000006-01.000", "00100000601000"],
+  ])("%s includes the published form %s", (typed, published) => {
+    expect(parcelIdCandidates(typed)).toContain(published);
+  });
+
+  it("puts only quoted ID literals in the filter", () => {
+    const where = parcelIdWhere("010042534") ?? "";
+    expect(where).toMatch(
+      /^LocalParcelID IN \('[A-Z0-9.-]+'(,'[A-Z0-9.-]+')*\)$/,
+    );
+    expect(where).toContain("'010-042534'");
+  });
+
+  it("reads the statewide form as county + local ID", () => {
+    expect(parcelIdWhere("39049-010-042534")).toContain(
+      "(County='Franklin' AND LocalParcelID IN ('010-042534'",
     );
   });
 
   it("produces no filter for values that are not parcel IDs", () => {
     expect(parcelIdWhere("1' OR '1'='1")).toBeNull();
     expect(parcelIdWhere("0000")).toBeNull();
+  });
+});
+
+describe("parseAddressQuery", () => {
+  it.each([
+    [
+      "57 S Main St Johnstown OH",
+      {
+        houseNumber: "57",
+        streetName: "MAIN",
+        streetOnly: "57 S MAIN ST",
+        place: "JOHNSTOWN",
+      },
+    ],
+    [
+      "10034 Appleton Rd, Johnstown",
+      {
+        houseNumber: "10034",
+        streetName: "APPLETON",
+        streetOnly: "10034 APPLETON RD",
+        place: "JOHNSTOWN",
+      },
+    ],
+    [
+      "10034 Appleton Rd Johnstown 43031",
+      { streetName: "APPLETON", place: "JOHNSTOWN" },
+    ],
+    [
+      "84 W Dodridge St, Columbus, OH 43202",
+      { streetName: "DODRIDGE", place: "COLUMBUS" },
+    ],
+    [
+      "123 St Clair Ave Mt Vernon",
+      { streetName: "ST CLAIR", place: "MOUNT VERNON" },
+    ],
+    [
+      "84 W Dodridge St",
+      { streetName: "DODRIDGE", streetOnly: "84 W DODRIDGE ST" },
+    ],
+  ])("%s", (query, expected) => {
+    const parsed = parseAddressQuery(query);
+    expect(parsed).toMatchObject({ ...expected, outOfState: false });
+    if (!("place" in expected)) expect(parsed?.place).toBeUndefined();
+  });
+
+  it("flags another state and requires a house number", () => {
+    expect(
+      parseAddressQuery("1600 Pennsylvania Ave NW, Washington, DC 20500")
+        ?.outOfState,
+    ).toBe(true);
+    expect(parseAddressQuery("Appleton Rd, Johnstown")).toBeNull();
+  });
+
+  it("maps places to counties from the Census table", () => {
+    expect(placeCounties("Johnstown")).toEqual(["39089"]);
+    expect(placeCounties("columbus")).toEqual(["39041", "39045", "39049"]);
+    expect(placeCounties("Nowhereville")).toEqual([]);
+  });
+});
+
+describe("sitePlace", () => {
+  it.each([
+    [
+      "10034 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+      "APPLETON",
+      "JOHNSTOWN",
+      "named",
+    ],
+    [
+      "123 MAIN ST PATASKALA, OH 43062 PATASKALA 43062",
+      "MAIN",
+      "JOHNSTOWN",
+      "other",
+    ],
+    ["84 W DODRIDGE ST", "DODRIDGE", "COLUMBUS", "absent"],
+    ["84 W DODRIDGE ST UNIT 2", "DODRIDGE", "COLUMBUS", "absent"],
+    ["7511  DAVIS-KIRK RD  PROSPECT 43342", "DAVIS-KIRK", "PROSPECT", "named"],
+  ] as const)("%s for %s", (situs, street, place, expected) => {
+    expect(sitePlace(situs, street, place)).toBe(expected);
   });
 });
 

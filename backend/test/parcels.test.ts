@@ -442,3 +442,209 @@ describe("GET /api/coverage", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("parcel key rule: ohio:<countyFips>:<LocalParcelID exactly as published>", () => {
+  it.each([
+    ["franklin-parcel-id", "39049"],
+    ["licking-parcel-id-published", "39089"],
+  ] as const)(
+    "%s keys the recorded LocalParcelID unchanged",
+    async (name, fips) => {
+      const { app, recording } = scenarioApp(name);
+      const published = (
+        recording.exchanges[0]?.body as {
+          features: { attributes: { LocalParcelID: string } }[];
+        }
+      ).features.map((f) => f.attributes.LocalParcelID);
+
+      const res = await request(app).get(OGRIP_SCENARIOS[name]);
+
+      expect(res.status).toBe(200);
+      for (const result of res.body as ParcelSearchResult[]) {
+        expect(published).toContain(result.parcel.sourceParcelId);
+        expect(result.parcel.key).toBe(
+          `ohio:${fips}:${result.parcel.sourceParcelId}`,
+        );
+      }
+    },
+  );
+});
+
+describe("parcel ID search with or without punctuation", () => {
+  it.each([
+    ["franklin-parcel-id", "ohio:39049:010-042534"],
+    ["franklin-parcel-id-compact", "ohio:39049:010-042534"],
+    ["franklin-parcel-id-spaced", "ohio:39049:010-042534"],
+    ["licking-parcel-id-published", "ohio:39089:00100000601000"],
+    ["licking-parcel-id", "ohio:39089:00100000601000"],
+  ] as const)("%s finds %s", async (name, key) => {
+    const { app } = scenarioApp(name);
+
+    const res = await request(app).get(OGRIP_SCENARIOS[name]);
+
+    expect(res.status).toBe(200);
+    expect(res.body.map((r: ParcelSearchResult) => r.parcel.key)).toEqual([
+      key,
+    ]);
+    expect(res.body[0].matchedOn).toBe("parcelId");
+  });
+});
+
+describe("address search fallbacks", () => {
+  const steps = (recording: OgripRecording) =>
+    recording.exchanges.map(({ url }) => {
+      const params = new URL(url).searchParams;
+      if (url.startsWith(OGRIP_LOCATOR))
+        return `locator:${params.get("SingleLine")}`;
+      if (params.get("where")?.includes("SitusAddressAll LIKE"))
+        return "siteAddress";
+      return params.has("geometry") ? "box" : "other";
+    });
+
+  it.each([
+    ["licking-address-no-zip", "ohio:39089:00100000601000"],
+    ["licking-address-city-comma", "ohio:39089:00100000601000"],
+  ] as const)(
+    "%s: retries the locator with only number + street when the city is rejected",
+    async (name, key) => {
+      const { app, recording } = scenarioApp(name);
+
+      const res = await request(app).get(OGRIP_SCENARIOS[name]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.map((r: ParcelSearchResult) => r.parcel.key)).toEqual([
+        key,
+      ]);
+      expect(steps(recording)).toEqual([
+        `locator:${decodeURIComponent(OGRIP_SCENARIOS[name].split("q=")[1] ?? "")}`,
+        "locator:10034 APPLETON RD",
+        "box",
+      ]);
+    },
+  );
+
+  it("finds a Main St address in Johnstown without a ZIP", async () => {
+    const { app } = scenarioApp("licking-main-st-no-zip");
+
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["licking-main-st-no-zip"],
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toMatchObject({
+      parcel: {
+        key: "ohio:39089:05317758800000",
+        siteAddress: "57 S MAIN ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+      },
+      matchedOn: "siteAddress",
+    });
+  });
+
+  it("returns [] for 123 Main St, Johnstown: the street exists, the parcel does not", async () => {
+    const { app, recording } = scenarioApp("johnstown-no-such-address");
+
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["johnstown-no-such-address"],
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+    // 123 MAIN ST in Pataskala, Utica, and Alexandria are not offered, and
+    // the slow site-address scan is skipped because the locator knew the street.
+    expect(steps(recording)).not.toContain("siteAddress");
+  });
+
+  it("matches SitusAddressAll in the city's county when the locator is down", async () => {
+    const { app, recording } = scenarioApp("locator-down-with-city");
+
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["locator-down-with-city"],
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.map((r: ParcelSearchResult) => r.parcel.key)).toEqual([
+      "ohio:39089:05317758800000",
+    ]);
+    expect(recording.exchanges[0]).toMatchObject({
+      status: 503,
+      forcedFailure: true,
+    });
+    expect(steps(recording)).toEqual([
+      "locator:57 S Main St, Johnstown",
+      "siteAddress",
+    ]);
+    expect(
+      new URL(recording.exchanges[1]?.url ?? "").searchParams.get("where"),
+    ).toBe("County IN ('Licking') AND SitusAddressAll LIKE '57 %MAIN%'");
+  });
+
+  it("reports the outage when the locator is down and no city narrows the search", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { app } = scenarioApp("locator-down-without-city");
+
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["locator-down-without-city"],
+    );
+
+    expect(res.status).toBe(502);
+    expect(res.body.error).toMatchObject({
+      code: "INTERNAL_ERROR",
+      retryable: true,
+    });
+  });
+});
+
+describe("coverage claims only what was measured", () => {
+  it("every row claims a searchable boundary, no evidence, and the count's time", async () => {
+    const { app, recording } = scenarioApp("coverage");
+
+    const rows = (await request(app).get("/api/coverage")).body as Coverage[];
+
+    expect(rows).toHaveLength(88);
+    for (const row of rows) {
+      expect(Object.keys(row).sort()).toEqual([
+        "boundarySearchable",
+        "county",
+        "countyFips",
+        "evidenceKinds",
+        "lastVerifiedAt",
+      ]);
+      expect(row.boundarySearchable).toBe(true);
+      expect(row.evidenceKinds).toEqual([]);
+      expect(row.lastVerifiedAt).toBe(recording.recordedAt);
+    }
+  });
+
+  it("reports a zero count as not searchable, omits unmeasured counties, and keeps the measured time while cached", async () => {
+    let at = new Date("2026-11-17T00:00:00.000Z");
+    const stats = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({
+            features: [
+              { attributes: { County: "Franklin", parcels: 454000 } },
+              { attributes: { County: "Licking", parcels: 0 } },
+            ],
+          }),
+        ),
+    );
+    const app = createApp("test-commit", {
+      ogrip: createOgripClient({ fetch: stats, now: () => at }),
+    });
+
+    const first = (await request(app).get("/api/coverage")).body as Coverage[];
+    at = new Date("2026-11-17T00:30:00.000Z");
+    const cached = (await request(app).get("/api/coverage")).body as Coverage[];
+    at = new Date("2026-11-17T01:01:00.000Z");
+    const remeasured = (await request(app).get("/api/coverage"))
+      .body as Coverage[];
+
+    expect(first.map((row) => [row.county, row.boundarySearchable])).toEqual([
+      ["Franklin", true],
+      ["Licking", false],
+    ]);
+    expect(cached[0]?.lastVerifiedAt).toBe("2026-11-17T00:00:00.000Z");
+    expect(remeasured[0]?.lastVerifiedAt).toBe("2026-11-17T01:01:00.000Z");
+    expect(stats).toHaveBeenCalledTimes(2);
+  });
+});

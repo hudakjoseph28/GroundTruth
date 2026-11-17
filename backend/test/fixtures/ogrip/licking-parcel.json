@@ -1,19 +1,14 @@
 {
   "scenario": "licking-parcel",
   "path": "/api/parcels/ohio%3A39089%3A00100000601000",
-  "recordedAt": "2026-11-16T23:49:17.067Z",
+  "recordedAt": "2026-11-17T00:11:55.180Z",
   "exchanges": [
     {
       "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Licking%27+AND+LocalParcelID%3D%2700100000601000%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
       "status": 200,
       "body": {
         "type": "FeatureCollection",
-        "crs": {
-          "type": "name",
-          "properties": {
-            "name": "EPSG:4326"
-          }
-        },
+        "crs": { "type": "name", "properties": { "name": "EPSG:4326" } },
         "features": [
           {
             "type": "Feature",
@@ -21,34 +16,13 @@
               "type": "Polygon",
               "coordinates": [
                 [
-                  [
-                    -82.6028371,
-                    40.1984799
-                  ],
-                  [
-                    -82.6010262,
-                    40.1980867
-                  ],
-                  [
-                    -82.6018498,
-                    40.1963872
-                  ],
-                  [
-                    -82.6019529,
-                    40.1964674
-                  ],
-                  [
-                    -82.6024723,
-                    40.1968835
-                  ],
-                  [
-                    -82.6029132,
-                    40.1972693
-                  ],
-                  [
-                    -82.6028371,
-                    40.1984799
-                  ]
+                  [-82.6028371, 40.1984799],
+                  [-82.6010262, 40.1980867],
+                  [-82.6018498, 40.1963872],
+                  [-82.6019529, 40.1964674],
+                  [-82.6024723, 40.1968835],
+                  [-82.6029132, 40.1972693],
+                  [-82.6028371, 40.1984799]
                 ]
               ]
             },
@@ -82,40 +56,19 @@
           "type": "Polygon",
           "coordinates": [
             [
-              [
-                -82.6028371,
-                40.1984799
-              ],
-              [
-                -82.6010262,
-                40.1980867
-              ],
-              [
-                -82.6018498,
-                40.1963872
-              ],
-              [
-                -82.6019529,
-                40.1964674
-              ],
-              [
-                -82.6024723,
-                40.1968835
-              ],
-              [
-                -82.6029132,
-                40.1972693
-              ],
-              [
-                -82.6028371,
-                40.1984799
-              ]
+              [-82.6028371, 40.1984799],
+              [-82.6010262, 40.1980867],
+              [-82.6018498, 40.1963872],
+              [-82.6019529, 40.1964674],
+              [-82.6024723, 40.1968835],
+              [-82.6029132, 40.1972693],
+              [-82.6028371, 40.1984799]
             ]
           ]
         },
         "authority": "Ohio OGRIP",
         "sourceUrl": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Licking%27+AND+LocalParcelID%3D%2700100000601000%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
-        "retrievedAt": "2026-11-16T23:49:17.067Z"
+        "retrievedAt": "2026-11-17T00:11:55.180Z"
       }
     }
   }

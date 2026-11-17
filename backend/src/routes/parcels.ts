@@ -8,8 +8,12 @@ import { parseParcelKey } from "../parcels/parcelKey.js";
 const MIN_QUERY = 3;
 const MAX_QUERY = 120;
 
-/** A parcel-ID query is one token with at least one digit: `010-042534`. */
-const PARCEL_ID_QUERY = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+/**
+ * A parcel-ID query is made of ID characters, and every space-separated
+ * part has a digit: `010-042534`, `010042534`, `010 042534`. An address
+ * always has a word without digits (`84 W Dodridge St`).
+ */
+const PARCEL_ID_PART = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 export interface ParcelRoutes {
   search: RequestHandler;
@@ -91,7 +95,9 @@ function readQuery(value: unknown): string {
 }
 
 function looksLikeParcelId(query: string): boolean {
-  return PARCEL_ID_QUERY.test(query) && /\d/.test(query);
+  return query
+    .split(/\s+/)
+    .every((part) => PARCEL_ID_PART.test(part) && /\d/.test(part));
 }
 
 /** Turns an OGRIP failure into a retryable v1 error; never into a result. */

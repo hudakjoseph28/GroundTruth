@@ -14,6 +14,14 @@ import {
   type ParcelSummary,
 } from "./normalize.js";
 import { countyByFips, countyByName, OHIO_COUNTIES } from "./ohioCounties.js";
+import {
+  MAX_PLACE_COUNTIES,
+  parseAddressQuery,
+  placeCounties,
+  sitePlace,
+  type AddressQuery,
+} from "./addressQuery.js";
+import { parcelIdWhere, sqlString } from "./parcelIdSearch.js";
 import { isKeyableParcelId } from "./parcelKey.js";
 
 /** Ohio's statewide parcel layer (OGRIP), queried only from the API. */
@@ -215,13 +223,103 @@ export function createOgripClient(
     ).slice(0, MAX_RESULTS);
   }
 
+  /**
+   * Address search, in order, stopping at the first step with a match:
+   *
+   * 1. The OGRIP locator on the query as typed, then a box around each
+   *    located point, matched on the parcel's published site address.
+   * 2. The same with only house number + street (`10034 Appleton Rd`): the
+   *    locator rejects some city names it does not hold for that street.
+   * 3. Without the locator: `SitusAddressAll` matched directly in the
+   *    counties the typed city lies in. It runs only when the locator failed
+   *    or knew no such street, and a city narrows it to at most three
+   *    counties: the field is not indexed, and one county takes 0.5–40 s.
+   *    When the locator did find the street, a miss is a real miss
+   *    (`123 Main St, Johnstown` has a street but no such parcel).
+   *
+   * Every step keeps only parcels consistent with a typed city. If the
+   * locator failed and step 3 could not run, the failure is reported, not
+   * hidden behind `[]`.
+   */
   async function searchByAddress(query: string): Promise<ParcelSearchResult[]> {
     const budget = searchBudget();
-    const located = await locate(query, budget);
-    const perCandidate = await Promise.all(
-      located.map((address) => parcelsAtAddress(address, budget)),
-    );
-    return uniqueByKey(perCandidate.flat()).slice(0, MAX_RESULTS);
+    const parsed = parseAddressQuery(query);
+    if (parsed?.outOfState) return [];
+    const counties = parsed?.place ? placeCounties(parsed.place) : [];
+    const keep = (results: ParcelSearchResult[]) =>
+      uniqueByKey(
+        results.filter((result) => placeConsistent(result, parsed, counties)),
+      ).slice(0, MAX_RESULTS);
+
+    const attempts = [query];
+    if (parsed && parsed.streetOnly !== query.trim().toUpperCase()) {
+      attempts.push(parsed.streetOnly);
+    }
+    let locatorFailure: OgripError | undefined;
+    let locatorFoundStreet = false;
+    for (const text of attempts) {
+      let located: LocatedAddress[];
+      try {
+        located = await locate(text, budget);
+      } catch (error) {
+        if (!(error instanceof OgripError)) throw error;
+        locatorFailure = error;
+        break;
+      }
+      if (located.length > 0) locatorFoundStreet = true;
+      const perCandidate = await Promise.all(
+        located.map((address) => parcelsAtAddress(address, budget)),
+      );
+      const results = keep(perCandidate.flat());
+      if (results.length > 0) return results;
+    }
+
+    if (
+      !locatorFoundStreet &&
+      parsed?.place &&
+      counties.length > 0 &&
+      counties.length <= MAX_PLACE_COUNTIES
+    ) {
+      return keep(await parcelsBySiteAddress(parsed, counties, budget));
+    }
+    if (locatorFailure) throw locatorFailure;
+    return [];
+  }
+
+  async function parcelsBySiteAddress(
+    address: AddressQuery,
+    countyFips: readonly string[],
+    budget: AbortSignal,
+  ): Promise<ParcelSearchResult[]> {
+    const names = countyFips.flatMap((fips) => {
+      const county = countyByFips(fips);
+      return county ? [sqlString(county.name)] : [];
+    });
+    if (names.length === 0) return [];
+    const url = layerQueryUrl({
+      where: `County IN (${names.join(",")}) AND SitusAddressAll LIKE ${sqlString(`${address.houseNumber} %${address.streetName}%`)}`,
+      outFields: PARCEL_FIELDS.join(","),
+      returnGeometry: "false",
+      returnCentroid: "true",
+      outSR: "4326",
+      resultRecordCount: "50",
+      f: "json",
+    });
+    const result = await getJson(url, featureQuerySchema, budget);
+    return result.features
+      .filter((feature) =>
+        siteAddressMatches(
+          feature.attributes.SitusAddressAll,
+          address.houseNumber,
+          address.streetName,
+        ),
+      )
+      .flatMap((feature) => {
+        const summary = summaryFromFeature(feature);
+        return summary
+          ? [{ parcel: summary, matchedOn: "siteAddress" as const }]
+          : [];
+      });
   }
 
   async function locate(
@@ -346,9 +444,12 @@ export function createOgripClient(
   }
 
   /**
-   * One row per county where OGRIP publishes parcels with IDs, measured by a
-   * live count. No GroundTruth evidence adapter runs on live parcels yet, so
-   * `evidenceKinds` is empty everywhere.
+   * One row per county in a live count of OGRIP parcels with published IDs.
+   * `boundarySearchable` means only that the count was above zero when it
+   * was taken (`lastVerifiedAt`, kept while cached); it says nothing about
+   * report depth. No evidence adapter runs on live parcels yet, so
+   * `evidenceKinds` is `[]` for every county. Counties missing from the
+   * count get no row.
    */
   async function getCoverage(): Promise<Coverage[]> {
     const nowMs = now().getTime();
@@ -394,44 +495,34 @@ export function createOgripClient(
 
 type QueryFeature = z.infer<typeof featureQuerySchema>["features"][number];
 
+/**
+ * A result fits a typed city when its published address names that city,
+ * or publishes no city and lies in a county the city is in. A published
+ * address naming a different city is dropped: `123 MAIN ST PATASKALA` is not
+ * an answer to `123 Main St, Johnstown`.
+ */
+function placeConsistent(
+  result: ParcelSearchResult,
+  parsed: AddressQuery | null,
+  counties: readonly string[],
+): boolean {
+  if (!parsed?.place) return true;
+  const where = sitePlace(
+    result.parcel.siteAddress ?? "",
+    parsed.streetName,
+    parsed.place,
+  );
+  if (where === "named") return true;
+  if (where === "other") return false;
+  return counties.length === 0 || counties.includes(result.parcel.countyFips);
+}
+
 function summaryFromFeature(feature: QueryFeature): ParcelSummary | null {
   if (!feature.centroid) return null;
   return toParcelSummary(feature.attributes, {
     latitude: feature.centroid.y,
     longitude: feature.centroid.x,
   });
-}
-
-/**
- * Builds an equality filter for a parcel-ID query. Accepts the county's
- * published ID, the same ID without dashes or dots (Licking publishes
- * `00100000601000` for the auditor's `001-000006-01.000`), and the
- * statewide form `39049-010-042534`. Every value is checked against the
- * parcel-ID character rule before it is quoted, so a query can only ever
- * become `LocalParcelID IN (...)`.
- */
-export function parcelIdWhere(query: string): string | null {
-  const upper = query.toUpperCase();
-  const ids = new Set(
-    [query, upper, upper.replace(/[-.]/g, "")].filter(isKeyableParcelId),
-  );
-  const clauses: string[] = [];
-  if (ids.size > 0) {
-    clauses.push(`LocalParcelID IN (${[...ids].map(sqlString).join(",")})`);
-  }
-  const statewide = /^(39\d{3})-(.+)$/.exec(upper);
-  const county = statewide?.[1] ? countyByFips(statewide[1]) : undefined;
-  const localId = statewide?.[2];
-  if (county && localId && isKeyableParcelId(localId)) {
-    clauses.push(
-      `(County=${sqlString(county.name)} AND LocalParcelID=${sqlString(localId)})`,
-    );
-  }
-  return clauses.length > 0 ? clauses.join(" OR ") : null;
-}
-
-function sqlString(value: string): string {
-  return `'${value.replaceAll("'", "''")}'`;
 }
 
 function layerQueryUrl(params: Record<string, string>): string {
