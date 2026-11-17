@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import jpeg from "jpeg-js";
 import { PNG } from "pngjs";
-import { goldenParcel, type Parcel } from "@groundtruth/shared";
+import { goldenParcel, secondCountyParcel, type Parcel } from "@groundtruth/shared";
 import {
   LAND_META_VERSION,
   landAssetDir,
@@ -24,7 +24,7 @@ import {
 } from "../src/parcel/ParcelScene/landMeta.ts";
 
 // Parcels the bake can find by key. Add to this as the catalog grows.
-const CATALOG: readonly Parcel[] = [goldenParcel];
+const CATALOG: readonly Parcel[] = [goldenParcel, secondCountyParcel];
 
 /** Extra ground on every side of the parcel's bounding box, as a share of its longer side. */
 const PADDING = 0.15;

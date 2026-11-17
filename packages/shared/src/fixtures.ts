@@ -7,6 +7,7 @@ import {
   type ParcelReport,
 } from "./contract.js";
 import golden from "./fixtures/golden-parcel.json" with { type: "json" };
+import secondCounty from "./fixtures/second-county-parcel.json" with { type: "json" };
 
 /**
  * The golden parcel: Franklin County 230-000918 (Seaman Rd rear lot, Pleasant
@@ -18,6 +19,15 @@ import golden from "./fixtures/golden-parcel.json" with { type: "json" };
  */
 export const goldenParcel: Parcel = toParcel(golden.parcel);
 export const goldenReport: ParcelReport = toReport(golden.report);
+
+/**
+ * The second-county parcel: Licking County 00500729609000 (93 Woody Knoll Dr,
+ * Bowling Green Township). GroundTruth has no Licking zoning check, so zoning
+ * is unknown; the FEMA flood finding is its one sourced check. `acreage` is
+ * OGRIP's published LandArea.
+ */
+export const secondCountyParcel: Parcel = toParcel(secondCounty.parcel);
+export const secondCountyReport: ParcelReport = toReport(secondCounty.report);
 
 // TODO(Kadhir): Record escrowAddress and transaction signatures after the staged devnet accounts exist. Release stays any fee payer and refund stays the buyer, per Escrow v1.
 export const stagedDeal = {
@@ -60,7 +70,21 @@ export const stagedDeal = {
 } satisfies Deal;
 
 // JSON imports widen literal types; check the contract's literals at load.
-function toParcel(raw: typeof golden.parcel): Parcel {
+type RawParcel = Omit<Parcel, "geometry"> & {
+  geometry: Omit<Parcel["geometry"], "geojson" | "authority"> & {
+    authority: string;
+    geojson: { type: string; coordinates: number[][][] };
+  };
+};
+type RawReport = Omit<
+  ParcelReport,
+  "coverage" | "biggestOpenQuestion" | "checks"
+> & {
+  coverage: string;
+  biggestOpenQuestion: string;
+  checks: (Omit<Check, "kind" | "status"> & { kind: string; status: string })[];
+};
+function toParcel(raw: RawParcel): Parcel {
   const type = raw.geometry.geojson.type;
   if (type !== "Polygon") throw new Error(`fixture geometry ${type}`);
   if (raw.geometry.authority !== "Ohio OGRIP") {
@@ -76,7 +100,7 @@ function toParcel(raw: typeof golden.parcel): Parcel {
   };
 }
 
-function toReport(raw: typeof golden.report): ParcelReport {
+function toReport(raw: RawReport): ParcelReport {
   const coverage = raw.coverage;
   if (
     coverage !== "deep" &&

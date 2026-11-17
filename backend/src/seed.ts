@@ -2,6 +2,8 @@ import { Prisma } from "@prisma/client";
 import {
   goldenParcel,
   goldenReport,
+  secondCountyParcel,
+  secondCountyReport,
   stagedDeal,
   type Parcel,
   type ParcelReport,
@@ -18,21 +20,24 @@ const RETIRED_FIXTURE_KEYS = ["ohio:39049:STAGED-DEMO"];
 async function main(): Promise<void> {
   await prisma.$transaction(async (tx) => {
     await seedParcelReport(tx, goldenParcel, goldenReport);
+    await seedParcelReport(tx, secondCountyParcel, secondCountyReport);
     await seedDeal(tx, stagedDeal);
     await tx.parcelRecord.deleteMany({
       where: { key: { in: RETIRED_FIXTURE_KEYS } },
     });
   });
 
-  const checks = await prisma.checkRecord.count({
-    where: { reportParcelKey: goldenReport.parcelKey },
-  });
-  const sources = await prisma.sourceRecord.count({
-    where: { check: { reportParcelKey: goldenReport.parcelKey } },
-  });
-  console.log(
-    `seeded ${goldenReport.parcelKey} with ${checks} checks and ${sources} sources`,
-  );
+  for (const report of [goldenReport, secondCountyReport]) {
+    const checks = await prisma.checkRecord.count({
+      where: { reportParcelKey: report.parcelKey },
+    });
+    const sources = await prisma.sourceRecord.count({
+      where: { check: { reportParcelKey: report.parcelKey } },
+    });
+    console.log(
+      `seeded ${report.parcelKey} with ${checks} checks and ${sources} sources`,
+    );
+  }
   const events = await prisma.timelineEventRecord.count({
     where: { dealId: stagedDeal.id },
   });

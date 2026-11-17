@@ -23,4 +23,10 @@ export type {
 
 export { CHECK_KINDS, CHECK_STATUSES, DEAL_STATES } from "./contract.js";
 
-export { goldenParcel, goldenReport, stagedDeal } from "./fixtures.js";
+export {
+  goldenParcel,
+  goldenReport,
+  secondCountyParcel,
+  secondCountyReport,
+  stagedDeal,
+} from "./fixtures.js";

@@ -1,4 +1,11 @@
-import { goldenParcel, goldenReport, stagedDeal } from "@groundtruth/shared";
+import {
+  goldenParcel,
+  goldenReport,
+  secondCountyParcel,
+  secondCountyReport,
+  stagedDeal,
+  type ParcelReport,
+} from "@groundtruth/shared";
 import { describe, expect, it } from "vitest";
 import { toParcelReport } from "../src/reports/mapReport.js";
 
@@ -115,3 +122,63 @@ describe("golden parcel fixture", () => {
     );
   });
 });
+
+describe("second-county parcel fixture", () => {
+  const find = (kind: string) =>
+    secondCountyReport.checks.find((entry) => entry.kind === kind);
+
+  it("is the published OGRIP parcel 00500729609000 in Licking County", () => {
+    expect(secondCountyParcel).toMatchObject({
+      key: "ohio:39089:00500729609000",
+      county: "Licking",
+      countyFips: "39089",
+      acreage: 1.2,
+      geometry: { authority: "Ohio OGRIP" },
+    });
+    expect(
+      new URL(secondCountyParcel.geometry.sourceUrl).searchParams.get("where"),
+    ).toBe("County='Licking' AND LocalParcelID='00500729609000'");
+  });
+
+  it("says GroundTruth has not checked Licking zoning, and names who can", () => {
+    expect(find("zoning")).toMatchObject({
+      status: "unknown",
+      finding: "GroundTruth doesn't check zoning in Licking County yet.",
+      sources: [],
+      responsibleParty: { role: "Township zoning inspector" },
+      nextAction:
+        "Bowling Green Township's zoning inspector can confirm the district.",
+    });
+    const text = JSON.stringify(secondCountyReport);
+    expect(text).not.toMatch(/R-2|\bAG\b|Agricultural|Residential District/);
+    expect(text).not.toMatch(/(can't|cannot|can not) be resolved/i);
+  });
+
+  it("reports FEMA Zone X with its panel and effective date", () => {
+    const flood = find("flood");
+    expect(flood?.status).toBe("evidenceFound");
+    expect(flood?.finding).toContain("39089C0505J");
+    expect(flood?.sources.map((source) => source.effectiveDate)).toEqual([
+      "2015-03-16",
+      "2015-03-16",
+    ]);
+  });
+
+  it("leaves every other check unknown, and sets coverage from the results", () => {
+    for (const entry of secondCountyReport.checks) {
+      if (entry.kind !== "flood") expect(entry.status).toBe("unknown");
+    }
+    expect(secondCountyReport.checks).toHaveLength(9);
+    expect(secondCountyReport.coverage).toBe(coverageOf(secondCountyReport));
+    expect(goldenReport.coverage).toBe(coverageOf(goldenReport));
+  });
+});
+
+/** Coverage that the checks support: any finding makes a report partial. */
+function coverageOf(report: ParcelReport): ParcelReport["coverage"] {
+  const statuses = new Set(report.checks.map((entry) => entry.status));
+  if (!statuses.has("evidenceFound") && !statuses.has("needsReview")) {
+    return "boundaryOnly";
+  }
+  return statuses.has("unknown") ? "partial" : "deep";
+}

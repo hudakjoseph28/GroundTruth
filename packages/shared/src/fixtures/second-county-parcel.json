@@ -1,0 +1,158 @@
+{
+  "parcel": {
+    "key": "ohio:39089:00500729609000",
+    "sourceParcelId": "00500729609000",
+    "county": "Licking",
+    "countyFips": "39089",
+    "siteAddress": "93 WOODY KNOLL DR THORNVILLE, OH 43076 THORNVILLE 43076",
+    "acreage": 1.2,
+    "centroid": {
+      "latitude": 39.953658358,
+      "longitude": -82.354917458
+    },
+    "geometry": {
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-82.3543162, 39.9534197],
+            [-82.3556256, 39.9534968],
+            [-82.3554333, 39.9539036],
+            [-82.3542848, 39.9538307],
+            [-82.3543014, 39.9536076],
+            [-82.3543162, 39.9534197]
+          ]
+        ]
+      },
+      "authority": "Ohio OGRIP",
+      "sourceUrl": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Licking%27+AND+LocalParcelID%3D%2700500729609000%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "retrievedAt": "2026-11-17T01:07:51.000Z"
+    }
+  },
+  "report": {
+    "parcelKey": "ohio:39089:00500729609000",
+    "generatedAt": "2026-11-17T01:07:57.000Z",
+    "coverage": "partial",
+    "biggestOpenQuestion": "zoning",
+    "checks": [
+      {
+        "kind": "zoning",
+        "status": "unknown",
+        "finding": "GroundTruth doesn't check zoning in Licking County yet.",
+        "limitation": "No zoning conclusion either way.",
+        "sources": [],
+        "responsibleParty": {
+          "role": "Township zoning inspector",
+          "organization": "Bowling Green Township, Licking County",
+          "publicContactUrl": "https://bowlinggreentwp.org/home/index.php/zoning"
+        },
+        "nextAction": "Bowling Green Township's zoning inspector can confirm the district."
+      },
+      {
+        "kind": "flood",
+        "status": "evidenceFound",
+        "finding": "FEMA's National Flood Hazard Layer maps the whole parcel in Zone X, area of minimal flood hazard, on FIRM panel 39089C0505J, effective March 16, 2015.",
+        "limitation": "Zone X is not a guarantee against flooding or a flood-insurance determination, and FEMA can revise the map after this date.",
+        "sources": [
+          {
+            "authority": "FEMA",
+            "title": "National Flood Hazard Layer: Zone X at the parcel",
+            "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query?geometry=-82.354917458%2C39.953658358&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=FLD_ZONE%2CZONE_SUBTY%2CSFHA_TF%2CDFIRM_ID&returnGeometry=false&f=json",
+            "retrievedAt": "2026-11-17T01:07:51.000Z",
+            "effectiveDate": "2015-03-16"
+          },
+          {
+            "authority": "FEMA",
+            "title": "FIRM panel 39089C0505J",
+            "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query?geometry=-82.354917458%2C39.953658358&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=FIRM_PAN%2CEFF_DATE&returnGeometry=false&f=json",
+            "retrievedAt": "2026-11-17T01:07:57.000Z",
+            "effectiveDate": "2015-03-16"
+          }
+        ],
+        "responsibleParty": {
+          "role": "FEMA flood map",
+          "organization": "FEMA",
+          "publicContactUrl": "https://msc.fema.gov/portal/home"
+        },
+        "nextAction": "Before closing, check the current FIRM for this lot on FEMA's Map Service Center."
+      },
+      {
+        "kind": "access",
+        "status": "unknown",
+        "finding": "GroundTruth has not checked this for this parcel yet.",
+        "limitation": "No conclusion either way.",
+        "sources": [],
+        "responsibleParty": {
+          "role": "Unassigned"
+        },
+        "nextAction": "No next action is recorded yet."
+      },
+      {
+        "kind": "utilities",
+        "status": "unknown",
+        "finding": "GroundTruth has not checked this for this parcel yet.",
+        "limitation": "No conclusion either way.",
+        "sources": [],
+        "responsibleParty": {
+          "role": "Unassigned"
+        },
+        "nextAction": "No next action is recorded yet."
+      },
+      {
+        "kind": "easements",
+        "status": "unknown",
+        "finding": "GroundTruth has not checked this for this parcel yet.",
+        "limitation": "No conclusion either way.",
+        "sources": [],
+        "responsibleParty": {
+          "role": "Unassigned"
+        },
+        "nextAction": "No next action is recorded yet."
+      },
+      {
+        "kind": "sellerAuthority",
+        "status": "unknown",
+        "finding": "GroundTruth has not checked this for this parcel yet.",
+        "limitation": "No conclusion either way.",
+        "sources": [],
+        "responsibleParty": {
+          "role": "Unassigned"
+        },
+        "nextAction": "No next action is recorded yet."
+      },
+      {
+        "kind": "survey",
+        "status": "unknown",
+        "finding": "GroundTruth has not checked this for this parcel yet.",
+        "limitation": "No conclusion either way.",
+        "sources": [],
+        "responsibleParty": {
+          "role": "Unassigned"
+        },
+        "nextAction": "No next action is recorded yet."
+      },
+      {
+        "kind": "septic",
+        "status": "unknown",
+        "finding": "GroundTruth has not checked this for this parcel yet.",
+        "limitation": "No conclusion either way.",
+        "sources": [],
+        "responsibleParty": {
+          "role": "Unassigned"
+        },
+        "nextAction": "No next action is recorded yet."
+      },
+      {
+        "kind": "closing",
+        "status": "unknown",
+        "finding": "GroundTruth has not checked this for this parcel yet.",
+        "limitation": "No conclusion either way.",
+        "sources": [],
+        "responsibleParty": {
+          "role": "Unassigned"
+        },
+        "nextAction": "No next action is recorded yet."
+      }
+    ]
+  }
+}

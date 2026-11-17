@@ -19,7 +19,7 @@ pnpm --filter @groundtruth/backend db:seed
 pnpm --filter @groundtruth/backend dev
 ```
 
-`db:seed` can be run again. It upserts the golden parcel `ohio:39049:230-000918` (Franklin County, Seaman Rd rear lot) from `packages/shared/src/fixtures/golden-parcel.json` and replaces that report's checks and sources. The report is `partial`: access `needsReview`, zoning and flood `evidenceFound` with dated sources, utilities and easements `unknown`. The seed also deletes the retired stand-in parcel `ohio:39049:STAGED-DEMO` and its report, if present.
+`db:seed` can be run again. It upserts the golden parcel `ohio:39049:230-000918` (Franklin County, Seaman Rd rear lot) from `packages/shared/src/fixtures/golden-parcel.json` and replaces that report's checks and sources. The report is `partial`: access `needsReview`, zoning and flood `evidenceFound` with dated sources, utilities and easements `unknown`. It also upserts the second-county parcel `ohio:39089:00500729609000` (Licking County, 93 Woody Knoll Dr) from `second-county-parcel.json`: coverage `partial`, flood `evidenceFound` (FEMA Zone X), zoning and every other check `unknown` because GroundTruth has no Licking zoning check yet. The seed also deletes the retired stand-in parcel `ohio:39049:STAGED-DEMO` and its report, if present.
 
 `GET /api/health` returns `{ "status": "ok", "commit": "..." }`.
 

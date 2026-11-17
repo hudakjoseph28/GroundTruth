@@ -1,6 +1,8 @@
 import {
   goldenParcel,
   goldenReport,
+  secondCountyParcel,
+  secondCountyReport,
   type Parcel,
   type ParcelReport,
   type ParcelSearchResult,
@@ -16,8 +18,8 @@ const MAX_QUERY = 120;
  * GET /api/parcels/:parcelKey
  * GET /api/parcels/:parcelKey/report
  */
-const catalog: readonly Parcel[] = [goldenParcel];
-const reports: readonly ParcelReport[] = [goldenReport];
+const catalog: readonly Parcel[] = [goldenParcel, secondCountyParcel];
+const reports: readonly ParcelReport[] = [goldenReport, secondCountyReport];
 
 export type SearchOutcome =
   | { status: "invalid"; message: string }
