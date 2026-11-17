@@ -77,6 +77,10 @@ async function seedParcelReport(
     generatedAt: new Date(report.generatedAt),
     coverage: report.coverage,
     biggestOpenQuestion: report.biggestOpenQuestion,
+    // A seeded report never expires, so a live report can never replace it.
+    // Clearing it also takes back a key that a live report was cached
+    // under before the seed ran (src/reports/store.ts).
+    expiresAt: null,
   };
   await tx.reportRecord.upsert({
     where: { parcelKey: report.parcelKey },

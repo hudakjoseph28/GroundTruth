@@ -31,6 +31,9 @@ model ReportRecord {
   generatedAt         DateTime      @db.Timestamptz(3)
   coverage            String
   biggestOpenQuestion String
+  /// Null for a seeded or manually verified report, which never expires.
+  /// A live report (src/reports/store.ts) is served until this time.
+  expiresAt           DateTime?     @db.Timestamptz(3)
   checks              CheckRecord[]
 }
 

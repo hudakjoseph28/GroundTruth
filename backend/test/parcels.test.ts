@@ -8,6 +8,7 @@ import {
   OGRIP_LOCATOR,
   OGRIP_PARCELS_LAYER,
 } from "../src/parcels/ogrip.js";
+import { OHIO_COUNTIES_WITHOUT_NFHL } from "../src/reports/femaFlood.js";
 import {
   OGRIP_SCENARIOS,
   type OgripRecording,
@@ -419,7 +420,7 @@ describe("OGRIP failures", () => {
 });
 
 describe("GET /api/coverage", () => {
-  it("lists only counties measured in OGRIP, with no evidence claimed yet", async () => {
+  it("lists only counties measured in OGRIP, with flood evidence where FEMA has a study", async () => {
     const { app, fetchImpl, recording } = scenarioApp("coverage");
 
     const res = await request(app).get("/api/coverage");
@@ -432,7 +433,7 @@ describe("GET /api/coverage", () => {
       county: "Franklin",
       countyFips: "39049",
       boundarySearchable: true,
-      evidenceKinds: [],
+      evidenceKinds: ["flood"],
       lastVerifiedAt: recording.recordedAt,
     });
     expect(rows.find((row) => row.county === "Licking")?.countyFips).toBe(
@@ -595,12 +596,15 @@ describe("address search fallbacks", () => {
 });
 
 describe("coverage claims only what was measured", () => {
-  it("every row claims a searchable boundary, no evidence, and the count's time", async () => {
+  it("every row claims a searchable boundary, flood only where NFHL has a study, and the count's time", async () => {
     const { app, recording } = scenarioApp("coverage");
 
     const rows = (await request(app).get("/api/coverage")).body as Coverage[];
 
     expect(rows).toHaveLength(88);
+    expect(
+      rows.filter((row) => row.evidenceKinds.length === 0).map((r) => r.county),
+    ).toEqual(["Fayette", "Henry", "Vinton", "Williams", "Wyandot"]);
     for (const row of rows) {
       expect(Object.keys(row).sort()).toEqual([
         "boundarySearchable",
@@ -610,7 +614,9 @@ describe("coverage claims only what was measured", () => {
         "lastVerifiedAt",
       ]);
       expect(row.boundarySearchable).toBe(true);
-      expect(row.evidenceKinds).toEqual([]);
+      expect(row.evidenceKinds).toEqual(
+        OHIO_COUNTIES_WITHOUT_NFHL.has(row.countyFips) ? [] : ["flood"],
+      );
       expect(row.lastVerifiedAt).toBe(recording.recordedAt);
     }
   });
