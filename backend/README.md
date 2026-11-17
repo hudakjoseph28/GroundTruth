@@ -130,6 +130,24 @@ The parcel's OGRIP geometry, with rings re-wound the way Esri reads them, is sen
 
 **NFHL coverage in Ohio, measured 2026-11-16:** 83 of 88 counties have a study. Fayette (39047), Henry (39069), Vinton (39163), Williams (39171), and Wyandot (39175) have none, so every parcel there gets a `missing` flood check.
 
+### Franklin zoning check
+
+Franklin parcels (`countyFips` 39049) get a live zoning check instead of the zoning template. Every other county keeps the template. Code: [src/reports/franklinZoning.ts](src/reports/franklinZoning.ts) and [src/reports/zoningCheck.ts](src/reports/zoningCheck.ts).
+
+- **Source:** Franklin County Economic Development & Planning's zoning map, [`FCEDP_Zoning_Districts_2025_View`](https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEDP_Zoning_Districts_2025_View/FeatureServer/0), fields `ZONING` and `Zoning_Class`. District names come from the layer's `Zoning_Class` domain.
+- **Query:** the parcel's full OGRIP polygon is sent by POST with `spatialRel=esriSpatialRelRelation&relationParam=T********`, so a district that only touches the lot's edge is left out.
+  - Named districts come back with their geometry.
+  - `NOT IN JURISDICTION` areas are only counted at first. Around Columbus that polygon is the city's whole outline, about 1.4 MB. Its geometry is fetched only when a named district also covers the lot, to measure where the map contradicts itself.
+  - The check has its own limit, `ZONING_TIMEOUT_MS` (default 6000), and runs alongside the flood check.
+- **Measuring:** each district's share of the lot is measured by testing a 300 × 300 grid of points across the lot's bounding box against the lot and each district (even-odd rule, which handles holes). Exact polygon clipping failed on real data: districts sharing an exact edge make clipping libraries give up. On 7 lots the sampled shares were within 0.02 percentage points of exact areas.
+- **Outcomes:** a district counts if it covers at least 1% of the lot; less is a sliver along a shared edge.
+  - One district, with less than 1% of the lot outside it: `evidenceFound`, naming the district and citing the layer (retrieved now) and the 2026 Zoning Resolution (as read on 2026-11-17).
+  - Two or more districts, 1% or more in no district, or a district the same map also marks `NOT IN JURISDICTION`: `needsReview`, giving each share.
+  - No named district (a city, village, or township that does its own zoning, such as Columbus, or `NOT IN JURISDICTION`): `unknown`, naming the local zoning office.
+  - Timeout or error: `unknown`. The report is still `200`, and it is not cached.
+- **Seeded golden report:** unchanged. The live check on `230-000918` gives the same answer, R on 100% of the lot, and a test holds the two together.
+- **Try it live:** `pnpm --filter @groundtruth/backend check:zoning ohio:39049:230-000918 ohio:39049:230-000397`
+
 ### Tested parcels (live, 2026-11-17 UTC)
 
 | Parcel | County | Flood result |

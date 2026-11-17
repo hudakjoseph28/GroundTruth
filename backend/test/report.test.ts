@@ -18,6 +18,11 @@ import {
   createFemaFloodClient,
   NFHL_SERVICE,
 } from "../src/reports/femaFlood.js";
+import {
+  createFranklinZoningClient,
+  FCEDP_ZONING_LAYER,
+  measure,
+} from "../src/reports/franklinZoning.js";
 import { prismaReportStore, type ReportStore } from "../src/reports/store.js";
 import { LIVE_REPORT_TTL_MS } from "../src/routes/report.js";
 import {
@@ -93,6 +98,9 @@ interface AppSetup {
   store?: ReportStore;
   femaFetch?: typeof fetch;
   floodTimeoutMs?: number;
+  /** Franklin County zoning map; defaults to the replayed recording. */
+  zoningFetch?: typeof fetch;
+  zoningTimeoutMs?: number;
 }
 
 function appWith(setup: AppSetup) {
@@ -104,8 +112,13 @@ function appWith(setup: AppSetup) {
         fetch: setup.femaFetch ?? setup.fetch,
         now,
       }),
+      zoning: createFranklinZoningClient({
+        fetch: setup.zoningFetch ?? setup.fetch,
+        now,
+      }),
       store: setup.store ?? memoryStore(),
       floodTimeoutMs: setup.floodTimeoutMs ?? 1_000,
+      zoningTimeoutMs: setup.zoningTimeoutMs ?? 1_000,
       now,
     },
   });
@@ -181,7 +194,27 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
       }),
     );
 
-    for (const check of report.checks.filter((c) => c.kind !== "flood")) {
+    // A Columbus lot: Franklin County's zoning map does not cover it.
+    const zoning = checkOf(report, "zoning");
+    expect(zoning).toMatchObject({
+      status: "unknown",
+      responsibleParty: {
+        role: "Zoning office for the city, village, or township that contains the lot",
+      },
+    });
+    expect(zoning.finding).toMatch(
+      /^Franklin County's zoning map does not cover this parcel\./,
+    );
+    expect(zoning.sources).toEqual([
+      expect.objectContaining({
+        url: FCEDP_ZONING_LAYER,
+        retrievedAt: recording.recordedAt,
+      }),
+    ]);
+
+    for (const check of report.checks.filter(
+      (c) => c.kind !== "flood" && c.kind !== "zoning",
+    )) {
       expect(check.status).toBe("unknown");
       expect(check.sources).toEqual([]);
       expect(check.responsibleParty.role).not.toBe("");
@@ -773,6 +806,181 @@ describe("Prisma report store behind the route", () => {
     expect(JSON.stringify(res.body)).not.toContain("hunter2");
     for (const [line] of log.mock.calls) {
       expect(String(line)).not.toContain("hunter2");
+    }
+  });
+});
+
+describe("Franklin County zoning, live from the county map", () => {
+  it("matches the seeded golden report for 230-000918: district R, the whole parcel", async () => {
+    const { app, recording } = scenario("franklin-golden");
+
+    const res = await request(app).get(
+      reportPath(REPORT_SCENARIOS["franklin-golden"]),
+    );
+
+    expect(res.status).toBe(200);
+    const live = checkOf(res.body as ParcelReport, "zoning");
+    const seeded = checkOf(goldenReport, "zoning");
+    expect(live.status).toBe(seeded.status);
+    expect(live.status).toBe("evidenceFound");
+    expect(live.finding).toBe(
+      "Franklin County's zoning map places the whole parcel in the Rural District (R).",
+    );
+    expect(seeded.finding).toContain(
+      "places the whole parcel in the Rural (R) district",
+    );
+
+    // The measured shares behind it: R alone, 100%, nothing uncovered.
+    const exchange = recording.exchanges.find((e) =>
+      e.url.startsWith(FCEDP_ZONING_LAYER),
+    );
+    const parcel = recording.exchanges.find((e) =>
+      e.url.includes("OhioStatewidePacels"),
+    );
+    const geometry = (
+      parcel?.body as {
+        features: { geometry: Parameters<typeof measure>[0] }[];
+      }
+    ).features[0]?.geometry;
+    if (!exchange || !geometry) throw new Error("recording incomplete");
+    expect(
+      measure(
+        geometry,
+        (exchange.body as { features: Parameters<typeof measure>[1] }).features,
+        recording.recordedAt,
+      ),
+    ).toEqual({
+      outcome: "found",
+      retrievedAt: recording.recordedAt,
+      districts: [{ code: "R", className: "Rural District", share: 1 }],
+      uncovered: 0,
+      contradicted: 0,
+    });
+
+    // Sources: the layer, retrieved now, and the Zoning Resolution, as read.
+    expect(live.sources).toEqual([
+      {
+        authority: "Franklin County Economic Development & Planning",
+        title: "FCEDP Zoning Districts 2025: districts under the parcel",
+        url: FCEDP_ZONING_LAYER,
+        retrievedAt: recording.recordedAt,
+      },
+      {
+        authority: "Franklin County Economic Development & Planning",
+        title: "Franklin County Zoning Resolution 2026",
+        url: "https://www.franklincountyohio.gov/files/assets/public/v/1/edp/documents/zoning-resolution/zoning-resolution-2026.pdf",
+        retrievedAt: "2026-11-17T00:54:52.000Z",
+      },
+    ]);
+    expect(live.limitation).toMatch(
+      /does not say what this lot may be used for/,
+    );
+  });
+
+  it("asks for review when two districts meaningfully cover the parcel", async () => {
+    const { app } = scenario("franklin-split");
+
+    const res = await request(app).get(
+      reportPath(REPORT_SCENARIOS["franklin-split"]),
+    );
+
+    expect(res.status).toBe(200);
+    const zoning = checkOf(res.body as ParcelReport, "zoning");
+    expect(zoning.status).toBe("needsReview");
+    expect(zoning.finding).toBe(
+      "Franklin County's zoning map splits this parcel: about 53% in the Rural District (R) and about 47% in the Neighborhood Commercial District (NC).",
+    );
+    expect(zoning.nextAction).toMatch(/how the district lines apply/);
+  });
+
+  it("keeps the report at 200 with zoning unknown when the county map times out", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const baseline = load("franklin-golden").apiResponse.body as ParcelReport;
+    const hanging = vi.fn<typeof fetch>(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+    const { app, store } = scenario("franklin-golden", {
+      zoningFetch: hanging,
+      zoningTimeoutMs: 200,
+    });
+
+    const started = Date.now();
+    const res = await request(app).get(
+      reportPath(REPORT_SCENARIOS["franklin-golden"]),
+    );
+
+    expect(res.status).toBe(200);
+    expect(Date.now() - started).toBeLessThan(2_000);
+    const report = res.body as ParcelReport;
+    expect(checkOf(report, "zoning")).toMatchObject({
+      status: "unknown",
+      finding:
+        "Franklin County's zoning map did not answer within 0.2 seconds, so no zoning district was checked.",
+      sources: [],
+    });
+    expect(report.checks.filter((c) => c.kind !== "zoning")).toEqual(
+      baseline.checks.filter((c) => c.kind !== "zoning"),
+    );
+    expect(hanging).toHaveBeenCalled();
+    // A timed-out report is not cached, so the next request asks again.
+    expect(store.write).not.toHaveBeenCalled();
+  });
+
+  it("says the county map could not be reached when it errors", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { app } = scenario("franklin-golden", {
+      zoningFetch: async () =>
+        new Response(JSON.stringify({ error: { code: 500, message: "x" } })),
+    });
+
+    const res = await request(app).get(
+      reportPath(REPORT_SCENARIOS["franklin-golden"]),
+    );
+
+    expect(res.status).toBe(200);
+    expect(checkOf(res.body as ParcelReport, "zoning")).toMatchObject({
+      status: "unknown",
+      finding:
+        "Franklin County's zoning map could not be reached, so no zoning district was checked.",
+    });
+  });
+
+  it("does not ask Franklin County's map about a parcel in another county", async () => {
+    const zoningFetch = vi.fn<typeof fetch>();
+    const { app } = scenario("licking-outside", { zoningFetch });
+
+    const res = await request(app).get(
+      reportPath(REPORT_SCENARIOS["licking-outside"]),
+    );
+
+    expect(res.status).toBe(200);
+    expect(zoningFetch).not.toHaveBeenCalled();
+    expect(checkOf(res.body as ParcelReport, "zoning").finding).toBe(
+      "No zoning record has been checked for this lot yet.",
+    );
+  });
+});
+
+describe("Franklin County zoning queries", () => {
+  it("only counts NOT IN JURISDICTION areas when no named district covers the lot", () => {
+    const zoningRequests = load("franklin-outside").exchanges.filter((e) =>
+      e.url.startsWith(FCEDP_ZONING_LAYER),
+    );
+    const excluded = zoningRequests
+      .map((e) => new URLSearchParams(e.requestBody))
+      .filter((p) => p.get("where")?.startsWith("ZONING LIKE"));
+    expect(excluded).toHaveLength(1);
+    expect(excluded[0]?.get("returnCountOnly")).toBe("true");
+    expect(excluded[0]?.get("returnGeometry")).toBeNull();
+    for (const request of zoningRequests) {
+      const params = new URLSearchParams(request.requestBody);
+      expect(params.get("spatialRel")).toBe("esriSpatialRelRelation");
+      expect(params.get("relationParam")).toBe("T********");
     }
   });
 });

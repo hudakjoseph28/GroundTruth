@@ -10,7 +10,15 @@ import {
   createFemaFloodClient,
   type FemaFloodClient,
 } from "../reports/femaFlood.js";
-import { buildReport, DEFAULT_FEMA_TIMEOUT_MS } from "../reports/pipeline.js";
+import {
+  createFranklinZoningClient,
+  type FranklinZoningClient,
+} from "../reports/franklinZoning.js";
+import {
+  buildReport,
+  DEFAULT_FEMA_TIMEOUT_MS,
+  DEFAULT_ZONING_TIMEOUT_MS,
+} from "../reports/pipeline.js";
 import { prismaReportStore, type ReportStore } from "../reports/store.js";
 
 /** How long a live report is served from PostgreSQL before it is rebuilt. */
@@ -22,6 +30,10 @@ export interface ReportRouteOptions {
   store?: ReportStore;
   /** Limit for the flood check. Defaults to 6000 ms. */
   floodTimeoutMs?: number;
+  /** Franklin County zoning map, for Franklin parcels only. */
+  zoning?: FranklinZoningClient;
+  /** Limit for the Franklin zoning check. Defaults to 6000 ms. */
+  zoningTimeoutMs?: number;
   now?: () => Date;
 }
 
@@ -41,6 +53,8 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
   const fema = options.fema ?? createFemaFloodClient();
   const store = options.store ?? prismaReportStore(prisma);
   const floodTimeoutMs = options.floodTimeoutMs ?? DEFAULT_FEMA_TIMEOUT_MS;
+  const zoning = options.zoning ?? createFranklinZoningClient();
+  const zoningTimeoutMs = options.zoningTimeoutMs ?? DEFAULT_ZONING_TIMEOUT_MS;
   const now = options.now ?? (() => new Date());
 
   return asyncRoute(async (req, res) => {
@@ -99,6 +113,8 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
     const built = await buildReport(parcel, {
       fema,
       floodTimeoutMs,
+      zoning,
+      zoningTimeoutMs,
       now,
     });
     res.json(built.report);

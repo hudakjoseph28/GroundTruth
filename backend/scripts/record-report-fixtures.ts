@@ -1,5 +1,6 @@
 /**
- * Records live OGRIP and FEMA NFHL responses for the report route tests.
+ * Records live OGRIP, FEMA NFHL, and Franklin County zoning responses for
+ * the report route tests.
  *
  *   pnpm --filter @groundtruth/backend record:report                   # every scenario
  *   pnpm --filter @groundtruth/backend record:report franklin-floodway # one scenario
@@ -25,6 +26,7 @@ import {
   createFemaFloodClient,
   NFHL_OHIO_STUDIES_QUERY,
 } from "../src/reports/femaFlood.js";
+import { createFranklinZoningClient } from "../src/reports/franklinZoning.js";
 import {
   REPORT_SCENARIOS,
   reportPath,
@@ -66,6 +68,11 @@ async function record(name: ReportScenario): Promise<void> {
         now: () => recordedAt,
       }),
       floodTimeoutMs: 30_000,
+      zoning: createFranklinZoningClient({
+        fetch: recordingFetch,
+        now: () => recordedAt,
+      }),
+      zoningTimeoutMs: 30_000,
       now: () => recordedAt,
       store: { read: async () => null, write: async () => {} },
     },
@@ -89,12 +96,16 @@ async function record(name: ReportScenario): Promise<void> {
     join(fixtureDir, `${name}.json`),
     `${JSON.stringify(recording, null, 2)}\n`,
   );
-  const flood = (
-    res.body as { checks?: { kind: string; finding: string }[] }
-  ).checks?.find((check) => check.kind === "flood");
+  const checks = (res.body as { checks?: { kind: string; finding: string }[] })
+    .checks;
+  const finding = (kind: string) =>
+    checks?.find((check) => check.kind === kind)?.finding;
   console.log(
-    `${name}: ${res.status} in ${Date.now() - started} ms, ${exchanges.length} upstream calls${flood ? ` | ${flood.finding}` : ""}`,
+    `${name}: ${res.status} in ${Date.now() - started} ms, ${exchanges.length} upstream calls`,
   );
+  for (const kind of ["flood", "zoning"]) {
+    if (finding(kind)) console.log(`  ${kind}: ${finding(kind)}`);
+  }
 }
 
 const NFHL_STUDIES = "nfhl-ohio-studies";

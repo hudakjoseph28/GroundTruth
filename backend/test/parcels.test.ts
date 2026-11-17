@@ -423,7 +423,7 @@ describe("OGRIP failures", () => {
 });
 
 describe("GET /api/coverage", () => {
-  it("lists only counties measured in OGRIP, with flood evidence where FEMA has a study", async () => {
+  it("lists only counties measured in OGRIP, with flood where FEMA has a study and zoning in Franklin", async () => {
     const { app, fetchImpl, recording } = scenarioApp("coverage");
 
     const res = await request(app).get("/api/coverage");
@@ -436,7 +436,7 @@ describe("GET /api/coverage", () => {
       county: "Franklin",
       countyFips: "39049",
       boundarySearchable: true,
-      evidenceKinds: ["flood"],
+      evidenceKinds: ["zoning", "flood"],
       lastVerifiedAt: recording.recordedAt,
     });
     expect(rows.find((row) => row.county === "Licking")?.countyFips).toBe(
@@ -601,7 +601,7 @@ describe("address search fallbacks", () => {
 });
 
 describe("coverage claims only what was measured", () => {
-  it("every row claims a searchable boundary, flood only where NFHL has a study, and the count's time", async () => {
+  it("every row claims a searchable boundary, flood only where NFHL has a study, zoning only in Franklin, and the count's time", async () => {
     const { app, recording } = scenarioApp("coverage");
 
     const rows = (await request(app).get("/api/coverage")).body as Coverage[];
@@ -619,9 +619,10 @@ describe("coverage claims only what was measured", () => {
         "lastVerifiedAt",
       ]);
       expect(row.boundarySearchable).toBe(true);
-      expect(row.evidenceKinds).toEqual(
-        OHIO_COUNTIES_WITHOUT_NFHL.has(row.countyFips) ? [] : ["flood"],
-      );
+      expect(row.evidenceKinds).toEqual([
+        ...(row.countyFips === "39049" ? ["zoning"] : []),
+        ...(OHIO_COUNTIES_WITHOUT_NFHL.has(row.countyFips) ? [] : ["flood"]),
+      ]);
       expect(row.lastVerifiedAt).toBe(recording.recordedAt);
     }
   });
