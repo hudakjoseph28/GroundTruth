@@ -83,6 +83,8 @@ pnpm format
 
 These five commands passed on Nov 12, 2026. `pnpm dev`, `pnpm test`, and `pnpm escrow:test` are not set up yet.
 
+**CI:** [GitHub Actions](.github/workflows/ci.yml) runs on every PR to `main` and every push to it. It typechecks shared and all packages, lints, runs backend unit tests, builds the web app, and runs backend `test:db` against Postgres 16. It skips escrow/Anchor tests because they need the Solana toolchain.
+
 ```ts
 import {
   type Deal,
