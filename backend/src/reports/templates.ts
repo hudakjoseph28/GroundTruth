@@ -27,6 +27,10 @@ export const TEMPLATE_KINDS = [
 
 export type TemplateKind = (typeof TEMPLATE_KINDS)[number];
 
+export function isTemplateKind(kind: CheckKind): kind is TemplateKind {
+  return (TEMPLATE_KINDS as readonly CheckKind[]).includes(kind);
+}
+
 const FRANKLIN_FIPS = "39049";
 
 const FRANKLIN_LINKS = {

@@ -26,8 +26,10 @@ export const goldenReport: ParcelReport = toReport(golden.report);
  * is unknown; the FEMA flood finding is its one sourced check. `acreage` is
  * OGRIP's published LandArea.
  *
- * Wording sources for both reports: unknown checks use the per-kind text from
- * backend/src/reports/templates.ts (#9). One documented override: this
+ * Wording sources for both reports: unknown checks carry the per-kind text
+ * of templateCheck() in backend/src/reports/templates.ts (#9). `db:seed`
+ * writes them from templateCheck() itself, and a backend test fails if this
+ * JSON drifts from it. One documented override: this
  * parcel's zoning check says "GroundTruth doesn't check zoning in Licking
  * County yet." and names the Bowling Green Township zoning inspector, which
  * is more specific than the generic zoning template. Seeded reports carry no

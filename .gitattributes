@@ -1,0 +1,4 @@
+# Collapse recorded provider responses and generated tables in GitHub diffs.
+backend/test/fixtures/** linguist-generated
+backend/src/parcels/ohioPlaces.ts linguist-generated
+backend/src/parcels/parcelIdFormats.ts linguist-generated

@@ -1,6 +1,13 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
-import type { Parcel, ParcelReport } from "@groundtruth/shared";
+import {
+  goldenParcel,
+  goldenReport,
+  secondCountyReport,
+  type Parcel,
+  type ParcelReport,
+} from "@groundtruth/shared";
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "../../src/db.js";
 import { prismaReportStore } from "../../src/reports/store.js";
@@ -136,4 +143,41 @@ describe("report store against PostgreSQL", () => {
       checks: [],
     });
   });
+
+  it("serves the seeded reports unchanged, even over a live copy cached first", async () => {
+    // A live report cached under the golden key before the seed ran. The
+    // seed restores the golden rows below.
+    await prisma.parcelRecord.deleteMany({ where: { key: goldenParcel.key } });
+    const live = { ...recorded, parcelKey: goldenParcel.key };
+    await store.write(goldenParcel, live, new Date("2026-11-18T00:00:00.000Z"));
+    expect(
+      await store.read(goldenParcel.key, new Date("2026-11-17T12:00:00.000Z")),
+    ).toEqual(live);
+
+    // The real seed script, as `db:seed` runs it.
+    execFileSync("npx", ["tsx", "src/seed.ts"], {
+      env: process.env,
+      stdio: "ignore",
+    });
+    const farFuture = new Date("2040-01-01T00:00:00.000Z");
+    expect(await store.read(goldenParcel.key, farFuture)).toEqual(goldenReport);
+    // Seeded unknown checks are written from templateCheck(); what the API
+    // serves is still the shared fixture, field for field.
+    expect(await store.read(secondCountyReport.parcelKey, farFuture)).toEqual(
+      secondCountyReport,
+    );
+
+    // A later live write cannot replace it.
+    await store.write(
+      goldenParcel,
+      { ...recorded, parcelKey: goldenParcel.key },
+      new Date("2040-01-02T00:00:00.000Z"),
+    );
+    expect(await store.read(goldenParcel.key, farFuture)).toEqual(goldenReport);
+    const row = await prisma.reportRecord.findUnique({
+      where: { parcelKey: goldenParcel.key },
+      select: { expiresAt: true },
+    });
+    expect(row?.expiresAt).toBeNull();
+  }, 60_000);
 });
