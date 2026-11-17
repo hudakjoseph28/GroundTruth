@@ -18,8 +18,9 @@
 // `release`, so the API can show the rejected payout on the deal timeline.
 // Keep in sync with src/routes/quicknodeWebhook.ts and backend/README.md.
 
-// Set to the deployed escrow program ID before using this filter.
-const PROGRAM_ID = "REPLACE_WITH_ESCROW_PROGRAM_ID";
+// The escrow program on devnet, deployed in #22 (GROUNDTRUTH_PROGRAM_ID in
+// packages/shared; quicknodeFilters.test.ts checks they match).
+const PROGRAM_ID = "ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG";
 
 // `release` takes no arguments, so its instruction data is exactly its
 // 8-byte Anchor discriminator, base58 encoded (from the IDL in

@@ -213,7 +213,9 @@ Timeline rows are ordered by time, then chain slot, then event index. A confirme
 
 Replays are harmless: a timeline row is unique by transaction signature + event index (a rejected release is index 0 of its transaction), and re-applying finds it and does nothing. The timestamp is not checked against a window. QuickNode does not document its format, and deduplication already makes a replayed delivery a no-op.
 
-**Test data.** The decoder, filter, webhook, and database tests use **IDL-encoded** logs built with the IDL's own coder ([test/support/escrowLogs.ts](test/support/escrowLogs.ts)), not logs recorded from devnet. The escrow program is not deployed yet. Once it is, record real devnet transactions for a held flow (init → fund → hold → rejected release → refund) and a released flow, and replay them in these tests too.
+**Test data.** Two kinds, kept apart:
+- **IDL-encoded** logs built with the IDL's own coder ([test/support/escrowLogs.ts](test/support/escrowLogs.ts)) drive the decoder, filter, webhook, and database tests through all six events, a spoofed log, and a held flow (init → fund → hold → rejected release → refund) and a released flow.
+- **Recorded devnet data** ([test/fixtures/devnet/program-history.json](test/fixtures/devnet/program-history.json)): every transaction that touched the deployed program, the program account, and its on-chain IDL, from the public RPC via `pnpm --filter @groundtruth/backend record:devnet` (no keys). [test/devnetRecorded.test.ts](test/devnetRecorded.test.ts) checks the on-chain IDL is the checked-in one and runs each recorded transaction through the real filter, webhook, and decoder. As of Nov 17 the history is only the deploy and two IDL uploads, so no real event logs exist yet. After the demo deals run on devnet, re-record and add each escrow transaction to `EXPECTED_SENT` in that test with the events it must decode to.
 
 ### Filters
 
@@ -222,7 +224,7 @@ Filters live in [quicknode/](quicknode/) and are pasted into the Stream's filter
 | File | Use |
 | --- | --- |
 | `heartbeat-filter.js` | `{ "transactions": [] }` for every block. Proves signing and delivery before the program exists. |
-| `groundtruth-filter.js` | The real filter. Set `PROGRAM_ID` to the deployed escrow program (`2ox43XbbztcxCt7LDZaF9fSaRezwTbCNxWBKf89uVHP1`, once deployed). Sends successful program transactions and failed `release` attempts; `RELEASE_IX_DATA` is the `release` discriminator in base58, checked against the IDL by `quicknodeFilters.test.ts`. |
+| `groundtruth-filter.js` | The real filter. `PROGRAM_ID` is the escrow program deployed to devnet in #22, `ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG` (the same `GROUNDTRUTH_PROGRAM_ID` the decoder uses; `quicknodeFilters.test.ts` checks they match). Sends successful program transactions and failed `release` attempts; `RELEASE_IX_DATA` is the `release` discriminator in base58, checked against the IDL by `quicknodeFilters.test.ts`. |
 | `inspect-filter.js` | Preview only. Reports the Block payload's field layout. |
 
 `quicknodeFilters.test.ts` runs the filter files and posts their output to the webhook, so a shape change on either side fails a test.

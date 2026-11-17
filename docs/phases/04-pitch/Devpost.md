@@ -38,7 +38,9 @@ Prisma maps the shared contract into PostgreSQL for seeded and cached reports. T
 
 The web is built with React, Vite, TypeScript, Three.js, and react-globe.gl. The API uses Node.js, Express, Zod, Prisma, and PostgreSQL. Vercel hosts the web deployment and Railway hosts the API and database documented in the repository.
 
-**[PENDING] Escrow build:** Rust, Anchor, SPL Token, Solana devnet, and Circle test USDC are present in the intended architecture, but the Devpost submission must not claim a working on-chain outcome until the escrow owner confirms the deployed program and receipts.
+**Escrow program on devnet:** The Rust and Anchor escrow program is deployed to Solana devnet as [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet) ([deploy transaction](https://explorer.solana.com/tx/4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU?cluster=devnet)). Its published Anchor IDL ([metadata account](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)) is identical to the IDL our backend decodes events with.
+
+**[PENDING] Escrow outcomes:** No deal has run on devnet yet. The submission must not claim a held payout, a released payout, a refund, or a USDC balance change until the escrow owner records those devnet transactions, their Explorer links, and before-and-after balances.
 
 **[PENDING] Sponsor integrations:** QuickNode Streams and ElevenLabs must remain described as planned integrations until their owners confirm the end-to-end acceptance checks.
 
@@ -78,7 +80,7 @@ Our immediate product step is to connect the web search experience to the live p
 
 We will test the report with first-time land buyers and title or closing professionals. The pilot questions are practical: Can a buyer explain the biggest open issue? Do they know who acts next? Does the report help them pause, negotiate, or walk away before sending money?
 
-- **[PENDING] Escrow:** confirm local and devnet held, released, and refund outcomes; record program ID, deal addresses, Explorer links, and balance changes.
+- **[PENDING] Escrow:** program ID and deploy links are recorded above. Still confirm devnet held, released, and refund outcomes; record deal addresses, transaction Explorer links, and balance changes.
 - **[PENDING] QuickNode Streams:** confirm the filtered devnet Stream, verified webhook, idempotent timeline projection, and second-device update.
 - **[PENDING] ElevenLabs:** confirm a real staged callback with a consenting teammate, verified webhook evidence, reviewer handoff, and audible video footage.
 - Add authenticated, private evidence handling before any real buyer, seller, identity, title, or call data enters the product.
@@ -88,6 +90,7 @@ We will test the report with first-time land buyers and title or closing profess
 
 ### Working on `main`
 
+- Rust and Anchor: the escrow program is deployed to Solana devnet (see the program link above)
 - TypeScript and pnpm workspaces
 - React, Vite, Three.js, and react-globe.gl
 - Node.js, Express, and Zod
@@ -100,7 +103,6 @@ We will test the report with first-time land buyers and title or closing profess
 
 ### Awaiting owner confirmation
 
-- **[PENDING]** Rust and Anchor
-- **[PENDING]** Solana devnet, SPL Token, and Circle test USDC
+- **[PENDING]** Solana devnet escrow deals: SPL Token transfers of Circle test USDC (no deal has run on devnet yet)
 - **[PENDING]** QuickNode Streams
 - **[PENDING]** ElevenLabs
