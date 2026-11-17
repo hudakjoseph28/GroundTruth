@@ -25,6 +25,14 @@ export const goldenReport: ParcelReport = toReport(golden.report);
  * Bowling Green Township). GroundTruth has no Licking zoning check, so zoning
  * is unknown; the FEMA flood finding is its one sourced check. `acreage` is
  * OGRIP's published LandArea.
+ *
+ * Wording sources for both reports: unknown checks use the per-kind text from
+ * backend/src/reports/templates.ts (#9). One documented override: this
+ * parcel's zoning check says "GroundTruth doesn't check zoning in Licking
+ * County yet." and names the Bowling Green Township zoning inspector, which
+ * is more specific than the generic zoning template. Seeded reports carry no
+ * `closing` check (no closing is open on either parcel), and
+ * `biggestOpenQuestion` follows #9's rule in backend/src/reports/pipeline.ts.
  */
 export const secondCountyParcel: Parcel = toParcel(secondCounty.parcel);
 export const secondCountyReport: ParcelReport = toReport(secondCounty.report);

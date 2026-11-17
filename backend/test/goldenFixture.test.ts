@@ -199,7 +199,7 @@ describe("second-county parcel fixture", () => {
     for (const entry of secondCountyReport.checks) {
       if (entry.kind !== "flood") expect(entry.status).toBe("unknown");
     }
-    expect(secondCountyReport.checks).toHaveLength(9);
+    expect(secondCountyReport.checks).toHaveLength(8);
     expect(secondCountyReport.coverage).toBe(coverageOf(secondCountyReport));
     expect(goldenReport.coverage).toBe(coverageOf(goldenReport));
   });
@@ -251,5 +251,73 @@ describe("unknown checks in the shared fixtures (Phase 2)", () => {
         /title company to search the recorded documents/,
       );
     }
+  });
+});
+
+/**
+ * #9's rule (backend/src/reports/pipeline.ts, biggestOpenQuestion): a held
+ * check first, then the first unresolved check in this priority order.
+ * Copied here until #9 is on main; then import it instead.
+ */
+const OPEN_QUESTION_PRIORITY = [
+  "access",
+  "septic",
+  "zoning",
+  "flood",
+  "utilities",
+  "easements",
+  "sellerAuthority",
+  "survey",
+  "closing",
+] as const;
+
+function expectedBiggestOpenQuestion(report: ParcelReport): string {
+  const rank = (kind: string) => {
+    const index = OPEN_QUESTION_PRIORITY.indexOf(
+      kind as (typeof OPEN_QUESTION_PRIORITY)[number],
+    );
+    return index === -1 ? OPEN_QUESTION_PRIORITY.length : index;
+  };
+  const ordered = [...report.checks].sort(
+    (a, b) => rank(a.kind) - rank(b.kind),
+  );
+  const held = ordered.find((entry) => entry.status === "held");
+  if (held) return held.kind;
+  const open = ordered.find(
+    (entry) => entry.status === "unknown" || entry.status === "needsReview",
+  );
+  return open?.kind ?? ordered[0]?.kind ?? "access";
+}
+
+describe("seeded report rules", () => {
+  it.each([
+    ["golden", goldenReport, "access"],
+    ["second county", secondCountyReport, "access"],
+  ] as const)(
+    "%s: biggestOpenQuestion follows #9's rule (%s)",
+    (_label, report, expected) => {
+      expect(report.biggestOpenQuestion).toBe(expected);
+      expect(report.biggestOpenQuestion).toBe(
+        expectedBiggestOpenQuestion(report),
+      );
+    },
+  );
+
+  it("has no closing check in either seeded report", () => {
+    for (const report of [goldenReport, secondCountyReport]) {
+      expect(report.checks.map((entry) => entry.kind)).not.toContain("closing");
+    }
+  });
+
+  it("keeps the documented Licking zoning override", () => {
+    const zoning = secondCountyReport.checks.find(
+      (entry) => entry.kind === "zoning",
+    );
+    expect(zoning?.finding).toBe(
+      "GroundTruth doesn't check zoning in Licking County yet.",
+    );
+    expect(zoning?.responsibleParty.organization).toBe(
+      "Bowling Green Township, Licking County",
+    );
   });
 });

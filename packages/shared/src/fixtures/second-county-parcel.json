@@ -31,9 +31,9 @@
   },
   "report": {
     "parcelKey": "ohio:39089:00500729609000",
-    "generatedAt": "2026-11-17T01:21:56.000Z",
+    "generatedAt": "2026-11-17T01:32:02.000Z",
     "coverage": "partial",
-    "biggestOpenQuestion": "zoning",
+    "biggestOpenQuestion": "access",
     "checks": [
       {
         "kind": "zoning",
@@ -152,17 +152,6 @@
           "role": "Local health district (sewage treatment systems)"
         },
         "nextAction": "If the lot has no sewer, ask the health district for a site and soil evaluation before you close."
-      },
-      {
-        "kind": "closing",
-        "status": "unknown",
-        "finding": "No closing is open on this parcel.",
-        "limitation": "Nothing has been funded, approved, or held. No conclusion either way.",
-        "sources": [],
-        "responsibleParty": {
-          "role": "Title or closing professional"
-        },
-        "nextAction": "If you go under contract, ask a title or closing company to run the closing and collect every required sign-off before any payment moves."
       }
     ]
   }
