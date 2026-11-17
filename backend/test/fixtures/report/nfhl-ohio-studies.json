@@ -1,0 +1,436 @@
+{
+  "recordedAt": "2026-11-17T01:19:09.436Z",
+  "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0/query?where=STUDY_ID+LIKE+%2739%25%27&outFields=STUDY_ID&returnDistinctValues=true&returnGeometry=false&f=json",
+  "status": 200,
+  "body": {
+    "displayFieldName": "STUDY_ID",
+    "fieldAliases": {
+      "STUDY_ID": "STUDY_ID"
+    },
+    "fields": [
+      {
+        "name": "STUDY_ID",
+        "type": "esriFieldTypeString",
+        "alias": "STUDY_ID",
+        "length": 6
+      }
+    ],
+    "features": [
+      {
+        "attributes": {
+          "STUDY_ID": "39127C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39015C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39095C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39133C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39037C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39025C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39027C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39151C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39073C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39137C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39063C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39067C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39093C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39075C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39043C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39123C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39019C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39077C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39013C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39109C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39083C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39121C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39169C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39113C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39023C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39085C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39065C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39087C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39135C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39131C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39103C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39165C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39059C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39155C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39061C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39005C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39041C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39003C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39017C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39149C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39153C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39119C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39097C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39161C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39145C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39111C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39071C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39141C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39029C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39147C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39143C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39139C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39129C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39091C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39107C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39115C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39125C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39105C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39053C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39033C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39117C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39049C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39031C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39039C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39057C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39167C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39051C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39173C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39055C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39021C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39081C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39099C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39159C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39045C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39089C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39101C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39009C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39011C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39007C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39079C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39035C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39001C"
+        }
+      },
+      {
+        "attributes": {
+          "STUDY_ID": "39157C"
+        }
+      }
+    ]
+  }
+}

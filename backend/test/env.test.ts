@@ -10,7 +10,17 @@ describe("readServerEnv", () => {
       port: 3001,
       commit: "unknown",
       ogripTimeoutMs: 8000,
+      femaTimeoutMs: 6000,
     });
+  });
+
+  it("reads FEMA_TIMEOUT_MS and rejects an out-of-range value", () => {
+    expect(
+      readServerEnv({ DATABASE_URL, FEMA_TIMEOUT_MS: "3000" }).femaTimeoutMs,
+    ).toBe(3000);
+    expect(() =>
+      readServerEnv({ DATABASE_URL, FEMA_TIMEOUT_MS: "100" }),
+    ).toThrow("FEMA_TIMEOUT_MS must be between 500 and 60000");
   });
 
   it("reads OGRIP_TIMEOUT_MS", () => {

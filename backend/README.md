@@ -1,6 +1,6 @@
 # @groundtruth/backend
 
-Express API: live Ohio parcel search and boundaries (OGRIP), the staged parcel report, staged deals, and the QuickNode webhook. Responses use the v1 types from `@groundtruth/shared`.
+Express API: live Ohio parcel search and boundaries (OGRIP), live parcel reports with a FEMA flood check, staged deals, and the QuickNode webhook. Responses use the v1 types from `@groundtruth/shared`.
 
 ## Local database
 
@@ -23,7 +23,7 @@ pnpm --filter @groundtruth/backend dev
 
 `GET /api/health` returns `{ "status": "ok", "commit": "..." }`.
 
-`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`. The parcel key is URL-encoded, for example `ohio%3A39049%3ASTAGED-DEMO`.
+`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`; see [Parcel report](#parcel-report-live-ogrip--fema). The parcel key is URL-encoded, for example `ohio%3A39049%3A010-042534`.
 
 ## Parcel search (live Ohio OGRIP)
 
@@ -33,7 +33,7 @@ These routes query Ohio's statewide parcel layer and address locator from the AP
 | --- | --- |
 | `GET /api/parcels/search?q=` | `ParcelSearchResult[]`, up to 10. `q` is trimmed and must be 3–120 characters (`400 INVALID_REQUEST` otherwise). `[]` means a valid query with no match. |
 | `GET /api/parcels/:parcelKey` | `Parcel` with the published boundary. `404 NOT_FOUND` if OGRIP has no such parcel in that county; `404 NO_COVERAGE` for a county code outside Ohio's 88. |
-| `GET /api/coverage` | `Coverage[]`: one row per county in a live count of OGRIP parcels with published IDs (cached 1 hour). `boundarySearchable` means only that the count was above zero at `lastVerifiedAt`, the time of that count. `evidenceKinds` is `[]` for every county until an evidence adapter runs on live parcels. A row says nothing about report depth. |
+| `GET /api/coverage` | `Coverage[]`: one row per county in a live count of OGRIP parcels with published IDs (cached 1 hour). `boundarySearchable` means only that the count was above zero at `lastVerifiedAt`, the time of that count. `evidenceKinds` lists the checks a live report can back with a source in that county. Today that is `["flood"]` in the 83 counties where FEMA has an NFHL study, and `[]` in Fayette, Henry, Vinton, Williams, and Wyandot, which have none (measured 2026-11-16; see [FEMA flood check](#fema-flood-check)). It names a check that can run, not a result: a given lot can still come back `unknown`. A row says nothing about report depth. |
 
 **Parcel key rule.** `ohio:<countyFips>:<LocalParcelID exactly as published>`. No punctuation is added or removed, so keys differ by county the way OGRIP does: Franklin publishes `010-042534` (`ohio:39049:010-042534`), Licking publishes `00100000601000` (`ohio:39089:00100000601000`). Published IDs that do not match `[A-Za-z0-9][A-Za-z0-9._-]*`, or are all zeros, get no key.
 
@@ -74,6 +74,75 @@ pnpm --filter @groundtruth/backend record:ogrip franklin-address  # one scenario
 ```
 
 Scenarios live in [test/fixtures/ogrip/scenarios.ts](test/fixtures/ogrip/scenarios.ts). Those listed in `LOCATOR_DOWN` are recorded with the recorder answering HTTP 503 for the locator (marked `forcedFailure`), so the fallback runs against real parcel-layer responses.
+
+## Parcel report (live OGRIP + FEMA)
+
+`GET /api/parcels/:parcelKey/report` builds a report for any OGRIP parcel. Code: [src/reports/](src/reports/), route in [src/routes/report.ts](src/routes/report.ts).
+
+1. **Stored report in force?** Serve it. A report with no `expiresAt` was seeded or verified by hand (`STAGED-DEMO` now, the golden parcel later). It is always served and never overwritten. A live copy is served until its `expiresAt`.
+2. **Otherwise, live.** Load the parcel through the OGRIP adapter (`404 NOT_FOUND` if OGRIP has no such parcel, `404 NO_COVERAGE` for a non-Ohio county code, `504`/`502` on an OGRIP failure). Then run every check at once, each with its own limit ([src/reports/pipeline.ts](src/reports/pipeline.ts)). Once the parcel exists the answer is always `200`. A slow, failed, or crashing check becomes an `unknown` check inside the report.
+3. **Cache.** A live report where no check failed for a passing reason is written to PostgreSQL after the response, for 24 hours (`LIVE_REPORT_TTL_MS`). Each source keeps its own `retrievedAt`. A report with a timed-out check is not stored, so the next request asks FEMA again. A database failure never blocks a live report.
+
+**Checks.** The report has eight checks in contract order: `zoning`, `flood`, `access`, `utilities`, `easements`, `sellerAuthority`, `survey`, `septic`. It has no `closing` check, because closing state comes from the deal, not the parcel.
+
+- `flood` runs live against FEMA (below).
+- The other seven have no adapter yet. Each is `unknown` from a plain-English template ([src/reports/templates.ts](src/reports/templates.ts)) that names what is missing, the limitation, who resolves it, and the next action. Contact links appear only where checked by hand: Franklin County Planning & Zoning, Recorder, and Public Health (live on 2026-11-16), and the ALTA seller-impersonation handout. Other counties get the office by name and no link.
+
+**Coverage.** `boundaryOnly` when no check has a supporting source, `deep` when every check does, `partial` otherwise. With only flood live, a report is `partial` when FEMA finds a zone and `boundaryOnly` otherwise.
+
+**`biggestOpenQuestion`** ([`biggestOpenQuestion()`](src/reports/pipeline.ts)):
+
+1. A `held` check (a reviewer blocked the closing).
+2. Otherwise the first unresolved (`unknown` or `needsReview`) check in this order: `access`, `septic`, `zoning`, `flood`, `utilities`, `easements`, `sellerAuthority`, `survey`, `closing`. Any unresolved question outranks any resolved finding, so an unknown access or septic check beats a found flood zone. Access and wastewater lead because a lot without legal access, or without sewer and a workable septic site, usually cannot be built on at all.
+3. Otherwise `flood` if FEMA found a Special Flood Hazard Area.
+4. Otherwise the first check in that order.
+
+Until access has an adapter, every live report's answer is `access`.
+
+### FEMA flood check
+
+Service: FEMA National Flood Hazard Layer, `https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer`. Layer IDs were read from the live service directory on 2026-11-16:
+
+| Layer | ID | Used for |
+| --- | --- | --- |
+| Flood Hazard Zones | 28 | `FLD_ZONE`, `ZONE_SUBTY`, `SFHA_TF` |
+| FIRM Panels | 3 | Panel number and `EFF_DATE` |
+| LOMRs | 1 | Effective Letters of Map Revision and their `EFF_DATE` |
+| NFHL Availability | 0 | Whether FEMA has a digital study here (`STUDY_ID`) |
+
+The parcel's OGRIP geometry, with rings re-wound the way Esri reads them, is sent by POST to all four layers at once with `spatialRel=esriSpatialRelRelation&relationParam=T********`. Their interiors must overlap, so a zone that only touches the parcel's edge is not counted. A dropped connection is retried once; FEMA sometimes resets the first connection. The whole check has `FEMA_TIMEOUT_MS` (default 6000).
+
+| Outcome | When | Check |
+| --- | --- | --- |
+| `found` | One or more mapped zones overlap the parcel | `evidenceFound`. Names each zone and whether any is a Special Flood Hazard Area. A parcel crossing several zones says so, with how many. Sources: the zones layer, each FIRM panel with its effective date, and each effective LOMR with its effective date. |
+| `missing` | No mapped zone overlaps, and no study covers it (or FEMA marks it "area not included") | `unknown`, with the two layers queried as dated sources |
+| `conflict` | FEMA lists a study but no zone covers the parcel, or a zone's SFHA flag contradicts its letter (A/V must be SFHA, X/D must not) | `unknown`, no zone stated |
+| `timeout` | Out of time, HTTP error, ArcGIS error body, or unexpected shape | `unknown`, no sources. Says whether FEMA timed out or could not be reached. |
+
+`effectiveDate` is FEMA's `EFF_DATE`, a calendar date, sent as `YYYY-MM-DD` (`2008-06-17`). Any stored effective date at midnight UTC is served the same way ([`effectiveDateString()`](src/reports/mapReport.ts)), so a seeded report written with calendar dates is served exactly as written. An effective date with any other time keeps the full ISO timestamp.
+
+**NFHL coverage in Ohio, measured 2026-11-16:** 83 of 88 counties have a study. Fayette (39047), Henry (39069), Vinton (39163), Williams (39171), and Wyandot (39175) have none, so every parcel there gets a `missing` flood check.
+
+### Tested parcels (live, 2026-11-17 UTC)
+
+| Parcel | County | Flood result |
+| --- | --- | --- |
+| `ohio:39049:010-042534`, 84 W Dodridge St | Franklin | Zone X (minimal). Panel 39049C0169K, effective 2008-06-17. LOMRs 13-05-6825P (2014-04-17), 15-05-0192X (2015-05-14), 15-05-3155P (2016-04-20) |
+| `ohio:39089:00100000601000`, 10034 Appleton Rd | Licking | Zone X (minimal). Panel 39089C0155J, effective 2015-03-16 |
+| `ohio:39049:185-002765`, 0 Groveport Pike | Franklin | Zone AE, regulatory floodway (SFHA) |
+| `ohio:39049:152-001927`, 0 Groveport Rd | Franklin | Crosses AE, AE floodway, X 0.2%, X minimal |
+| `ohio:39175:010025000000`, 17859 Township Hwy 148 | Wyandot | `missing`: no NFHL study |
+
+### Recorded fixtures
+
+Report tests replay real OGRIP and FEMA responses from [test/fixtures/report/](test/fixtures/report/), matched by method, URL, and POST body, so they never touch the network. After changing a query, re-record and review the diff:
+
+```bash
+pnpm --filter @groundtruth/backend record:report                    # every scenario
+pnpm --filter @groundtruth/backend record:report franklin-floodway  # one scenario
+```
+
+The report recordings include the OGRIP parcel request. A change to the OGRIP query shows up here as an "unrecorded request" until you re-record.
 
 ## Deals
 
