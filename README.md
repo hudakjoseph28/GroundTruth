@@ -83,8 +83,9 @@ These five commands passed on Nov 12, 2026. `pnpm dev`, `pnpm test`, and `pnpm e
 import {
   type Deal,
   type Parcel,
+  goldenParcel,
+  goldenReport,
   stagedDeal,
-  stagedParcel,
 } from "@groundtruth/shared";
 ```
 

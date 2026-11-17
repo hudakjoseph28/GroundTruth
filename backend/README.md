@@ -19,11 +19,11 @@ pnpm --filter @groundtruth/backend db:seed
 pnpm --filter @groundtruth/backend dev
 ```
 
-`db:seed` can be run again. It upserts the shared staged parcel `ohio:39049:STAGED-DEMO` and replaces that parcel's checks. The seeded report is `boundaryOnly`: the shared fixture has no evidence, so every check is `unknown`.
+`db:seed` can be run again. It upserts the golden parcel `ohio:39049:230-000918` (Franklin County, Seaman Rd rear lot) from `packages/shared/src/fixtures/golden-parcel.json` and replaces that report's checks and sources. The report is `partial`: access `needsReview`, zoning and flood `evidenceFound` with dated sources, utilities and easements `unknown`. It also upserts the second-county parcel `ohio:39089:00500729609000` (Licking County, 93 Woody Knoll Dr) from `second-county-parcel.json`: coverage `partial`, biggest open question `access`, flood `evidenceFound` (FEMA Zone X), and zoning, access, utilities, easements, seller authority, survey, and septic `unknown`. Unknown checks use the per-kind wording from `src/reports/templates.ts`; the Licking zoning sentence ("GroundTruth doesn't check zoning in Licking County yet.") is a documented override. Neither seeded report has a `closing` check, and `biggestOpenQuestion` follows the rule in `src/reports/pipeline.ts`. The seed also deletes the retired stand-in parcel `ohio:39049:STAGED-DEMO` and its report, if present.
 
 `GET /api/health` returns `{ "status": "ok", "commit": "..." }`.
 
-`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`. The parcel key is URL-encoded, for example `ohio%3A39049%3ASTAGED-DEMO`.
+`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`. The parcel key is URL-encoded, for example `ohio%3A39049%3A230-000918`.
 
 ## Parcel search (live Ohio OGRIP)
 

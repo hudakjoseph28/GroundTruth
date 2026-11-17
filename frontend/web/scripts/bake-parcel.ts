@@ -2,7 +2,7 @@
 // elevation for the parcel's padded bounding box, written where the web app
 // serves them.
 //
-//   npx --yes pnpm@12.18.0 --filter @groundtruth/web bake:parcel ohio:39049:STAGED-DEMO
+//   npx --yes pnpm@12.18.0 --filter @groundtruth/web bake:parcel ohio:39049:230-000918
 //
 // Writes public/parcels/<sourceParcelId>/imagery.jpg, height.png, meta.json.
 // Re-run it whenever the parcel's geometry changes, then commit the three files.
@@ -11,7 +11,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import jpeg from "jpeg-js";
 import { PNG } from "pngjs";
-import { stagedParcel, type Parcel } from "@groundtruth/shared";
+import { goldenParcel, secondCountyParcel, type Parcel } from "@groundtruth/shared";
 import {
   LAND_META_VERSION,
   landAssetDir,
@@ -24,7 +24,7 @@ import {
 } from "../src/parcel/ParcelScene/landMeta.ts";
 
 // Parcels the bake can find by key. Add to this as the catalog grows.
-const CATALOG: readonly Parcel[] = [stagedParcel];
+const CATALOG: readonly Parcel[] = [goldenParcel, secondCountyParcel];
 
 /** Extra ground on every side of the parcel's bounding box, as a share of its longer side. */
 const PADDING = 0.15;
@@ -304,7 +304,7 @@ function encodeJpeg(raster: Raster): Buffer {
 async function main() {
   const wanted = process.argv[2];
   if (!wanted) {
-    throw new Error("Usage: bake:parcel <parcelKey>, for example ohio:39049:STAGED-DEMO");
+    throw new Error("Usage: bake:parcel <parcelKey>, for example ohio:39049:230-000918");
   }
   const parcel = CATALOG.find((entry) => entry.key === wanted || entry.sourceParcelId === wanted);
   if (!parcel) {

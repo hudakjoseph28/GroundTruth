@@ -1,68 +1,99 @@
 import { Prisma } from "@prisma/client";
-import { stagedDeal, stagedParcel, type Parcel } from "@groundtruth/shared";
+import {
+  goldenParcel,
+  goldenReport,
+  secondCountyParcel,
+  secondCountyReport,
+  stagedDeal,
+  type Parcel,
+  type ParcelReport,
+} from "@groundtruth/shared";
 import { prisma } from "./db.js";
 import { seedDeal } from "./deals/seedDeal.js";
-import { stagedReport } from "./reports/stagedReport.js";
+
+/**
+ * The old made-up stand-in parcel. Its report, checks, and sources cascade
+ * with it. Only this exact fixture key is removed.
+ */
+const RETIRED_FIXTURE_KEYS = ["ohio:39049:STAGED-DEMO"];
 
 async function main(): Promise<void> {
-  const parcel: Parcel = stagedParcel;
   await prisma.$transaction(async (tx) => {
-    await tx.parcelRecord.upsert({
-      where: { key: parcel.key },
-      create: {
-        key: parcel.key,
-        sourceParcelId: parcel.sourceParcelId,
-        county: parcel.county,
-        countyFips: parcel.countyFips,
-        township: parcel.township ?? null,
-        siteAddress: parcel.siteAddress ?? null,
-        acreage: parcel.acreage ?? null,
-        latitude: parcel.centroid.latitude,
-        longitude: parcel.centroid.longitude,
-        geometryGeoJson: jsonValue(parcel.geometry.geojson),
-        geometryAuthority: parcel.geometry.authority,
-        geometrySourceUrl: parcel.geometry.sourceUrl,
-        geometryRetrievedAt: new Date(parcel.geometry.retrievedAt),
-      },
-      update: {
-        sourceParcelId: parcel.sourceParcelId,
-        county: parcel.county,
-        countyFips: parcel.countyFips,
-        township: parcel.township ?? null,
-        siteAddress: parcel.siteAddress ?? null,
-        acreage: parcel.acreage ?? null,
-        latitude: parcel.centroid.latitude,
-        longitude: parcel.centroid.longitude,
-        geometryGeoJson: jsonValue(parcel.geometry.geojson),
-        geometryAuthority: parcel.geometry.authority,
-        geometrySourceUrl: parcel.geometry.sourceUrl,
-        geometryRetrievedAt: new Date(parcel.geometry.retrievedAt),
-      },
+    await seedParcelReport(tx, goldenParcel, goldenReport);
+    await seedParcelReport(tx, secondCountyParcel, secondCountyReport);
+    await seedDeal(tx, stagedDeal);
+    await tx.parcelRecord.deleteMany({
+      where: { key: { in: RETIRED_FIXTURE_KEYS } },
     });
+  });
 
-    await tx.reportRecord.upsert({
-      where: { parcelKey: stagedReport.parcelKey },
-      create: {
-        parcelKey: stagedReport.parcelKey,
-        generatedAt: new Date(stagedReport.generatedAt),
-        coverage: stagedReport.coverage,
-        biggestOpenQuestion: stagedReport.biggestOpenQuestion,
-      },
-      update: {
-        generatedAt: new Date(stagedReport.generatedAt),
-        coverage: stagedReport.coverage,
-        biggestOpenQuestion: stagedReport.biggestOpenQuestion,
-      },
+  for (const report of [goldenReport, secondCountyReport]) {
+    const checks = await prisma.checkRecord.count({
+      where: { reportParcelKey: report.parcelKey },
     });
-
-    await tx.checkRecord.deleteMany({
-      where: { reportParcelKey: stagedReport.parcelKey },
+    const sources = await prisma.sourceRecord.count({
+      where: { check: { reportParcelKey: report.parcelKey } },
     });
+    console.log(
+      `seeded ${report.parcelKey} with ${checks} checks and ${sources} sources`,
+    );
+  }
+  const events = await prisma.timelineEventRecord.count({
+    where: { dealId: stagedDeal.id },
+  });
+  console.log(`seeded deal ${stagedDeal.id} (${events} timeline events)`);
+}
 
-    await tx.checkRecord.createMany({
-      data: stagedReport.checks.map((check, position) => ({
-        id: `${stagedReport.parcelKey}:${check.kind}`,
-        reportParcelKey: stagedReport.parcelKey,
+/** Upserts a parcel and replaces its report's checks and sources. */
+async function seedParcelReport(
+  tx: Prisma.TransactionClient,
+  parcel: Parcel,
+  report: ParcelReport,
+): Promise<void> {
+  if (report.parcelKey !== parcel.key) {
+    throw new Error("Report does not belong to the parcel");
+  }
+  const parcelFields = {
+    sourceParcelId: parcel.sourceParcelId,
+    county: parcel.county,
+    countyFips: parcel.countyFips,
+    township: parcel.township ?? null,
+    siteAddress: parcel.siteAddress ?? null,
+    acreage: parcel.acreage ?? null,
+    latitude: parcel.centroid.latitude,
+    longitude: parcel.centroid.longitude,
+    geometryGeoJson: jsonValue(parcel.geometry.geojson),
+    geometryAuthority: parcel.geometry.authority,
+    geometrySourceUrl: parcel.geometry.sourceUrl,
+    geometryRetrievedAt: new Date(parcel.geometry.retrievedAt),
+  };
+  await tx.parcelRecord.upsert({
+    where: { key: parcel.key },
+    create: { key: parcel.key, ...parcelFields },
+    update: parcelFields,
+  });
+
+  const reportFields = {
+    generatedAt: new Date(report.generatedAt),
+    coverage: report.coverage,
+    biggestOpenQuestion: report.biggestOpenQuestion,
+  };
+  await tx.reportRecord.upsert({
+    where: { parcelKey: report.parcelKey },
+    create: { parcelKey: report.parcelKey, ...reportFields },
+    update: reportFields,
+  });
+
+  // Sources cascade with their checks.
+  await tx.checkRecord.deleteMany({
+    where: { reportParcelKey: report.parcelKey },
+  });
+  for (const [position, check] of report.checks.entries()) {
+    const checkId = `${report.parcelKey}:${check.kind}`;
+    await tx.checkRecord.create({
+      data: {
+        id: checkId,
+        reportParcelKey: report.parcelKey,
         position,
         kind: check.kind,
         status: check.status,
@@ -74,20 +105,22 @@ async function main(): Promise<void> {
         publicContactUrl: check.responsibleParty.publicContactUrl ?? null,
         reviewerWallet: check.reviewerWallet ?? null,
         transactionSignature: check.transactionSignature ?? null,
-      })),
+        sources: {
+          create: check.sources.map((source, sourcePosition) => ({
+            id: `${checkId}:${sourcePosition}`,
+            position: sourcePosition,
+            authority: source.authority,
+            title: source.title,
+            url: source.url,
+            retrievedAt: new Date(source.retrievedAt),
+            effectiveDate: source.effectiveDate
+              ? new Date(source.effectiveDate)
+              : null,
+          })),
+        },
+      },
     });
-
-    await seedDeal(tx, stagedDeal);
-  });
-
-  const checks = await prisma.checkRecord.count({
-    where: { reportParcelKey: stagedReport.parcelKey },
-  });
-  console.log(`seeded ${stagedReport.parcelKey} with ${checks} checks`);
-  const events = await prisma.timelineEventRecord.count({
-    where: { dealId: stagedDeal.id },
-  });
-  console.log(`seeded deal ${stagedDeal.id} (${events} timeline events)`);
+  }
 }
 
 main()

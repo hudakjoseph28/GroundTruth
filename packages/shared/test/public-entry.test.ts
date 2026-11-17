@@ -16,8 +16,9 @@ import {
   CHECK_KINDS,
   CHECK_STATUSES,
   DEAL_STATES,
+  goldenParcel,
+  goldenReport,
   stagedDeal,
-  stagedParcel,
 } from "@groundtruth/shared";
 
 type ContractSurface = {
@@ -39,14 +40,15 @@ const statuses: readonly CheckStatus[] = CHECK_STATUSES;
 const states: readonly DealState[] = DEAL_STATES;
 
 const surface = {
-  parcel: stagedParcel,
+  parcel: goldenParcel,
+  report: goldenReport,
   deal: stagedDeal,
   kind: kinds[0],
   status: statuses[2],
   state: states[0],
 } satisfies Pick<
   ContractSurface,
-  "parcel" | "deal" | "kind" | "status" | "state"
+  "parcel" | "report" | "deal" | "kind" | "status" | "state"
 >;
 
 void surface;

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { useLocation } from "react-router-dom";
-import { stagedParcel } from "@groundtruth/shared";
+import { goldenParcel } from "@groundtruth/shared";
 import { Segmented } from "../components/Segmented";
 import { HOW, type CalloutId, type Outcome, type StepId } from "../content/home";
 import { SITE } from "../content/site";
@@ -193,7 +193,7 @@ export function HowItWorks() {
                           >
                             {callout.id === "earth" ? (
                               <a
-                                href={googleEarthUrl(stagedParcel.centroid)}
+                                href={googleEarthUrl(goldenParcel.centroid)}
                                 target="_blank"
                                 rel="noreferrer"
                                 onFocus={() => setHovered("earth")}

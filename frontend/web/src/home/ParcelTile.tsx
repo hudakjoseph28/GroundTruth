@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { stagedParcel } from "@groundtruth/shared";
+import { goldenParcel } from "@groundtruth/shared";
 import { HOW, type CalloutId } from "../content/home";
 import { FlatLand } from "../parcel/ParcelScene/FlatLand";
 import { heightAt } from "../parcel/ParcelScene/landAssets";
@@ -18,13 +18,13 @@ const P = HOW.parcel;
  * is the flat picture and costs no WebGL.
  */
 export function ParcelTile({ focus }: { focus: CalloutId | null }) {
-  const assets = useLandAssets(stagedParcel.sourceParcelId);
-  const ring = useMemo(() => outerRing(stagedParcel.geometry.geojson), []);
+  const assets = useLandAssets(goldenParcel.sourceParcelId);
+  const ring = useMemo(() => outerRing(goldenParcel.geometry.geojson), []);
 
   // Heights along the row through the parcel's middle, west to east.
   const profile = useMemo(() => {
     if (!assets) return null;
-    const { v } = regionUV(assets.meta.bbox, stagedParcel.centroid.longitude, stagedParcel.centroid.latitude);
+    const { v } = regionUV(assets.meta.bbox, goldenParcel.centroid.longitude, goldenParcel.centroid.latitude);
     const row = Math.min(1, Math.max(0, v));
     const points = Array.from({ length: SAMPLES + 1 }, (_, index) => {
       const u = index / SAMPLES;

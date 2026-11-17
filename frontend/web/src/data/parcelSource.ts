@@ -1,5 +1,8 @@
 import {
-  stagedParcel,
+  goldenParcel,
+  goldenReport,
+  secondCountyParcel,
+  secondCountyReport,
   type Parcel,
   type ParcelReport,
   type ParcelSearchResult,
@@ -15,7 +18,8 @@ const MAX_QUERY = 120;
  * GET /api/parcels/:parcelKey
  * GET /api/parcels/:parcelKey/report
  */
-const catalog: readonly Parcel[] = [stagedParcel];
+const catalog: readonly Parcel[] = [goldenParcel, secondCountyParcel];
+const reports: readonly ParcelReport[] = [goldenReport, secondCountyReport];
 
 export type SearchOutcome =
   | { status: "invalid"; message: string }
@@ -50,7 +54,7 @@ export function searchParcels(rawQuery: string): SearchOutcome {
     return {
       status: "empty",
       message:
-        "No staged parcel matched. Live Ohio records are not connected. The sample parcel ID is STAGED-DEMO.",
+        "No sample parcel matched. Live Ohio search is not connected here yet. Try the sample parcel ID 230-000918.",
     };
   }
   return { status: "results", results };
@@ -61,13 +65,11 @@ export function getParcel(parcelKey: string): Parcel | null {
 }
 
 export function getParcelReport(parcelKey: string): ParcelReport | null {
-  const parcel = getParcel(parcelKey);
-  if (!parcel) return null;
-  return null;
+  return reports.find((report) => report.parcelKey === parcelKey) ?? null;
 }
 
 export function sampleParcelPath(): string {
-  return parcelPath(stagedParcel.key);
+  return parcelPath(goldenParcel.key);
 }
 
 export function parcelPath(parcelKey: string): string {
@@ -93,11 +95,19 @@ function matchParcel(
 ): ParcelSearchResult["matchedOn"] | null {
   const address = parcel.siteAddress?.toLowerCase();
   if (address?.includes(needle)) return "siteAddress";
+  // Parcel IDs match with or without punctuation: 230-000918 or 230000918.
+  const compactNeedle = compactId(needle);
   if (
     parcel.sourceParcelId.toLowerCase().includes(needle) ||
-    parcel.key.toLowerCase().includes(needle)
+    parcel.key.toLowerCase().includes(needle) ||
+    (compactNeedle.length >= 3 &&
+      compactId(parcel.sourceParcelId).includes(compactNeedle))
   ) {
     return "parcelId";
   }
   return null;
+}
+
+function compactId(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }

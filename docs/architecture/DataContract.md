@@ -207,7 +207,7 @@ Required program events: `DealInitialized`, `DealFunded`, `ApprovalSigned`, `Hol
 The scaffold creates these in `packages/shared/src/fixtures` and keeps UI/API/program test values aligned:
 
 - `golden-parcel.json`: manually verified Franklin County parcel with OGRIP geometry, at least one dated evidence source, and one deliberate unresolved check.
-- `boundary-only-parcel.json`: real parcel from a second county whose local evidence remains unavailable.
+- `second-county-parcel.json`: real parcel from a second county where GroundTruth runs few local checks; unchecked items, including zoning, stay `unknown`, and `coverage` follows the results.
 - `held-deal.json`: funded deal with a title-reviewer hold for `SELLER_IDENTITY_DISPUTED`; release is expected to fail.
 - `cleared-deal.json`: funded deal with required title, survey, and septic approvals; release is expected to pay the bound seller once.
 

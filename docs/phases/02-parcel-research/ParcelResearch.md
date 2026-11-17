@@ -10,7 +10,7 @@
 
 - OGRIP adapter and parcel/report routes under `backend/src` using the v1 shared schemas.
 - Search, result list, parcel map, evidence stack, and all loading/empty/unknown/error states under `frontend/web/src`.
-- `golden-parcel.json` and `boundary-only-parcel.json` in `packages/shared/src/fixtures`, populated only after manual source verification.
+- `golden-parcel.json` and `second-county-parcel.json` in `packages/shared/src/fixtures`, populated only after manual source verification.
 - A coverage note recording the two tested counties, exact parcel keys, source URLs, retrieval time, and which evidence adapters returned usable facts.
 
 ## Build this
