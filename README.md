@@ -12,6 +12,8 @@ By the first end-to-end checkpoint, a judge can open the public site, search rea
 
 **Repository status on Nov 12:** `@groundtruth/shared` is the v1 contract. `@groundtruth/web` can search the staged parcel and open it. `@groundtruth/backend` serves `GET /api/health` and `GET /api/parcels/:parcelKey/report` from a local Postgres seed. `escrow` is still empty.
 
+**Parcel data on Nov 17:** `GET /api/parcels/search`, `GET /api/parcels/:parcelKey`, and `GET /api/coverage` query live Ohio OGRIP parcels in all 88 counties. `GET /api/parcels/:parcelKey/report` builds live reports with a FEMA flood check, and serves seeded reports for the golden parcel `ohio:39049:230-000918` (Franklin) and the second-county parcel `ohio:39089:00500729609000` (Licking). The web still searches those two fixture parcels; switching it to the live search route is open. What was tested and where checks return evidence: [Coverage](docs/phases/02-parcel-research/Coverage.md).
+
 **Deployed on Nov 14:** web at <https://groundtruth-lac.vercel.app> (Vercel) and API at <https://api-production-db8a8106.up.railway.app> (Railway, with its own Postgres). The web forwards `/api/*` to the API, so browser code calls relative `/api/...` paths. The API serves health, the staged parcel report, and the staged deal and timeline. How to redeploy: [backend/README.md](backend/README.md#deployment).
 
 Do not describe a route, test, deployment, or integration as working until the corresponding artifact exists and has been run.
@@ -59,10 +61,10 @@ docs/
   design/Vision.md        how the website should look and feel (+ vision.jpg)
   phases/                 build order, owners, acceptance checks
   agents/Prompt.md        task template for handing work to an agent
-packages/shared/          `@groundtruth/shared` v1 types and staged fixtures
-frontend/web/             Vite app: homepage, staged search, parcel view
+packages/shared/          `@groundtruth/shared` v1 types, golden and second-county parcel fixtures, staged deal
+frontend/web/             Vite app: homepage, search over the two fixture parcels, parcel view
 frontend/mobile/          reserved; native app is out of core scope
-backend/                  Express API: live OGRIP parcel search, staged report and deals
+backend/                  Express API: live OGRIP search, live and seeded parcel reports, staged deals
 escrow/                   Anchor program (empty until scaffold)
 ```
 
