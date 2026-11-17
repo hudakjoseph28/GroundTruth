@@ -199,6 +199,7 @@ export interface DeriveDealAccountsArgs<TPublicKey> {
   dealId: Uint8Array | number[];
   mint?: TPublicKey;
   programId?: TPublicKey;
+  allowOwnerOffCurve?: boolean;
   web3: Web3DerivationContext<TPublicKey>;
 }
 
@@ -253,15 +254,16 @@ export function deriveDealAccounts<TPublicKey>(
 
   const [dealPda, dealBump] = deriveDealPda(buyer, dealId, web3, programId);
   const vault = deriveVaultPda(dealPda, web3, mint);
+  const allowOwnerOffCurve = args.allowOwnerOffCurve ?? false;
   const sellerTokenAccount = web3.getAssociatedTokenAddressSync(
     mint,
     seller,
-    false,
+    allowOwnerOffCurve,
   );
   const buyerTokenAccount = web3.getAssociatedTokenAddressSync(
     mint,
     buyer,
-    false,
+    allowOwnerOffCurve,
   );
 
   return {
