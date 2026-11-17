@@ -302,8 +302,25 @@ function devnetChain(): Chain & { connection: Connection } {
   };
 }
 
-/** The deployed program's ELF: ProgramData account data after its 45-byte header. */
+/** The deployed program's ELF: ProgramData account data after its 45-byte header, or local build if specified. */
 async function deployedProgramBytes(connection: Connection) {
+  const rawPath = process.env.LOCAL_PROGRAM_SO || process.env.ESCROW_PROGRAM_SO;
+  const localSo = rawPath
+    ? existsSync(rawPath)
+      ? rawPath
+      : existsSync(join(ESCROW_ROOT, rawPath))
+        ? join(ESCROW_ROOT, rawPath)
+        : null
+    : null;
+  if (localSo) {
+    const elf = readFileSync(localSo);
+    return {
+      programData: "local-target-build",
+      deploySlot: 0,
+      sha256: createHash("sha256").update(elf).digest("hex"),
+      elf,
+    };
+  }
   const program = await connection.getAccountInfo(PROGRAM, "confirmed");
   if (!program?.executable) throw new Error("program not found on devnet");
   const programData = new PublicKey(program.data.subarray(4, 36));
@@ -320,9 +337,8 @@ async function deployedProgramBytes(connection: Connection) {
 
 async function simulationChain(wallets: Wallets, usdc: bigint) {
   const { LiteSVM, FailedTransactionMetadata } = await import("litesvm");
-  const { address, getTransactionDecoder, lamports } = await import(
-    "@solana/kit"
-  );
+  const { address, getTransactionDecoder, lamports } =
+    await import("@solana/kit");
   const deployed = await deployedProgramBytes(
     new Connection(RPC_URL, "confirmed"),
   );
