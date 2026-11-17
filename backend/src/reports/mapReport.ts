@@ -42,6 +42,17 @@ export interface StoredReport {
   checks: StoredCheck[];
 }
 
+/**
+ * An effective date is a calendar date (FEMA's `EFF_DATE`, an ordinance
+ * date), so midnight UTC is written `YYYY-MM-DD`: a full UTC timestamp would
+ * show the day before in a US time zone. Any other time keeps the full ISO
+ * form rather than lose information.
+ */
+export function effectiveDateString(date: Date): string {
+  const iso = date.toISOString();
+  return iso.endsWith("T00:00:00.000Z") ? iso.slice(0, 10) : iso;
+}
+
 export function toParcelReport(row: StoredReport): ParcelReport {
   return {
     parcelKey: row.parcelKey,
@@ -86,7 +97,9 @@ function toSource(row: StoredSource): Source {
     title: row.title,
     url: row.url,
     retrievedAt: row.retrievedAt.toISOString(),
-    effectiveDate: row.effectiveDate?.toISOString(),
+    effectiveDate: row.effectiveDate
+      ? effectiveDateString(row.effectiveDate)
+      : undefined,
   };
 }
 

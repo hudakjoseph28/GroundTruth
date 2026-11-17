@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:db": "vitest run --config vitest.db.config.ts",
     "record:ogrip": "tsx scripts/record-ogrip-fixtures.ts",
+    "record:report": "tsx scripts/record-report-fixtures.ts",
     "generate:id-formats": "tsx scripts/generate-parcel-id-formats.ts && prettier --write src/parcels/parcelIdFormats.ts",
     "generate:places": "tsx scripts/generate-ohio-places.ts && prettier --write src/parcels/ohioPlaces.ts",
     "lint": "pnpm -w exec eslint backend",

@@ -1,0 +1,311 @@
+{
+  "scenario": "licking-outside",
+  "parcelKey": "ohio:39089:00100000601000",
+  "recordedAt": "2026-11-17T01:19:09.774Z",
+  "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6028371%2C40.1984799%5D%2C%5B-82.6010262%2C40.1980867%5D%2C%5B-82.6018498%2C40.1963872%5D%2C%5B-82.6019529%2C40.1964674%5D%2C%5B-82.6024723%2C40.1968835%5D%2C%5B-82.6029132%2C40.1972693%5D%2C%5B-82.6028371%2C40.1984799%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=STUDY_ID&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "STUDY_ID",
+        "fieldAliases": {
+          "STUDY_ID": "STUDY_ID"
+        },
+        "fields": [
+          {
+            "name": "STUDY_ID",
+            "type": "esriFieldTypeString",
+            "alias": "STUDY_ID",
+            "length": 6
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "STUDY_ID": "39089C"
+            }
+          },
+          {
+            "attributes": {
+              "STUDY_ID": "39089C"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6028371%2C40.1984799%5D%2C%5B-82.6010262%2C40.1980867%5D%2C%5B-82.6018498%2C40.1963872%5D%2C%5B-82.6019529%2C40.1964674%5D%2C%5B-82.6024723%2C40.1968835%5D%2C%5B-82.6029132%2C40.1972693%5D%2C%5B-82.6028371%2C40.1984799%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=CASE_NO%2CEFF_DATE%2CSTATUS&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "CASE_NO",
+        "fieldAliases": {
+          "CASE_NO": "CASE_NO",
+          "EFF_DATE": "EFF_DATE",
+          "STATUS": "STATUS"
+        },
+        "fields": [
+          {
+            "name": "CASE_NO",
+            "type": "esriFieldTypeString",
+            "alias": "CASE_NO",
+            "length": 13
+          },
+          {
+            "name": "EFF_DATE",
+            "type": "esriFieldTypeDate",
+            "alias": "EFF_DATE",
+            "length": 8
+          },
+          {
+            "name": "STATUS",
+            "type": "esriFieldTypeString",
+            "alias": "STATUS",
+            "length": 12
+          }
+        ],
+        "features": []
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6028371%2C40.1984799%5D%2C%5B-82.6010262%2C40.1980867%5D%2C%5B-82.6018498%2C40.1963872%5D%2C%5B-82.6019529%2C40.1964674%5D%2C%5B-82.6024723%2C40.1968835%5D%2C%5B-82.6029132%2C40.1972693%5D%2C%5B-82.6028371%2C40.1984799%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=FLD_ZONE%2CZONE_SUBTY%2CSFHA_TF&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "FLD_AR_ID",
+        "fieldAliases": {
+          "FLD_ZONE": "FLD_ZONE",
+          "ZONE_SUBTY": "ZONE_SUBTY",
+          "SFHA_TF": "SFHA_TF"
+        },
+        "fields": [
+          {
+            "name": "FLD_ZONE",
+            "type": "esriFieldTypeString",
+            "alias": "FLD_ZONE",
+            "length": 17
+          },
+          {
+            "name": "ZONE_SUBTY",
+            "type": "esriFieldTypeString",
+            "alias": "ZONE_SUBTY",
+            "length": 76
+          },
+          {
+            "name": "SFHA_TF",
+            "type": "esriFieldTypeString",
+            "alias": "SFHA_TF",
+            "length": 1
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "FLD_ZONE": "X",
+              "ZONE_SUBTY": "AREA OF MINIMAL FLOOD HAZARD",
+              "SFHA_TF": "F"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6028371%2C40.1984799%5D%2C%5B-82.6010262%2C40.1980867%5D%2C%5B-82.6018498%2C40.1963872%5D%2C%5B-82.6019529%2C40.1964674%5D%2C%5B-82.6024723%2C40.1968835%5D%2C%5B-82.6029132%2C40.1972693%5D%2C%5B-82.6028371%2C40.1984799%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=FIRM_PAN%2CEFF_DATE&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "DFIRM_ID",
+        "fieldAliases": {
+          "FIRM_PAN": "FIRM_PAN",
+          "EFF_DATE": "EFF_DATE"
+        },
+        "fields": [
+          {
+            "name": "FIRM_PAN",
+            "type": "esriFieldTypeString",
+            "alias": "FIRM_PAN",
+            "length": 11
+          },
+          {
+            "name": "EFF_DATE",
+            "type": "esriFieldTypeDate",
+            "alias": "EFF_DATE",
+            "length": 8
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "FIRM_PAN": "39089C0155J",
+              "EFF_DATE": 1426464000000
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Licking%27+AND+LocalParcelID%3D%2700100000601000%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "status": 200,
+      "body": {
+        "type": "FeatureCollection",
+        "crs": {
+          "type": "name",
+          "properties": {
+            "name": "EPSG:4326"
+          }
+        },
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [-82.6028371, 40.1984799],
+                  [-82.6010262, 40.1980867],
+                  [-82.6018498, 40.1963872],
+                  [-82.6019529, 40.1964674],
+                  [-82.6024723, 40.1968835],
+                  [-82.6029132, 40.1972693],
+                  [-82.6028371, 40.1984799]
+                ]
+              ]
+            },
+            "properties": {
+              "County": "Licking",
+              "LocalParcelID": "00100000601000",
+              "StateParcelID": "39089-00100000601000",
+              "SitusAddressAll": "10034 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+              "LandArea": 5.61
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "apiResponse": {
+    "status": 200,
+    "body": {
+      "parcelKey": "ohio:39089:00100000601000",
+      "generatedAt": "2026-11-17T01:19:09.774Z",
+      "coverage": "partial",
+      "biggestOpenQuestion": "access",
+      "checks": [
+        {
+          "kind": "zoning",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No zoning record has been checked for this lot yet.",
+          "limitation": "GroundTruth has no zoning source for Licking County, so it cannot say which district applies or what may be built here.",
+          "responsibleParty": {
+            "role": "Zoning office for the township, city, or village that contains the lot"
+          },
+          "nextAction": "Ask the zoning office that covers this lot which district applies and whether it allows what you plan to build."
+        },
+        {
+          "kind": "flood",
+          "status": "evidenceFound",
+          "finding": "FEMA's flood map puts this lot in Zone X (area of minimal flood hazard). No part of it is mapped in a Special Flood Hazard Area.",
+          "limitation": "FEMA's zone lines and the parcel lines come from different maps, so the edges may not line up exactly. Being outside the mapped floodplain does not mean the lot never floods. A flood zone is not a flood-insurance determination or a building permit.",
+          "sources": [
+            {
+              "authority": "FEMA",
+              "title": "National Flood Hazard Layer: flood hazard zones",
+              "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+              "retrievedAt": "2026-11-17T01:19:09.774Z"
+            },
+            {
+              "authority": "FEMA",
+              "title": "Flood Insurance Rate Map panel 39089C0155J",
+              "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
+              "retrievedAt": "2026-11-17T01:19:09.774Z",
+              "effectiveDate": "2015-03-16"
+            }
+          ],
+          "responsibleParty": {
+            "role": "FEMA flood map",
+            "organization": "FEMA Flood Map Service Center",
+            "publicContactUrl": "https://msc.fema.gov/portal/home"
+          },
+          "nextAction": "Check the current map for this lot on FEMA's Flood Map Service Center before closing; a lender may still order its own flood determination."
+        },
+        {
+          "kind": "access",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No record of legal road access has been checked for this lot.",
+          "limitation": "A boundary that touches a road does not prove a legal right to use it, and a driveway needs its own approval.",
+          "responsibleParty": {
+            "role": "Title reviewer, then surveyor",
+            "organization": "Licking County Recorder"
+          },
+          "nextAction": "Ask a title company to search recorded access rights, and ask the road authority what a driveway permit needs."
+        },
+        {
+          "kind": "utilities",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No utility record has been checked for this lot.",
+          "limitation": "No conclusion either way: public water and sewer may reach the lot, or it may need a well and a septic system.",
+          "responsibleParty": {
+            "role": "Water and sewer utility for this area"
+          },
+          "nextAction": "Ask the utility that serves this area whether water and sewer reach the lot, and what connecting would cost."
+        },
+        {
+          "kind": "easements",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No search of recorded easements or restrictions is attached.",
+          "limitation": "Recorded easements, covenants, or restrictions can limit where and what you build. None are ruled in or out.",
+          "responsibleParty": {
+            "role": "Title reviewer",
+            "organization": "Licking County Recorder"
+          },
+          "nextAction": "Ask a title company to search the recorded documents for this parcel."
+        },
+        {
+          "kind": "sellerAuthority",
+          "status": "unknown",
+          "sources": [],
+          "finding": "The seller's right to sell this lot has not been verified.",
+          "limitation": "This report does not check ownership records or the seller's identity. Sellers who impersonate the real owner often target vacant land (see the linked ALTA guidance).",
+          "responsibleParty": {
+            "role": "Title reviewer",
+            "organization": "American Land Title Association (guidance)",
+            "publicContactUrl": "https://www.alta.org/file/ALTA-Seller-Impersonation-Handout"
+          },
+          "nextAction": "Have a title company confirm the owner of record and reach the owner through contact details it finds independently, not ones the seller supplied."
+        },
+        {
+          "kind": "survey",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No survey of this lot is attached.",
+          "limitation": "The boundary shown comes from Ohio's statewide parcel map (OGRIP), which is not a survey. The real corners and lines can differ.",
+          "responsibleParty": {
+            "role": "Licensed Ohio surveyor"
+          },
+          "nextAction": "Hire a licensed Ohio surveyor to locate the boundary before you close."
+        },
+        {
+          "kind": "septic",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No septic site review is on file for this lot.",
+          "limitation": "If public sewer does not reach the lot, a septic system needs a site and soil evaluation before anyone can say one will work.",
+          "responsibleParty": {
+            "role": "Local health district (sewage treatment systems)"
+          },
+          "nextAction": "If the lot has no sewer, ask the health district for a site and soil evaluation before you close."
+        }
+      ]
+    }
+  }
+}
