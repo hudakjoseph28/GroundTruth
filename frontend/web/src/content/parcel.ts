@@ -15,6 +15,8 @@ export const PARCEL_PAGE = {
   keyLabel: "Parcel key",
   county: (name: string) => `${name} County`,
   acres: (value: number) => `${value} acres`,
+  /** The OGRIP boundary's own area: a map measurement, not legal acreage. */
+  mappedAcres: (value: number) => `about ${value} acres, mapped`,
   missing: {
     title: "Parcel not found",
     body: "That link does not name an Ohio parcel. Search by parcel ID or street address instead.",

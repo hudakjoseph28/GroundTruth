@@ -1,7 +1,7 @@
 {
   "scenario": "wyandot-missing",
   "parcelKey": "ohio:39175:010025000000",
-  "recordedAt": "2026-11-17T01:19:11.193Z",
+  "recordedAt": "2026-11-18T20:14:07.258Z",
   "exchanges": [
     {
       "method": "POST",
@@ -131,7 +131,7 @@
     },
     {
       "method": "GET",
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Wyandot%27+AND+LocalParcelID%3D%27010025000000%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Wyandot%27+AND+LocalParcelID%3D%27010025000000%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
       "status": 200,
       "body": {
         "type": "FeatureCollection",
@@ -148,17 +148,50 @@
               "type": "Polygon",
               "coordinates": [
                 [
-                  [-83.1306816, 40.7331653],
-                  [-83.1307899, 40.7331646],
-                  [-83.1307868, 40.7341938],
-                  [-83.1306785, 40.7341946],
-                  [-83.1299632, 40.7341996],
-                  [-83.1299579, 40.7341996],
-                  [-83.1299507, 40.7341996],
-                  [-83.1299539, 40.7331704],
-                  [-83.1299611, 40.7331703],
-                  [-83.1299721, 40.7331703],
-                  [-83.1306816, 40.7331653]
+                  [
+                    -83.1306816,
+                    40.7331653
+                  ],
+                  [
+                    -83.1307899,
+                    40.7331646
+                  ],
+                  [
+                    -83.1307868,
+                    40.7341938
+                  ],
+                  [
+                    -83.1306785,
+                    40.7341946
+                  ],
+                  [
+                    -83.1299632,
+                    40.7341996
+                  ],
+                  [
+                    -83.1299579,
+                    40.7341996
+                  ],
+                  [
+                    -83.1299507,
+                    40.7341996
+                  ],
+                  [
+                    -83.1299539,
+                    40.7331704
+                  ],
+                  [
+                    -83.1299611,
+                    40.7331703
+                  ],
+                  [
+                    -83.1299721,
+                    40.7331703
+                  ],
+                  [
+                    -83.1306816,
+                    40.7331653
+                  ]
                 ]
               ]
             },
@@ -167,7 +200,8 @@
               "LocalParcelID": "010025000000",
               "StateParcelID": "39175-010025000000",
               "SitusAddressAll": "17859    TOWNSHIP HWY 148  ",
-              "LandArea": 2
+              "LandArea": 2,
+              "Shape__Area": 86921.20056152344
             }
           }
         ]
@@ -178,7 +212,7 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39175:010025000000",
-      "generatedAt": "2026-11-17T01:19:11.193Z",
+      "generatedAt": "2026-11-18T20:14:07.258Z",
       "coverage": "boundaryOnly",
       "biggestOpenQuestion": "access",
       "checks": [
@@ -203,13 +237,13 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: study availability",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0",
-              "retrievedAt": "2026-11-17T01:19:11.193Z"
+              "retrievedAt": "2026-11-18T20:14:07.258Z"
             },
             {
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-17T01:19:11.193Z"
+              "retrievedAt": "2026-11-18T20:14:07.258Z"
             }
           ],
           "responsibleParty": {

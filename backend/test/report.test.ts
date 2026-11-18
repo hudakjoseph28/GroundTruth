@@ -23,6 +23,11 @@ import {
   FCEDP_ZONING_LAYER,
   measure,
 } from "../src/reports/franklinZoning.js";
+import {
+  createFranklinAccessClient,
+  FCEO_ROAD_LAYER,
+  FRANKLIN_ROW_LAYER,
+} from "../src/reports/franklinAccess.js";
 import { prismaReportStore, type ReportStore } from "../src/reports/store.js";
 import { LIVE_REPORT_TTL_MS } from "../src/routes/report.js";
 import {
@@ -101,6 +106,9 @@ interface AppSetup {
   /** Franklin County zoning map; defaults to the replayed recording. */
   zoningFetch?: typeof fetch;
   zoningTimeoutMs?: number;
+  /** Franklin County right-of-way and road layers; defaults to the recording. */
+  accessFetch?: typeof fetch;
+  accessTimeoutMs?: number;
 }
 
 function appWith(setup: AppSetup) {
@@ -116,9 +124,14 @@ function appWith(setup: AppSetup) {
         fetch: setup.zoningFetch ?? setup.fetch,
         now,
       }),
+      access: createFranklinAccessClient({
+        fetch: setup.accessFetch ?? setup.fetch,
+        now,
+      }),
       store: setup.store ?? memoryStore(),
       floodTimeoutMs: setup.floodTimeoutMs ?? 1_000,
       zoningTimeoutMs: setup.zoningTimeoutMs ?? 1_000,
+      accessTimeoutMs: setup.accessTimeoutMs ?? 1_000,
       now,
     },
   });
@@ -148,7 +161,7 @@ afterEach(() => {
 });
 
 describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", () => {
-  it("builds the Franklin report: Zone X, dated FIRM panel and LOMRs, everything else unknown", async () => {
+  it("builds the Franklin report: Zone X with dated FIRM panel and LOMRs, mapped road access, the rest unknown", async () => {
     const { app, recording } = scenario("franklin-outside");
 
     const res = await request(app).get(
@@ -162,7 +175,8 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
       parcelKey: "ohio:39049:010-042534",
       generatedAt: recording.recordedAt,
       coverage: "partial",
-      biggestOpenQuestion: "access",
+      // Access has county evidence, so the first open question is septic.
+      biggestOpenQuestion: "septic",
     });
     expect(report.checks.map((check) => check.kind)).toEqual([
       "zoning",
@@ -212,20 +226,16 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
       }),
     ]);
 
+    expect(checkOf(report, "access").status).toBe("evidenceFound");
+
     for (const check of report.checks.filter(
-      (c) => c.kind !== "flood" && c.kind !== "zoning",
+      (c) => !["flood", "zoning", "access"].includes(c.kind),
     )) {
       expect(check.status).toBe("unknown");
       expect(check.sources).toEqual([]);
       expect(check.responsibleParty.role).not.toBe("");
       expect(check.nextAction).not.toBe("");
     }
-    expect(checkOf(report, "access").responsibleParty).toEqual({
-      role: "Title reviewer, then surveyor",
-      organization: "Franklin County Recorder",
-      publicContactUrl:
-        "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs",
-    });
   });
 
   it("builds the Licking report with its own FIRM date and no Franklin links", async () => {
@@ -452,8 +462,9 @@ describe("a slow or failed FEMA never breaks the report", () => {
     expect(report.checks.filter((c) => c.kind !== "flood")).toEqual(
       baseline.checks.filter((c) => c.kind !== "flood"),
     );
-    expect(report.coverage).toBe("boundaryOnly");
-    expect(report.biggestOpenQuestion).toBe("access");
+    // The county's access evidence still stands without FEMA.
+    expect(report.coverage).toBe("partial");
+    expect(report.biggestOpenQuestion).toBe("septic");
     expect(hangingFema).toHaveBeenCalled();
     expect(fetchImpl.mock.calls.some(([input]) => isFema(input))).toBe(false);
     // A timed-out report is not cached, so the next request asks FEMA again.
@@ -588,6 +599,7 @@ describe("report route errors", () => {
       ogrip: createOgripClient({ fetch: hanging, timeoutMs: 50 }),
       report: {
         fema: createFemaFloodClient({ fetch: hanging }),
+        access: createFranklinAccessClient({ fetch: hanging }),
         store: memoryStore(),
       },
     });
@@ -981,6 +993,248 @@ describe("Franklin County zoning queries", () => {
       const params = new URLSearchParams(request.requestBody);
       expect(params.get("spatialRel")).toBe("esriSpatialRelRelation");
       expect(params.get("relationParam")).toBe("T********");
+    }
+  });
+});
+
+describe("Franklin County road access, live from the county right-of-way and road layers", () => {
+  const RECORDER = {
+    organization: "Franklin County Recorder",
+    publicContactUrl:
+      "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs",
+  };
+
+  async function accessOf(name: ReportScenario, overrides = {}) {
+    const { app, recording, store } = scenario(name, overrides);
+    const res = await request(app).get(reportPath(REPORT_SCENARIOS[name]));
+    expect(res.status).toBe(200);
+    const report = res.body as ParcelReport;
+    return { report, access: checkOf(report, "access"), recording, store };
+  }
+
+  it("names the right-of-way a city lot touches: 84 W Dodridge St, a corner on Neil Ave", async () => {
+    const { report, access, recording } = await accessOf("franklin-outside");
+
+    expect(report).toEqual(recording.apiResponse.body);
+    expect(access).toEqual({
+      kind: "access",
+      status: "evidenceFound",
+      finding:
+        "This parcel touches the public right-of-way of W Dodridge St and Neil Ave in Franklin County's right-of-way layer. In the county engineer's road layer, the W Dodridge St centerline is about 9 m (28 ft) from the parcel.",
+      limitation:
+        "Touching a mapped right-of-way is not legal access. These layers do not show whether the lot has a recorded right to use the road, whether the road is built and maintained where the lot meets it, or whether a driveway would be permitted there.",
+      sources: [
+        {
+          authority: "Franklin County",
+          title:
+            "Tax parcel right-of-way layer: public road right-of-way within 1 m of the parcel",
+          url: FRANKLIN_ROW_LAYER,
+          retrievedAt: recording.recordedAt,
+        },
+        {
+          authority: "Franklin County Engineer",
+          title:
+            "Public road sections: W Dodridge St centerline about 9 m (28 ft) from the parcel",
+          url: FCEO_ROAD_LAYER,
+          retrievedAt: recording.recordedAt,
+        },
+      ],
+      responsibleParty: {
+        role: "Title reviewer, then the road authority",
+        ...RECORDER,
+      },
+      nextAction:
+        "Ask a title company to confirm the lot's recorded right to reach W Dodridge St, and ask the road authority (Columbus, per the county road layer) what a driveway permit needs.",
+    });
+  });
+
+  it("says when a rural lot runs to the road's centerline (Harrisburg Pike)", async () => {
+    const { access } = await accessOf("franklin-split");
+
+    expect(access.status).toBe("evidenceFound");
+    expect(access.finding).toBe(
+      "This parcel touches the public right-of-way of Harrisburg Pike in Franklin County's right-of-way layer. In the county engineer's road layer, the Harrisburg Pike centerline meets the parcel boundary.",
+    );
+    expect(access.nextAction).toContain(
+      "(Pleasant Twp, per the county road layer)",
+    );
+  });
+
+  it("lists every road whose right-of-way the lot touches (0 Groveport Rd)", async () => {
+    const { access } = await accessOf("franklin-crossing");
+
+    expect(access.status).toBe("evidenceFound");
+    expect(access.finding).toMatch(
+      /^This parcel touches the public right-of-way of Old Rathmell Ct and Samson Frontage Rd /,
+    );
+  });
+
+  it("needs review when the touching right-of-way has no road through it, and flags a nearby interstate", async () => {
+    const { access } = await accessOf("franklin-floodway");
+
+    expect(access.status).toBe("needsReview");
+    expect(access.finding).toBe(
+      "A public road right-of-way (recorded as \"Highway\") touches this parcel in Franklin County's right-of-way layer, but the county engineer's road layer shows no road centerline running through it beside the parcel. It may be land set aside for a road that was never built, or the edge of a wider road corridor. The nearest mapped road, I-270, is about 43 m (141 ft) away. The road layer lists it in the federal highway system (interstates and expressways), and those are usually limited-access, with no driveways.",
+    );
+    expect(access.responsibleParty).toEqual({
+      role: "Title reviewer, then surveyor",
+      ...RECORDER,
+    });
+  });
+
+  it("agrees with the seeded golden report: no right-of-way touches 230-000918, Seaman Rd about 106 m away", async () => {
+    const { access, report, recording } = await accessOf("franklin-golden");
+
+    expect(access).toEqual({
+      kind: "access",
+      status: "needsReview",
+      finding:
+        "No public road right-of-way touches this parcel in Franklin County's right-of-way layer. The nearest mapped road, Seaman Rd, is about 106 m (347 ft) away in the county engineer's road layer.",
+      limitation:
+        "These layers show mapped right-of-way and road centerlines. They do not show recorded easements, private lanes, or other legal access, so they cannot establish whether the parcel has access.",
+      sources: [
+        {
+          authority: "Franklin County",
+          title:
+            "Tax parcel right-of-way layer: no public road right-of-way touches the parcel",
+          url: FRANKLIN_ROW_LAYER,
+          retrievedAt: recording.recordedAt,
+        },
+        {
+          authority: "Franklin County Engineer",
+          title:
+            "Public road sections: nearest road Seaman Rd, about 106 m (347 ft)",
+          url: FCEO_ROAD_LAYER,
+          retrievedAt: recording.recordedAt,
+        },
+      ],
+      responsibleParty: { role: "Title reviewer, then surveyor", ...RECORDER },
+      nextAction:
+        "Ask a title company to search for recorded legal access to Seaman Rd or another public road, such as an easement across a neighboring lot, and have a surveyor show where it runs.",
+    });
+    expect(report.biggestOpenQuestion).toBe("access");
+
+    // Same status, layers, and road as the hand-verified golden check. The
+    // golden card rounds to 107 m; QA measured 105.75 m (DemoScript-Parcel).
+    const seeded = checkOf(goldenReport, "access");
+    expect(seeded.status).toBe(access.status);
+    expect(seeded.finding).toContain(
+      "No road right-of-way touches this parcel",
+    );
+    expect(seeded.finding).toContain("Seaman Rd");
+    expect(seeded.sources.map((s) => s.url)).toEqual(
+      expect.arrayContaining(access.sources.map((s) => s.url)),
+    );
+  });
+
+  it("leaves the seeded golden report exactly as verified", async () => {
+    const accessFetch = vi.fn<typeof fetch>();
+    const res = await request(
+      appWith({
+        fetch: vi.fn<typeof fetch>(),
+        accessFetch,
+        at: new Date(),
+        store: memoryStore([goldenReport]),
+      }),
+    ).get(reportPath(goldenParcel.key));
+
+    expect(res.body).toEqual(goldenReport);
+    expect(accessFetch).not.toHaveBeenCalled();
+    expect(checkOf(res.body as ParcelReport, "access").finding).toBe(
+      "No road right-of-way touches this parcel in Franklin County's right-of-way layer. The nearest mapped road, Seaman Rd, is about 107 m away in the county engineer's road layer. The Franklin County Auditor lists the parcel as \"SEAMAN RD REAR\".",
+    );
+  });
+
+  it("keeps the report at 200 with access unknown when the county layers time out", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const baseline = load("franklin-outside").apiResponse.body as ParcelReport;
+    const hanging = vi.fn<typeof fetch>(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+
+    const started = Date.now();
+    const { report, access, store } = await accessOf("franklin-outside", {
+      accessFetch: hanging,
+      accessTimeoutMs: 200,
+    });
+
+    expect(Date.now() - started).toBeLessThan(2_000);
+    expect(access).toEqual({
+      kind: "access",
+      status: "unknown",
+      finding:
+        "Franklin County's road maps did not answer within 0.2 seconds, so road access was not checked.",
+      limitation: "No access conclusion either way.",
+      sources: [],
+      responsibleParty: { role: "Title reviewer, then surveyor", ...RECORDER },
+      nextAction:
+        "Reload the report to ask the county maps again, or ask a title company to search recorded access rights.",
+    });
+    expect(report.checks.filter((c) => c.kind !== "access")).toEqual(
+      baseline.checks.filter((c) => c.kind !== "access"),
+    );
+    expect(report.biggestOpenQuestion).toBe("access");
+    expect(hanging).toHaveBeenCalled();
+    // A timed-out report is not cached, so the next request asks again.
+    expect(store.write).not.toHaveBeenCalled();
+  });
+
+  it("says the county layers could not be reached when one answers with an ArcGIS error", async () => {
+    const recording = load("franklin-outside");
+    const replayed = replay(recording);
+    const { access } = await accessOf("franklin-outside", {
+      accessFetch: vi.fn<typeof fetch>(async (input, init) =>
+        String(input).startsWith(FCEO_ROAD_LAYER)
+          ? new Response(JSON.stringify({ error: { code: 500, message: "x" } }))
+          : replayed(input, init),
+      ),
+    });
+
+    expect(access.status).toBe("unknown");
+    expect(access.finding).toBe(
+      "Franklin County's road maps could not be reached, so road access was not checked.",
+    );
+  });
+
+  it("does not ask Franklin County's layers about a parcel in another county", async () => {
+    const accessFetch = vi.fn<typeof fetch>();
+    const { access } = await accessOf("licking-outside", { accessFetch });
+
+    expect(accessFetch).not.toHaveBeenCalled();
+    expect(access.status).toBe("unknown");
+    expect(access.finding).toBe(
+      "No record of legal road access has been checked for this lot.",
+    );
+  });
+
+  it("queries public road right-of-way within 1 m, and roads within 200 m before widening", () => {
+    for (const name of [
+      "franklin-outside",
+      "franklin-golden",
+      "franklin-split",
+    ] as const) {
+      const exchanges = load(name).exchanges;
+      const row = exchanges
+        .filter((e) => e.url === `${FRANKLIN_ROW_LAYER}/query`)
+        .map((e) => new URLSearchParams(e.requestBody));
+      const roads = exchanges
+        .filter((e) => e.url === `${FCEO_ROAD_LAYER}/query`)
+        .map((e) => new URLSearchParams(e.requestBody));
+      expect(row).toHaveLength(1);
+      expect(row[0]?.get("where")).toContain("'Plat - R/W'");
+      expect(row[0]?.get("where")).not.toContain("Historic");
+      expect(row[0]?.get("distance")).toBe("1");
+      expect(row[0]?.get("units")).toBe("esriSRUnit_Meter");
+      // Each recorded lot has a road within 200 m, so no wider search ran.
+      expect(roads.map((p) => p.get("distance"))).toEqual(["200"]);
+      expect(roads[0]?.get("where")).toBe(
+        "RoadClass IS NULL OR RoadClass NOT IN ('Private','Ramp')",
+      );
     }
   });
 });

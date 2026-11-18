@@ -1,6 +1,6 @@
 /**
- * Records live OGRIP, FEMA NFHL, and Franklin County zoning responses for
- * the report route tests.
+ * Records live OGRIP, FEMA NFHL, and Franklin County zoning, right-of-way,
+ * and road responses for the report route tests.
  *
  *   pnpm --filter @groundtruth/backend record:report                   # every scenario
  *   pnpm --filter @groundtruth/backend record:report franklin-floodway # one scenario
@@ -26,6 +26,7 @@ import {
   createFemaFloodClient,
   NFHL_OHIO_STUDIES_QUERY,
 } from "../src/reports/femaFlood.js";
+import { createFranklinAccessClient } from "../src/reports/franklinAccess.js";
 import { createFranklinZoningClient } from "../src/reports/franklinZoning.js";
 import {
   REPORT_SCENARIOS,
@@ -73,6 +74,11 @@ async function record(name: ReportScenario): Promise<void> {
         now: () => recordedAt,
       }),
       zoningTimeoutMs: 30_000,
+      access: createFranklinAccessClient({
+        fetch: recordingFetch,
+        now: () => recordedAt,
+      }),
+      accessTimeoutMs: 30_000,
       now: () => recordedAt,
       store: { read: async () => null, write: async () => {} },
     },
@@ -103,7 +109,7 @@ async function record(name: ReportScenario): Promise<void> {
   console.log(
     `${name}: ${res.status} in ${Date.now() - started} ms, ${exchanges.length} upstream calls`,
   );
-  for (const kind of ["flood", "zoning"]) {
+  for (const kind of ["flood", "zoning", "access"]) {
     if (finding(kind)) console.log(`  ${kind}: ${finding(kind)}`);
   }
 }

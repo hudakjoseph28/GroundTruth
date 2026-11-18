@@ -1,8 +1,761 @@
 {
   "scenario": "franklin-outside",
   "parcelKey": "ohio:39049:010-042534",
-  "recordedAt": "2026-11-17T04:55:15.003Z",
+  "recordedAt": "2026-11-18T20:14:04.743Z",
   "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://gis.franklincountyohio.gov/hosting/rest/services/ParcelFeatures/Parcel_Features/MapServer/6/query",
+      "requestBody": "where=TYPE+IN+%28%27Public+Right+Of+Way%27%2C%27Plat+-+R%2FW%27%2C%27Deed+-+R%2FW%27%2C%27Road+Record%27%2C%27Prescriptive+Right+Of+Way%27%2C%27Court+-+R%2FW%27%2C%27Highway%27%29&geometry=%7B%22rings%22%3A%5B%5B%5B-83.0142782%2C40.0164132%5D%2C%5B-83.014393%2C40.0163945%5D%2C%5B-83.0144793%2C40.0167287%5D%2C%5B-83.014367%2C40.0167465%5D%2C%5B-83.0143261%2C40.016593%5D%2C%5B-83.0142782%2C40.0164132%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&distance=1&outFields=TYPE&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&units=esriSRUnit_Meter&returnGeometry=true&outSR=4326&geometryPrecision=7&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "Name",
+        "fieldAliases": {
+          "TYPE": "TYPE"
+        },
+        "geometryType": "esriGeometryPolygon",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "TYPE",
+            "type": "esriFieldTypeString",
+            "alias": "TYPE",
+            "length": 50
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "TYPE": "Plat - R/W"
+            },
+            "geometry": {
+              "rings": [
+                [
+                  [
+                    -83.0142519,
+                    40.0167649
+                  ],
+                  [
+                    -83.014367,
+                    40.0167465
+                  ],
+                  [
+                    -83.0144793,
+                    40.0167287
+                  ],
+                  [
+                    -83.0149394,
+                    40.0166554
+                  ],
+                  [
+                    -83.0149475,
+                    40.0166932
+                  ],
+                  [
+                    -83.0148912,
+                    40.0167023
+                  ],
+                  [
+                    -83.0142621,
+                    40.0168033
+                  ],
+                  [
+                    -83.0142519,
+                    40.0167649
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "attributes": {
+              "TYPE": "Plat - R/W"
+            },
+            "geometry": {
+              "rings": [
+                [
+                  [
+                    -83.0149323,
+                    40.0149803
+                  ],
+                  [
+                    -83.0151075,
+                    40.0156439
+                  ],
+                  [
+                    -83.0150304,
+                    40.0156563
+                  ],
+                  [
+                    -83.0144732,
+                    40.015746
+                  ],
+                  [
+                    -83.0143918,
+                    40.0157554
+                  ],
+                  [
+                    -83.0139996,
+                    40.0158176
+                  ],
+                  [
+                    -83.014018,
+                    40.0158985
+                  ],
+                  [
+                    -83.0140282,
+                    40.0159305
+                  ],
+                  [
+                    -83.0141062,
+                    40.0162423
+                  ],
+                  [
+                    -83.0141131,
+                    40.0162694
+                  ],
+                  [
+                    -83.0141485,
+                    40.0162638
+                  ],
+                  [
+                    -83.0143254,
+                    40.0162353
+                  ],
+                  [
+                    -83.0151491,
+                    40.0161029
+                  ],
+                  [
+                    -83.0152244,
+                    40.0160908
+                  ],
+                  [
+                    -83.0152673,
+                    40.0162531
+                  ],
+                  [
+                    -83.0151953,
+                    40.0162641
+                  ],
+                  [
+                    -83.0151839,
+                    40.0162659
+                  ],
+                  [
+                    -83.0141986,
+                    40.0164261
+                  ],
+                  [
+                    -83.0141637,
+                    40.0164317
+                  ],
+                  [
+                    -83.014171,
+                    40.01646
+                  ],
+                  [
+                    -83.0142519,
+                    40.0167649
+                  ],
+                  [
+                    -83.0142757,
+                    40.016854
+                  ],
+                  [
+                    -83.0144366,
+                    40.0174572
+                  ],
+                  [
+                    -83.0122707,
+                    40.017392
+                  ],
+                  [
+                    -83.0121291,
+                    40.0173879
+                  ],
+                  [
+                    -83.0119419,
+                    40.0167023
+                  ],
+                  [
+                    -83.0116367,
+                    40.0155886
+                  ],
+                  [
+                    -83.0113394,
+                    40.0144741
+                  ],
+                  [
+                    -83.010896,
+                    40.012779
+                  ],
+                  [
+                    -83.0107648,
+                    40.0123007
+                  ],
+                  [
+                    -83.0108974,
+                    40.0123061
+                  ],
+                  [
+                    -83.0108998,
+                    40.0123137
+                  ],
+                  [
+                    -83.0110307,
+                    40.012809
+                  ],
+                  [
+                    -83.0110332,
+                    40.0128182
+                  ],
+                  [
+                    -83.0110437,
+                    40.012858
+                  ],
+                  [
+                    -83.0110558,
+                    40.0129038
+                  ],
+                  [
+                    -83.0110838,
+                    40.0130096
+                  ],
+                  [
+                    -83.0111182,
+                    40.0131399
+                  ],
+                  [
+                    -83.0111495,
+                    40.0132583
+                  ],
+                  [
+                    -83.0116762,
+                    40.0131737
+                  ],
+                  [
+                    -83.0117461,
+                    40.0131632
+                  ],
+                  [
+                    -83.0123559,
+                    40.0130673
+                  ],
+                  [
+                    -83.0125777,
+                    40.0130323
+                  ],
+                  [
+                    -83.0130252,
+                    40.0129619
+                  ],
+                  [
+                    -83.0129038,
+                    40.012522
+                  ],
+                  [
+                    -83.0128785,
+                    40.01243
+                  ],
+                  [
+                    -83.0128639,
+                    40.0123889
+                  ],
+                  [
+                    -83.0130889,
+                    40.012397
+                  ],
+                  [
+                    -83.013231,
+                    40.0129308
+                  ],
+                  [
+                    -83.0142758,
+                    40.0127643
+                  ],
+                  [
+                    -83.0141935,
+                    40.0124487
+                  ],
+                  [
+                    -83.0142638,
+                    40.0124478
+                  ],
+                  [
+                    -83.0146811,
+                    40.0140272
+                  ],
+                  [
+                    -83.0135856,
+                    40.0141997
+                  ],
+                  [
+                    -83.0135681,
+                    40.0142025
+                  ],
+                  [
+                    -83.0135788,
+                    40.0142429
+                  ],
+                  [
+                    -83.0136864,
+                    40.0146531
+                  ],
+                  [
+                    -83.0137011,
+                    40.0147043
+                  ],
+                  [
+                    -83.0138215,
+                    40.0151559
+                  ],
+                  [
+                    -83.0149323,
+                    40.0149803
+                  ]
+                ],
+                [
+                  [
+                    -83.0134619,
+                    40.016539
+                  ],
+                  [
+                    -83.0134413,
+                    40.0164605
+                  ],
+                  [
+                    -83.0127456,
+                    40.0165727
+                  ],
+                  [
+                    -83.012765,
+                    40.0166479
+                  ],
+                  [
+                    -83.0125337,
+                    40.0166839
+                  ],
+                  [
+                    -83.0124975,
+                    40.0166895
+                  ],
+                  [
+                    -83.0121188,
+                    40.0167484
+                  ],
+                  [
+                    -83.0120713,
+                    40.0167558
+                  ],
+                  [
+                    -83.0120997,
+                    40.0168635
+                  ],
+                  [
+                    -83.0121954,
+                    40.0172262
+                  ],
+                  [
+                    -83.0122505,
+                    40.017228
+                  ],
+                  [
+                    -83.013639,
+                    40.0172735
+                  ],
+                  [
+                    -83.0136747,
+                    40.0172706
+                  ],
+                  [
+                    -83.0138068,
+                    40.0172753
+                  ],
+                  [
+                    -83.0139318,
+                    40.0172797
+                  ],
+                  [
+                    -83.0140248,
+                    40.017283
+                  ],
+                  [
+                    -83.0141711,
+                    40.0172882
+                  ],
+                  [
+                    -83.0140565,
+                    40.016855
+                  ],
+                  [
+                    -83.0140481,
+                    40.0168234
+                  ],
+                  [
+                    -83.014039,
+                    40.0167988
+                  ],
+                  [
+                    -83.0139526,
+                    40.0164725
+                  ],
+                  [
+                    -83.0139515,
+                    40.0164615
+                  ],
+                  [
+                    -83.013842,
+                    40.0164786
+                  ],
+                  [
+                    -83.0137243,
+                    40.016497
+                  ],
+                  [
+                    -83.0136013,
+                    40.0165162
+                  ],
+                  [
+                    -83.0134854,
+                    40.0165344
+                  ],
+                  [
+                    -83.0134619,
+                    40.016539
+                  ]
+                ],
+                [
+                  [
+                    -83.0120202,
+                    40.0165948
+                  ],
+                  [
+                    -83.0139092,
+                    40.0162992
+                  ],
+                  [
+                    -83.0137856,
+                    40.0158514
+                  ],
+                  [
+                    -83.0119116,
+                    40.0161465
+                  ],
+                  [
+                    -83.0120202,
+                    40.0165948
+                  ]
+                ],
+                [
+                  [
+                    -83.0124052,
+                    40.0155473
+                  ],
+                  [
+                    -83.012335,
+                    40.0155599
+                  ],
+                  [
+                    -83.0117783,
+                    40.0156455
+                  ],
+                  [
+                    -83.0118998,
+                    40.0160958
+                  ],
+                  [
+                    -83.0137738,
+                    40.0157985
+                  ],
+                  [
+                    -83.013658,
+                    40.015351
+                  ],
+                  [
+                    -83.013235,
+                    40.0154173
+                  ],
+                  [
+                    -83.013106,
+                    40.0154375
+                  ],
+                  [
+                    -83.0124052,
+                    40.0155473
+                  ]
+                ],
+                [
+                  [
+                    -83.0136157,
+                    40.0151887
+                  ],
+                  [
+                    -83.0134953,
+                    40.0147382
+                  ],
+                  [
+                    -83.0122033,
+                    40.0149401
+                  ],
+                  [
+                    -83.0121406,
+                    40.0149503
+                  ],
+                  [
+                    -83.011616,
+                    40.0150332
+                  ],
+                  [
+                    -83.0117371,
+                    40.0154857
+                  ],
+                  [
+                    -83.0122617,
+                    40.0154027
+                  ],
+                  [
+                    -83.0123209,
+                    40.0153934
+                  ],
+                  [
+                    -83.0136157,
+                    40.0151887
+                  ]
+                ],
+                [
+                  [
+                    -83.013361,
+                    40.0142355
+                  ],
+                  [
+                    -83.0133089,
+                    40.0142438
+                  ],
+                  [
+                    -83.0131733,
+                    40.0142651
+                  ],
+                  [
+                    -83.0130671,
+                    40.0142818
+                  ],
+                  [
+                    -83.0128734,
+                    40.0143123
+                  ],
+                  [
+                    -83.0127675,
+                    40.0143289
+                  ],
+                  [
+                    -83.0114838,
+                    40.0145309
+                  ],
+                  [
+                    -83.0116031,
+                    40.0149825
+                  ],
+                  [
+                    -83.0121291,
+                    40.0148973
+                  ],
+                  [
+                    -83.0122004,
+                    40.0148866
+                  ],
+                  [
+                    -83.0134806,
+                    40.0146833
+                  ],
+                  [
+                    -83.0133719,
+                    40.0142759
+                  ],
+                  [
+                    -83.013361,
+                    40.0142355
+                  ]
+                ],
+                [
+                  [
+                    -83.0133154,
+                    40.0140719
+                  ],
+                  [
+                    -83.0131979,
+                    40.0136247
+                  ],
+                  [
+                    -83.0125025,
+                    40.0137334
+                  ],
+                  [
+                    -83.0113257,
+                    40.0139172
+                  ],
+                  [
+                    -83.0114305,
+                    40.014328
+                  ],
+                  [
+                    -83.0114407,
+                    40.0143684
+                  ],
+                  [
+                    -83.0114932,
+                    40.0143601
+                  ],
+                  [
+                    -83.0133154,
+                    40.0140719
+                  ]
+                ],
+                [
+                  [
+                    -83.0117537,
+                    40.0133298
+                  ],
+                  [
+                    -83.0111864,
+                    40.013416
+                  ],
+                  [
+                    -83.0113093,
+                    40.0138646
+                  ],
+                  [
+                    -83.0118716,
+                    40.0137754
+                  ],
+                  [
+                    -83.0119066,
+                    40.0137692
+                  ],
+                  [
+                    -83.0131857,
+                    40.0135706
+                  ],
+                  [
+                    -83.0130621,
+                    40.0131237
+                  ],
+                  [
+                    -83.0117891,
+                    40.013325
+                  ],
+                  [
+                    -83.0117537,
+                    40.0133298
+                  ]
+                ],
+                [
+                  [
+                    -83.0143155,
+                    40.0129288
+                  ],
+                  [
+                    -83.0136676,
+                    40.0130297
+                  ],
+                  [
+                    -83.0136245,
+                    40.0130395
+                  ],
+                  [
+                    -83.0132707,
+                    40.0130926
+                  ],
+                  [
+                    -83.0133936,
+                    40.0135382
+                  ],
+                  [
+                    -83.0137441,
+                    40.0134823
+                  ],
+                  [
+                    -83.0137823,
+                    40.0134774
+                  ],
+                  [
+                    -83.0144313,
+                    40.013373
+                  ],
+                  [
+                    -83.0143155,
+                    40.0129288
+                  ]
+                ],
+                [
+                  [
+                    -83.0145643,
+                    40.0138756
+                  ],
+                  [
+                    -83.0144449,
+                    40.0134279
+                  ],
+                  [
+                    -83.0137952,
+                    40.0135276
+                  ],
+                  [
+                    -83.0137577,
+                    40.0135333
+                  ],
+                  [
+                    -83.0134029,
+                    40.0135908
+                  ],
+                  [
+                    -83.0135223,
+                    40.0140394
+                  ],
+                  [
+                    -83.0138807,
+                    40.0139871
+                  ],
+                  [
+                    -83.0139135,
+                    40.0139795
+                  ],
+                  [
+                    -83.0145643,
+                    40.0138756
+                  ]
+                ],
+                [
+                  [
+                    -83.0139849,
+                    40.0157655
+                  ],
+                  [
+                    -83.0150155,
+                    40.0156017
+                  ],
+                  [
+                    -83.0149051,
+                    40.0151548
+                  ],
+                  [
+                    -83.0138673,
+                    40.0153177
+                  ],
+                  [
+                    -83.0139849,
+                    40.0157655
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
     {
       "method": "POST",
       "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0/query",
@@ -195,8 +948,482 @@
       }
     },
     {
+      "method": "POST",
+      "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEO_Road_Sections_Public/FeatureServer/0/query",
+      "requestBody": "where=RoadClass+IS+NULL+OR+RoadClass+NOT+IN+%28%27Private%27%2C%27Ramp%27%29&geometry=%7B%22rings%22%3A%5B%5B%5B-83.0142782%2C40.0164132%5D%2C%5B-83.014393%2C40.0163945%5D%2C%5B-83.0144793%2C40.0167287%5D%2C%5B-83.014367%2C40.0167465%5D%2C%5B-83.0143261%2C40.016593%5D%2C%5B-83.0142782%2C40.0164132%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&distance=200&outFields=MSAG_LSN%2CRoadClass%2CJurisdiction&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&units=esriSRUnit_Meter&returnGeometry=true&outSR=4326&geometryPrecision=7&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "GlobalID",
+        "geometryProperties": {
+          "shapeLengthFieldName": "Shape__Length",
+          "units": "esriFeet"
+        },
+        "geometryType": "esriGeometryPolyline",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "MSAG_LSN",
+            "type": "esriFieldTypeString",
+            "alias": "MSAG_LSN",
+            "sqlType": "sqlTypeOther",
+            "length": 254,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "RoadClass",
+            "type": "esriFieldTypeString",
+            "alias": "RoadClass",
+            "sqlType": "sqlTypeOther",
+            "length": 254,
+            "domain": {
+              "type": "codedValue",
+              "name": "RoadBase",
+              "mergePolicy": "esriMPTDefaultValue",
+              "splitPolicy": "esriSPTDuplicate",
+              "codedValues": [
+                {
+                  "name": "Federal Highway System",
+                  "code": "Federal Highway System"
+                },
+                {
+                  "name": "State Highway System",
+                  "code": "State Highway System"
+                },
+                {
+                  "name": "COUNTY",
+                  "code": "COUNTY"
+                },
+                {
+                  "name": "TWP SUB",
+                  "code": "TWP SUB"
+                },
+                {
+                  "name": "TWP ALLEY",
+                  "code": "TWP ALLEY"
+                },
+                {
+                  "name": "Retired",
+                  "code": "Retired"
+                },
+                {
+                  "name": "Ramp",
+                  "code": "Ramp"
+                },
+                {
+                  "name": "City Major",
+                  "code": "City Major"
+                },
+                {
+                  "name": "COUNTY DUAL",
+                  "code": "COUNTY DUAL"
+                },
+                {
+                  "name": "TOWNSHIP DUAL",
+                  "code": "TOWNSHIP DUAL"
+                },
+                {
+                  "name": "Private",
+                  "code": "Private"
+                },
+                {
+                  "name": "Out of Area",
+                  "code": "Out of Area"
+                },
+                {
+                  "name": "City Subdivision",
+                  "code": "City Subdivision"
+                },
+                {
+                  "name": "State Minor",
+                  "code": "State Minor"
+                },
+                {
+                  "name": "TWP",
+                  "code": "TWP"
+                },
+                {
+                  "name": "MOD",
+                  "code": "MOD"
+                },
+                {
+                  "name": "NEW",
+                  "code": "NEW"
+                },
+                {
+                  "name": "REMOVE",
+                  "code": "REMOVE"
+                },
+                {
+                  "name": "Other",
+                  "code": "Other"
+                }
+              ]
+            },
+            "defaultValue": null
+          },
+          {
+            "name": "Jurisdiction",
+            "type": "esriFieldTypeString",
+            "alias": "Jurisdiction",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "MSAG_LSN": "NEIL AVE",
+              "RoadClass": "City Subdivision",
+              "Jurisdiction": "Columbus"
+            },
+            "geometry": {
+              "paths": [
+                [
+                  [
+                    -83.0142762,
+                    40.0173154
+                  ],
+                  [
+                    -83.0142575,
+                    40.0172501
+                  ],
+                  [
+                    -83.0141413,
+                    40.0168029
+                  ],
+                  [
+                    -83.0140297,
+                    40.0163732
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "attributes": {
+              "MSAG_LSN": "NEIL AVE",
+              "RoadClass": "City Major",
+              "Jurisdiction": "Columbus"
+            },
+            "geometry": {
+              "paths": [
+                [
+                  [
+                    -83.0143262,
+                    40.0062239
+                  ],
+                  [
+                    -83.014216,
+                    40.0067613
+                  ],
+                  [
+                    -83.0141972,
+                    40.0068535
+                  ],
+                  [
+                    -83.0141095,
+                    40.0072815
+                  ],
+                  [
+                    -83.013921,
+                    40.0082483
+                  ],
+                  [
+                    -83.0138336,
+                    40.0087818
+                  ],
+                  [
+                    -83.0137478,
+                    40.0093052
+                  ],
+                  [
+                    -83.0137393,
+                    40.0094043
+                  ],
+                  [
+                    -83.0136725,
+                    40.0097911
+                  ],
+                  [
+                    -83.0135859,
+                    40.010293
+                  ],
+                  [
+                    -83.0135214,
+                    40.010655
+                  ],
+                  [
+                    -83.0134773,
+                    40.0109029
+                  ],
+                  [
+                    -83.0134132,
+                    40.0110718
+                  ],
+                  [
+                    -83.013337,
+                    40.0112337
+                  ],
+                  [
+                    -83.0132762,
+                    40.0114254
+                  ],
+                  [
+                    -83.0132446,
+                    40.0115252
+                  ],
+                  [
+                    -83.0131009,
+                    40.0119788
+                  ],
+                  [
+                    -83.0130095,
+                    40.0122859
+                  ],
+                  [
+                    -83.0129923,
+                    40.0124139
+                  ],
+                  [
+                    -83.0129898,
+                    40.0124692
+                  ],
+                  [
+                    -83.0131349,
+                    40.0130355
+                  ],
+                  [
+                    -83.0132865,
+                    40.0135902
+                  ],
+                  [
+                    -83.0134363,
+                    40.0141468
+                  ],
+                  [
+                    -83.0135824,
+                    40.0146941
+                  ],
+                  [
+                    -83.0137341,
+                    40.0152619
+                  ],
+                  [
+                    -83.0138799,
+                    40.0158177
+                  ],
+                  [
+                    -83.0139107,
+                    40.0159325
+                  ],
+                  [
+                    -83.0140154,
+                    40.0163222
+                  ],
+                  [
+                    -83.0140297,
+                    40.0163732
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "attributes": {
+              "MSAG_LSN": "NORTH ST",
+              "RoadClass": "City Subdivision",
+              "Jurisdiction": "Columbus"
+            },
+            "geometry": {
+              "paths": [
+                [
+                  [
+                    -83.012122,
+                    40.0173286
+                  ],
+                  [
+                    -83.0125448,
+                    40.0173444
+                  ],
+                  [
+                    -83.0130555,
+                    40.0173605
+                  ],
+                  [
+                    -83.0141573,
+                    40.0173996
+                  ],
+                  [
+                    -83.0141894,
+                    40.0173987
+                  ],
+                  [
+                    -83.0142354,
+                    40.0173894
+                  ],
+                  [
+                    -83.0142695,
+                    40.0173637
+                  ],
+                  [
+                    -83.0142796,
+                    40.0173401
+                  ],
+                  [
+                    -83.0142762,
+                    40.0173154
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "attributes": {
+              "MSAG_LSN": "W DODRIDGE ST",
+              "RoadClass": "City Major",
+              "Jurisdiction": "Columbus"
+            },
+            "geometry": {
+              "paths": [
+                [
+                  [
+                    -83.02219,
+                    40.0162867
+                  ],
+                  [
+                    -83.0216311,
+                    40.0162664
+                  ],
+                  [
+                    -83.0213467,
+                    40.0162573
+                  ],
+                  [
+                    -83.0205269,
+                    40.016231
+                  ],
+                  [
+                    -83.0200283,
+                    40.0162135
+                  ],
+                  [
+                    -83.0177781,
+                    40.0161344
+                  ],
+                  [
+                    -83.0176874,
+                    40.0161312
+                  ],
+                  [
+                    -83.0166684,
+                    40.0161217
+                  ],
+                  [
+                    -83.0164709,
+                    40.0161185
+                  ],
+                  [
+                    -83.0160914,
+                    40.0161149
+                  ],
+                  [
+                    -83.0159303,
+                    40.0161077
+                  ],
+                  [
+                    -83.0157062,
+                    40.0161158
+                  ],
+                  [
+                    -83.0155924,
+                    40.0161267
+                  ],
+                  [
+                    -83.0154884,
+                    40.0161431
+                  ],
+                  [
+                    -83.0151085,
+                    40.0162031
+                  ],
+                  [
+                    -83.0140297,
+                    40.0163732
+                  ],
+                  [
+                    -83.0134462,
+                    40.0164656
+                  ],
+                  [
+                    -83.0128488,
+                    40.0165602
+                  ],
+                  [
+                    -83.0128457,
+                    40.0165607
+                  ],
+                  [
+                    -83.0123493,
+                    40.0166389
+                  ],
+                  [
+                    -83.0119378,
+                    40.0167049
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "attributes": {
+              "MSAG_LSN": "W DUNCAN ST",
+              "RoadClass": "City Subdivision",
+              "Jurisdiction": "Columbus"
+            },
+            "geometry": {
+              "paths": [
+                [
+                  [
+                    -83.0145564,
+                    40.0151367
+                  ],
+                  [
+                    -83.0137341,
+                    40.0152619
+                  ],
+                  [
+                    -83.012315,
+                    40.0154799
+                  ],
+                  [
+                    -83.0120034,
+                    40.0155278
+                  ],
+                  [
+                    -83.0116472,
+                    40.0155875
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "method": "GET",
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27010-042534%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27010-042534%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
       "status": 200,
       "body": {
         "type": "FeatureCollection",
@@ -245,7 +1472,8 @@
               "LocalParcelID": "010-042534",
               "StateParcelID": "39049-010-042534",
               "SitusAddressAll": "84 W DODRIDGE ST   ",
-              "LandArea": 0
+              "LandArea": 0,
+              "Shape__Area": 4030.744873046875
             }
           }
         ]
@@ -256,9 +1484,9 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39049:010-042534",
-      "generatedAt": "2026-11-17T04:55:15.003Z",
+      "generatedAt": "2026-11-18T20:14:04.743Z",
       "coverage": "partial",
-      "biggestOpenQuestion": "access",
+      "biggestOpenQuestion": "septic",
       "checks": [
         {
           "kind": "zoning",
@@ -270,7 +1498,7 @@
               "authority": "Franklin County Economic Development & Planning",
               "title": "FCEDP Zoning Districts 2025: districts under the parcel",
               "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEDP_Zoning_Districts_2025_View/FeatureServer/0",
-              "retrievedAt": "2026-11-17T04:55:15.003Z"
+              "retrievedAt": "2026-11-18T20:14:04.743Z"
             }
           ],
           "responsibleParty": {
@@ -288,34 +1516,34 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-17T04:55:15.003Z"
+              "retrievedAt": "2026-11-18T20:14:04.743Z"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39049C0169K",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-17T04:55:15.003Z",
+              "retrievedAt": "2026-11-18T20:14:04.743Z",
               "effectiveDate": "2008-06-17"
             },
             {
               "authority": "FEMA",
               "title": "Letter of Map Revision 13-05-6825P",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1",
-              "retrievedAt": "2026-11-17T04:55:15.003Z",
+              "retrievedAt": "2026-11-18T20:14:04.743Z",
               "effectiveDate": "2014-04-17"
             },
             {
               "authority": "FEMA",
               "title": "Letter of Map Revision 15-05-0192X",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1",
-              "retrievedAt": "2026-11-17T04:55:15.003Z",
+              "retrievedAt": "2026-11-18T20:14:04.743Z",
               "effectiveDate": "2015-05-14"
             },
             {
               "authority": "FEMA",
               "title": "Letter of Map Revision 15-05-3155P",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1",
-              "retrievedAt": "2026-11-17T04:55:15.003Z",
+              "retrievedAt": "2026-11-18T20:14:04.743Z",
               "effectiveDate": "2016-04-20"
             }
           ],
@@ -328,16 +1556,29 @@
         },
         {
           "kind": "access",
-          "status": "unknown",
-          "sources": [],
-          "finding": "No record of legal road access has been checked for this lot.",
-          "limitation": "A boundary that touches a road does not prove a legal right to use it, and a driveway needs its own approval.",
+          "status": "evidenceFound",
+          "finding": "This parcel touches the public right-of-way of W Dodridge St and Neil Ave in Franklin County's right-of-way layer. In the county engineer's road layer, the W Dodridge St centerline is about 9 m (28 ft) from the parcel.",
+          "limitation": "Touching a mapped right-of-way is not legal access. These layers do not show whether the lot has a recorded right to use the road, whether the road is built and maintained where the lot meets it, or whether a driveway would be permitted there.",
+          "sources": [
+            {
+              "authority": "Franklin County",
+              "title": "Tax parcel right-of-way layer: public road right-of-way within 1 m of the parcel",
+              "url": "https://gis.franklincountyohio.gov/hosting/rest/services/ParcelFeatures/Parcel_Features/MapServer/6",
+              "retrievedAt": "2026-11-18T20:14:04.743Z"
+            },
+            {
+              "authority": "Franklin County Engineer",
+              "title": "Public road sections: W Dodridge St centerline about 9 m (28 ft) from the parcel",
+              "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEO_Road_Sections_Public/FeatureServer/0",
+              "retrievedAt": "2026-11-18T20:14:04.743Z"
+            }
+          ],
           "responsibleParty": {
-            "role": "Title reviewer, then surveyor",
+            "role": "Title reviewer, then the road authority",
             "organization": "Franklin County Recorder",
             "publicContactUrl": "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs"
           },
-          "nextAction": "Ask a title company to search recorded access rights, and ask the road authority what a driveway permit needs."
+          "nextAction": "Ask a title company to confirm the lot's recorded right to reach W Dodridge St, and ask the road authority (Columbus, per the county road layer) what a driveway permit needs."
         },
         {
           "kind": "utilities",

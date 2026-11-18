@@ -1,8 +1,34 @@
 {
   "scenario": "franklin-golden",
   "parcelKey": "ohio:39049:230-000918",
-  "recordedAt": "2026-11-17T04:55:16.255Z",
+  "recordedAt": "2026-11-18T20:14:07.729Z",
   "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://gis.franklincountyohio.gov/hosting/rest/services/ParcelFeatures/Parcel_Features/MapServer/6/query",
+      "requestBody": "where=TYPE+IN+%28%27Public+Right+Of+Way%27%2C%27Plat+-+R%2FW%27%2C%27Deed+-+R%2FW%27%2C%27Road+Record%27%2C%27Prescriptive+Right+Of+Way%27%2C%27Court+-+R%2FW%27%2C%27Highway%27%29&geometry=%7B%22rings%22%3A%5B%5B%5B-83.2483202%2C39.8829772%5D%2C%5B-83.2483232%2C39.8829807%5D%2C%5B-83.2491642%2C39.8839868%5D%2C%5B-83.2492292%2C39.884877%5D%2C%5B-83.2490753%2C39.884954%5D%2C%5B-83.2476656%2C39.8833056%5D%2C%5B-83.2483202%2C39.8829772%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&distance=1&outFields=TYPE&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&units=esriSRUnit_Meter&returnGeometry=true&outSR=4326&geometryPrecision=7&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "Name",
+        "fieldAliases": {
+          "TYPE": "TYPE"
+        },
+        "geometryType": "esriGeometryPolygon",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "TYPE",
+            "type": "esriFieldTypeString",
+            "alias": "TYPE",
+            "length": 50
+          }
+        ],
+        "features": []
+      }
+    },
     {
       "method": "POST",
       "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0/query",
@@ -7167,8 +7193,290 @@
       }
     },
     {
+      "method": "POST",
+      "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEO_Road_Sections_Public/FeatureServer/0/query",
+      "requestBody": "where=RoadClass+IS+NULL+OR+RoadClass+NOT+IN+%28%27Private%27%2C%27Ramp%27%29&geometry=%7B%22rings%22%3A%5B%5B%5B-83.2483202%2C39.8829772%5D%2C%5B-83.2483232%2C39.8829807%5D%2C%5B-83.2491642%2C39.8839868%5D%2C%5B-83.2492292%2C39.884877%5D%2C%5B-83.2490753%2C39.884954%5D%2C%5B-83.2476656%2C39.8833056%5D%2C%5B-83.2483202%2C39.8829772%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&distance=200&outFields=MSAG_LSN%2CRoadClass%2CJurisdiction&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&units=esriSRUnit_Meter&returnGeometry=true&outSR=4326&geometryPrecision=7&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "GlobalID",
+        "geometryProperties": {
+          "shapeLengthFieldName": "Shape__Length",
+          "units": "esriFeet"
+        },
+        "geometryType": "esriGeometryPolyline",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "MSAG_LSN",
+            "type": "esriFieldTypeString",
+            "alias": "MSAG_LSN",
+            "sqlType": "sqlTypeOther",
+            "length": 254,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "RoadClass",
+            "type": "esriFieldTypeString",
+            "alias": "RoadClass",
+            "sqlType": "sqlTypeOther",
+            "length": 254,
+            "domain": {
+              "type": "codedValue",
+              "name": "RoadBase",
+              "mergePolicy": "esriMPTDefaultValue",
+              "splitPolicy": "esriSPTDuplicate",
+              "codedValues": [
+                {
+                  "name": "Federal Highway System",
+                  "code": "Federal Highway System"
+                },
+                {
+                  "name": "State Highway System",
+                  "code": "State Highway System"
+                },
+                {
+                  "name": "COUNTY",
+                  "code": "COUNTY"
+                },
+                {
+                  "name": "TWP SUB",
+                  "code": "TWP SUB"
+                },
+                {
+                  "name": "TWP ALLEY",
+                  "code": "TWP ALLEY"
+                },
+                {
+                  "name": "Retired",
+                  "code": "Retired"
+                },
+                {
+                  "name": "Ramp",
+                  "code": "Ramp"
+                },
+                {
+                  "name": "City Major",
+                  "code": "City Major"
+                },
+                {
+                  "name": "COUNTY DUAL",
+                  "code": "COUNTY DUAL"
+                },
+                {
+                  "name": "TOWNSHIP DUAL",
+                  "code": "TOWNSHIP DUAL"
+                },
+                {
+                  "name": "Private",
+                  "code": "Private"
+                },
+                {
+                  "name": "Out of Area",
+                  "code": "Out of Area"
+                },
+                {
+                  "name": "City Subdivision",
+                  "code": "City Subdivision"
+                },
+                {
+                  "name": "State Minor",
+                  "code": "State Minor"
+                },
+                {
+                  "name": "TWP",
+                  "code": "TWP"
+                },
+                {
+                  "name": "MOD",
+                  "code": "MOD"
+                },
+                {
+                  "name": "NEW",
+                  "code": "NEW"
+                },
+                {
+                  "name": "REMOVE",
+                  "code": "REMOVE"
+                },
+                {
+                  "name": "Other",
+                  "code": "Other"
+                }
+              ]
+            },
+            "defaultValue": null
+          },
+          {
+            "name": "Jurisdiction",
+            "type": "esriFieldTypeString",
+            "alias": "Jurisdiction",
+            "sqlType": "sqlTypeOther",
+            "length": 30,
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "MSAG_LSN": "SEAMAN RD",
+              "RoadClass": "TWP",
+              "Jurisdiction": "Pleasant Twp"
+            },
+            "geometry": {
+              "paths": [
+                [
+                  [
+                    -83.2396515,
+                    39.8745807
+                  ],
+                  [
+                    -83.2399298,
+                    39.8748582
+                  ],
+                  [
+                    -83.2407037,
+                    39.8756823
+                  ],
+                  [
+                    -83.2413026,
+                    39.8763309
+                  ],
+                  [
+                    -83.2426382,
+                    39.877778
+                  ],
+                  [
+                    -83.2436293,
+                    39.8788528
+                  ],
+                  [
+                    -83.244148,
+                    39.8794299
+                  ],
+                  [
+                    -83.2455952,
+                    39.8810237
+                  ],
+                  [
+                    -83.2464525,
+                    39.8819611
+                  ],
+                  [
+                    -83.246856,
+                    39.8823963
+                  ],
+                  [
+                    -83.246889,
+                    39.8824695
+                  ],
+                  [
+                    -83.2468883,
+                    39.8825276
+                  ],
+                  [
+                    -83.2468619,
+                    39.8825722
+                  ],
+                  [
+                    -83.2468224,
+                    39.8826091
+                  ],
+                  [
+                    -83.2467781,
+                    39.8826361
+                  ],
+                  [
+                    -83.2467326,
+                    39.8826554
+                  ],
+                  [
+                    -83.2453486,
+                    39.8833488
+                  ],
+                  [
+                    -83.2443366,
+                    39.8838546
+                  ],
+                  [
+                    -83.2438071,
+                    39.8841201
+                  ],
+                  [
+                    -83.2437506,
+                    39.8841548
+                  ],
+                  [
+                    -83.2437064,
+                    39.8841932
+                  ],
+                  [
+                    -83.2436771,
+                    39.8842277
+                  ],
+                  [
+                    -83.2436615,
+                    39.8842668
+                  ],
+                  [
+                    -83.2436569,
+                    39.8843041
+                  ],
+                  [
+                    -83.2436623,
+                    39.8843431
+                  ],
+                  [
+                    -83.2436863,
+                    39.8843954
+                  ],
+                  [
+                    -83.2437265,
+                    39.8844485
+                  ],
+                  [
+                    -83.2442078,
+                    39.8850158
+                  ],
+                  [
+                    -83.2447516,
+                    39.8856463
+                  ],
+                  [
+                    -83.2453612,
+                    39.8863722
+                  ],
+                  [
+                    -83.2460575,
+                    39.8871973
+                  ],
+                  [
+                    -83.2467654,
+                    39.8880221
+                  ],
+                  [
+                    -83.2475298,
+                    39.8889224
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "method": "GET",
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27230-000918%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27230-000918%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
       "status": 200,
       "body": {
         "type": "FeatureCollection",
@@ -7221,7 +7529,8 @@
               "LocalParcelID": "230-000918",
               "StateParcelID": "39049-230-000918",
               "SitusAddressAll": "0  SEAMAN RD   ",
-              "LandArea": 0
+              "LandArea": 0,
+              "Shape__Area": 132393.54370117188
             }
           }
         ]
@@ -7232,7 +7541,7 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39049:230-000918",
-      "generatedAt": "2026-11-17T04:55:16.255Z",
+      "generatedAt": "2026-11-18T20:14:07.729Z",
       "coverage": "partial",
       "biggestOpenQuestion": "access",
       "checks": [
@@ -7246,7 +7555,7 @@
               "authority": "Franklin County Economic Development & Planning",
               "title": "FCEDP Zoning Districts 2025: districts under the parcel",
               "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEDP_Zoning_Districts_2025_View/FeatureServer/0",
-              "retrievedAt": "2026-11-17T04:55:16.255Z"
+              "retrievedAt": "2026-11-18T20:14:07.729Z"
             },
             {
               "authority": "Franklin County Economic Development & Planning",
@@ -7272,20 +7581,20 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-17T04:55:16.255Z"
+              "retrievedAt": "2026-11-18T20:14:07.729Z"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39049C0290K",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-17T04:55:16.255Z",
+              "retrievedAt": "2026-11-18T20:14:07.729Z",
               "effectiveDate": "2008-06-17"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39097C0190E",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-17T04:55:16.255Z",
+              "retrievedAt": "2026-11-18T20:14:07.729Z",
               "effectiveDate": "2023-11-16"
             }
           ],
@@ -7298,16 +7607,29 @@
         },
         {
           "kind": "access",
-          "status": "unknown",
-          "sources": [],
-          "finding": "No record of legal road access has been checked for this lot.",
-          "limitation": "A boundary that touches a road does not prove a legal right to use it, and a driveway needs its own approval.",
+          "status": "needsReview",
+          "finding": "No public road right-of-way touches this parcel in Franklin County's right-of-way layer. The nearest mapped road, Seaman Rd, is about 106 m (347 ft) away in the county engineer's road layer.",
+          "limitation": "These layers show mapped right-of-way and road centerlines. They do not show recorded easements, private lanes, or other legal access, so they cannot establish whether the parcel has access.",
+          "sources": [
+            {
+              "authority": "Franklin County",
+              "title": "Tax parcel right-of-way layer: no public road right-of-way touches the parcel",
+              "url": "https://gis.franklincountyohio.gov/hosting/rest/services/ParcelFeatures/Parcel_Features/MapServer/6",
+              "retrievedAt": "2026-11-18T20:14:07.729Z"
+            },
+            {
+              "authority": "Franklin County Engineer",
+              "title": "Public road sections: nearest road Seaman Rd, about 106 m (347 ft)",
+              "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEO_Road_Sections_Public/FeatureServer/0",
+              "retrievedAt": "2026-11-18T20:14:07.729Z"
+            }
+          ],
           "responsibleParty": {
             "role": "Title reviewer, then surveyor",
             "organization": "Franklin County Recorder",
             "publicContactUrl": "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs"
           },
-          "nextAction": "Ask a title company to search recorded access rights, and ask the road authority what a driveway permit needs."
+          "nextAction": "Ask a title company to search for recorded legal access to Seaman Rd or another public road, such as an easement across a neighboring lot, and have a surveyor show where it runs."
         },
         {
           "kind": "utilities",

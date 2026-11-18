@@ -1,40 +1,12 @@
 {
   "scenario": "franklin-parcel",
   "path": "/api/parcels/ohio%3A39049%3A010-042534",
-  "recordedAt": "2026-11-17T00:11:55.047Z",
+  "recordedAt": "2026-11-18T20:13:32.467Z",
   "exchanges": [
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27010-042534%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27010-042534%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
       "status": 200,
-      "body": {
-        "type": "FeatureCollection",
-        "crs": { "type": "name", "properties": { "name": "EPSG:4326" } },
-        "features": [
-          {
-            "type": "Feature",
-            "geometry": {
-              "type": "Polygon",
-              "coordinates": [
-                [
-                  [-83.0142782, 40.0164132],
-                  [-83.014393, 40.0163945],
-                  [-83.0144793, 40.0167287],
-                  [-83.014367, 40.0167465],
-                  [-83.0143261, 40.016593],
-                  [-83.0142782, 40.0164132]
-                ]
-              ]
-            },
-            "properties": {
-              "County": "Franklin",
-              "LocalParcelID": "010-042534",
-              "StateParcelID": "39049-010-042534",
-              "SitusAddressAll": "84 W DODRIDGE ST   ",
-              "LandArea": 0
-            }
-          }
-        ]
-      }
+      "body": {"type":"FeatureCollection","crs":{"type":"name","properties":{"name":"EPSG:4326"}},"features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-83.0142782,40.0164132],[-83.014393,40.0163945],[-83.0144793,40.0167287],[-83.014367,40.0167465],[-83.0143261,40.016593],[-83.0142782,40.0164132]]]},"properties":{"County":"Franklin","LocalParcelID":"010-042534","StateParcelID":"39049-010-042534","SitusAddressAll":"84 W DODRIDGE ST   ","LandArea":0,"Shape__Area":4030.744873046875}}]}
     }
   ],
   "apiResponse": {
@@ -49,23 +21,42 @@
         "longitude": -83.0143792190444
       },
       "siteAddress": "84 W DODRIDGE ST",
+      "mappedAcreage": 0.09,
       "geometry": {
         "geojson": {
           "type": "Polygon",
           "coordinates": [
             [
-              [-83.0142782, 40.0164132],
-              [-83.014393, 40.0163945],
-              [-83.0144793, 40.0167287],
-              [-83.014367, 40.0167465],
-              [-83.0143261, 40.016593],
-              [-83.0142782, 40.0164132]
+              [
+                -83.0142782,
+                40.0164132
+              ],
+              [
+                -83.014393,
+                40.0163945
+              ],
+              [
+                -83.0144793,
+                40.0167287
+              ],
+              [
+                -83.014367,
+                40.0167465
+              ],
+              [
+                -83.0143261,
+                40.016593
+              ],
+              [
+                -83.0142782,
+                40.0164132
+              ]
             ]
           ]
         },
         "authority": "Ohio OGRIP",
-        "sourceUrl": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27010-042534%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
-        "retrievedAt": "2026-11-17T00:11:55.047Z"
+        "sourceUrl": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27010-042534%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+        "retrievedAt": "2026-11-18T20:13:32.467Z"
       }
     }
   }

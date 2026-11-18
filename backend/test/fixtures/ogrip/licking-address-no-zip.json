@@ -1,109 +1,22 @@
 {
   "scenario": "licking-address-no-zip",
   "path": "/api/parcels/search?q=10034%20Appleton%20Rd%20Johnstown%20OH",
-  "recordedAt": "2026-11-17T04:13:23.454Z",
+  "recordedAt": "2026-11-18T20:13:33.526Z",
   "exchanges": [
     {
       "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=10034+Appleton+Rd+Johnstown+OH&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
       "status": 200,
-      "body": {
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "candidates": []
-      }
+      "body": {"spatialReference":{"wkid":4326,"latestWkid":4326},"candidates":[]}
     },
     {
       "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=10034+APPLETON+RD&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
       "status": 200,
-      "body": {
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "candidates": [
-          {
-            "address": "10034 APPLETON, 43031",
-            "location": { "x": -82.601140329917, "y": 40.195916133823 },
-            "score": 92,
-            "attributes": {
-              "Addr_type": "StreetAddress",
-              "AddNum": "10034",
-              "StName": "APPLETON"
-            },
-            "extent": {
-              "xmin": -82.602140329918,
-              "ymin": 40.194916133823,
-              "xmax": -82.600140329917,
-              "ymax": 40.196916133823
-            }
-          }
-        ]
-      }
+      "body": {"spatialReference":{"wkid":4326,"latestWkid":4326},"candidates":[{"address":"10034 APPLETON, 43031","location":{"x":-82.601140329917,"y":40.195916133823},"score":92,"attributes":{"Addr_type":"StreetAddress","AddNum":"10034","StName":"APPLETON"},"extent":{"xmin":-82.602140329918,"ymin":40.194916133823,"xmax":-82.600140329917,"ymax":40.196916133823}}]}
     },
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%2710034+%25%27+OR+SitusAddressAll+LIKE+%27+%2510034+%25%27%29&geometry=-82.607021%2C40.191425%2C-82.595260%2C40.200408&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%2710034+%25%27+OR+SitusAddressAll+LIKE+%27+%2510034+%25%27%29&geometry=-82.607021%2C40.191425%2C-82.595260%2C40.200408&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
       "status": 200,
-      "body": {
-        "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
-        "globalIdFieldName": "GlobalID",
-        "geometryType": "esriGeometryPolygon",
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "fields": [
-          {
-            "name": "County",
-            "type": "esriFieldTypeString",
-            "alias": "County",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LocalParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "LocalParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "StateParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "StateParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 50,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "SitusAddressAll",
-            "type": "esriFieldTypeString",
-            "alias": "Situs Address All",
-            "sqlType": "sqlTypeOther",
-            "length": 255,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LandArea",
-            "type": "esriFieldTypeDouble",
-            "alias": "LandArea",
-            "sqlType": "sqlTypeOther",
-            "domain": null,
-            "defaultValue": null
-          }
-        ],
-        "features": [
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "00100000601000",
-              "StateParcelID": "39089-00100000601000",
-              "SitusAddressAll": "10034 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 5.61
-            },
-            "centroid": { "x": -82.60208500209575, "y": 40.19757017255763 }
-          }
-        ]
-      }
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Licking","LocalParcelID":"00100000601000","StateParcelID":"39089-00100000601000","SitusAddressAll":"10034 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":5.61,"Shape__Area":243160.19470214844},"centroid":{"x":-82.60208500209575,"y":40.19757017255763}}]}
     }
   ],
   "apiResponse": {
@@ -120,7 +33,8 @@
             "longitude": -82.60208500209575
           },
           "siteAddress": "10034 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-          "acreage": 5.61
+          "acreage": 5.61,
+          "mappedAcreage": 5.58
         },
         "matchedOn": "siteAddress"
       }

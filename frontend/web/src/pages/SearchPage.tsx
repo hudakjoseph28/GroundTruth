@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { SearchForm } from "../components/SearchForm";
-import { SEARCH } from "../content/search";
+import type { ParcelSearchResult } from "@groundtruth/shared";
+import { SEARCH, SEARCH_EXAMPLES } from "../content/search";
 import { formatSiteAddress } from "../data/address";
 import {
   invalidQuery,
@@ -51,11 +52,11 @@ export function SearchPage() {
   return (
     <section className="sheet">
       <h1>{SEARCH.title}</h1>
-      <SearchForm initialQuery={query} />
+      <SearchForm key={query} initialQuery={query} />
+      <SearchExamples current={query} />
       {blank ? (
         <div className="search-start">
           <p>{SEARCH.lede}</p>
-          <Examples />
         </div>
       ) : outcome === null ? (
         <SearchLoading />
@@ -69,22 +70,7 @@ export function SearchPage() {
                 onPointerDown={warmSlot}
                 onFocus={warmSlot}
               >
-                <span className="result-id">
-                  {result.parcel.sourceParcelId}
-                </span>
-                <span>{SEARCH.county(result.parcel.county)}</span>
-                <ResultAddress published={result.parcel.siteAddress} />
-                {result.parcel.township ? (
-                  <span>{result.parcel.township}</span>
-                ) : null}
-                {result.parcel.acreage !== undefined ? (
-                  <span>{SEARCH.acres(result.parcel.acreage)}</span>
-                ) : null}
-                <span className="quiet">
-                  {result.matchedOn === "siteAddress"
-                    ? SEARCH.matchedAddress
-                    : SEARCH.matchedParcelId}
-                </span>
+                <ResultCard result={result} />
               </Link>
             </li>
           ))}
@@ -103,43 +89,67 @@ export function SearchPage() {
           ) : null}
         </div>
       ) : (
-        <>
-          <p className="notice" role="status">
-            {outcome.message}
-          </p>
-          {outcome.status === "empty" ? <Examples /> : null}
-        </>
+        <p className="notice" role="status">
+          {outcome.message}
+        </p>
       )}
     </section>
   );
 }
 
-/** The address as a person would write it, with the county's own text on hover. */
-function ResultAddress({ published }: { published: string | undefined }) {
-  const address = formatSiteAddress(published);
-  if (!address) return null;
+/** Address first, then county and acreage, then the parcel ID. */
+function ResultCard({ result }: { result: ParcelSearchResult }) {
+  const { parcel } = result;
+  const address = formatSiteAddress(parcel.siteAddress);
+  const acreage =
+    parcel.acreage !== undefined
+      ? SEARCH.acres(parcel.acreage)
+      : parcel.mappedAcreage !== undefined
+        ? SEARCH.mappedAcres(parcel.mappedAcreage)
+        : SEARCH.noAcreage;
   return (
-    <span title={address.published}>
-      {address.text}
-      {address.noHouseNumber ? (
-        <span className="quiet"> ({SEARCH.noHouseNumber})</span>
-      ) : null}
-    </span>
+    <>
+      {/* The county's own text on hover. */}
+      <span className="result-address" title={address?.published}>
+        {address ? address.text : SEARCH.noAddress}
+        {address?.noHouseNumber ? (
+          <span className="quiet"> ({SEARCH.noHouseNumber})</span>
+        ) : null}
+      </span>
+      <span className="result-facts">
+        <span>{SEARCH.county(parcel.county)}</span>
+        <span>{acreage}</span>
+      </span>
+      <span className="result-meta quiet">
+        <span className="result-id">{SEARCH.parcelId(parcel.sourceParcelId)}</span>
+        <span>
+          {result.matchedOn === "siteAddress"
+            ? SEARCH.matchedAddress
+            : SEARCH.matchedParcelId}
+        </span>
+      </span>
+    </>
   );
 }
 
-/** Searches known to return a parcel, so nobody starts from a blank field. */
-function Examples() {
+/** Searches known to return a real parcel, one tap away, under the box. */
+function SearchExamples({ current }: { current: string }) {
   return (
     <div className="search-examples">
-      <p>{SEARCH.examplesLabel}</p>
-      <ul>
-        {SEARCH.examples.map((example) => (
+      <span className="quiet" id="search-examples-label">
+        {SEARCH.examplesLabel}
+      </span>
+      <ul aria-labelledby="search-examples-label">
+        {SEARCH_EXAMPLES.map((example) => (
           <li key={example.query}>
-            <Link to={`/search?q=${encodeURIComponent(example.query)}`}>
+            <Link
+              className="example-chip"
+              to={`/search?q=${encodeURIComponent(example.query)}`}
+              aria-current={example.query === current.trim() ? "page" : undefined}
+            >
+              <span className="example-kind">{example.kind}</span>
               {example.query}
             </Link>
-            <span className="quiet">{example.note}</span>
           </li>
         ))}
       </ul>

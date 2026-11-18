@@ -4,6 +4,7 @@ import {
   type ParcelReport,
   type ParcelSearchResult,
 } from "@groundtruth/shared";
+import { SEARCH } from "../content/search";
 import { request, type FailedOutcome } from "./api";
 
 export type { FailedOutcome };
@@ -78,7 +79,7 @@ export async function searchParcels(
   if (results.length === 0) {
     return {
       status: "empty",
-      message: `No Ohio parcel matched “${query}”. Try a parcel ID such as 230-000918, or a street address that starts with a house number.`,
+      message: SEARCH.empty(query),
     };
   }
   return { status: "results", results };

@@ -118,6 +118,7 @@ const attributesSchema = z.object({
   StateParcelID: z.string().nullish(),
   SitusAddressAll: z.string().nullish(),
   LandArea: z.number().nullish(),
+  Shape__Area: z.number().nullish(),
 });
 
 const pointSchema = z.object({ x: z.number(), y: z.number() });
@@ -633,7 +634,17 @@ export function createOgripClient(
     if (!geometry || !first) return null;
     const centroid = polygonCentroid(geometry);
     if (!centroid) return null;
-    const summary = toParcelSummary(first.properties, centroid);
+    // Every part's area: a parcel published as several polygons is one lot.
+    const partAreas = features.map((feature) => feature.properties.Shape__Area);
+    const summary = toParcelSummary(
+      {
+        ...first.properties,
+        Shape__Area: partAreas.every((area) => typeof area === "number")
+          ? partAreas.reduce<number>((sum, area) => sum + (area ?? 0), 0)
+          : null,
+      },
+      centroid,
+    );
     if (!summary || summary.countyFips !== countyFips) return null;
     return {
       ...summary,
@@ -753,13 +764,25 @@ function withParams(base: string, params: Record<string, string>): string {
   return `${base}?${new URLSearchParams(params).toString()}`;
 }
 
+/**
+ * One result per parcel key. A parcel OGRIP publishes as several polygons
+ * comes back once per part, each with its own `Shape__Area`; one part's
+ * area is not the lot's, so `mappedAcreage` is dropped when the copies
+ * disagree. The parcel route sums every part instead.
+ */
 function uniqueByKey(results: ParcelSearchResult[]): ParcelSearchResult[] {
-  const seen = new Set<string>();
-  return results.filter((result) => {
-    if (seen.has(result.parcel.key)) return false;
-    seen.add(result.parcel.key);
-    return true;
-  });
+  const byKey = new Map<string, ParcelSearchResult>();
+  for (const result of results) {
+    const kept = byKey.get(result.parcel.key);
+    if (!kept) {
+      byKey.set(result.parcel.key, result);
+    } else if (kept.parcel.mappedAcreage !== result.parcel.mappedAcreage) {
+      const parcel = { ...kept.parcel };
+      delete parcel.mappedAcreage;
+      byKey.set(result.parcel.key, { ...kept, parcel });
+    }
+  }
+  return [...byKey.values()];
 }
 
 function envelopeAround(

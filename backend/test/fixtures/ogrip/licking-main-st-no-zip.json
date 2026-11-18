@@ -1,161 +1,17 @@
 {
   "scenario": "licking-main-st-no-zip",
   "path": "/api/parcels/search?q=57%20S%20Main%20St%20Johnstown%20OH",
-  "recordedAt": "2026-11-17T04:13:24.281Z",
+  "recordedAt": "2026-11-18T20:13:34.012Z",
   "exchanges": [
     {
       "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=57+S+Main+St+Johnstown+OH&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
       "status": 200,
-      "body": {
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "candidates": [
-          {
-            "address": "57 MAIN, JOHNSTOWN, 43031",
-            "location": { "x": -82.684020607035, "y": 40.152869160741 },
-            "score": 96.53,
-            "attributes": {
-              "Addr_type": "StreetAddress",
-              "AddNum": "57",
-              "StName": "MAIN"
-            },
-            "extent": {
-              "xmin": -82.685020607035,
-              "ymin": 40.151869160741,
-              "xmax": -82.683020607035,
-              "ymax": 40.153869160741
-            }
-          }
-        ]
-      }
+      "body": {"spatialReference":{"wkid":4326,"latestWkid":4326},"candidates":[{"address":"57 MAIN, JOHNSTOWN, 43031","location":{"x":-82.684020607035,"y":40.152869160741},"score":96.53,"attributes":{"Addr_type":"StreetAddress","AddNum":"57","StName":"MAIN"},"extent":{"xmin":-82.685020607035,"ymin":40.151869160741,"xmax":-82.683020607035,"ymax":40.153869160741}}]}
     },
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%2757+%25%27+OR+SitusAddressAll+LIKE+%27+%2557+%25%27%29&geometry=-82.689897%2C40.148378%2C-82.678144%2C40.157361&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%2757+%25%27+OR+SitusAddressAll+LIKE+%27+%2557+%25%27%29&geometry=-82.689897%2C40.148378%2C-82.678144%2C40.157361&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
       "status": 200,
-      "body": {
-        "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
-        "globalIdFieldName": "GlobalID",
-        "geometryType": "esriGeometryPolygon",
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "fields": [
-          {
-            "name": "County",
-            "type": "esriFieldTypeString",
-            "alias": "County",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LocalParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "LocalParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "StateParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "StateParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 50,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "SitusAddressAll",
-            "type": "esriFieldTypeString",
-            "alias": "Situs Address All",
-            "sqlType": "sqlTypeOther",
-            "length": 255,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LandArea",
-            "type": "esriFieldTypeDouble",
-            "alias": "LandArea",
-            "sqlType": "sqlTypeOther",
-            "domain": null,
-            "defaultValue": null
-          }
-        ],
-        "features": [
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05318247800000",
-              "StateParcelID": "39089-05318247800000",
-              "SitusAddressAll": "57 COSHOCTON ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.12
-            },
-            "centroid": { "x": -82.68346813834428, "y": 40.15434069283858 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05317758800000",
-              "StateParcelID": "39089-05317758800000",
-              "SitusAddressAll": "57 S MAIN ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.23
-            },
-            "centroid": { "x": -82.68419179163179, "y": 40.15280515728641 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05317758800000",
-              "StateParcelID": "39089-05317758800000",
-              "SitusAddressAll": "57 S MAIN ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.23
-            },
-            "centroid": { "x": -82.68440496026946, "y": 40.152680288366874 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05317853000000",
-              "StateParcelID": "39089-05317853000000",
-              "SitusAddressAll": "57 E PRATT ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.56
-            },
-            "centroid": { "x": -82.68196575730872, "y": 40.153015261598505 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05317966400004",
-              "StateParcelID": "39089-05317966400004",
-              "SitusAddressAll": "57 ANNA WAY JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.2
-            },
-            "centroid": { "x": -82.68667035914154, "y": 40.148324895308846 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05318331800000",
-              "StateParcelID": "39089-05318331800000",
-              "SitusAddressAll": "57 JERSEY ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.32
-            },
-            "centroid": { "x": -82.68234413547746, "y": 40.14915616937553 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05317853000000",
-              "StateParcelID": "39089-05317853000000",
-              "SitusAddressAll": "57 E PRATT ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.56
-            },
-            "centroid": { "x": -82.68210693184008, "y": 40.15293504979976 }
-          }
-        ]
-      }
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Licking","LocalParcelID":"05317853000000","StateParcelID":"39089-05317853000000","SitusAddressAll":"57 E PRATT ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.56,"Shape__Area":12155.659912109375},"centroid":{"x":-82.68210693184008,"y":40.15293504979976}},{"attributes":{"County":"Licking","LocalParcelID":"05318331800000","StateParcelID":"39089-05318331800000","SitusAddressAll":"57 JERSEY ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.32,"Shape__Area":14115.923950195312},"centroid":{"x":-82.68234413547746,"y":40.14915616937553}},{"attributes":{"County":"Licking","LocalParcelID":"05317758800000","StateParcelID":"39089-05317758800000","SitusAddressAll":"57 S MAIN ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.23,"Shape__Area":4905.7135009765625},"centroid":{"x":-82.68419179163179,"y":40.15280515728641}},{"attributes":{"County":"Licking","LocalParcelID":"05317758800000","StateParcelID":"39089-05317758800000","SitusAddressAll":"57 S MAIN ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.23,"Shape__Area":4147.60498046875},"centroid":{"x":-82.68440496026946,"y":40.152680288366874}},{"attributes":{"County":"Licking","LocalParcelID":"05317853000000","StateParcelID":"39089-05317853000000","SitusAddressAll":"57 E PRATT ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.56,"Shape__Area":12161.880004882812},"centroid":{"x":-82.68196575730872,"y":40.153015261598505}},{"attributes":{"County":"Licking","LocalParcelID":"05317966400004","StateParcelID":"39089-05317966400004","SitusAddressAll":"57 ANNA WAY JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.2,"Shape__Area":8468.089477539062},"centroid":{"x":-82.68667035914154,"y":40.148324895308846}},{"attributes":{"County":"Licking","LocalParcelID":"05318247800000","StateParcelID":"39089-05318247800000","SitusAddressAll":"57 COSHOCTON ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.12,"Shape__Area":5193.2564697265625},"centroid":{"x":-82.68346813834428,"y":40.15434069283858}}]}
     }
   ],
   "apiResponse": {

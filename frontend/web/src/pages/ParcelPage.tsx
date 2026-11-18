@@ -240,7 +240,11 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
   const place = [
     PARCEL_PAGE.county(parcel.county),
     parcel.township,
-    parcel.acreage === undefined ? undefined : PARCEL_PAGE.acres(parcel.acreage),
+    parcel.acreage !== undefined
+      ? PARCEL_PAGE.acres(parcel.acreage)
+      : parcel.mappedAcreage !== undefined
+        ? PARCEL_PAGE.mappedAcres(parcel.mappedAcreage)
+        : undefined,
   ]
     .filter(Boolean)
     .join(" · ");

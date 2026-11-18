@@ -17,7 +17,15 @@ export const PARCEL_FIELDS = [
   "StateParcelID",
   "SitusAddressAll",
   "LandArea",
+  "Shape__Area",
 ] as const;
+
+/**
+ * OGRIP's layer is stored in EPSG:3735 (NAD83 / Ohio South, US survey
+ * feet; read from the layer on 2026-11-18), so `Shape__Area` is in square
+ * US survey feet, and a US survey acre is exactly 43,560 of them.
+ */
+const SQUARE_FEET_PER_ACRE = 43_560;
 
 export interface ParcelAttributes {
   County?: string | null;
@@ -25,6 +33,7 @@ export interface ParcelAttributes {
   StateParcelID?: string | null;
   SitusAddressAll?: string | null;
   LandArea?: number | null;
+  Shape__Area?: number | null;
 }
 
 export type ParcelSummary = Omit<Parcel, "geometry">;
@@ -38,6 +47,9 @@ export type ParcelSummary = Omit<Parcel, "geometry">;
  *   `StateParcelID` prefix when one is published.
  * - `acreage` is `LandArea`, which tracks the polygon's area in acres in every
  *   county that fills it (0 means not recorded, so it is omitted).
+ * - `mappedAcreage` is the boundary's own area (`Shape__Area`) in acres, to
+ *   two decimals. It is a map measurement, not a recorded or legal acreage:
+ *   the golden lot maps at 3.04 acres; the Auditor lists 3.015.
  * - No OGRIP field carries a township; it is omitted.
  */
 export function toParcelSummary(
@@ -65,6 +77,11 @@ export function toParcelSummary(
   const acreage = attributes.LandArea;
   if (typeof acreage === "number" && Number.isFinite(acreage) && acreage > 0) {
     summary.acreage = acreage;
+  }
+  const area = attributes.Shape__Area;
+  if (typeof area === "number" && Number.isFinite(area) && area > 0) {
+    const acres = Math.round((area / SQUARE_FEET_PER_ACRE) * 100) / 100;
+    if (acres > 0) summary.mappedAcreage = acres;
   }
   return summary;
 }

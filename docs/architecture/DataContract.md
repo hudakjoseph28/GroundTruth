@@ -31,7 +31,8 @@ export interface Parcel {
   countyFips: string;
   township?: string;
   siteAddress?: string;     // physical site address only
-  acreage?: number;
+  acreage?: number;         // county-published acreage (OGRIP LandArea)
+  mappedAcreage?: number;   // area of the OGRIP boundary; label it "mapped"
   centroid: { latitude: number; longitude: number };
   geometry: {
     geojson: GeoJSON.Polygon | GeoJSON.MultiPolygon;

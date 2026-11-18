@@ -66,6 +66,7 @@ An address naming another state (`…, Washington, DC 20500`) returns `[]` witho
 | `county`, `countyFips` | `County`, mapped to its Census FIPS code; must agree with the `StateParcelID` prefix (`39049-…`) |
 | `siteAddress` | `SitusAddressAll`, with whitespace collapsed |
 | `acreage` | `LandArea` when above 0 (it tracks polygon area in acres in every county that fills it) |
+| `mappedAcreage` | `Shape__Area` ÷ 43,560, to two decimals. The layer is EPSG:3735 (US survey feet), so this is the boundary's own area in acres. Franklin publishes `LandArea` 0, so search shows this instead, labeled "mapped". A parcel published as several polygons sums its parts on the parcel route; in search, copies that disagree drop it rather than show one part's area. Never a recorded or legal acreage. |
 | `centroid` | ArcGIS centroid in search results; area-weighted centroid of the boundary on the parcel route |
 | `geometry.geojson` | Layer geometry in WGS84; a parcel published as several polygons becomes one `MultiPolygon` |
 | `geometry.sourceUrl` | The exact query URL the API fetched |
@@ -149,6 +150,31 @@ Franklin parcels (`countyFips` 39049) get a live zoning check instead of the zon
   - Timeout or error: `unknown`. The report is still `200`, and it is not cached.
 - **Seeded golden report:** unchanged. The live check on `230-000918` gives the same answer, R on 100% of the lot, and a test holds the two together.
 - **Try it live:** `pnpm --filter @groundtruth/backend check:zoning ohio:39049:230-000918 ohio:39049:230-000397`
+
+### Franklin road access check
+
+Franklin parcels get a live access check instead of the access template, from the same two county layers the golden report cites. Code: [src/reports/franklinAccess.ts](src/reports/franklinAccess.ts) and [src/reports/accessCheck.ts](src/reports/accessCheck.ts).
+
+- **Sources:** Franklin County's tax-parcel [right-of-way layer](https://gis.franklincountyohio.gov/hosting/rest/services/ParcelFeatures/Parcel_Features/MapServer/6) (`TYPE`) and the County Engineer's [road sections](https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEO_Road_Sections_Public/FeatureServer/0) (`MSAG_LSN`, `RoadClass`, `Jurisdiction`).
+- **Queries** (POST, parcel polygon, run together):
+  - Right-of-way within 1 m of the parcel, public road types only: `Public Right Of Way`, `Plat - R/W`, `Deed - R/W`, `Road Record`, `Prescriptive Right Of Way`, `Court - R/W`, `Highway`. Abandoned (`Historic - R/W`), private ingress-egress, sidewalks, paths, leases, and easements are left out.
+  - Road centerlines within 200 m, widened to 1 mile only if none. `Private` and `Ramp` classes are skipped.
+- **Measuring:** distances from the parcel boundary to each centerline are computed locally in metres. A road "runs through" a touching right-of-way when its point closest to the parcel lies inside that polygon, within 100 m. The nearest such road is the frontage; another is named only within 25 m of it (a corner lot), because one Columbus right-of-way polygon can cover a whole street grid.
+- **Outcomes.** None of them claims legal access:
+  - Touches, with a road through it: `evidenceFound`. Names the road(s) and the centerline distance, and names the road authority from `Jurisdiction`. If every such road is in the `Federal Highway System` class (interstates and expressways): `needsReview`, flagged as usually limited-access.
+  - Touches, with no road through it: `needsReview`. It may be a paper street or a highway corridor's edge. Gives the nearest road.
+  - Does not touch: `needsReview`, with the nearest road and distance, or "no road within about 1.6 km (1 mile)". A road in another county is marked as outside Franklin County.
+  - Timeout or error: `unknown`. The report is still `200` and is not cached. Limit: `ACCESS_TIMEOUT_MS` (default 6000).
+- **Seeded golden report:** unchanged. Live on `230-000918` the check gives the same answer: no right-of-way touches it, nearest road Seaman Rd about 106 m (the card rounds to 107 m; QA measured 105.75 m). A test holds the two together.
+- **Try it live:** `pnpm --filter @groundtruth/backend check:access ohio:39049:230-000918 ohio:39049:010-042534`
+
+| Parcel | Access result (live, 2026-11-18) |
+| --- | --- |
+| `230-000918`, 0 Seaman Rd (golden) | `needsReview`: no right-of-way touches it; Seaman Rd about 106 m |
+| `010-042534`, 84 W Dodridge St | `evidenceFound`: W Dodridge St and Neil Ave; centerline about 9 m |
+| `230-000397`, 6948 Harrisburg Pike | `evidenceFound`: Harrisburg Pike; centerline meets the boundary |
+| `152-001927`, 0 Groveport Rd | `evidenceFound`: Old Rathmell Ct and Samson Frontage Rd |
+| `185-002765`, 0 Groveport Pike | `needsReview`: touches a "Highway" right-of-way with no centerline through it; I-270 about 43 m, flagged limited-access |
 
 ### Tested parcels (live, 2026-11-17 UTC)
 

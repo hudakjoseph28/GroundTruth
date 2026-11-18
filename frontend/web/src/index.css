@@ -475,9 +475,78 @@ section[tabindex="-1"]:focus {
   background: var(--surface-2);
 }
 
+.result-address {
+  color: var(--text);
+  font-size: var(--step-0);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.result-facts,
+.result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.result-facts {
+  color: #d7d7d7;
+}
+
+.result-meta {
+  font-size: var(--step--1);
+}
+
 .result-id {
   font-family: var(--mono);
-  font-weight: 600;
+}
+
+/* Example searches under the box: real queries, one tap each. */
+.search-examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 14px;
+  font-size: var(--step--1);
+}
+
+.search-examples ul {
+  display: contents;
+  list-style: none;
+}
+
+.example-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 4px 12px 4px 6px;
+  background: var(--surface-1);
+  color: #d7d7d7;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.example-chip:hover,
+.example-chip[aria-current="page"] {
+  border-color: rgba(196, 161, 90, 0.6);
+  color: var(--text);
+}
+
+.example-kind {
+  border-radius: 999px;
+  padding: 1px 7px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* The plain boundary drawing, for a parcel with no baked imagery. */
@@ -515,60 +584,17 @@ section[tabindex="-1"]:focus {
   .btn,
   .segmented button,
   .search-row,
-  .results a {
+  .results a,
+  .example-chip {
     transition: none;
   }
 }
 
-/* ---------- Search: before a query, and when nothing matched ---------- */
+/* ---------- Search: before a query ---------- */
 
 .search-start > p {
   margin: var(--space-s) 0 0;
   color: #d7d7d7;
-}
-
-.search-examples {
-  margin-top: var(--space-s);
-}
-
-.search-examples p {
-  margin: 0 0 var(--s-2);
-  color: var(--text-2);
-  font-size: 0.9rem;
-}
-
-.search-examples ul {
-  display: grid;
-  gap: var(--s-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.search-examples li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.2rem 0.9rem;
-  font-size: 0.9rem;
-}
-
-.search-examples a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.5rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  padding: 0 0.95rem;
-  background: var(--surface-1);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-
-.search-examples a:hover {
-  border-color: var(--gold);
 }
 
 /* ---------- Live search: loading and failure ---------- */

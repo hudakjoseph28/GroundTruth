@@ -1,17 +1,12 @@
 {
   "scenario": "no-match-parcel-id",
   "path": "/api/parcels/search?q=ZZ-404-000404",
-  "recordedAt": "2026-11-17T00:11:54.831Z",
+  "recordedAt": "2026-11-18T20:13:32.331Z",
   "exchanges": [
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IN+%28%27ZZ-404-000404%27%2C%27ZZ404000404%27%2C%27ZZ-40-40-00-404%27%29&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=20&f=json",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IN+%28%27ZZ-404-000404%27%2C%27ZZ404000404%27%2C%27ZZ-40-40-00-404%27%29&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=20&f=json",
       "status": 200,
-      "body": {
-        "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
-        "globalIdFieldName": "GlobalID",
-        "features": []
-      }
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","features":[]}
     }
   ],
   "apiResponse": {
