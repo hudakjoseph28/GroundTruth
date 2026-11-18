@@ -5,6 +5,10 @@ import { createEscrowDecoder } from "./chain/escrowDecoder.js";
 import { prisma } from "./db.js";
 import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
 import { getDeal, getDealTimeline } from "./routes/deals.js";
+import {
+  elevenLabsWebhook,
+  type ElevenLabsWebhookOptions,
+} from "./routes/elevenlabsWebhook.js";
 import { getHealth } from "./routes/health.js";
 import { createOgripClient, type OgripClient } from "./parcels/ogrip.js";
 import { parcelRoutes } from "./routes/parcels.js";
@@ -13,9 +17,11 @@ import {
   type QuickNodeWebhookOptions,
 } from "./routes/quicknodeWebhook.js";
 import { reportRoute, type ReportRouteOptions } from "./routes/report.js";
+import { recordOwnerCall } from "./voice/ownerCall.js";
 
 export interface AppOptions {
   quicknode?: Partial<QuickNodeWebhookOptions>;
+  elevenlabs?: Partial<ElevenLabsWebhookOptions>;
   /** Statewide parcel source. Defaults to live OGRIP. */
   ogrip?: OgripClient;
   /** FEMA client, report store, flood limit, and clock for live reports. */
@@ -54,6 +60,16 @@ export function createApp(commit: string, options: AppOptions = {}) {
       apply:
         options.quicknode?.apply ??
         ((event) => applyConfirmedEvent(prisma, event)),
+    }),
+  );
+  app.post(
+    "/api/webhooks/elevenlabs",
+    ...elevenLabsWebhook({
+      secret: options.elevenlabs?.secret,
+      agentId: options.elevenlabs?.agentId,
+      now: options.elevenlabs?.now,
+      record:
+        options.elevenlabs?.record ?? ((call) => recordOwnerCall(prisma, call)),
     }),
   );
 

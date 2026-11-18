@@ -16,6 +16,10 @@ export interface ServerEnv {
   femaTimeoutMs: number;
   /** Limit for a Franklin report's county zoning check, in milliseconds. */
   zoningTimeoutMs: number;
+  /** ElevenLabs post-call webhook secret; the webhook refuses all deliveries without it. */
+  elevenLabsWebhookSecret: string | undefined;
+  /** Optional: only this agent's calls become evidence. */
+  elevenLabsAgentId: string | undefined;
 }
 
 export function readServerEnv(
@@ -41,6 +45,9 @@ export function readServerEnv(
       source.ZONING_TIMEOUT_MS,
       DEFAULT_ZONING_TIMEOUT_MS,
     ),
+    elevenLabsWebhookSecret:
+      source.ELEVENLABS_WEBHOOK_SECRET?.trim() || undefined,
+    elevenLabsAgentId: source.ELEVENLABS_AGENT_ID?.trim() || undefined,
   };
 }
 

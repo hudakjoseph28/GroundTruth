@@ -249,6 +249,34 @@ Filters live in [quicknode/](quicknode/) and are pasted into the Stream's filter
 
 The first start (22:56:59 UTC) was stopped after three `503`s because the token was not yet set. Resuming it after the token was set produced the run above.
 
+## ElevenLabs owner callback
+
+A staged check against seller impersonation. An ElevenLabs agent phones a **consenting teammate** who plays the owner on record of the golden parcel and asks whether they are selling it. The result becomes **evidence** on the deal timeline for the title reviewer. It never approves, holds, or releases anything; the reviewer's signature and the escrow program decide that. No real parcel owner is ever called.
+
+**Flow**
+
+1. **Trigger, local only.** `pnpm --filter @groundtruth/backend call:owner` prints a dry run; add `--confirm` to dial. It calls `POST https://api.elevenlabs.io/v1/convai/twilio/outbound-call` with the agent, the imported Twilio number, the callee, and dynamic variables: `deal_id`, `participant_label`, `parcel_id`, `parcel_description`. The API key and phone number stay in `backend/.env`. It never prints the key or the full number.
+2. **Agent.** The prompt, first message, and the `sale_answer` data-collection field are in [elevenlabs/owner-callback-agent.md](elevenlabs/owner-callback-agent.md).
+3. **Webhook.** `POST /api/webhooks/elevenlabs`:
+   - **Signature:** verifies the `ElevenLabs-Signature` header (`t=<unix secs>,v0=<hex>`, HMAC-SHA256 of `"<t>.<raw body>"` with `ELEVENLABS_WEBHOOK_SECRET`). This mirrors the official SDK 2.75.0 `constructEvent`, including its 30-minute limit on old timestamps, with a constant-time compare.
+   - **Events:**
+     - `post_call_transcription` → `analysis.data_collection_results.sale_answer` becomes *owner denies sale*, *owner confirms sale*, or *unclear*.
+     - `call_initiation_failure` → *no answer*.
+     - Audio and other event types are acknowledged and never stored.
+   - **Storage:** one `OwnerCallRecord` per `conversation_id` (conversation ID, completion time, deal ID, participant label, `call_successful`, outcome) and one `evidenceReceived` timeline row, written in one transaction. **No transcript, audio, or phone number is stored or logged.**
+   - **Deals:** only public demo deals accept evidence. Calls with no `deal_id`, an unknown deal, or another agent (when `ELEVENLABS_AGENT_ID` is set) are acknowledged and ignored.
+
+| Response | Meaning | ElevenLabs does |
+| --- | --- | --- |
+| `200` | Recorded, duplicate, or ignored | Done |
+| `400` | Signed body is not a post-call event | No retry |
+| `401` | Signature missing, wrong, or older than 30 min | No retry |
+| `500` / `503` | Database error, or no secret configured | Retries if retries are enabled on the webhook |
+
+**Setup.** Railway needs `ELEVENLABS_WEBHOOK_SECRET` (from the HMAC webhook created in ElevenLabs settings) and `ELEVENLABS_AGENT_ID`. Local `.env` needs `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `ELEVENLABS_PHONE_NUMBER_ID`, `OWNER_CALLBACK_TO_NUMBER`, and `OWNER_CALLBACK_PARTICIPANT_LABEL` (see `.env.example`).
+
+**Test data.** `test/support/elevenlabsPayloads.ts` follows the documented payload and the SDK types. It is not recorded from a live call; replace it once the first real call lands.
+
 ## Tests
 
 ```bash
