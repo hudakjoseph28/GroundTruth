@@ -11,8 +11,8 @@ import type {
 // staged wallets and the money is test USDC, and the page says so.
 
 export const DEAL_PAGE = {
-  eyebrow: "Staged deal",
-  staged: "Staged roles · test USDC · Solana devnet",
+  eyebrow: "Deal",
+  staged: "Solana devnet · test USDC · reviewer wallets",
   unit: "test USDC",
   amount: "In this deal",
   status: "Status",
@@ -29,9 +29,9 @@ export const DEAL_PAGE = {
   retry: "Try again",
   missing: {
     title: "Deal not found",
-    body: "No public staged deal has this ID.",
+    body: "No public deal has this ID.",
     home: "Go to the homepage",
-    parcel: "Open the demo parcel",
+    parcel: "Open the Franklin parcel",
   },
 } as const;
 
@@ -124,7 +124,7 @@ export const REVIEWERS = {
     notSigned: "Did not sign",
   },
   receipt: "Receipt",
-  wallet: "Staged wallet",
+  wallet: "Reviewer wallet",
 } as const;
 
 export const HOLD = {
@@ -178,5 +178,5 @@ export const NOT_FOUND = {
   body: "Nothing lives at this address. It may have been mistyped, or the link may be out of date.",
   home: "Go to the homepage",
   search: "Search for a parcel",
-  parcel: "Open the demo parcel",
+  parcel: "Open the Franklin parcel",
 } as const;

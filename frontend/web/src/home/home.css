@@ -41,7 +41,7 @@
 }
 
 .section {
-  padding: var(--space-xl) var(--pad);
+  padding: clamp(2rem, 1.2rem + 2vw, 3.25rem) var(--pad);
 }
 
 .section h2 {
