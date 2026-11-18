@@ -110,7 +110,7 @@ The zoning check cites no Licking County source, because GroundTruth runs no Lic
 
 ## Forced timeouts
 
-Run on `main` at `ce33d40` with `vitest run test/report.test.ts test/parcels.test.ts -t "timeout|time out|times out|budget"`. Result: **7 passed**.
+Current verification runs `vitest run test/ssurgoSoils.test.ts test/report.test.ts test/parcels.test.ts` for the provider replay, report isolation, and coverage paths; the complete backend suite is also run before merge.
 
 - **FEMA times out** (FEMA forced to hang, flood limit 200 ms) on `ohio:39049:010-042534`:
   - The report still returns **`200`** within 2 s.

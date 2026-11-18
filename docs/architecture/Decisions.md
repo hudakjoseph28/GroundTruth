@@ -15,6 +15,7 @@
 | D9 | **Public staged demo data; wallet authorization for actions.** No production user-account system this week. | The stage flow contains no real PII. Removing account setup keeps focus on evidence and program authorization. | Real personal/contact/title data enters the system; then authentication and row-level authorization become mandatory before ingestion. |
 | D10 | **Polling every 2 seconds** for the first connected timeline; add server-sent events only after the Stream works | The sponsor value is confirmed Stream ingestion, not a fragile socket layer. Polling is reliable across Vercel/Railway and sufficient on stage. | Polling makes the second-device update visibly late or exceeds provider limits after measurement. |
 | D11 | **Vitest + Testing Library + Supertest** for TypeScript; **Anchor/Mocha** for the program | One test runner per runtime and clear phase acceptance checks. | A scaffolded official template already supplies an equivalent runner; keep it rather than churn. |
+| D12 | **USDA NRCS Soil Data Access (SSURGO) is the statewide septic-screening source.** Query parcel-overlapping map units and `muaggatt.engstafdcd`; on timeout or provider failure return `unknown` and retry on the next uncached report rather than substituting another dataset. | SDA publishes the requested map-unit geometry and dominant-condition septic-tank absorption field rating from one authoritative service. A transient outage cannot justify a positive or negative finding. | SDA remains unavailable after the hackathon or removes the spatial/rating fields; record the failure and add an adapter for an equivalent official USDA delivery without changing the report contract. |
 
 ## Consequences everyone codes to
 
@@ -32,5 +33,6 @@ Append a dated row instead of erasing history:
 | --- | --- | --- | --- | --- |
 | — | No replacements yet | — | — | — |
 | 2026-11-12 | D1 accepted | `pnpm install --frozen-lockfile`, `pnpm -r build`, `pnpm -r typecheck`, `pnpm lint`, and `pnpm format` passed from a clean checkout | none | Joey Hudak |
+| 2026-11-18 | D12 accepted; transient failure behavior exercised | `POST https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest` returned HTTP 502 at 23:17Z and 23:56Z; the exact first response is recorded in `backend/test/fixtures/ssurgo/sda-502-2026-11-18.json` | No provider replacement. Serve an uncached `unknown` septic check and retry USDA on the next report. | Gagan |
 
 A replacement is complete only when [README](../../README.md), [Architecture](Architecture.md), [DataContract](DataContract.md), affected phase files, environment examples, and deployment notes agree.
