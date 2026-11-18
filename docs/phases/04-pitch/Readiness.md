@@ -1,9 +1,9 @@
 # Submission readiness
 
-**Audited:** Wed Nov 18, 2026, about 11:00 a.m. to 12:30 p.m. ET, as a signed-out judge.
+**Audited:** Wed Nov 18, 2026, finishing 12:25 p.m. ET, as a signed-out judge.
 **Internal deadline:** Fri Nov 20, 11:00 a.m. ET. Devpost closes 1:00 p.m. ET.
 
-**What was audited:** <https://groundtruth-lac.vercel.app> and its `/api` routes, in Chrome at 1440 × 900 and at a 390 px phone viewport (emulated, with touch). The API reported commit `0bc6a93`; `main` was at `6b61ce9`, and the two commits in between touch only `escrow/` and docs. Everything marked "watched" below was seen on screen or read from a live response during this audit. Nothing here is taken from a PR description.
+**What was audited:** <https://groundtruth-lac.vercel.app> and its `/api` routes, in Chrome at 1440 × 900 and at a 390 px phone viewport (emulated, with touch). The API reported commit `0bc6a93`; `main` was at `6b61ce9`, and the two commits in between touch only `escrow/` and docs. PRs #27 and #28 merged while this was being written (`main` is now `be388bd`); H3 was rechecked after that. Everything marked "watched" below was seen on screen or read from a live response during this audit. Nothing here is taken from a PR description.
 
 ## Where we stand
 
@@ -31,7 +31,7 @@ Ranked. Owners: **Joey** web UI · **Kadhir** escrow · **Satya** API, QuickNode
 | --- | --- | --- | --- | --- |
 | H1 | **Merging #29 changes the golden parcel page.** | Run locally against the production API: the escrow strip drops its `STAGED` tag and reads "Waiting on 3 sign-offs · Draft · 0/3" with an Explorer link to an account that does not exist yet, while the cards below still say "Seller authority: Held" and "Survey: Signed off". | Joey, with Gagan | In `frontend/web/src/data/ledger.ts`, stop `hasChainState` from counting `escrowAddress` alone as chain state. B3 replaces this properly. Details are in the [#29 review comment](https://github.com/hudakjoseph28/UBC-Hackathon/pull/29#issuecomment-6986045575). |
 | H2 | **QuickNode: no escrow event has gone through the Stream.** | The only recorded proof is the Nov 15 heartbeat run (117 deliveries answered 204). No escrow transaction exists to deliver. The webhook is live: an unsigned POST gets 401. | Satya | Before the devnet run: resume the Stream with `groundtruth-filter.js`, and confirm `QUICKNODE_STREAM_TOKEN` is set on Railway. After it: record the Stream name, filter, destination, one delivered signature, and the time it appeared on a second device. Enter the bounty only if that second-device check passes, which needs B3. |
-| H3 | **ElevenLabs is not deployed and no call is recorded.** | PR #27 is open. `POST /api/webhooks/elevenlabs` returns 404 on the live API. | Satya | Merge #27. Set the ElevenLabs secret and agent ID on Railway. Place the staged call to a consenting teammate with `call:owner --confirm`. Save the conversation ID and record the call audio for the video. Enter the bounty only after that. |
+| H3 | **ElevenLabs is merged but not live, and no call is recorded.** | PR #27 merged at 12:18 p.m. ET. At 12:24 p.m. `POST /api/webhooks/elevenlabs` still returned 404 on the live API, on Vercel and on Railway directly, and `/api/health` still reported `0bc6a93`. That may be a deploy still in progress. | Satya | Confirm Railway deployed `main`: the route should answer 401 to an unsigned POST. Redeploy if it still answers 404. Set the ElevenLabs secret and agent ID on Railway. Place the staged call to a consenting teammate with `call:owner --confirm`. Save the conversation ID and record the call audio for the video. Enter the bounty only after that. |
 | H4 | **Unknown URLs show a blank black page.** | `/deals/staged-devnet-deal`, `/deals/…/timeline`, and `/nope` render nothing: no header, no message. | Joey | Add a catch-all route in `App.tsx` inside `SiteLayout`: "Page not found" plus links to home and the demo parcel. |
 | H5 | **Two TODO labels are visible on the public site.** | Footer on every page: `Devpost TODO: add link`. Homepage: `Become a reviewer` beside `TODO: reviewer signup`. | Joey | Put the Devpost URL in `FOOTER.devpost` once B5 exists, or remove the row. Remove the reviewer button, or label it "Not open yet". |
 | H6 | **Searching the golden parcel's own address finds nothing.** | The result card shows `0 SEAMAN RD`. Searching `0 Seaman Rd` returns "No Ohio parcel matched". | Gagan | Let a house number of `0` match the published site address, or do not show a `0` address on the card. |
@@ -63,7 +63,7 @@ From the [README](../../../README.md#definition-of-a-winning-build).
 | Search returns real OGRIP boundaries from two counties; golden report shows a dated source, a gap, and the next person | **Pass** | Watched. `230-000918` and `84 W Dodridge St` (Franklin) and `00500729609000` and `93 Woody Knoll Dr` (Licking) return results in 0.3 to 1.4 seconds. The Road access drawer shows three sources retrieved Nov 17, 2026, "What it does not establish", and "Title reviewer, then county zoning office". |
 | Held deal rejects release on-chain with balances unchanged | **Not yet** | No deal on devnet (B2). The simulation in #29 shows `DealHeld (6019)`, but that is not devnet. |
 | Cleared deal pays the exact amount once; every claim has an Explorer link | **Not yet** | No deal on devnet (B2). Only the program and deploy links exist. |
-| ElevenLabs call creates reviewer evidence, never an approval | **Not yet** | Code is in open PR #27, not deployed, and no call is recorded (H3). |
+| ElevenLabs call creates reviewer evidence, never an approval | **Not yet** | The code merged in #27 but is not live, and no call is recorded (H3). |
 | QuickNode Stream drives the timeline on a second device | **Not yet** | Heartbeat proof only; no escrow event delivered; the web has no timeline page (H2, B3). |
 | Video, repo, and app all open signed out | **Fail** | App: pass. Repo: 404 (B1). Video: does not exist (B4). |
 

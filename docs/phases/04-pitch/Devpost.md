@@ -6,7 +6,7 @@
 
 > Submission note: Keep every `[PENDING]` label until the named owner confirms the integration and supplies the required proof. Remove the label only after that proof is recorded in the repository.
 >
-> Checked Nov 18, 12:30 p.m. ET ([Readiness.md](Readiness.md)): no deal has run on devnet, the ElevenLabs callback is not deployed, and no escrow event has gone through the QuickNode Stream. Every `[PENDING]` below stays.
+> Checked Nov 18, 12:25 p.m. ET ([Readiness.md](Readiness.md)): no deal has run on devnet, the ElevenLabs callback is merged but not yet answering on the live API and no call is recorded, and no escrow event has gone through the QuickNode Stream. Every `[PENDING]` below stays.
 
 ## What it does
 
