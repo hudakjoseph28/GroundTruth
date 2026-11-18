@@ -23,7 +23,7 @@ pnpm --filter @groundtruth/backend dev
 
 `GET /api/health` returns `{ "status": "ok", "commit": "..." }`.
 
-`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`; see [Parcel report](#parcel-report-live-ogrip--fema). The parcel key is URL-encoded, for example `ohio%3A39049%3A230-000918`.
+`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`; see [Parcel report](#parcel-report-live-ogrip--fema--usda-ssurgo). The parcel key is URL-encoded, for example `ohio%3A39049%3A230-000918`.
 
 ## Parcel search (live Ohio OGRIP)
 
