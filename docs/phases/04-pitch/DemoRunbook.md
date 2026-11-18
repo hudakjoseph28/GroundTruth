@@ -17,6 +17,14 @@ This runbook was checked against <https://groundtruth-lac.vercel.app> and its pu
 - [ ] Laptop is charged and plugged in. The terminal is open at the repository root with dependencies already installed.
 - [ ] `escrow/.demo-wallets/` is present and contains the five existing staged keypair files: `buyer.json`, `seller.json`, `title.json`, `survey.json`, and `septic.json`. Do not open, copy, project, or commit them.
 - [ ] Run the read-only backstage check `pnpm --filter @groundtruth/escrow demo:deals`. It must report `stage-finish ready (septic approval and release)`. **Do not run `stage-finish` before the live segment.**
+- [ ] **Warm the cache at least 10 minutes before presenting.** On the laptop, open each parcel below once and wait until its land block finishes loading. The first open builds the 3D land (USGS aerial imagery and elevation) and caches it on the API. A cold build can take longer than the 10 seconds the page waits, and the live report is also cached for 24 hours.
+  - 230-000918, the demo parcel (baked into the site; this is a render check): <https://groundtruth-lac.vercel.app/parcels/ohio%3A39049%3A230-000918>
+  - 84 W Dodridge St, Columbus (search example): <https://groundtruth-lac.vercel.app/parcels/ohio%3A39049%3A010-042534>
+  - 10034 Appleton Rd, Johnstown (search example): <https://groundtruth-lac.vercel.app/parcels/ohio%3A39089%3A00100000601000>
+  - 93 Woody Knoll Dr, Licking County, the second fixture parcel (baked; render check): <https://groundtruth-lac.vercel.app/parcels/ohio%3A39089%3A00500729609000>
+  - Any other parcel you plan to search on stage.
+
+  If a parcel shows its boundary flat with "The 3D land isn't ready for this parcel yet," wait a minute and reload until the 3D block appears. Its build kept running and is cached. 3D for parcels other than the two baked ones needs the on-demand land endpoint (#37) deployed to Railway. Until then they stay flat however many times they are opened.
 - [ ] Open these projected laptop tabs in this order:
   1. <https://groundtruth-lac.vercel.app>
   2. <https://groundtruth-lac.vercel.app/parcels/ohio%3A39049%3A230-000918>
