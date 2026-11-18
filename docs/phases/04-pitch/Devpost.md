@@ -5,6 +5,8 @@
 **One-sentence pitch:** GroundTruth helps a first-time Ohio land buyer understand a parcel before paying by showing sourced facts, honest gaps, and the person responsible for the next decision.
 
 > Submission note: Keep every `[PENDING]` label until the named owner confirms the integration and supplies the required proof. Remove the label only after that proof is recorded in the repository.
+>
+> Checked Nov 18, 12:30 p.m. ET ([Readiness.md](Readiness.md)): no deal has run on devnet, the ElevenLabs callback is not deployed, and no escrow event has gone through the QuickNode Stream. Every `[PENDING]` below stays.
 
 ## What it does
 
@@ -12,7 +14,7 @@ Buying vacant land can look simple until the buyer asks basic questions: Can I b
 
 GroundTruth brings that evidence into one buyer-readable report. It shows what a public record supports, what it does not establish, who can resolve the open question, and what the buyer should do next. It is decision support, not a legal buildability opinion, title search, survey, identity service, or deed-transfer system.
 
-The current web demo searches two real Ohio parcel fixtures and opens their published boundaries. The backend supports live address and parcel-ID search against Ohio OGRIP across all 88 counties. It also builds live FEMA flood checks in the 83 counties with an NFHL study. Missing or timed-out evidence stays `unknown` instead of becoming a guessed answer.
+The web demo searches live Ohio OGRIP parcels by address or parcel ID and opens each published boundary. The statewide layer covers all 88 counties, and we checked the deployed search in Franklin and Licking counties. The backend also builds live FEMA flood checks in the 83 counties with an NFHL study. Missing or timed-out evidence stays `unknown` instead of becoming a guessed answer.
 
 Our golden parcel is a real 3.015-acre vacant lot in Franklin County. County zoning maps it Rural, but county GIS shows no road right-of-way touching it and the nearest mapped road centerline is about 106 metres away. A title reviewer still has to determine whether a recorded access easement exists. That is the moment we want a first-time buyer to understand: acreage and zoning can look promising while legal access remains unresolved.
 
@@ -76,7 +78,7 @@ The most important design lesson was to keep evidence, professional judgment, an
 
 ## What's next for GroundTruth
 
-Our immediate product step is to connect the web search experience to the live parcel API. The backend already supports live statewide discovery, while the current web demo uses the two canonical fixtures. We also want to add verified local zoning and access adapters behind the same report contract, county by county, without weakening the `unknown` state.
+Our immediate product step is to add verified local zoning and access adapters behind the same report contract, county by county, without weakening the `unknown` state. Statewide search is live today, but only Franklin County has a zoning check.
 
 We will test the report with first-time land buyers and title or closing professionals. The pilot questions are practical: Can a buyer explain the biggest open issue? Do they know who acts next? Does the report help them pause, negotiate, or walk away before sending money?
 

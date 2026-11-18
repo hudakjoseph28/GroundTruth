@@ -4,6 +4,8 @@
 
 **Outcome:** a complete Consumer Applications submission and a reproducible five-minute presentation make one claim: GroundTruth helps a first-time land buyer understand a parcel before paying, then uses Solana to enforce the staged professionals' payment conditions.
 
+**Status and video:** [Readiness punch list](Readiness.md) · [submission video script](VideoScript.md) · [Devpost draft](Devpost.md) · [parcel demo script](DemoScript-Parcel.md) · [QA proof](QA-Proof.md)
+
 **Read first:** [UBC win strategy](../../ubc/UBC-Hackathon.md#win-strategy) · [demo timing](../../ubc/UBC-Hackathon.md#demo-and-submission) · [Vision](../../design/Vision.md) · [Problem story rules](../../context/Problem.md#rules-for-the-story)
 
 ## Final positioning
