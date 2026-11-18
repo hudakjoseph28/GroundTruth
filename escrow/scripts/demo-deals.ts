@@ -20,7 +20,9 @@
  *   run       Refuses unless `check` passes and a `simulate` rehearsal of the
  *             same run passes, then runs both closings on devnet and writes
  *             demo-results/devnet-<runId>.{json,md}, updated after every
- *             transaction so a partial run is still recorded.
+ *             transaction so a partial run is still recorded. Refuses to start
+ *             if LOCAL_PROGRAM_SO / ESCROW_PROGRAM_SO is set: the rehearsal
+ *             must run the bytecode deployed on devnet, not a local build.
  *
  * The closings, both bound to the golden parcel:
  *   held      initialize -> fund -> title hold -> release (must fail on-chain
@@ -302,9 +304,16 @@ function devnetChain(): Chain & { connection: Connection } {
   };
 }
 
+/** A local program build to simulate instead of the deployed program, if configured. */
+function localProgramPath(): string | undefined {
+  return (
+    process.env.LOCAL_PROGRAM_SO || process.env.ESCROW_PROGRAM_SO || undefined
+  );
+}
+
 /** The deployed program's ELF: ProgramData account data after its 45-byte header, or local build if specified. */
 async function deployedProgramBytes(connection: Connection) {
-  const rawPath = process.env.LOCAL_PROGRAM_SO || process.env.ESCROW_PROGRAM_SO;
+  const rawPath = localProgramPath();
   if (rawPath) {
     const resolvedPath = existsSync(rawPath)
       ? rawPath
@@ -1133,6 +1142,13 @@ async function main() {
   if (positional.length > 1 || !["check", "simulate", "run"].includes(mode)) {
     throw new Error(
       `usage: demo-deals.ts [check|simulate|run] [--amount <usdc>] [--held-error <IDL error name>]`,
+    );
+  }
+  // The rehearsal guards the devnet run only if it executes the same bytecode
+  // devnet will. A local build would let a rehearsal pass that devnet fails.
+  if (mode === "run" && localProgramPath() !== undefined) {
+    throw new Error(
+      "run refuses to start while LOCAL_PROGRAM_SO or ESCROW_PROGRAM_SO is set: the rehearsal must use the program deployed on devnet. Unset it, or use `simulate` to test a local build.",
     );
   }
   const amount = flags.amount ? parseUsdc(flags.amount) : DEFAULT_AMOUNT;
