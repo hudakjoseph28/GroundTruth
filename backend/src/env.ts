@@ -1,4 +1,5 @@
 import { DEFAULT_OGRIP_TIMEOUT_MS } from "./parcels/ogrip.js";
+import type { TwilioConfig } from "./sms/sender.js";
 import {
   DEFAULT_ACCESS_TIMEOUT_MS,
   DEFAULT_FEMA_TIMEOUT_MS,
@@ -23,6 +24,8 @@ export interface ServerEnv {
   elevenLabsWebhookSecret: string | undefined;
   /** Optional: only this agent's calls become evidence. */
   elevenLabsAgentId: string | undefined;
+  /** Twilio for staged deal text alerts. Unset: opt-ins are refused and nothing is texted. */
+  twilio: TwilioConfig | undefined;
 }
 
 export function readServerEnv(
@@ -56,7 +59,28 @@ export function readServerEnv(
     elevenLabsWebhookSecret:
       source.ELEVENLABS_WEBHOOK_SECRET?.trim() || undefined,
     elevenLabsAgentId: source.ELEVENLABS_AGENT_ID?.trim() || undefined,
+    twilio: readTwilio(source),
   };
+}
+
+/** All three or none: a partial set is a deploy mistake, not "off". */
+function readTwilio(source: NodeJS.ProcessEnv): TwilioConfig | undefined {
+  const accountSid = source.TWILIO_ACCOUNT_SID?.trim() || undefined;
+  const authToken = source.TWILIO_AUTH_TOKEN?.trim() || undefined;
+  const fromNumber = source.TWILIO_FROM_NUMBER?.trim() || undefined;
+  if (!accountSid && !authToken && !fromNumber) return undefined;
+  if (!accountSid || !authToken || !fromNumber) {
+    throw new Error(
+      "TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER must be set together",
+    );
+  }
+  if (!/^AC[0-9a-fA-F]{32}$/.test(accountSid)) {
+    throw new Error("TWILIO_ACCOUNT_SID must be a Twilio Account SID (AC...)");
+  }
+  if (!/^\+[1-9]\d{7,14}$/.test(fromNumber)) {
+    throw new Error("TWILIO_FROM_NUMBER must be in +E.164 form");
+  }
+  return { accountSid, authToken, fromNumber };
 }
 
 function readOgripTimeout(value: string | undefined): number {

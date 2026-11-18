@@ -1,6 +1,8 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import type { DealState, Hold, ReviewerRole } from "@groundtruth/shared";
 import type { ConfirmedEvent, ProgramEvent } from "./programEvents.js";
+import { formatUsdc } from "./usdc.js";
+import { queueSmsAlerts } from "../sms/alerts.js";
 
 export type ApplyResult = "applied" | "duplicate" | "unknownDeal";
 
@@ -160,9 +162,10 @@ async function applyInTransaction(
       break;
   }
 
+  const eventId = `${signature}:${eventIndex}`;
   await tx.timelineEventRecord.create({
     data: {
-      id: `${signature}:${eventIndex}`,
+      id: eventId,
       dealId: deal.id,
       at,
       type: TIMELINE_TYPES[event.name],
@@ -173,6 +176,11 @@ async function applyInTransaction(
       slot: BigInt(slot),
       confirmationStatus: "confirmed",
     },
+  });
+  await queueSmsAlerts(tx, {
+    dealId: deal.id,
+    eventId,
+    eventName: event.name,
   });
 
   if (transition.to !== deal.state) {
@@ -232,13 +240,4 @@ function requireAmount(eventAmount: string, boundAmount: string): string {
     throw new ChainDriftError("Event amount differs from the bound amount");
   }
   return eventAmount;
-}
-
-/** Test USDC has 6 decimals. */
-function formatUsdc(baseUnits: string): string {
-  const value = BigInt(baseUnits);
-  const whole = value / 1_000_000n;
-  const fraction = (value % 1_000_000n).toString().padStart(6, "0");
-  const trimmed = fraction.replace(/0+$/, "");
-  return trimmed ? `${whole}.${trimmed}` : whole.toString();
 }

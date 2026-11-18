@@ -1,7 +1,7 @@
 import type { ApiError } from "@groundtruth/shared";
 
 /**
- * One GET against the GroundTruth API. The browser calls relative `/api/...`
+ * Calls against the GroundTruth API. The browser calls relative `/api/...`
  * paths: Vercel forwards them to the API in production, and Vite does the
  * same in dev and preview (vite.config.ts).
  *
@@ -30,16 +30,32 @@ const UNREACHABLE: FailedOutcome = {
   retryable: true,
 };
 
-export async function request(
+export function request(
   path: string,
   signal?: AbortSignal,
 ): Promise<ApiResponse> {
+  return call(path, { signal, headers: { accept: "application/json" } });
+}
+
+/** One JSON POST against the GroundTruth API, answered the same way as `request`. */
+export function postJson(
+  path: string,
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<ApiResponse> {
+  return call(path, {
+    method: "POST",
+    signal,
+    headers: { accept: "application/json", "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+async function call(path: string, init: RequestInit): Promise<ApiResponse> {
+  const signal = init.signal;
   let response: Response;
   try {
-    response = await fetch(path, {
-      signal,
-      headers: { accept: "application/json" },
-    });
+    response = await fetch(path, init);
   } catch (error) {
     if (signal?.aborted) throw error;
     return { status: "failed", failure: UNREACHABLE };

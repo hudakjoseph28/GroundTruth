@@ -5,6 +5,8 @@ export type {
   CheckStatus,
   Coverage,
   Deal,
+  DealSmsSubscription,
+  DealSmsSubscriptionRequest,
   DealState,
   GeoJsonMultiPolygon,
   GeoJsonPolygon,

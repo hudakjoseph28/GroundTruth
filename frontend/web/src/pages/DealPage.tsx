@@ -11,6 +11,7 @@ import {
   TIMELINE,
 } from "../content/deal";
 import { QrCode } from "../deal/QrCode";
+import { TextAlerts } from "../deal/TextAlerts";
 import { useDealFeed, type LiveDeal } from "../deal/useDealFeed";
 import { dealPath } from "../data/dealSource";
 import {
@@ -23,7 +24,11 @@ import {
   type ReviewerView,
   type TimelineRow,
 } from "../data/dealView";
-import { explorerAddressUrl, explorerTxUrl, shortAddress } from "../data/ledger";
+import {
+  explorerAddressUrl,
+  explorerTxUrl,
+  shortAddress,
+} from "../data/ledger";
 import { usePageTitle } from "../layout/usePageTitle";
 import { getParcel, parcelPath, sampleParcelPath } from "../data/parcelSource";
 import "../deal/deal.css";
@@ -82,7 +87,11 @@ export function DealPage() {
         <div className="notice notice-error" role="alert">
           <p>{feed.message}</p>
           {feed.retryable ? (
-            <button type="button" className="btn btn-small" onClick={feed.retry}>
+            <button
+              type="button"
+              className="btn btn-small"
+              onClick={feed.retry}
+            >
               {DEAL_PAGE.retry}
             </button>
           ) : null}
@@ -110,12 +119,24 @@ function DealScreen({ live }: { live: LiveDeal }) {
       </header>
 
       <div className="deal-summary">
-        <Hero deal={deal} live={live.liveState === deal.state} parcel={parcel} />
+        <Hero
+          deal={deal}
+          live={live.liveState === deal.state}
+          parcel={parcel}
+        />
         <Reviewers deal={deal} />
         {deal.hold && <HoldCard hold={deal.hold} />}
+        {/* A closed deal has no more events to text about. */}
+        {deal.state !== "released" && deal.state !== "refunded" && (
+          <TextAlerts dealId={deal.id} />
+        )}
       </div>
 
-      <section className="deal-timeline" id="timeline" aria-labelledby="deal-timeline-title">
+      <section
+        className="deal-timeline"
+        id="timeline"
+        aria-labelledby="deal-timeline-title"
+      >
         <header className="deal-section-head">
           <h2 id="deal-timeline-title">{TIMELINE.title}</h2>
           <p>{TIMELINE.order}</p>
@@ -224,14 +245,21 @@ function Reviewers({ deal }: { deal: DealView }) {
             </span>
             <p className="deal-reviewer-who">
               {REVIEWERS.role(reviewer.role)}
-              <span className="mono" title={`${REVIEWERS.wallet} ${reviewer.wallet}`}>
+              <span
+                className="mono"
+                title={`${REVIEWERS.wallet} ${reviewer.wallet}`}
+              >
                 {shortAddress(reviewer.wallet)}
               </span>
             </p>
             <p className="deal-reviewer-status">
               <strong>{REVIEWERS.status[reviewer.status]}</strong>
               {reviewer.signature && (
-                <a href={explorerTxUrl(reviewer.signature)} target="_blank" rel="noreferrer">
+                <a
+                  href={explorerTxUrl(reviewer.signature)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   {REVIEWERS.receipt}
                   <NewTab />
                 </a>
@@ -246,7 +274,11 @@ function Reviewers({ deal }: { deal: DealView }) {
 
 function HoldCard({ hold }: { hold: HoldView }) {
   return (
-    <section className="deal-hold" data-active={hold.active} aria-labelledby="deal-hold-title">
+    <section
+      className="deal-hold"
+      data-active={hold.active}
+      aria-labelledby="deal-hold-title"
+    >
       <h2 id="deal-hold-title">
         {hold.active ? HOLD.active : HOLD.ended}
         <span>{hold.reason}</span>
@@ -255,7 +287,11 @@ function HoldCard({ hold }: { hold: HoldView }) {
       <p className="deal-hold-foot">
         {HOLD.placedBy(hold.role)} ·{" "}
         <time dateTime={hold.at}>{formatMoment(hold.at)}</time> ·{" "}
-        <a href={explorerTxUrl(hold.signature)} target="_blank" rel="noreferrer">
+        <a
+          href={explorerTxUrl(hold.signature)}
+          target="_blank"
+          rel="noreferrer"
+        >
           {HOLD.receipt}
           <NewTab />
         </a>
@@ -280,7 +316,9 @@ function Row({ row, fresh }: { row: TimelineRow; fresh: boolean }) {
       <div className="deal-row-body">
         <p className="deal-row-head">
           <strong>{row.label}</strong>
-          {row.blocked && <span className="deal-row-blocked">{TIMELINE.blocked}</span>}
+          {row.blocked && (
+            <span className="deal-row-blocked">{TIMELINE.blocked}</span>
+          )}
           {fresh && <span className="deal-row-new">{TIMELINE.fresh}</span>}
           <time dateTime={row.at}>{formatMoment(row.at)}</time>
         </p>
@@ -330,7 +368,9 @@ function Handoff({ dealId }: { dealId: string }) {
       <div>
         <h2 id="deal-handoff-title">{HANDOFF.title}</h2>
         <p>{HANDOFF.body}</p>
-        <p className="mono deal-handoff-url">{url.replace(/^https?:\/\//, "")}</p>
+        <p className="mono deal-handoff-url">
+          {url.replace(/^https?:\/\//, "")}
+        </p>
       </div>
     </section>
   );
