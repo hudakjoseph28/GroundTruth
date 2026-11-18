@@ -14,6 +14,7 @@ import {
   stagedDemoChainAccounts,
   stagedDemoDeals,
   stagedLiveDeal,
+  stagedRehearsalDeal,
   stagedReleasedDeal,
   type Deal,
 } from "@groundtruth/shared";
@@ -30,17 +31,21 @@ function ata(owner: web3.PublicKey) {
 }
 
 describe("staged demo deals", () => {
-  it("keeps the staged-devnet-deal ID as the held deal and adds the released and live ones", () => {
+  it("keeps the staged-devnet-deal ID as the held deal and adds the released, live, and rehearsal ones", () => {
     expect(stagedDemoDeals.map((d) => d.id)).toEqual([
       "staged-devnet-deal",
       "staged-devnet-deal-released",
       "staged-devnet-deal-live",
+      "staged-devnet-deal-rehearsal",
     ]);
     expect(stagedDemoChainAccounts[stagedDeal.id]?.outcome).toBe("held");
     expect(stagedDemoChainAccounts[stagedReleasedDeal.id]?.outcome).toBe(
       "released",
     );
     expect(stagedDemoChainAccounts[stagedLiveDeal.id]?.outcome).toBe("live");
+    expect(stagedDemoChainAccounts[stagedRehearsalDeal.id]?.outcome).toBe(
+      "rehearsal",
+    );
   });
 
   it.each([
@@ -48,6 +53,8 @@ describe("staged demo deals", () => {
     [stagedReleasedDeal.id, stagedReleasedDeal, "25000000"],
     // The live deal fits in what the buyer had left after the first two.
     [stagedLiveDeal.id, stagedLiveDeal, "10000000"],
+    // The rehearsal copy mirrors the live deal, so a rehearsal looks the same.
+    [stagedRehearsalDeal.id, stagedRehearsalDeal, "10000000"],
   ] as const)(
     "%s: bound to the golden parcel, its amount, three required reviewers",
     (_id, deal, amount) => {
@@ -87,7 +94,7 @@ describe("staged demo deals", () => {
   );
 
   it("gives every deal a distinct PDA and the same participants", () => {
-    expect(new Set(stagedDemoDeals.map((d) => d.escrowAddress)).size).toBe(3);
+    expect(new Set(stagedDemoDeals.map((d) => d.escrowAddress)).size).toBe(4);
     const participants = (deal: Deal) => ({
       parcelKey: deal.parcelKey,
       buyerWallet: deal.buyerWallet,
@@ -100,5 +107,6 @@ describe("staged demo deals", () => {
     });
     expect(participants(stagedReleasedDeal)).toEqual(participants(stagedDeal));
     expect(participants(stagedLiveDeal)).toEqual(participants(stagedDeal));
+    expect(participants(stagedRehearsalDeal)).toEqual(participants(stagedDeal));
   });
 });

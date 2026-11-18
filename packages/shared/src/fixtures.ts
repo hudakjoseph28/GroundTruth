@@ -44,7 +44,8 @@ export const secondCountyReport: ParcelReport = toReport(secondCounty.report);
  * required title, survey, and septic reviewers: `stagedDeal` is held
  * (release rejected, buyer refunded) and `stagedReleasedDeal` is released to
  * the seller after every approval, both 25 test USDC and run on 2026-11-18;
- * `stagedLiveDeal` (10 test USDC) is released live on stage.
+ * `stagedLiveDeal` (10 test USDC) is released live on stage, and
+ * `stagedRehearsalDeal` is its copy for rehearsing that moment.
  *
  * Public keys only. The wallets are the staged demo keypairs that
  * escrow/scripts/demo-deals.ts generated (their private keys stay in the
@@ -57,6 +58,7 @@ export const STAGED_DEAL_ID_LABELS = {
   held: "groundtruth-demo-held-v1",
   released: "groundtruth-demo-released-v1",
   live: "groundtruth-demo-live-v1",
+  rehearsal: "groundtruth-demo-rehearsal-v1",
 } as const;
 
 const stagedParticipants = {
@@ -144,10 +146,34 @@ export const stagedLiveDeal = {
   ],
 } satisfies Deal;
 
+/**
+ * A copy of the live deal for rehearsing the stage moment: the same 10 test
+ * USDC, participants, and two-step flow (`stage-prep --deal
+ * staged-devnet-deal-rehearsal`, then `stage-finish --deal ...`), on its own
+ * PDA, so a rehearsal never consumes the deal released on stage.
+ */
+export const stagedRehearsalDeal = {
+  id: "staged-devnet-deal-rehearsal",
+  ...stagedParticipants,
+  amountBaseUnits: "10000000",
+  escrowAddress: "6KQJYssz234KjxrMkREcxpcKbok34aaFyihDST6DmH5u",
+  timeline: [
+    {
+      id: "staged-devnet-deal-rehearsal-created",
+      at: "2026-11-18T00:00:00.000Z",
+      type: "dealCreated",
+      actorRole: "buyer",
+      buyerMessage: "Staged devnet deal created. No funds have moved.",
+      confirmationStatus: "offChainEvidence",
+    },
+  ],
+} satisfies Deal;
+
 export const stagedDemoDeals = [
   stagedDeal,
   stagedReleasedDeal,
   stagedLiveDeal,
+  stagedRehearsalDeal,
 ] as const;
 
 /**
@@ -169,6 +195,14 @@ export const stagedDemoChainAccounts = {
     dealIdHex:
       "9ea97f60d7b1c3bc164c8465ca3026c725c04cb17c8d07dc4c5eacf68aaa1b86",
     vault: "8hTorFjmtUyS3DeRn6A9drtb4cjmSix711bKAydXmHXZ",
+    buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+  },
+  [stagedRehearsalDeal.id]: {
+    outcome: "rehearsal",
+    dealIdLabel: STAGED_DEAL_ID_LABELS.rehearsal,
+    dealIdHex:
+      "b4c31dd9f5b572ffbac275189ff161d55015171d1d537264cfc7cceeaae99312",
+    vault: "EebWs66L2rogg9PDi5xMcKAWpfZ5xTyB1VBcFMyzNqe2",
     buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
   },
   [stagedReleasedDeal.id]: {
