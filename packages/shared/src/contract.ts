@@ -37,6 +37,11 @@ export interface Parcel {
   township?: string;
   siteAddress?: string;
   acreage?: number;
+  /**
+   * Area of the OGRIP boundary in acres. A map measurement, never a recorded
+   * or legal acreage; show it labeled as mapped.
+   */
+  mappedAcreage?: number;
   centroid: { latitude: number; longitude: number };
   geometry: {
     geojson: GeoJsonPolygon | GeoJsonMultiPolygon;

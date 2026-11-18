@@ -1,210 +1,22 @@
 {
   "scenario": "johnstown-no-such-address",
   "path": "/api/parcels/search?q=123%20Main%20St%20Johnstown%20OH",
-  "recordedAt": "2026-11-17T04:13:24.529Z",
+  "recordedAt": "2026-11-18T20:13:34.519Z",
   "exchanges": [
     {
       "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=123+Main+St+Johnstown+OH&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
       "status": 200,
-      "body": {
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "candidates": [
-          {
-            "address": "123 MAIN, JOHNSTOWN, 43031",
-            "location": { "x": -82.682990903738, "y": 40.151803170765 },
-            "score": 98,
-            "attributes": {
-              "Addr_type": "StreetAddress",
-              "AddNum": "123",
-              "StName": "MAIN"
-            },
-            "extent": {
-              "xmin": -82.683990903738,
-              "ymin": 40.150803170765,
-              "xmax": -82.681990903738,
-              "ymax": 40.152803170765
-            }
-          }
-        ]
-      }
+      "body": {"spatialReference":{"wkid":4326,"latestWkid":4326},"candidates":[{"address":"123 MAIN, JOHNSTOWN, 43031","location":{"x":-82.682990903738,"y":40.151803170765},"score":98,"attributes":{"Addr_type":"StreetAddress","AddNum":"123","StName":"MAIN"},"extent":{"xmin":-82.683990903738,"ymin":40.150803170765,"xmax":-82.681990903738,"ymax":40.152803170765}}]}
     },
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27123+%25%27+OR+SitusAddressAll+LIKE+%27+%25123+%25%27%29&geometry=-82.688867%2C40.147312%2C-82.677115%2C40.156295&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27123+%25%27+OR+SitusAddressAll+LIKE+%27+%25123+%25%27%29&geometry=-82.688867%2C40.147312%2C-82.677115%2C40.156295&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
       "status": 200,
-      "body": {
-        "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
-        "globalIdFieldName": "GlobalID",
-        "geometryType": "esriGeometryPolygon",
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "fields": [
-          {
-            "name": "County",
-            "type": "esriFieldTypeString",
-            "alias": "County",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LocalParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "LocalParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "StateParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "StateParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 50,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "SitusAddressAll",
-            "type": "esriFieldTypeString",
-            "alias": "Situs Address All",
-            "sqlType": "sqlTypeOther",
-            "length": 255,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LandArea",
-            "type": "esriFieldTypeDouble",
-            "alias": "LandArea",
-            "sqlType": "sqlTypeOther",
-            "domain": null,
-            "defaultValue": null
-          }
-        ],
-        "features": [
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05318212400000",
-              "StateParcelID": "39089-05318212400000",
-              "SitusAddressAll": "123 VALLEY VIEW DR JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.22
-            },
-            "centroid": { "x": -82.6885646053658, "y": 40.148589300412965 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05318096600000",
-              "StateParcelID": "39089-05318096600000",
-              "SitusAddressAll": "123 W MAPLE ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 2.66
-            },
-            "centroid": { "x": -82.68880085061559, "y": 40.15295056545044 }
-          }
-        ]
-      }
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Licking","LocalParcelID":"05318096600000","StateParcelID":"39089-05318096600000","SitusAddressAll":"123 W MAPLE ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":2.66,"Shape__Area":116258.18115234375},"centroid":{"x":-82.68880085061559,"y":40.15295056545044}},{"attributes":{"County":"Licking","LocalParcelID":"05318212400000","StateParcelID":"39089-05318212400000","SitusAddressAll":"123 VALLEY VIEW DR JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.22,"Shape__Area":9851.877197265625},"centroid":{"x":-82.6885646053658,"y":40.148589300412965}}]}
     },
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27123+%25%27+OR+SitusAddressAll+LIKE+%27+%25123+%25%27%29&geometry=-82.700620%2C40.138329%2C-82.665362%2C40.165278&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27123+%25%27+OR+SitusAddressAll+LIKE+%27+%25123+%25%27%29&geometry=-82.700620%2C40.138329%2C-82.665362%2C40.165278&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
       "status": 200,
-      "body": {
-        "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
-        "globalIdFieldName": "GlobalID",
-        "geometryType": "esriGeometryPolygon",
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "fields": [
-          {
-            "name": "County",
-            "type": "esriFieldTypeString",
-            "alias": "County",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LocalParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "LocalParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "StateParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "StateParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 50,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "SitusAddressAll",
-            "type": "esriFieldTypeString",
-            "alias": "Situs Address All",
-            "sqlType": "sqlTypeOther",
-            "length": 255,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LandArea",
-            "type": "esriFieldTypeDouble",
-            "alias": "LandArea",
-            "sqlType": "sqlTypeOther",
-            "domain": null,
-            "defaultValue": null
-          }
-        ],
-        "features": [
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05318096600000",
-              "StateParcelID": "39089-05318096600000",
-              "SitusAddressAll": "123 W MAPLE ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 2.66
-            },
-            "centroid": { "x": -82.68880085061559, "y": 40.15295056545044 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05317244000316",
-              "StateParcelID": "39089-05317244000316",
-              "SitusAddressAll": "123 PARKDALE DR JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.23
-            },
-            "centroid": { "x": -82.68470333284472, "y": 40.163927453890246 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05317753400067",
-              "StateParcelID": "39089-05317753400067",
-              "SitusAddressAll": "123 BIGELOW DR JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.17
-            },
-            "centroid": { "x": -82.69933350800038, "y": 40.14362402240511 }
-          },
-          {
-            "attributes": {
-              "County": "Licking",
-              "LocalParcelID": "05318212400000",
-              "StateParcelID": "39089-05318212400000",
-              "SitusAddressAll": "123 VALLEY VIEW DR JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
-              "LandArea": 0.22
-            },
-            "centroid": { "x": -82.6885646053658, "y": 40.148589300412965 }
-          }
-        ]
-      }
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Licking","LocalParcelID":"05318096600000","StateParcelID":"39089-05318096600000","SitusAddressAll":"123 W MAPLE ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":2.66,"Shape__Area":116258.18115234375},"centroid":{"x":-82.68880085061559,"y":40.15295056545044}},{"attributes":{"County":"Licking","LocalParcelID":"05317244000316","StateParcelID":"39089-05317244000316","SitusAddressAll":"123 PARKDALE DR JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.23,"Shape__Area":9587.299560546875},"centroid":{"x":-82.68470333284472,"y":40.163927453890246}},{"attributes":{"County":"Licking","LocalParcelID":"05318212400000","StateParcelID":"39089-05318212400000","SitusAddressAll":"123 VALLEY VIEW DR JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.22,"Shape__Area":9851.877197265625},"centroid":{"x":-82.6885646053658,"y":40.148589300412965}},{"attributes":{"County":"Licking","LocalParcelID":"05317753400067","StateParcelID":"39089-05317753400067","SitusAddressAll":"123 BIGELOW DR JOHNSTOWN, OH 43031 JOHNSTOWN 43031","LandArea":0.17,"Shape__Area":7502.711181640625},"centroid":{"x":-82.69933350800038,"y":40.14362402240511}}]}
     }
   ],
   "apiResponse": {

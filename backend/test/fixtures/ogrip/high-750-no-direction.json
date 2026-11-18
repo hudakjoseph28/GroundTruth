@@ -1,314 +1,32 @@
 {
   "scenario": "high-750-no-direction",
   "path": "/api/parcels/search?q=750%20High%20St%2C%20Columbus",
-  "recordedAt": "2026-11-17T04:13:48.146Z",
+  "recordedAt": "2026-11-18T20:13:39.370Z",
   "exchanges": [
     {
       "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=750+High+St%2C+Columbus&maxLocations=5&outSR=4326&outFields=Addr_type%2CAddNum%2CStName&f=json",
       "status": 200,
-      "body": {
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "candidates": [
-          {
-            "address": "750 HIGH, COLUMBUS, 43207",
-            "location": { "x": -82.995279302975, "y": 39.911196445225 },
-            "score": 98.82,
-            "attributes": {
-              "Addr_type": "StreetAddress",
-              "AddNum": "750",
-              "StName": "HIGH"
-            },
-            "extent": {
-              "xmin": -82.996279302975,
-              "ymin": 39.910196445225,
-              "xmax": -82.994279302975,
-              "ymax": 39.912196445225
-            }
-          },
-          {
-            "address": "750 HIGH, COLUMBUS, 43215",
-            "location": { "x": -83.003564278609, "y": 39.977654869433 },
-            "score": 98.82,
-            "attributes": {
-              "Addr_type": "StreetAddress",
-              "AddNum": "750",
-              "StName": "HIGH"
-            },
-            "extent": {
-              "xmin": -83.004564278609,
-              "ymin": 39.976654869433,
-              "xmax": -83.002564278609,
-              "ymax": 39.978654869433
-            }
-          },
-          {
-            "address": "750 HIGH, COLUMBUS, 43206",
-            "location": { "x": -82.997578693486, "y": 39.946783314336 },
-            "score": 98.82,
-            "attributes": {
-              "Addr_type": "StreetAddress",
-              "AddNum": "750",
-              "StName": "HIGH"
-            },
-            "extent": {
-              "xmin": -82.998578693486,
-              "ymin": 39.945783314336,
-              "xmax": -82.996578693486,
-              "ymax": 39.947783314336
-            }
-          },
-          {
-            "address": "HIGH, COLUMBUS, 43235",
-            "location": { "x": -83.016680360783, "y": 40.132156303014 },
-            "score": 89.71,
-            "attributes": {
-              "Addr_type": "StreetName",
-              "AddNum": "",
-              "StName": "HIGH"
-            },
-            "extent": {
-              "xmin": -83.017680360783,
-              "ymin": 40.131156303014,
-              "xmax": -83.015680360783,
-              "ymax": 40.133156303014
-            }
-          },
-          {
-            "address": "HIGH, COLUMBUS, 43137",
-            "location": { "x": -83.002339707572, "y": 39.85111104327 },
-            "score": 89.71,
-            "attributes": {
-              "Addr_type": "StreetName",
-              "AddNum": "",
-              "StName": "HIGH"
-            },
-            "extent": {
-              "xmin": -83.003339707572,
-              "ymin": 39.85011104327,
-              "xmax": -83.001339707572,
-              "ymax": 39.85211104327
-            }
-          }
-        ]
-      }
+      "body": {"spatialReference":{"wkid":4326,"latestWkid":4326},"candidates":[{"address":"750 HIGH, COLUMBUS, 43207","location":{"x":-82.995279302975,"y":39.911196445225},"score":98.82,"attributes":{"Addr_type":"StreetAddress","AddNum":"750","StName":"HIGH"},"extent":{"xmin":-82.996279302975,"ymin":39.910196445225,"xmax":-82.994279302975,"ymax":39.912196445225}},{"address":"750 HIGH, COLUMBUS, 43215","location":{"x":-83.003564278609,"y":39.977654869433},"score":98.82,"attributes":{"Addr_type":"StreetAddress","AddNum":"750","StName":"HIGH"},"extent":{"xmin":-83.004564278609,"ymin":39.976654869433,"xmax":-83.002564278609,"ymax":39.978654869433}},{"address":"750 HIGH, COLUMBUS, 43206","location":{"x":-82.997578693486,"y":39.946783314336},"score":98.82,"attributes":{"Addr_type":"StreetAddress","AddNum":"750","StName":"HIGH"},"extent":{"xmin":-82.998578693486,"ymin":39.945783314336,"xmax":-82.996578693486,"ymax":39.947783314336}},{"address":"HIGH, COLUMBUS, 43235","location":{"x":-83.016680360783,"y":40.132156303014},"score":89.71,"attributes":{"Addr_type":"StreetName","AddNum":"","StName":"HIGH"},"extent":{"xmin":-83.017680360783,"ymin":40.131156303014,"xmax":-83.015680360783,"ymax":40.133156303014}},{"address":"HIGH, COLUMBUS, 43137","location":{"x":-83.002339707572,"y":39.85111104327},"score":89.71,"attributes":{"Addr_type":"StreetName","AddNum":"","StName":"HIGH"},"extent":{"xmin":-83.003339707572,"ymin":39.85011104327,"xmax":-83.001339707572,"ymax":39.85211104327}}]}
     },
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27750+%25%27+OR+SitusAddressAll+LIKE+%27+%25750+%25%27%29&geometry=-83.001135%2C39.906705%2C-82.989424%2C39.915688&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27750+%25%27+OR+SitusAddressAll+LIKE+%27+%25750+%25%27%29&geometry=-83.001135%2C39.906705%2C-82.989424%2C39.915688&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
       "status": 200,
-      "body": {
-        "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
-        "globalIdFieldName": "GlobalID",
-        "features": []
-      }
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","features":[]}
     },
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27750+%25%27+OR+SitusAddressAll+LIKE+%27+%25750+%25%27%29&geometry=-83.009426%2C39.973163%2C-82.997703%2C39.982146&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27750+%25%27+OR+SitusAddressAll+LIKE+%27+%25750+%25%27%29&geometry=-83.009426%2C39.973163%2C-82.997703%2C39.982146&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
       "status": 200,
-      "body": {
-        "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
-        "globalIdFieldName": "GlobalID",
-        "geometryType": "esriGeometryPolygon",
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "fields": [
-          {
-            "name": "County",
-            "type": "esriFieldTypeString",
-            "alias": "County",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LocalParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "LocalParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "StateParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "StateParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 50,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "SitusAddressAll",
-            "type": "esriFieldTypeString",
-            "alias": "Situs Address All",
-            "sqlType": "sqlTypeOther",
-            "length": 255,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LandArea",
-            "type": "esriFieldTypeDouble",
-            "alias": "LandArea",
-            "sqlType": "sqlTypeOther",
-            "domain": null,
-            "defaultValue": null
-          }
-        ],
-        "features": [
-          {
-            "attributes": {
-              "County": "Franklin",
-              "LocalParcelID": "010-009871",
-              "StateParcelID": "39049-010-009871",
-              "SitusAddressAll": "750  PARK ST   ",
-              "LandArea": 0
-            },
-            "centroid": { "x": -83.00495402772036, "y": 39.9775522304566 }
-          },
-          {
-            "attributes": {
-              "County": "Franklin",
-              "LocalParcelID": "010-028040",
-              "StateParcelID": "39049-010-028040",
-              "SitusAddressAll": "750 N HIGH ST   ",
-              "LandArea": 0
-            },
-            "centroid": { "x": -83.00318936871533, "y": 39.97762697364092 }
-          },
-          {
-            "attributes": {
-              "County": "Franklin",
-              "LocalParcelID": "010-276437",
-              "StateParcelID": "39049-010-276437",
-              "SitusAddressAll": "750  PEARL ST   ",
-              "LandArea": 0
-            },
-            "centroid": { "x": -83.00272106742418, "y": 39.97781004053347 }
-          }
-        ]
-      }
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Franklin","LocalParcelID":"010-009871","StateParcelID":"39049-010-009871","SitusAddressAll":"750  PARK ST   ","LandArea":0,"Shape__Area":4117.9915771484375},"centroid":{"x":-83.00495402772036,"y":39.9775522304566}},{"attributes":{"County":"Franklin","LocalParcelID":"010-028040","StateParcelID":"39049-010-028040","SitusAddressAll":"750 N HIGH ST   ","LandArea":0,"Shape__Area":33622.69641113281},"centroid":{"x":-83.00318936871533,"y":39.97762697364092}},{"attributes":{"County":"Franklin","LocalParcelID":"010-276437","StateParcelID":"39049-010-276437","SitusAddressAll":"750  PEARL ST   ","LandArea":0,"Shape__Area":1100.928955078125},"centroid":{"x":-83.00272106742418,"y":39.97781004053347}}]}
     },
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27750+%25%27+OR+SitusAddressAll+LIKE+%27+%25750+%25%27%29&geometry=-83.003437%2C39.942292%2C-82.991720%2C39.951275&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27750+%25%27+OR+SitusAddressAll+LIKE+%27+%25750+%25%27%29&geometry=-83.003437%2C39.942292%2C-82.991720%2C39.951275&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
       "status": 200,
-      "body": {
-        "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
-        "globalIdFieldName": "GlobalID",
-        "geometryType": "esriGeometryPolygon",
-        "spatialReference": { "wkid": 4326, "latestWkid": 4326 },
-        "fields": [
-          {
-            "name": "County",
-            "type": "esriFieldTypeString",
-            "alias": "County",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LocalParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "LocalParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 30,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "StateParcelID",
-            "type": "esriFieldTypeString",
-            "alias": "StateParcelID",
-            "sqlType": "sqlTypeOther",
-            "length": 50,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "SitusAddressAll",
-            "type": "esriFieldTypeString",
-            "alias": "Situs Address All",
-            "sqlType": "sqlTypeOther",
-            "length": 255,
-            "domain": null,
-            "defaultValue": null
-          },
-          {
-            "name": "LandArea",
-            "type": "esriFieldTypeDouble",
-            "alias": "LandArea",
-            "sqlType": "sqlTypeOther",
-            "domain": null,
-            "defaultValue": null
-          }
-        ],
-        "features": [
-          {
-            "attributes": {
-              "County": "Franklin",
-              "LocalParcelID": "010-020912",
-              "StateParcelID": "39049-010-020912",
-              "SitusAddressAll": "750 S HIGH ST   ",
-              "LandArea": 0
-            },
-            "centroid": { "x": -82.99729076173298, "y": 39.946830689274606 }
-          },
-          {
-            "attributes": {
-              "County": "Franklin",
-              "LocalParcelID": "010-063232",
-              "StateParcelID": "39049-010-063232",
-              "SitusAddressAll": "750  MOHAWK ST   ",
-              "LandArea": 0
-            },
-            "centroid": { "x": -82.99292435022373, "y": 39.94734886250484 }
-          },
-          {
-            "attributes": {
-              "County": "Franklin",
-              "LocalParcelID": "010-005660",
-              "StateParcelID": "39049-010-005660",
-              "SitusAddressAll": "750 S FRONT ST   ",
-              "LandArea": 0
-            },
-            "centroid": { "x": -82.99909690230109, "y": 39.946625956339126 }
-          },
-          {
-            "attributes": {
-              "County": "Franklin",
-              "LocalParcelID": "010-035997",
-              "StateParcelID": "39049-010-035997",
-              "SitusAddressAll": "750 S THIRD ST   ",
-              "LandArea": 0
-            },
-            "centroid": { "x": -82.99467715554252, "y": 39.94713490680561 }
-          },
-          {
-            "attributes": {
-              "County": "Franklin",
-              "LocalParcelID": "010-077939",
-              "StateParcelID": "39049-010-077939",
-              "SitusAddressAll": "750 S LAZELLE ST   ",
-              "LandArea": 0
-            },
-            "centroid": { "x": -82.99393745107832, "y": 39.94721885604578 }
-          }
-        ]
-      }
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Franklin","LocalParcelID":"010-077939","StateParcelID":"39049-010-077939","SitusAddressAll":"750 S LAZELLE ST   ","LandArea":0,"Shape__Area":2372.7333984375},"centroid":{"x":-82.99393745107832,"y":39.94721885604578}},{"attributes":{"County":"Franklin","LocalParcelID":"010-020912","StateParcelID":"39049-010-020912","SitusAddressAll":"750 S HIGH ST   ","LandArea":0,"Shape__Area":3388.498291015625},"centroid":{"x":-82.99729076173298,"y":39.946830689274606}},{"attributes":{"County":"Franklin","LocalParcelID":"010-063232","StateParcelID":"39049-010-063232","SitusAddressAll":"750  MOHAWK ST   ","LandArea":0,"Shape__Area":4309.939208984375},"centroid":{"x":-82.99292435022373,"y":39.94734886250484}},{"attributes":{"County":"Franklin","LocalParcelID":"010-005660","StateParcelID":"39049-010-005660","SitusAddressAll":"750 S FRONT ST   ","LandArea":0,"Shape__Area":3197.092529296875},"centroid":{"x":-82.99909690230109,"y":39.946625956339126}},{"attributes":{"County":"Franklin","LocalParcelID":"010-035997","StateParcelID":"39049-010-035997","SitusAddressAll":"750 S THIRD ST   ","LandArea":0,"Shape__Area":2997.1336669921875},"centroid":{"x":-82.99467715554252,"y":39.94713490680561}}]}
     },
     {
-      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27750+%25%27+OR+SitusAddressAll+LIKE+%27+%25750+%25%27%29&geometry=-83.012846%2C39.897722%2C-82.977712%2C39.924671&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+%28SitusAddressAll+LIKE+%27750+%25%27+OR+SitusAddressAll+LIKE+%27+%25750+%25%27%29&geometry=-83.012846%2C39.897722%2C-82.977712%2C39.924671&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&f=json",
       "status": 200,
-      "body": {
-        "objectIdFieldName": "OBJECTID",
-        "uniqueIdField": { "name": "OBJECTID", "isSystemMaintained": true },
-        "globalIdFieldName": "GlobalID",
-        "features": []
-      }
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","features":[]}
     }
   ],
   "apiResponse": {
@@ -324,7 +42,8 @@
             "latitude": 39.97762697364092,
             "longitude": -83.00318936871533
           },
-          "siteAddress": "750 N HIGH ST"
+          "siteAddress": "750 N HIGH ST",
+          "mappedAcreage": 0.77
         },
         "matchedOn": "siteAddress"
       },
@@ -338,7 +57,8 @@
             "latitude": 39.946830689274606,
             "longitude": -82.99729076173298
           },
-          "siteAddress": "750 S HIGH ST"
+          "siteAddress": "750 S HIGH ST",
+          "mappedAcreage": 0.08
         },
         "matchedOn": "siteAddress"
       }

@@ -15,7 +15,12 @@ import {
   type FranklinZoningClient,
 } from "../reports/franklinZoning.js";
 import {
+  createFranklinAccessClient,
+  type FranklinAccessClient,
+} from "../reports/franklinAccess.js";
+import {
   buildReport,
+  DEFAULT_ACCESS_TIMEOUT_MS,
   DEFAULT_FEMA_TIMEOUT_MS,
   DEFAULT_ZONING_TIMEOUT_MS,
 } from "../reports/pipeline.js";
@@ -34,6 +39,10 @@ export interface ReportRouteOptions {
   zoning?: FranklinZoningClient;
   /** Limit for the Franklin zoning check. Defaults to 6000 ms. */
   zoningTimeoutMs?: number;
+  /** Franklin County right-of-way and road layers, for Franklin parcels only. */
+  access?: FranklinAccessClient;
+  /** Limit for the Franklin access check. Defaults to 6000 ms. */
+  accessTimeoutMs?: number;
   now?: () => Date;
 }
 
@@ -55,6 +64,8 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
   const floodTimeoutMs = options.floodTimeoutMs ?? DEFAULT_FEMA_TIMEOUT_MS;
   const zoning = options.zoning ?? createFranklinZoningClient();
   const zoningTimeoutMs = options.zoningTimeoutMs ?? DEFAULT_ZONING_TIMEOUT_MS;
+  const access = options.access ?? createFranklinAccessClient();
+  const accessTimeoutMs = options.accessTimeoutMs ?? DEFAULT_ACCESS_TIMEOUT_MS;
   const now = options.now ?? (() => new Date());
 
   return asyncRoute(async (req, res) => {
@@ -115,6 +126,8 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
       floodTimeoutMs,
       zoning,
       zoningTimeoutMs,
+      access,
+      accessTimeoutMs,
       now,
     });
     res.json(built.report);

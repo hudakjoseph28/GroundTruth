@@ -13,10 +13,13 @@ import {
   type FranklinZoningClient,
 } from "./franklinZoning.js";
 import { zoningCheck } from "./zoningCheck.js";
+import { accessCheck } from "./accessCheck.js";
+import type { FranklinAccessClient } from "./franklinAccess.js";
 import { TEMPLATE_KINDS, templateCheck } from "./templates.js";
 
 export const DEFAULT_FEMA_TIMEOUT_MS = 6_000;
 export const DEFAULT_ZONING_TIMEOUT_MS = 6_000;
+export const DEFAULT_ACCESS_TIMEOUT_MS = 6_000;
 /** Template checks do no I/O; the limit only guards against a bug. */
 const TEMPLATE_TIMEOUT_MS = 1_000;
 
@@ -31,6 +34,13 @@ export interface ReportPipelineOptions {
   zoning?: FranklinZoningClient;
   /** Limit for the zoning check. */
   zoningTimeoutMs?: number;
+  /**
+   * Franklin County's right-of-way and road layers. When set, Franklin
+   * parcels get a live access check; every other county keeps the template.
+   */
+  access?: FranklinAccessClient;
+  /** Limit for the access check (all its queries together). */
+  accessTimeoutMs?: number;
   now: () => Date;
 }
 
@@ -87,8 +97,8 @@ export async function buildReport(
       transient: true,
     }),
   };
-  const zoningClient =
-    parcel.countyFips === FRANKLIN_COUNTY_FIPS ? options.zoning : undefined;
+  const franklin = parcel.countyFips === FRANKLIN_COUNTY_FIPS;
+  const zoningClient = franklin ? options.zoning : undefined;
   const zoningTimeoutMs = options.zoningTimeoutMs ?? DEFAULT_ZONING_TIMEOUT_MS;
   const zoning: CheckRunner | null = zoningClient
     ? {
@@ -110,8 +120,33 @@ export async function buildReport(
         }),
       }
     : null;
+  const accessClient = franklin ? options.access : undefined;
+  const accessTimeoutMs = options.accessTimeoutMs ?? DEFAULT_ACCESS_TIMEOUT_MS;
+  const access: CheckRunner | null = accessClient
+    ? {
+        kind: "access",
+        timeoutMs: accessTimeoutMs,
+        async run(signal) {
+          const outcome = await accessClient.access(
+            parcel.geometry.geojson,
+            signal,
+          );
+          return {
+            check: accessCheck(outcome, accessTimeoutMs),
+            transient: outcome.outcome === "timeout",
+          };
+        },
+        failed: (cause) => ({
+          check: accessCheck({ outcome: "timeout", cause }, accessTimeoutMs),
+          transient: true,
+        }),
+      }
+    : null;
+  const live = [zoning, access].filter(
+    (runner): runner is CheckRunner => runner !== null,
+  );
   const templates = TEMPLATE_KINDS.filter(
-    (kind) => !(zoning && kind === "zoning"),
+    (kind) => !live.some((runner) => runner.kind === kind),
   ).map(
     (kind): CheckRunner => ({
       kind,
@@ -124,7 +159,7 @@ export async function buildReport(
     }),
   );
 
-  const runners = [flood, ...(zoning ? [zoning] : []), ...templates].sort(
+  const runners = [flood, ...live, ...templates].sort(
     (a, b) => CHECK_KINDS.indexOf(a.kind) - CHECK_KINDS.indexOf(b.kind),
   );
   const settled = await Promise.allSettled(runners.map(runWithTimeout));

@@ -13,6 +13,7 @@ const app = createApp(env.commit, {
   report: {
     floodTimeoutMs: env.femaTimeoutMs,
     zoningTimeoutMs: env.zoningTimeoutMs,
+    accessTimeoutMs: env.accessTimeoutMs,
   },
 });
 

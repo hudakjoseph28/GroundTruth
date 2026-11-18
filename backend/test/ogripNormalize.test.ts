@@ -226,6 +226,24 @@ describe("toParcelSummary", () => {
     });
   });
 
+  it("measures the boundary's mapped acreage from Shape__Area (square US feet)", () => {
+    // The golden lot: 132,394 sq ft in OGRIP; the Auditor lists 3.015 acres.
+    const summary = toParcelSummary(
+      {
+        ...franklin,
+        LocalParcelID: "230-000918",
+        StateParcelID: "39049-230-000918",
+        Shape__Area: 132_394,
+      },
+      centroid,
+    );
+    expect(summary?.mappedAcreage).toBe(3.04);
+    expect(summary).not.toHaveProperty("acreage");
+    expect(
+      toParcelSummary({ ...franklin, Shape__Area: 0 }, centroid),
+    ).not.toHaveProperty("mappedAcreage");
+  });
+
   it("keeps published acreage", () => {
     expect(
       toParcelSummary({ ...franklin, LandArea: 5.61 }, centroid)?.acreage,

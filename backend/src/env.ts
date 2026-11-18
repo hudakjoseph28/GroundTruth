@@ -1,5 +1,6 @@
 import { DEFAULT_OGRIP_TIMEOUT_MS } from "./parcels/ogrip.js";
 import {
+  DEFAULT_ACCESS_TIMEOUT_MS,
   DEFAULT_FEMA_TIMEOUT_MS,
   DEFAULT_ZONING_TIMEOUT_MS,
 } from "./reports/pipeline.js";
@@ -16,6 +17,8 @@ export interface ServerEnv {
   femaTimeoutMs: number;
   /** Limit for a Franklin report's county zoning check, in milliseconds. */
   zoningTimeoutMs: number;
+  /** Limit for a Franklin report's road access check, in milliseconds. */
+  accessTimeoutMs: number;
   /** ElevenLabs post-call webhook secret; the webhook refuses all deliveries without it. */
   elevenLabsWebhookSecret: string | undefined;
   /** Optional: only this agent's calls become evidence. */
@@ -44,6 +47,11 @@ export function readServerEnv(
       "ZONING_TIMEOUT_MS",
       source.ZONING_TIMEOUT_MS,
       DEFAULT_ZONING_TIMEOUT_MS,
+    ),
+    accessTimeoutMs: readTimeout(
+      "ACCESS_TIMEOUT_MS",
+      source.ACCESS_TIMEOUT_MS,
+      DEFAULT_ACCESS_TIMEOUT_MS,
     ),
     elevenLabsWebhookSecret:
       source.ELEVENLABS_WEBHOOK_SECRET?.trim() || undefined,

@@ -87,6 +87,8 @@ describe("GET /api/parcels/search with recorded OGRIP responses", () => {
         county: "Franklin",
         countyFips: "39049",
         siteAddress: "84 W DODRIDGE ST",
+        // OGRIP publishes no LandArea for Franklin; this is the boundary's area.
+        mappedAcreage: 0.09,
         centroid: {
           latitude: expect.closeTo(40.01657, 4),
           longitude: expect.closeTo(-83.01438, 4),
@@ -123,6 +125,7 @@ describe("GET /api/parcels/search with recorded OGRIP responses", () => {
         county: "Licking",
         countyFips: "39089",
         acreage: 5.61,
+        mappedAcreage: 5.58,
       },
       matchedOn: "siteAddress",
     });
@@ -544,6 +547,10 @@ describe("address search fallbacks", () => {
       },
       matchedOn: "siteAddress",
     });
+    // OGRIP publishes this lot as two polygons (4,906 and 4,148 sq ft). One
+    // part's area is not the lot's, so search leaves the mapped area out.
+    expect(res.body[0].parcel.acreage).toBe(0.23);
+    expect(res.body[0].parcel).not.toHaveProperty("mappedAcreage");
   });
 
   it("returns [] for 123 Main St, Johnstown: the street exists, the parcel does not", async () => {
