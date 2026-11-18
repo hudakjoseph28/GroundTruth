@@ -173,14 +173,15 @@ The report recordings include the OGRIP parcel request. A change to the OGRIP qu
 
 `GET /api/deals/:id` returns a `Deal`, and `GET /api/deals/:id/timeline` returns its `TimelineEvent[]`. Only deals seeded as public demos are readable; any other ID returns `404`.
 
-`db:seed` upserts the two staged demo closings from `stagedDemoDeals` in `@groundtruth/shared`. Both are on the golden parcel, 25 test USDC, with the same buyer, seller, and required title/survey/septic reviewers:
+`db:seed` upserts the staged demo closings from `stagedDemoDeals` in `@groundtruth/shared`. All are on the golden parcel, with the same buyer, seller, and required title/survey/septic reviewers:
 
 | Deal ID | Outcome | Deal PDA (`escrowAddress`) | deal_id = sha256 of |
 | --- | --- | --- | --- |
 | `staged-devnet-deal` | held: release rejected, buyer refunded | `54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW` | `groundtruth-demo-held-v1` |
 | `staged-devnet-deal-released` | released to the seller | `3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu` | `groundtruth-demo-released-v1` |
+| `staged-devnet-deal-live` | released live on stage (10 USDC) | `2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg` | `groundtruth-demo-live-v1` |
 
-The addresses are what `pnpm --filter @groundtruth/escrow demo:deals plan` prints for the staged demo wallets, and `test/stagedDemoDeals.test.ts` re-derives each one. Public keys only. Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
+The first two are 25 test USDC and ran on 2026-11-18. The addresses are what `pnpm --filter @groundtruth/escrow demo:deals plan` prints for the staged demo wallets, and `test/stagedDemoDeals.test.ts` re-derives each one. Public keys only. Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 
 Timeline rows are ordered by time, then chain slot, then event index. A confirmed row is unique by transaction signature + event index, which is the QuickNode replay guard.
 

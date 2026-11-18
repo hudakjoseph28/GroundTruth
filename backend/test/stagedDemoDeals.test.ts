@@ -13,6 +13,7 @@ import {
   stagedDeal,
   stagedDemoChainAccounts,
   stagedDemoDeals,
+  stagedLiveDeal,
   stagedReleasedDeal,
   type Deal,
 } from "@groundtruth/shared";
@@ -29,22 +30,29 @@ function ata(owner: web3.PublicKey) {
 }
 
 describe("staged demo deals", () => {
-  it("keeps the staged-devnet-deal ID as the held deal and adds the released one", () => {
+  it("keeps the staged-devnet-deal ID as the held deal and adds the released and live ones", () => {
     expect(stagedDemoDeals.map((d) => d.id)).toEqual([
       "staged-devnet-deal",
       "staged-devnet-deal-released",
+      "staged-devnet-deal-live",
     ]);
     expect(stagedDemoChainAccounts[stagedDeal.id]?.outcome).toBe("held");
     expect(stagedDemoChainAccounts[stagedReleasedDeal.id]?.outcome).toBe(
       "released",
     );
+    expect(stagedDemoChainAccounts[stagedLiveDeal.id]?.outcome).toBe("live");
   });
 
-  it.each(stagedDemoDeals.map((d) => [d.id, d] as const))(
-    "%s: bound to the golden parcel, 25 USDC, three required reviewers",
-    (_id, deal) => {
+  it.each([
+    [stagedDeal.id, stagedDeal, "25000000"],
+    [stagedReleasedDeal.id, stagedReleasedDeal, "25000000"],
+    // The live deal fits in what the buyer had left after the first two.
+    [stagedLiveDeal.id, stagedLiveDeal, "10000000"],
+  ] as const)(
+    "%s: bound to the golden parcel, its amount, three required reviewers",
+    (_id, deal, amount) => {
       expect(deal.parcelKey).toBe(goldenParcel.key);
-      expect(deal.amountBaseUnits).toBe("25000000");
+      expect(deal.amountBaseUnits).toBe(amount);
       expect(deal.mint).toBe(USDC_MINT_DEVNET);
       expect(deal.state).toBe("draft");
       expect(deal.reviewers.map((r) => [r.role, r.required])).toEqual([
@@ -78,19 +86,19 @@ describe("staged demo deals", () => {
     },
   );
 
-  it("gives the two deals distinct PDAs and the same participants", () => {
-    expect(stagedDeal.escrowAddress).not.toBe(stagedReleasedDeal.escrowAddress);
+  it("gives every deal a distinct PDA and the same participants", () => {
+    expect(new Set(stagedDemoDeals.map((d) => d.escrowAddress)).size).toBe(3);
     const participants = (deal: Deal) => ({
       parcelKey: deal.parcelKey,
       buyerWallet: deal.buyerWallet,
       sellerWallet: deal.sellerWallet,
       sellerTokenAccount: deal.sellerTokenAccount,
       reviewers: deal.reviewers,
-      amountBaseUnits: deal.amountBaseUnits,
       mint: deal.mint,
       cluster: deal.cluster,
       state: deal.state,
     });
     expect(participants(stagedReleasedDeal)).toEqual(participants(stagedDeal));
+    expect(participants(stagedLiveDeal)).toEqual(participants(stagedDeal));
   });
 });

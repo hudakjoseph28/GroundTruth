@@ -40,10 +40,11 @@ export const secondCountyParcel: Parcel = toParcel(secondCounty.parcel);
 export const secondCountyReport: ParcelReport = toReport(secondCounty.report);
 
 /**
- * The two staged demo closings on Solana devnet, both on the golden parcel
- * and both 25 test USDC with required title, survey, and septic reviewers:
- * `stagedDeal` is held (release rejected, buyer refunded) and
- * `stagedReleasedDeal` is released to the seller after every approval.
+ * The staged demo closings on Solana devnet, all on the golden parcel with
+ * required title, survey, and septic reviewers: `stagedDeal` is held
+ * (release rejected, buyer refunded) and `stagedReleasedDeal` is released to
+ * the seller after every approval, both 25 test USDC and run on 2026-11-18;
+ * `stagedLiveDeal` (10 test USDC) is released live on stage.
  *
  * Public keys only. The wallets are the staged demo keypairs that
  * escrow/scripts/demo-deals.ts generated (their private keys stay in the
@@ -55,6 +56,7 @@ export const secondCountyReport: ParcelReport = toReport(secondCounty.report);
 export const STAGED_DEAL_ID_LABELS = {
   held: "groundtruth-demo-held-v1",
   released: "groundtruth-demo-released-v1",
+  live: "groundtruth-demo-live-v1",
 } as const;
 
 const stagedParticipants = {
@@ -119,7 +121,34 @@ export const stagedReleasedDeal = {
   ],
 } satisfies Deal;
 
-export const stagedDemoDeals = [stagedDeal, stagedReleasedDeal] as const;
+/**
+ * The deal released live on stage: `demo:deals stage-prep` initializes and
+ * funds it with title and survey approvals, then `stage-finish` sends the
+ * septic approval and the release. 10 test USDC, so the buyer covers it from
+ * what the first two closings left.
+ */
+export const stagedLiveDeal = {
+  id: "staged-devnet-deal-live",
+  ...stagedParticipants,
+  amountBaseUnits: "10000000",
+  escrowAddress: "2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg",
+  timeline: [
+    {
+      id: "staged-devnet-deal-live-created",
+      at: "2026-11-18T00:00:00.000Z",
+      type: "dealCreated",
+      actorRole: "buyer",
+      buyerMessage: "Staged devnet deal created. No funds have moved.",
+      confirmationStatus: "offChainEvidence",
+    },
+  ],
+} satisfies Deal;
+
+export const stagedDemoDeals = [
+  stagedDeal,
+  stagedReleasedDeal,
+  stagedLiveDeal,
+] as const;
 
 /**
  * On-chain accounts of each staged demo deal that `Deal` does not carry,
@@ -134,6 +163,14 @@ export const stagedDemoChainAccounts = {
     vault: "HZUjdzLUAx7dSfQ3DjfFmsZ93Xfcy7Xrr7hKTnR6eecj",
     buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
   },
+  [stagedLiveDeal.id]: {
+    outcome: "live",
+    dealIdLabel: STAGED_DEAL_ID_LABELS.live,
+    dealIdHex:
+      "9ea97f60d7b1c3bc164c8465ca3026c725c04cb17c8d07dc4c5eacf68aaa1b86",
+    vault: "8hTorFjmtUyS3DeRn6A9drtb4cjmSix711bKAydXmHXZ",
+    buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+  },
   [stagedReleasedDeal.id]: {
     outcome: "released",
     dealIdLabel: STAGED_DEAL_ID_LABELS.released,
@@ -145,7 +182,7 @@ export const stagedDemoChainAccounts = {
 } as const satisfies Record<
   string,
   {
-    outcome: "held" | "released";
+    outcome: keyof typeof STAGED_DEAL_ID_LABELS;
     dealIdLabel: string;
     dealIdHex: string;
     vault: string;
