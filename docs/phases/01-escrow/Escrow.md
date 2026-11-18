@@ -92,7 +92,7 @@ pnpm --filter @groundtruth/escrow demo:deals run        # devnet; refuses unless
 
   The parcel is `ohio:39049:230-000918`, and each deal ID is the sha256 of a string naming that parcel. The script checks the deal state and the buyer, vault and seller balances at every settlement.
 - **Output:** `escrow/demo-results/devnet-<runId>.json` and `.md`, with Explorer links. They are rewritten after every transaction, so a partial run is still recorded. Simulation output is gitignored.
-- **Held release error:** the spec says DealHeld (6019), and that is the script's default. On the deployed program, `release` checks `state == Funded` before it checks for a hold, and `place_hold` sets the state to `Held`. So a held release fails with **InvalidDealState (6009)**, and 6019 is unreachable; `simulate` shows this. Either reorder those two checks in `release` and upgrade the program, or run with `--held-error InvalidDealState`.
+- **Held release error:** the spec specifies `DealHeld` (6019), and that is the script's default. In the escrow contract (`release.rs`), the `deal.hold.is_none()` check is placed before the `state == Funded` check so that attempting to release a held deal fails with **DealHeld (6019)** as expected. Once upgraded on devnet, both on-chain runs and simulations verify `DealHeld (6019)`. Local simulation against the rebuilt contract can also be run via `LOCAL_PROGRAM_SO=target/deploy/groundtruth_escrow.so pnpm --filter @groundtruth/escrow demo:deals simulate`.
 
 ## Depends on
 

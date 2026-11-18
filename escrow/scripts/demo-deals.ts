@@ -302,8 +302,40 @@ function devnetChain(): Chain & { connection: Connection } {
   };
 }
 
-/** The deployed program's ELF: ProgramData account data after its 45-byte header. */
+/** The deployed program's ELF: ProgramData account data after its 45-byte header, or local build if specified. */
 async function deployedProgramBytes(connection: Connection) {
+  const rawPath = process.env.LOCAL_PROGRAM_SO || process.env.ESCROW_PROGRAM_SO;
+  if (rawPath) {
+    const resolvedPath = existsSync(rawPath)
+      ? rawPath
+      : existsSync(join(ESCROW_ROOT, rawPath))
+        ? join(ESCROW_ROOT, rawPath)
+        : null;
+    if (!resolvedPath) {
+      throw new Error(
+        `Configured local program file not found at "${rawPath}" or "${join(
+          ESCROW_ROOT,
+          rawPath,
+        )}". Build the program with "anchor build" or verify LOCAL_PROGRAM_SO/ESCROW_PROGRAM_SO.`,
+      );
+    }
+    try {
+      const elf = readFileSync(resolvedPath);
+      return {
+        programData: "local-target-build",
+        deploySlot: 0,
+        sha256: createHash("sha256").update(elf).digest("hex"),
+        elf,
+      };
+    } catch (err) {
+      throw new Error(
+        `Failed to read configured local program file at "${resolvedPath}": ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
+  }
+
   const program = await connection.getAccountInfo(PROGRAM, "confirmed");
   if (!program?.executable) throw new Error("program not found on devnet");
   const programData = new PublicKey(program.data.subarray(4, 36));
@@ -320,9 +352,8 @@ async function deployedProgramBytes(connection: Connection) {
 
 async function simulationChain(wallets: Wallets, usdc: bigint) {
   const { LiteSVM, FailedTransactionMetadata } = await import("litesvm");
-  const { address, getTransactionDecoder, lamports } = await import(
-    "@solana/kit"
-  );
+  const { address, getTransactionDecoder, lamports } =
+    await import("@solana/kit");
   const deployed = await deployedProgramBytes(
     new Connection(RPC_URL, "confirmed"),
   );

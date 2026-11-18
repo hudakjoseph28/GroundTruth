@@ -62,11 +62,11 @@ pub struct Release<'info> {
 }
 
 pub fn handle_release(ctx: Context<Release>) -> Result<()> {
+    require!(ctx.accounts.deal.hold.is_none(), EscrowError::DealHeld);
     require!(
         ctx.accounts.deal.state == DealState::Funded,
         EscrowError::InvalidDealState
     );
-    require!(ctx.accounts.deal.hold.is_none(), EscrowError::DealHeld);
 
     let has_required = ctx.accounts.deal.reviewers.iter().any(|r| r.required);
     let all_required_approved = has_required

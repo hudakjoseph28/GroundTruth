@@ -2448,7 +2448,7 @@ describe("groundtruth_escrow sprint 1", () => {
         .rpc();
       expect.fail("Should have rejected release on Held deal");
     } catch (err: unknown) {
-      expect((err as Error).message).to.match(/InvalidDealState|DealHeld/i);
+      expect((err as Error).message).to.match(/DealHeld/i);
     }
 
     const deal = await program.account.dealAccount.fetch(setup.dealPda);
