@@ -8,7 +8,7 @@
 >
 > Checked Nov 18, 12:55 p.m. ET ([Readiness.md](Readiness.md)): both demo closings ran on devnet at 12:41 to 12:48 p.m. ET, and every escrow claim below was read back from the public RPC and opened on Solana Explorer. ElevenLabs and QuickNode Streams stay `[PENDING]`. No staged call is recorded. The two closings' timeline rows were backfilled with `replay:devnet`, not delivered by the Stream, so they are not Stream proof. The only QuickNode deliveries are the live stage deal's 4 `stage-prep` transactions, whose webhooks arrived 1–2 s after their blocks. The second-device check is still open.
 >
-> Updated Nov 18, 2:01 p.m. ET: QuickNode Streams delivered the stage deal's four transactions to the live timeline (below). The two closings above were backfilled with `replay:devnet` and are not Stream deliveries. At that time the API showed the held deal as `refunded` and the released deal still as `draft`. ElevenLabs stays `[PENDING]`: no staged call is recorded.
+> Updated Nov 18, 2:01 p.m. ET: QuickNode Streams delivered the stage deal's four transactions to the live timeline (below). The two closings above were backfilled with `replay:devnet` and are not Stream deliveries. At that time the API showed the held deal as `refunded` and the released deal still as `draft`; by 2:05 p.m. ET its replay had landed and the API showed it as `released`. ElevenLabs stays `[PENDING]`: no staged call is recorded.
 
 ## What it does
 
@@ -37,7 +37,7 @@ ALTA's 2026 survey of 245 title insurance professionals found that 59% of respon
 
 ![Railway log: four quicknode applied lines for the stage deal](../../proof/quicknode-stage-prep.png)
 
-Railway's HTTP log shows each webhook arriving 1–2 s after its block (18:57:20–18:57:24 UTC). The 1.8–3.3 s first measured on the deal timeline includes the timeline's 2 s polling. The screenshot's app-log lines are all stamped 13:57:29 EST; the arrival times come from the HTTP log, which is not in the repo.
+Railway's HTTP log shows each webhook arriving 1–2 s after its block (18:57:20–18:57:24 UTC). The 1.8–3.3 s first measured on the deal timeline came from polling the timeline API every 1.5 s against whole-second block times, so it includes up to 1.5 s of polling delay. The screenshot's app-log lines are all stamped 13:57:29 EST; the arrival times come from the HTTP log, which is not in the repo.
 
 The two closings above are not Stream deliveries: their timeline rows were backfilled with `replay:devnet`, because QuickNode backfill needs a paid plan. **[PENDING]** Measure the update on a second device before entering the Streams bounty.
 
