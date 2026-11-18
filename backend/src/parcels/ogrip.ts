@@ -745,8 +745,8 @@ export function createOgripClient(
    * with a source in that county: `flood` wherever FEMA has an NFHL study
    * (83 counties; see OHIO_COUNTIES_WITHOUT_NFHL for the five without,
    * measured 2026-11-16), and `zoning` in Franklin County, where the
-   * county's zoning map is read live. Every other check has no adapter yet. Counties
-   * missing from the count get no row.
+   * county's zoning map is read live, and `septic` statewide through USDA
+   * NRCS Soil Data Access. Counties missing from the count get no row.
    */
   async function getCoverage(): Promise<Coverage[]> {
     const nowMs = now().getTime();
@@ -784,6 +784,7 @@ export function createOgripClient(
         // Franklin County's zoning map (src/reports/franklinZoning.ts).
         ...(county.fips === FRANKLIN_COUNTY_FIPS ? (["zoning"] as const) : []),
         ...(hasNfhlStudy(county.fips) ? (["flood"] as const) : []),
+        "septic" as const,
       ],
       lastVerifiedAt: measuredAt,
     }));

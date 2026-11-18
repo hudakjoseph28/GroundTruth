@@ -1,6 +1,6 @@
 /**
- * Records live OGRIP, FEMA NFHL, and Franklin County zoning, right-of-way,
- * and road responses for the report route tests.
+ * Records live OGRIP, FEMA NFHL, USDA NRCS Soil Data Access, and Franklin
+ * County zoning, right-of-way, and road responses for the report route tests.
  *
  *   pnpm --filter @groundtruth/backend record:report                   # every scenario
  *   pnpm --filter @groundtruth/backend record:report franklin-floodway # one scenario
@@ -28,6 +28,7 @@ import {
 } from "../src/reports/femaFlood.js";
 import { createFranklinAccessClient } from "../src/reports/franklinAccess.js";
 import { createFranklinZoningClient } from "../src/reports/franklinZoning.js";
+import { createSsurgoSoilsClient } from "../src/reports/ssurgoSoils.js";
 import {
   REPORT_SCENARIOS,
   reportPath,
@@ -79,6 +80,11 @@ async function record(name: ReportScenario): Promise<void> {
         now: () => recordedAt,
       }),
       accessTimeoutMs: 30_000,
+      soils: createSsurgoSoilsClient({
+        fetch: recordingFetch,
+        now: () => recordedAt,
+      }),
+      soilsTimeoutMs: 30_000,
       now: () => recordedAt,
       store: { read: async () => null, write: async () => {} },
     },
@@ -109,7 +115,7 @@ async function record(name: ReportScenario): Promise<void> {
   console.log(
     `${name}: ${res.status} in ${Date.now() - started} ms, ${exchanges.length} upstream calls`,
   );
-  for (const kind of ["flood", "zoning", "access"]) {
+  for (const kind of ["flood", "zoning", "access", "septic"]) {
     if (finding(kind)) console.log(`  ${kind}: ${finding(kind)}`);
   }
 }

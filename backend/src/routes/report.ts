@@ -22,8 +22,13 @@ import {
   buildReport,
   DEFAULT_ACCESS_TIMEOUT_MS,
   DEFAULT_FEMA_TIMEOUT_MS,
+  DEFAULT_SOILS_TIMEOUT_MS,
   DEFAULT_ZONING_TIMEOUT_MS,
 } from "../reports/pipeline.js";
+import {
+  createSsurgoSoilsClient,
+  type SsurgoSoilsClient,
+} from "../reports/ssurgoSoils.js";
 import { prismaReportStore, type ReportStore } from "../reports/store.js";
 
 /** How long a live report is served from PostgreSQL before it is rebuilt. */
@@ -43,6 +48,10 @@ export interface ReportRouteOptions {
   access?: FranklinAccessClient;
   /** Limit for the Franklin access check. Defaults to 6000 ms. */
   accessTimeoutMs?: number;
+  /** USDA NRCS Soil Data Access. Null is test-only opt-out. */
+  soils?: SsurgoSoilsClient | null;
+  /** Limit for the SSURGO soils/septic check. Defaults to 6000 ms. */
+  soilsTimeoutMs?: number;
   now?: () => Date;
 }
 
@@ -66,6 +75,9 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
   const zoningTimeoutMs = options.zoningTimeoutMs ?? DEFAULT_ZONING_TIMEOUT_MS;
   const access = options.access ?? createFranklinAccessClient();
   const accessTimeoutMs = options.accessTimeoutMs ?? DEFAULT_ACCESS_TIMEOUT_MS;
+  const soils =
+    options.soils === undefined ? createSsurgoSoilsClient() : options.soils;
+  const soilsTimeoutMs = options.soilsTimeoutMs ?? DEFAULT_SOILS_TIMEOUT_MS;
   const now = options.now ?? (() => new Date());
 
   return asyncRoute(async (req, res) => {
@@ -128,6 +140,8 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
       zoningTimeoutMs,
       access,
       accessTimeoutMs,
+      soils: soils ?? undefined,
+      soilsTimeoutMs,
       now,
     });
     res.json(built.report);

@@ -1,0 +1,11 @@
+{
+  "recordedAt": "2026-11-18T23:17:00.000Z",
+  "request": {
+    "method": "POST",
+    "url": "https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest"
+  },
+  "response": {
+    "status": 502,
+    "body": "<html>\n<head><title>502 Bad Gateway</title></head>\n<body>\n<center><h1>502 Bad Gateway</h1></center>\n</body>\n</html>\n"
+  }
+}

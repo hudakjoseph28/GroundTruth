@@ -1,0 +1,15 @@
+{
+  "recordedAt": "2026-11-18T22:45:00.000Z",
+  "recordingNote": "Deterministic SDA response-shape fixture for replay; values are test data, not parcel evidence.",
+  "response": {
+    "status": 200,
+    "body": {
+      "Table": [
+        ["mukey", "musym", "muname", "engstafdcd", "overlap_area"],
+        ["test-101", "Ko", "Kokomo silty clay loam", "Very limited", 72.5],
+        ["test-102", "CrB", "Crosby silt loam", "Somewhat limited", 22.5],
+        ["test-103", "Bs", "Brookston silty clay loam", "Not limited", 5]
+      ]
+    }
+  }
+}

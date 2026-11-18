@@ -1,6 +1,6 @@
 # Phase 2 · Coverage note
 
-**Recorded Nov 17, 2026, against `main` at `ce33d40`** (PRs #7, #8, #9 via #10); Franklin zoning added the same day. This note covers what GroundTruth searched, what it checked, and where. Each claim comes from a recorded live response or a hand-verified fixture in this repository. It measures **search coverage** and **report depth** separately, as [ParcelResearch.md](ParcelResearch.md#demo-scope) asks.
+**Recorded Nov 17–18, 2026, against `main`**; statewide USDA NRCS soils coverage was added Nov 18. This note covers what GroundTruth searched, what it checked, and where. Each claim comes from a recorded live response, a provider-contract fixture, or a hand-verified fixture in this repository. It measures **search coverage** and **report depth** separately, as [ParcelResearch.md](ParcelResearch.md#demo-scope) asks.
 
 ## Summary
 
@@ -10,8 +10,9 @@
 | Counties tested end to end (search → boundary → report) | **2:** Franklin (39049) and Licking (39089) |
 | Counties where the flood check can return evidence | **83 of 88**, the counties with a FEMA NFHL study |
 | Counties where the zoning check can return evidence | **1 of 88:** Franklin, live from the county's zoning map, for lots in the townships under county zoning (added Nov 17, 2026) |
-| Checks with sourced evidence beyond flood and Franklin zoning | **Golden parcel only:** access, seeded and verified by hand |
-| Every other check, every other parcel | `unknown`, with a named responsible party and next action |
+| Counties where the septic check can return evidence | **88 of 88:** live USDA NRCS Soil Data Access (SSURGO) map units and the published septic-tank absorption field dominant-condition rating |
+| Other checks with sourced evidence | Franklin access is live; the golden access result is also seeded and verified by hand |
+| Utilities, easements, seller authority, and survey | `unknown`, with a named responsible party and next action |
 
 ## Canonical parcels
 
@@ -50,10 +51,11 @@ Address queries with no match return `[]` and are also recorded:
 | **Flood** | **Live in 83 counties.** Any OGRIP parcel in a county with a FEMA NFHL study gets zones, FIRM panels and effective LOMRs with effective dates | `unknown` in the 5 counties without an NFHL study, or when FEMA times out or fails |
 | **Zoning** | **Live in Franklin County.** The parcel's full OGRIP polygon is intersected with Franklin County's zoning map (`FCEDP_Zoning_Districts_2025_View`). One district covering the lot gives `evidenceFound`, naming the district and citing the layer and the 2026 Zoning Resolution. Two or more districts, or a meaningful part outside the map, give `needsReview`. **Golden parcel:** seeded and verified by hand; the live check gives the same result, R on 100%. | Franklin lots the county map doesn't cover (in a city, village, or township with its own zoning, such as Columbus): `unknown`, naming the local zoning office. Timeout or error: `unknown`, report still `200`. Other counties: `unknown` from the per-kind template. The Licking parcel keeps one documented override sentence: "GroundTruth doesn't check zoning in Licking County yet." |
 | **Access** | **Golden parcel only:** seeded `needsReview` (county right-of-way and road layers, Zoning Resolution 2026 §302.042 and §302.0391). It never says "no access". | `unknown` from the template |
-| Utilities, easements, seller authority, survey, septic | Nowhere yet | `unknown` from the template, each with its own responsible party and next action |
+| **Septic** | **Live statewide.** The full parcel polygon is sent to USDA NRCS Soil Data Access. SSURGO map units are intersected with the parcel and returned with area share and the published `muaggatt.engstafdcd` dominant-condition rating: `Very limited`, `Somewhat limited`, or `Not limited`. A rated response is always `needsReview`, never a site-feasibility conclusion. | No map unit, an unrated/other value, timeout, provider error, or malformed response is `unknown`. Every outcome ends by directing the buyer to the Ohio Department of Health homeowner page, their local health district, and a site and soil evaluation. |
+| Utilities, easements, seller authority, survey | Nowhere yet | `unknown` from the template, each with its own responsible party and next action |
 | Closing | Comes from the staged deal, not the report | Seeded reports have no closing check |
 
-`GET /api/coverage` matches this table: `evidenceKinds: ["zoning", "flood"]` for Franklin, `["flood"]` for the other 82 counties with an NFHL study, and `[]` for the five without one.
+`GET /api/coverage` matches this table: `evidenceKinds: ["zoning", "flood", "septic"]` for Franklin, `["flood", "septic"]` for the other 82 counties with an NFHL study, and `["septic"]` for the five without one.
 
 ### Franklin zoning, live results (Nov 17, 2026)
 
@@ -78,6 +80,8 @@ The exact query URLs are stored in each fixture's `sourceUrl` / `sources[].url`.
 | Ohio OGRIP statewide parcels | <https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0> | Golden boundary 2026-11-17T00:54:44Z. Licking boundary 2026-11-17T01:07:51Z. Search and boundary test recordings 2026-11-17T00:11:53Z–00:12:00Z. County count for `/api/coverage` 2026-11-17T00:11:55Z. |
 | OGRIP address locator (LBRS) | <https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer> | Address test recordings, 2026-11-17T00:11:53Z–00:12:00Z |
 | FEMA National Flood Hazard Layer | <https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer> (zones 28, FIRM panels 3, LOMRs 1, study availability 0) | Ohio study availability 2026-11-17T01:19:09Z. Flood report recordings 2026-11-17T01:19:09Z–01:23:04Z. |
+| USDA NRCS Soil Data Access (SSURGO) | <https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest> (`mupolygon`, `mapunit`, `muaggatt.engstafdcd`) | Each successful live report records its own `retrievedAt`. Deterministic provider-contract fixture clock: 2026-11-18T22:45:00Z. A real availability response was recorded at 2026-11-18T23:17:00Z (HTTP 502; see known limits). |
+| Ohio Department of Health homeowner sewage guidance | <https://odh.ohio.gov/know-our-programs/sewage-treatment-systems/information-for-homeowners/> | Read 2026-11-18; used only for the required local-health-district and site-and-soil-evaluation next action, not as parcel evidence. |
 
 ### Golden parcel `ohio:39049:230-000918`
 
@@ -113,6 +117,10 @@ Run on `main` at `ce33d40` with `vitest run test/report.test.ts test/parcels.tes
   - Flood becomes `unknown`: "FEMA's flood map service did not answer within 0.2 seconds, so no flood zone was checked."
   - Every other check is unchanged and coverage drops to `boundaryOnly`.
   - The timed-out report is **not cached**, so the next request asks FEMA again.
+- **USDA Soil Data Access times out independently** (forced to hang, soils limit 200 ms) on the same parcel:
+  - The report still returns **`200`** within 2 s and every non-septic check is unchanged.
+  - Septic becomes `unknown`; it makes no suitability conclusion and still ends with the health-district site and soil evaluation next action.
+  - The timed-out report is not cached, so the next request can ask USDA again.
 - **OGRIP times out on the report route:** `504 PROVIDER_TIMEOUT`, `retryable: true`, with no guessed report.
 - **OGRIP times out on parcel-ID search, address search, the parcel route and `/api/coverage`:** each returns `504 PROVIDER_TIMEOUT`, `retryable: true`, with no partial result.
 - **An address search whose individual requests fit the per-request limit, but together exceed the search budget:** `504 PROVIDER_TIMEOUT`.
@@ -122,6 +130,8 @@ Run on `main` at `ce33d40` with `vitest run test/report.test.ts test/parcels.tes
 - **A city alone is not searched.** A street name without a house number returns up to ten lots on that street, and `0 <street>` finds lots with no assigned number. A city or township on its own answers `400` asking for a street or a parcel ID.
 - **OGRIP publishes 0 acreage for Franklin.** `LandArea` is 0 for Franklin parcels, so `Parcel.acreage` is omitted there. The golden parcel's 3.015 legal acres come from the Franklin County Auditor and are cited only inside its zoning check.
 - **5 counties have no NFHL data.** Fayette (39047), Henry (39069), Vinton (39163), Williams (39171) and Wyandot (39175) have no FEMA NFHL study, so flood is always `unknown` there.
+- **SSURGO is screening evidence, not approval.** `engstafdcd` is the map unit's dominant-condition interpretation for septic-tank absorption fields. A parcel can cross several map units, inclusions may differ from the dominant soil, and the check does not establish sewer availability, system design, drain-field location, permitting, or site feasibility. The local health district and an on-site soil evaluation decide the next step.
+- **The USDA endpoint was unavailable during implementation verification.** Soil Data Access returned HTTP 502 at 2026-11-18T23:17:00Z even for a one-row health query. The exact response is saved in `backend/test/fixtures/ssurgo/sda-502-2026-11-18.json`; it replays as `unknown`. The success path uses a clearly labeled deterministic SDA response-shape fixture and must be re-recorded from USDA when the service is available. Production still calls USDA live and does not cache a provider failure.
 - **The web search isn't on the live API yet.** `frontend/web/src/data/parcelSource.ts` searches the two canonical parcels only; `GET /api/parcels/search` is live, but the web doesn't call it yet.
 - **Address fallback scope.**
   - When the OGRIP locator is down or doesn't know the street, the fallback matches `SitusAddressAll` only when the typed city lies in at most 3 counties (Census 2020 place names).
