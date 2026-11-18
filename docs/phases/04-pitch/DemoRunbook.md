@@ -4,10 +4,10 @@
 
 This runbook was checked against <https://groundtruth-lac.vercel.app> and its public API on Nov 18, 2026. The parcel sequence reuses `DemoScript-Parcel.md`. The current deployed states are:
 
-- `staged-devnet-deal` is **Refunded**. Its immutable timeline still shows the title hold, the rejected release with `DealHeld (6019)`, and the later buyer refund.
+- `staged-devnet-deal` is **Refunded**. Its timeline shows the title hold, the rejected release with `DealHeld (6019)`, and the later buyer refund, each independently verifiable on-chain. After them it shows the ElevenLabs `Evidence received` row (below).
 - `staged-devnet-deal-live` is **Funded** for **10 test USDC**, with title and survey signed and septic waiting.
 - `staged-devnet-deal-released` is the preserved fallback: **Released** for **25 test USDC** after all three approvals.
-- The live API does **not** yet contain an ElevenLabs `Evidence received` row, and there is no public recording URL. Do not claim a live callback until the audio gate below passes.
+- **ElevenLabs is proven.** A real staged call to a consenting teammate (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`) was verified and recorded at 22:10:54 UTC on Nov 18 as `ownerDeniesSale` on `staged-devnet-deal`. That was after the deal's hold and refund, so its `Evidence received` row appears after them. Proof: [Railway log](../../proof/elevenlabs-owner-callback.png). The audio gate has passed; use the recorded clip. The product still has no public recording URL.
 
 ## Rehearsing the live moment
 
@@ -44,7 +44,7 @@ The rehearsal deal can run once. The buyer needs 10 test USDC free for it, on to
   5. <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released>
   6. [Preserved release on Solana Explorer](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet)
 - [ ] Browser zoom is 100%, the deal timeline and parcel drawers are readable on the projector, and the terminal font is at least 18 pt.
-- [ ] **Audio gate:** use only a recording of the real ElevenLabs call to a consenting teammate, clearly labeled `Recorded ElevenLabs owner callback · staged participant`. Record its conversation ID on the private show sheet. If that artifact still does not exist, use the no-audio fallback below and do not enter or claim the ElevenLabs bounty.
+- [ ] **Audio gate: passed.** Preload the recorded clip of the real ElevenLabs call to a consenting teammate (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`), clearly labeled `Recorded ElevenLabs owner callback · staged participant`. Check that it plays on the projector's audio out. Keep the conversation ID on the private show sheet.
 - [ ] Rehearse the hand signals: presenter raises one finger for “advance,” a flat palm for “hold this screen,” and two fingers for “take the fallback.”
 
 ## 0:00–0:30 · The buyer's story
@@ -115,8 +115,8 @@ The rehearsal deal can run once. The buyer needs 10 test USDC free for it, on to
 **Demo driver — every click**
 
 1. On the parcel ledger, click `Open the deal timeline`. If it is off screen, switch directly to the preloaded held-deal tab.
-2. **Only if the audio gate passed:** click Play on the preloaded, labeled recording and stop it immediately after the staged owner says they are not selling. Keep the held-deal page projected. There is no public recording URL in the current product.
-3. Point to `Refunded`, `Refunded to the buyer`, the `Title reviewer · Hold placed` row, and the card `Hold on this deal · Seller identity disputed`.
+2. Click Play on the preloaded, labeled recording and stop it immediately after the staged owner says they are not selling. Keep the held-deal page projected. There is no public recording URL in the current product.
+3. Point to `Refunded`, `Refunded to the buyer`, the `Title reviewer · Hold placed` row, and the card `Hold on this deal · Seller identity disputed`. Then point to the `Evidence received` row from the owner callback, which sits after the refund.
 4. Scroll to `Release rejected`. Point to `Blocked · no money moved` and the message ending `DealHeld (6019)`.
 5. In that row, click `View transaction Rro8…vwGz`. Solana Explorer opens in a new tab on devnet. Pause on the failed transaction; expand `Program Logs` only if `DealHeld` is not already visible.
 
@@ -125,21 +125,22 @@ The rehearsal deal can run once. The buyer needs 10 test USDC free for it, on to
 - `25 test USDC · Refunded` and `Refunded to the buyer`
 - The explanation that the escrow returned 25 test USDC to the buyer while the hold was active and paid nothing to the seller
 - `Hold on this deal · Seller identity disputed`, placed by the title reviewer
+- `Evidence received` from the owner callback: the person reached as the owner on record said they are not selling. It was recorded after the hold and refund, as evidence only.
 - `Release rejected · Blocked · no money moved`
 - `A release was rejected on-chain because a reviewer's hold is active. No funds moved. Program error: DealHeld (6019).`
 - Solana Explorer for signature `Rro8WA…vwGz` on devnet
 
 **Presenter — say exactly these three lines**
 
-> “The callback is evidence, not authority: ElevenLabs can report what the staged owner said, but only the assigned title reviewer can place this hold.”
+> “In a real closing, this callback is what prompts the title reviewer to hold; our staged call was recorded today, so it appears after the hold.”
 
-> “This preserved deal has since refunded the buyer, but its history cannot be rewritten: the title reviewer disputed seller identity, and the program rejected release with `DealHeld` before that refund.”
+> “This preserved deal has since refunded the buyer, and its history is independently verifiable on-chain: the title reviewer disputed seller identity, and the program rejected release with `DealHeld` before that refund.”
 
 > “The failed transaction is the proof—25 test USDC did not go to the seller, and the program, not our web page, enforced that result.”
 
 **Fallbacks**
 
-- No real recording—which is the current live state: skip step 2 and replace the first spoken line with, “The current public demo has no recorded ElevenLabs callback, so I will not claim one; this on-chain story begins with the title reviewer’s signed hold.” Do not play a reenactment or call it ElevenLabs.
+- Clip will not play: skip step 2, point to the `Evidence received` row, and keep the first spoken line; the row and the Railway log are the proof. Never play a reenactment or call one ElevenLabs.
 - Deal page slow: switch to the preloaded held-deal tab. If the API is unavailable, use the preloaded Explorer transaction and say only what the transaction proves.
 - Explorer slow: stay on the product's `Release rejected` row, which carries the same signature and error. The direct Explorer tab is already preloaded.
 
@@ -231,4 +232,4 @@ Do **not** consume the one-time `stage-finish` transaction in the short version.
 | 1:10–1:35 | Driver: switch to preserved released deal, click the newest `Payment released` row's `View transaction`. Presenter speaks. | <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released> → [release transaction](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet) | `25 test USDC · Released`; all three reviewers signed; payment receipt | “In the independent cleared deal, all three reviewers signed and the program paid exactly 25 test USDC to the bound seller.” |
 | 1:35–2:00 | Driver: leave Explorer open. Presenter closes. | Preserved release on Solana Explorer | Independently verifiable receipt | “The product is Consumer because it starts with the buyer and the parcel. Solana makes the professional decisions obeyable by the money, and an Ohio title or closing partner is the path to a real pilot.” |
 
-If the ElevenLabs audio gate has passed, place a five-second excerpt immediately before the held-deal line and shorten the closing by five seconds. Otherwise omit it and do not claim the integration.
+The ElevenLabs audio gate has passed: place a five-second excerpt of the recorded clip immediately before the held-deal line and shorten the closing by five seconds. If it will not play, point to the held deal's `Evidence received` row instead.

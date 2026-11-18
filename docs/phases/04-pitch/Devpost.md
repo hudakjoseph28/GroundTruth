@@ -9,6 +9,8 @@
 > Checked Nov 18, 12:55 p.m. ET ([Readiness.md](Readiness.md)): both demo closings ran on devnet at 12:41 to 12:48 p.m. ET, and every escrow claim below was read back from the public RPC and opened on Solana Explorer. ElevenLabs and QuickNode Streams stay `[PENDING]`. No staged call is recorded. The two closings' timeline rows were backfilled with `replay:devnet`, not delivered by the Stream, so they are not Stream proof. The only QuickNode deliveries are the live stage deal's 4 `stage-prep` transactions, whose webhooks arrived 1–2 s after their blocks. The second-device check is still open.
 >
 > Updated Nov 18, 2:01 p.m. ET: QuickNode Streams delivered the stage deal's four transactions to the live timeline (below). The two closings above were backfilled with `replay:devnet` and are not Stream deliveries. At that time the API showed the held deal as `refunded` and the released deal still as `draft`; by 2:05 p.m. ET its replay had landed and the API showed it as `released`. ElevenLabs stays `[PENDING]`: no staged call is recorded.
+>
+> Updated Nov 18, 5:15 p.m. ET: **ElevenLabs is proven.** The staged owner callback was recorded at 5:10 p.m. ET and appears on the held deal's timeline as evidence (below). The call came after that deal's hold and refund, so it is evidence only. We enter the ElevenLabs bounty.
 
 ## What it does
 
@@ -31,7 +33,9 @@ ALTA's 2026 survey of 245 title insurance professionals found that 59% of respon
 
 **[PENDING] Closing in the product:** The website and API do not show these two outcomes yet. Until they do, the proof is the Explorer links in this document, not a screen in the app.
 
-**[PENDING] ElevenLabs:** The planned owner callback supplies evidence to a staged title reviewer. The call never approves, holds, releases, or refunds a deal by itself. Do not enter the ElevenLabs bounty until the owner confirms a real consenting-participant call, verified webhook delivery, and audible demo footage.
+**ElevenLabs:** The owner callback supplies evidence to a staged title reviewer. The call never approves, holds, releases, or refunds a deal by itself. A real **ElevenLabs Agents** call to a consenting teammate playing the owner of record (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`) ended at 22:10:40 UTC on Nov 18. The API verified its signed post-call webhook and logged `elevenlabs recorded ownerDeniesSale conv_9801m7rbaxvye0yrq4jmyzfyq6xz deal=staged-devnet-deal` at 22:10:54 UTC ([Railway log](../../proof/elevenlabs-owner-callback.png)). The held deal `staged-devnet-deal` shows it as an `Evidence received` row: the person reached as the owner on record said they are not selling.
+
+  The call was recorded **after** that deal's hold and refund, so it appears after them on the timeline. In a real closing, this callback is what prompts the title reviewer to hold. Here it is shown as evidence only and changed no deal state. Only the title reviewer's signature, not the call, is what the escrow program checks.
 
 **QuickNode Streams:** A Solana devnet Stream, filtered to our escrow program, sends confirmed program events to a signed webhook that writes them to the buyer's deal timeline. On Nov 18 the stage deal `staged-devnet-deal-live` ([`2UrftJ…F6Cg`](https://explorer.solana.com/address/2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg?cluster=devnet)) ran four transactions: initialize [`jmK7fg…pPeE`](https://explorer.solana.com/tx/jmK7fg1PBNa2kYfqbvaDJ3sNWCBSUM4gAbEp529M5QHYeg145EF9RpKGaHKThkZ9PGt2Q9o1jDRFG2ny2GApPeE?cluster=devnet), fund [`5waYrx…PxH5`](https://explorer.solana.com/tx/5waYrx5rD6y7sZttZ73i7H2v1eFyqXvuCkuwxBKC11atb5DQi3CsgHrEyUYrwppxTPPHowg1uxxRejrcaVrJPxH5?cluster=devnet), and the title [`2VSXvY…sFPL`](https://explorer.solana.com/tx/2VSXvYoKQcaHxfK6V8zCFZE9imyBxE8ZF3b8RK7snsP57HxrWdpnYVWUT8puLoZ53bKzvoas2CyuvBUZeRGvsFPL?cluster=devnet) and survey [`Gj327z…M89V`](https://explorer.solana.com/tx/Gj327zRzpfPwqmnTW669iuBQ1DK8e1PTWSMoQKmZcvezZZuZTwFded8mea1bHvHsKLDnfYCBS1w4YikYeNsM89V?cluster=devnet) approvals, in slots 523727603–523727618. All four were applied straight from the Stream, with no replay: the API logged `quicknode applied` for `DealInitialized`, `DealFunded`, and both `ApprovalSigned` events.
 
@@ -80,7 +84,9 @@ Balances are test USDC after each step, read from the transactions' token balanc
 
 Not shown on devnet: a second release attempt on the released deal. The vault is closed, and the local test suite covers repeated settlement.
 
-**Sponsor integrations:** QuickNode Streams delivered the stage deal's four transactions to the live timeline (see above). The two closings' timeline rows came from `replay:devnet`, not the Stream. **[PENDING]** ElevenLabs stays a planned integration until its owner confirms a staged call: the webhook is deployed and rejects unsigned requests, but no call is recorded.
+**Sponsor integrations:**
+- **QuickNode Streams** delivered the stage deal's four transactions to the live timeline (see above). The two closings' timeline rows came from `replay:devnet`, not the Stream.
+- **ElevenLabs:** a real staged owner callback was recorded, verified, and attached to the held deal's timeline as evidence. It was recorded after the hold and refund, so it is evidence only. We enter the ElevenLabs bounty.
 
 ## Challenges we ran into
 
@@ -106,7 +112,7 @@ Finally, we had to keep three kinds of truth separate: a public record supplies 
 
 - QuickNode Streams delivered four confirmed escrow transactions from devnet to our webhook 1–2 s after their blocks, with no replay ([Railway log](../../proof/quicknode-stage-prep.png)).
 
-**[PENDING] Do not add ElevenLabs to this accomplishments list until its owner confirms the required proof.**
+- An ElevenLabs Agents call to a consenting teammate playing the owner of record reached our signed webhook. The webhook recorded the answer (`ownerDeniesSale`) as evidence on the held deal's timeline ([Railway log](../../proof/elevenlabs-owner-callback.png)). The call never approves, holds, or releases anything. In this staged run it was recorded after the hold and refund.
 
 ## What we learned
 
@@ -124,7 +130,7 @@ We will test the report with first-time land buyers and title or closing profess
 
 - **[PENDING] Closing in the product:** the held, refunded, and released outcomes are on devnet with their links above. Still show them in the website's deal view and the API timeline.
 - **[PENDING] QuickNode Streams:** measure the timeline update on a second device, and deliver the stage deal's septic approval and release through the Stream.
-- **[PENDING] ElevenLabs:** confirm a real staged callback with a consenting teammate, verified webhook evidence, reviewer handoff, and audible video footage.
+- **ElevenLabs:** place the owner callback before the title reviewer decides, as it would sit in a real closing. In the staged run it was recorded after the hold.
 - Add authenticated, private evidence handling before any real buyer, seller, identity, title, or call data enters the product.
 - Work with a title or closing partner to define production approval, hold, release, and refund terms. The hackathon workflow is a staged prototype, not a production closing service.
 
@@ -144,7 +150,4 @@ We will test the report with first-time land buyers and title or closing profess
 - Vitest and Supertest
 - Vercel and Railway deployment configuration
 - QuickNode Streams: live delivery of the stage deal's four transactions to the deal timeline (second-device update not yet measured)
-
-### Awaiting owner confirmation
-
-- **[PENDING]** ElevenLabs
+- ElevenLabs Agents: a staged owner callback, recorded as evidence on the held deal's timeline (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`)
