@@ -1,93 +1,105 @@
-import { useEffect, useState } from "react";
+import { useId, useState } from "react";
 import { Link } from "react-router-dom";
+import type { ReviewerRole } from "@groundtruth/shared";
 import { ESCROW } from "../../content/parcel";
 import { dealPath } from "../../data/dealSource";
-import { explorerAddressUrl, shortAddress, type EscrowSummary } from "../../data/ledger";
+import { explorerAddressUrl, shortAddress, type EscrowSummary, type ReviewerMarkState } from "../../data/ledger";
+import { ChainStrip } from "../../deal/ChainStrip";
 import { CopyButton } from "./CopyButton";
 
-/** First tick, then the gap between ticks, in milliseconds. */
-const COUNT_START_MS = 320;
-const COUNT_STEP_MS = 260;
+const ROLE_NAME: Record<ReviewerRole, string> = {
+  title: "Title",
+  survey: "Survey",
+  septic: "Septic",
+};
 
-/** Counts 0, 1, 2… up to the target once `run` is true. */
-function useCountUp(target: number, run: boolean): number {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!run || count >= target) return;
-    const timer = window.setTimeout(() => setCount(count + 1), count === 0 ? COUNT_START_MS : COUNT_STEP_MS);
-    return () => window.clearTimeout(timer);
-  }, [run, count, target]);
-  return Math.min(count, target);
-}
+const MARK_WORD: Record<ReviewerMarkState, string> = {
+  approved: "signed",
+  held: "hold",
+  waiting: "waiting",
+  missed: "did not sign",
+};
 
-/** The one escrow behind the deal: how much, what state, and whether money can move. */
+/** One closing: a fixed header, then the confirmed chain. */
 export function EscrowStrip({
   escrow,
-  counting,
-  animated,
+  startOpen,
 }: {
   escrow: EscrowSummary;
-  /** True once the page is showing, so the sign-off count can tick up. */
-  counting: boolean;
-  /** False when the visitor asked for reduced motion: show the final numbers. */
-  animated: boolean;
+  startOpen?: boolean;
 }) {
-  const ticked = useCountUp(escrow.signed, counting && animated);
-  const signed = animated ? ticked : escrow.signed;
+  const [open, setOpen] = useState(Boolean(startOpen));
+  const panelId = useId();
+  const meter = escrow.reviewers
+    .map((reviewer) => `${ROLE_NAME[reviewer.role]} ${MARK_WORD[reviewer.state]}`)
+    .join(", ");
 
   return (
-    <section className="escrow" data-tone={escrow.verdict.tone} aria-labelledby="escrow-title">
-      <div className="escrow-head">
-        <h3 id="escrow-title">{ESCROW.title}</h3>
-        <p>
-          <span className="tag">{escrow.staged ? ESCROW.staged : ESCROW.stagedRoles}</span>
-          {ESCROW.cluster}
-        </p>
+    <section className="escrow" data-tone={escrow.verdict.tone} data-open={open}>
+      <h3 className="visually-hidden">{ESCROW.title}</h3>
+      <button
+        type="button"
+        className="escrow-toggle"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="escrow-lead">
+          <span className="escrow-chip">
+            <i aria-hidden="true" />
+            {escrow.chip}
+          </span>
+          <span className="escrow-line">{escrow.line}</span>
+        </span>
+        <span className="escrow-amount">
+          <span className="escrow-amount-num">{escrow.amount}</span>
+          <span className="escrow-amount-unit">{ESCROW.unit}</span>
+        </span>
+        <span className="escrow-meter" role="img" aria-label={`${ESCROW.meterLabel}: ${meter}`}>
+          {escrow.reviewers.map((reviewer) => (
+            <span
+              key={reviewer.role}
+              className="meter-dot"
+              data-state={reviewer.state}
+              title={`${ROLE_NAME[reviewer.role]} ${MARK_WORD[reviewer.state]}`}
+            />
+          ))}
+        </span>
+        <svg className="escrow-chevron" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M3.5 6 8 10.5 12.5 6" />
+        </svg>
+      </button>
+      <div className="escrow-panel" id={panelId}>
+        <div className="escrow-panel-inner" inert={open ? undefined : true}>
+          <ChainStrip blocks={escrow.blocks} outlines={escrow.outlines} />
+          <div className="escrow-foot">
+            {escrow.escrowAddress ? (
+              <p className="escrow-account">
+                {ESCROW.address}{" "}
+                <a
+                  className="mono"
+                  href={explorerAddressUrl(escrow.escrowAddress)}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={escrow.escrowAddress}
+                >
+                  {shortAddress(escrow.escrowAddress)}
+                </a>
+                <CopyButton
+                  icon
+                  value={escrow.escrowAddress}
+                  label={`Copy ${ESCROW.address.toLowerCase()} address`}
+                />
+              </p>
+            ) : (
+              <span />
+            )}
+            <Link className="escrow-view" to={`${dealPath(escrow.dealId)}#timeline`}>
+              {ESCROW.open} <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </div>
       </div>
-      <p className="escrow-verdict">{escrow.verdict.text}</p>
-      <dl className="escrow-facts">
-        <div>
-          <dt>{ESCROW.amount}</dt>
-          <dd>
-            <span className="mono">{escrow.amount}</span> {ESCROW.unit}
-          </dd>
-        </div>
-        <div>
-          <dt>{ESCROW.state}</dt>
-          <dd>{ESCROW.states[escrow.state]}</dd>
-        </div>
-        <div>
-          <dt>{ESCROW.signOffs}</dt>
-          <dd>
-            <span className="mono" aria-hidden="true">
-              {signed}/{escrow.required}
-            </span>
-            <span className="visually-hidden">
-              {escrow.signed} of {escrow.required}
-            </span>
-          </dd>
-        </div>
-      </dl>
-      <p className="escrow-open">
-        <Link to={dealPath(escrow.dealId)}>
-          {ESCROW.open} <span aria-hidden="true">→</span>
-        </Link>
-      </p>
-      {escrow.escrowAddress && !escrow.staged && (
-        <p className="escrow-address">
-          {ESCROW.address}{" "}
-          <a
-            className="mono"
-            href={explorerAddressUrl(escrow.escrowAddress)}
-            target="_blank"
-            rel="noreferrer"
-            title={escrow.escrowAddress}
-          >
-            {shortAddress(escrow.escrowAddress)}
-          </a>
-          <CopyButton value={escrow.escrowAddress} label={`Copy ${ESCROW.address.toLowerCase()}`} />
-        </p>
-      )}
     </section>
   );
 }

@@ -128,7 +128,10 @@ export const ESCROW = {
   cluster: "Solana devnet",
   staged: "Staged",
   stagedRoles: "Staged roles",
-  open: "Open the deal timeline",
+  open: "View timeline",
+  closings: "Closings on this parcel",
+  devnet: "devnet",
+  devnetLive: "devnet live",
   others: "All staged deals on this parcel",
   deal: "Deal",
   loading: "Reading the deal's state…",
@@ -137,7 +140,9 @@ export const ESCROW = {
   signOffs: "Sign-offs",
   state: "State",
   amount: "Deposit",
-  address: "Escrow address",
+  address: "Escrow",
+  notYet: "Not yet",
+  meterLabel: "Reviewers",
   states: {
     draft: "Draft",
     funded: "Funded",
@@ -146,12 +151,23 @@ export const ESCROW = {
     refunded: "Refunded",
   } satisfies Record<DealState, string>,
   verdict: {
-    held: (role: ReviewerRole) => `Payout blocked: ${ROLE_NAMES[role]} hold active`,
-    heldUnknown: "Payout blocked: a reviewer's hold is active",
-    waiting: (count: number) => `Waiting on ${count} sign-off${count === 1 ? "" : "s"}`,
+    held: (role: ReviewerRole) => `Payout blocked by a ${ROLE_NAMES[role]} hold`,
+    heldUnknown: "Payout blocked by a reviewer hold",
+    waiting: (role: ReviewerRole) => `Waiting on ${ROLE_NAMES[role]} sign-off`,
+    waitingCount: (count: number) => `Waiting on ${count} sign-off${count === 1 ? "" : "s"}`,
+    draft: "The deposit is not in escrow yet",
     ready: "All required sign-offs are in",
-    released: "Released to the bound seller",
-    refunded: "Refunded to the buyer",
+    released: "Paid to the seller",
+    refunded: "Returned to the buyer",
+    refundedHeld: (role: ReviewerRole) => `Returned to the buyer after a ${ROLE_NAMES[role]} hold`,
+  },
+  chip: {
+    draft: "Draft",
+    funded: "Funded",
+    held: "Held",
+    released: "Released",
+    refunded: "Refunded",
+    refundedHeld: "Refunded · held",
   },
 } as const;
 
@@ -161,7 +177,8 @@ export const CHAIN_FINDINGS = {
     `The ${ROLE_NAMES[role]} reviewer signed this approval against the escrow.`,
   signedLimit: "The approval covers this reviewer's scope only.",
   held: (role: ReviewerRole) => `The ${ROLE_NAMES[role]} reviewer placed a hold on the escrow.`,
-  heldLimit: "A hold blocks the payout until it is resolved. It is not a finding of fraud.",
+  heldLimit:
+    "A hold blocks the payout. It cannot be lifted. The buyer can take a refund, and that ends the deal. It is not a finding of fraud.",
   reviewer: (role: ReviewerRole) => `${ROLE_NAMES[role].charAt(0).toUpperCase()}${ROLE_NAMES[role].slice(1)} reviewer`,
   program: "Escrow program",
   undecided: (role: ReviewerRole, closed: boolean) =>
@@ -174,7 +191,7 @@ export const CHAIN_FINDINGS = {
   undecidedNext: (role: ReviewerRole) => `Waiting on the ${ROLE_NAMES[role]} reviewer's signature.`,
   closedNext: "Nothing further. This deal is closed.",
   closingLimit:
-    "This is the escrow's state for one staged deal in test USDC. It is not a deed transfer or a real closing.",
+    "This is the escrow's state for this deal, in test USDC on Solana devnet. It is not a deed transfer.",
   closing: {
     released: "Every required reviewer signed, and the escrow paid the bound seller.",
     refunded: (held: boolean) =>
