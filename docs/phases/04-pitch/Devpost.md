@@ -7,6 +7,8 @@
 > Submission note: Keep every `[PENDING]` label until the named owner confirms the integration and supplies the required proof. Remove the label only after that proof is recorded in the repository.
 >
 > Checked Nov 18, 12:55 p.m. ET ([Readiness.md](Readiness.md)): both demo closings ran on devnet at 12:41 to 12:48 p.m. ET, and every escrow claim below was read back from the public RPC and opened on Solana Explorer. ElevenLabs and QuickNode Streams stay `[PENDING]`: no staged call is recorded, and the API and the website still show both deals as `draft`, so the Stream has not projected these transactions.
+>
+> Updated Nov 18, 2:01 p.m. ET: QuickNode Streams delivered the stage deal's four transactions to the live timeline (below). The two closings above were backfilled with `replay:devnet` and are not Stream deliveries. At that time the API showed the held deal as `refunded` and the released deal still as `draft`. ElevenLabs stays `[PENDING]`: no staged call is recorded.
 
 ## What it does
 
@@ -31,7 +33,7 @@ ALTA's 2026 survey of 245 title insurance professionals found that 59% of respon
 
 **[PENDING] ElevenLabs:** The planned owner callback supplies evidence to a staged title reviewer. The call never approves, holds, releases, or refunds a deal by itself. Do not enter the ElevenLabs bounty until the owner confirms a real consenting-participant call, verified webhook delivery, and audible demo footage.
 
-**[PENDING] QuickNode Streams:** The planned Stream projects confirmed GroundTruth program events into the buyer timeline and updates a second device. Do not enter the Streams bounty until the owner confirms the deployed-program filter, verified webhook, deduplication, matching transaction signature, and measured second-device update.
+**QuickNode Streams:** A Solana devnet Stream, filtered to our escrow program, sends confirmed program events to a signed webhook that writes them to the buyer's deal timeline. On Nov 18 the stage deal `staged-devnet-deal-live` ([`2UrftJ…F6Cg`](https://explorer.solana.com/address/2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg?cluster=devnet)) ran four transactions: initialize [`jmK7fg…pPeE`](https://explorer.solana.com/tx/jmK7fg1PBNa2kYfqbvaDJ3sNWCBSUM4gAbEp529M5QHYeg145EF9RpKGaHKThkZ9PGt2Q9o1jDRFG2ny2GApPeE?cluster=devnet), fund [`5waYrx…PxH5`](https://explorer.solana.com/tx/5waYrx5rD6y7sZttZ73i7H2v1eFyqXvuCkuwxBKC11atb5DQi3CsgHrEyUYrwppxTPPHowg1uxxRejrcaVrJPxH5?cluster=devnet), and the title [`2VSXvY…sFPL`](https://explorer.solana.com/tx/2VSXvYoKQcaHxfK6V8zCFZE9imyBxE8ZF3b8RK7snsP57HxrWdpnYVWUT8puLoZ53bKzvoas2CyuvBUZeRGvsFPL?cluster=devnet) and survey [`Gj327z…M89V`](https://explorer.solana.com/tx/Gj327zRzpfPwqmnTW669iuBQ1DK8e1PTWSMoQKmZcvezZZuZTwFded8mea1bHvHsKLDnfYCBS1w4YikYeNsM89V?cluster=devnet) approvals, in slots 523727603–523727618. All four reached the live timeline through the Stream in 1.8–3.3 s, with no replay. The two closings above are not Stream deliveries: their timeline rows were backfilled with `replay:devnet`, because QuickNode backfill needs a paid plan. **[PENDING]** Measure the update on a second device before entering the Streams bounty.
 
 ## How we built it
 
@@ -72,7 +74,7 @@ Balances are test USDC after each step, read from the transactions' token balanc
 
 Not shown on devnet: a second release attempt on the released deal. The vault is closed, and the local test suite covers repeated settlement.
 
-**[PENDING] Sponsor integrations:** QuickNode Streams and ElevenLabs must remain described as planned integrations until their owners confirm the end-to-end acceptance checks. Both webhooks are deployed and reject unsigned requests, but the API has no timeline rows for the Nov 18 closings and no staged call is recorded.
+**Sponsor integrations:** QuickNode Streams delivered the stage deal's four transactions to the live timeline (see above). The two closings' timeline rows came from `replay:devnet`, not the Stream. **[PENDING]** ElevenLabs stays a planned integration until its owner confirms a staged call: the webhook is deployed and rejects unsigned requests, but no call is recorded.
 
 ## Challenges we ran into
 
@@ -96,7 +98,9 @@ Finally, we had to keep three kinds of truth separate: a public record supplies 
 
 - We ran both closings on Solana devnet: a reviewer's hold made the program reject a release with the vault balance unchanged, and three reviewer approvals released exactly 25 test USDC to the bound seller. Each step has an Explorer link above.
 
-**[PENDING] Do not add ElevenLabs or Streams to this accomplishments list until their owners confirm the required proof.**
+- QuickNode Streams carried four confirmed escrow transactions from devnet to the live deal timeline in 1.8–3.3 s, with no replay.
+
+**[PENDING] Do not add ElevenLabs to this accomplishments list until its owner confirms the required proof.**
 
 ## What we learned
 
@@ -113,7 +117,7 @@ Our immediate product step is to add verified local zoning and access adapters b
 We will test the report with first-time land buyers and title or closing professionals. The pilot questions are practical: Can a buyer explain the biggest open issue? Do they know who acts next? Does the report help them pause, negotiate, or walk away before sending money?
 
 - **[PENDING] Closing in the product:** the held, refunded, and released outcomes are on devnet with their links above. Still show them in the website's deal view and the API timeline.
-- **[PENDING] QuickNode Streams:** confirm the filtered devnet Stream, verified webhook, idempotent timeline projection, and second-device update.
+- **[PENDING] QuickNode Streams:** measure the timeline update on a second device, and deliver the stage deal's septic approval and release through the Stream.
 - **[PENDING] ElevenLabs:** confirm a real staged callback with a consenting teammate, verified webhook evidence, reviewer handoff, and audible video footage.
 - Add authenticated, private evidence handling before any real buyer, seller, identity, title, or call data enters the product.
 - Work with a title or closing partner to define production approval, hold, release, and refund terms. The hackathon workflow is a staged prototype, not a production closing service.
@@ -133,8 +137,8 @@ We will test the report with first-time land buyers and title or closing profess
 - Franklin County Auditor, zoning, road right-of-way, road-section, and stream-buffer sources for the verified golden parcel
 - Vitest and Supertest
 - Vercel and Railway deployment configuration
+- QuickNode Streams: live delivery of the stage deal's four transactions to the deal timeline (second-device update not yet measured)
 
 ### Awaiting owner confirmation
 
-- **[PENDING]** QuickNode Streams
 - **[PENDING]** ElevenLabs
