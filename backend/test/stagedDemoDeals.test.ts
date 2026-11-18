@@ -16,6 +16,7 @@ import {
   stagedDemoDeals,
   stagedLiveDeal,
   stagedRehearsalDeal,
+  stagedRehearsalV2Deal,
   stagedReleasedDeal,
   type Deal,
 } from "@groundtruth/shared";
@@ -32,12 +33,13 @@ function ata(owner: web3.PublicKey) {
 }
 
 describe("staged demo deals", () => {
-  it("keeps the staged-devnet-deal ID as the held deal and adds the released, live, and rehearsal ones", () => {
+  it("keeps the staged-devnet-deal ID as the held deal and adds the released, live, and two rehearsal ones", () => {
     expect(stagedDemoDeals.map((d) => d.id)).toEqual([
       "staged-devnet-deal",
       "staged-devnet-deal-released",
       "staged-devnet-deal-live",
       "staged-devnet-deal-rehearsal",
+      "staged-devnet-deal-rehearsal-v2",
     ]);
     expect(stagedDemoChainAccounts[stagedDeal.id]?.outcome).toBe("held");
     expect(stagedDemoChainAccounts[stagedReleasedDeal.id]?.outcome).toBe(
@@ -46,6 +48,9 @@ describe("staged demo deals", () => {
     expect(stagedDemoChainAccounts[stagedLiveDeal.id]?.outcome).toBe("live");
     expect(stagedDemoChainAccounts[stagedRehearsalDeal.id]?.outcome).toBe(
       "rehearsal",
+    );
+    expect(stagedDemoChainAccounts[stagedRehearsalV2Deal.id]?.outcome).toBe(
+      "rehearsalV2",
     );
   });
 
@@ -56,6 +61,7 @@ describe("staged demo deals", () => {
     [stagedLiveDeal.id, stagedLiveDeal, "10000000"],
     // The rehearsal copy mirrors the live deal, so a rehearsal looks the same.
     [stagedRehearsalDeal.id, stagedRehearsalDeal, "10000000"],
+    [stagedRehearsalV2Deal.id, stagedRehearsalV2Deal, "10000000"],
   ] as const)(
     "%s: bound to the golden parcel, its amount, three required reviewers",
     (_id, deal, amount) => {
@@ -95,7 +101,7 @@ describe("staged demo deals", () => {
   );
 
   it("gives every deal a distinct PDA and the same participants", () => {
-    expect(new Set(stagedDemoDeals.map((d) => d.escrowAddress)).size).toBe(4);
+    expect(new Set(stagedDemoDeals.map((d) => d.escrowAddress)).size).toBe(5);
     const participants = (deal: Deal) => ({
       parcelKey: deal.parcelKey,
       buyerWallet: deal.buyerWallet,
@@ -109,6 +115,9 @@ describe("staged demo deals", () => {
     expect(participants(stagedReleasedDeal)).toEqual(participants(stagedDeal));
     expect(participants(stagedLiveDeal)).toEqual(participants(stagedDeal));
     expect(participants(stagedRehearsalDeal)).toEqual(participants(stagedDeal));
+    expect(participants(stagedRehearsalV2Deal)).toEqual(
+      participants(stagedDeal),
+    );
   });
 });
 
@@ -160,6 +169,10 @@ describe('the off-chain "created" row of each staged deal', () => {
     // signatures on 2026-11-18T22:46Z), so any event it gets sorts after.
     expect(Date.parse(stagedRehearsalDeal.timeline[0].at)).toBeGreaterThan(
       Date.parse(stagedLiveDeal.timeline[0].at),
+    );
+    // v2 had no devnet transaction on its PDA when it was registered.
+    expect(Date.parse(stagedRehearsalV2Deal.timeline[0].at)).toBeGreaterThan(
+      Date.parse(stagedRehearsalDeal.timeline[0].at),
     );
   });
 

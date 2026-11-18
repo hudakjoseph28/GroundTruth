@@ -59,6 +59,7 @@ export const STAGED_DEAL_ID_LABELS = {
   released: "groundtruth-demo-released-v1",
   live: "groundtruth-demo-live-v1",
   rehearsal: "groundtruth-demo-rehearsal-v1",
+  rehearsalV2: "groundtruth-demo-rehearsal-v2",
 } as const;
 
 const stagedParticipants = {
@@ -102,6 +103,8 @@ const REGISTERED_AT = {
   heldAndReleased: "2026-11-18T17:24:49.000Z",
   live: "2026-11-18T18:48:34.000Z",
   rehearsal: "2026-11-18T22:40:31.000Z",
+  // When the v2 fixture was written (before any transaction on its PDA).
+  rehearsalV2: "2026-11-18T23:23:17.000Z",
 } as const;
 
 /** The held demo deal. Its ID predates the second deal; the web reads it. */
@@ -184,11 +187,34 @@ export const stagedRehearsalDeal = {
   ],
 } satisfies Deal;
 
+/**
+ * The second rehearsal copy of the live deal. The first
+ * (`staged-devnet-deal-rehearsal`) was used up testing the reviewer portal
+ * (#45) on 2026-11-18. Same 10 test USDC, wallets, and parcel; its own PDA.
+ */
+export const stagedRehearsalV2Deal = {
+  id: "staged-devnet-deal-rehearsal-v2",
+  ...stagedParticipants,
+  amountBaseUnits: "10000000",
+  escrowAddress: "EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X",
+  timeline: [
+    {
+      id: "staged-devnet-deal-rehearsal-v2-created",
+      at: REGISTERED_AT.rehearsalV2,
+      type: "dealCreated",
+      actorRole: "buyer",
+      buyerMessage: "Staged devnet deal created. No funds have moved.",
+      confirmationStatus: "offChainEvidence",
+    },
+  ],
+} satisfies Deal;
+
 export const stagedDemoDeals = [
   stagedDeal,
   stagedReleasedDeal,
   stagedLiveDeal,
   stagedRehearsalDeal,
+  stagedRehearsalV2Deal,
 ] as const;
 
 /**
@@ -218,6 +244,14 @@ export const stagedDemoChainAccounts = {
     dealIdHex:
       "b4c31dd9f5b572ffbac275189ff161d55015171d1d537264cfc7cceeaae99312",
     vault: "EebWs66L2rogg9PDi5xMcKAWpfZ5xTyB1VBcFMyzNqe2",
+    buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+  },
+  [stagedRehearsalV2Deal.id]: {
+    outcome: "rehearsalV2",
+    dealIdLabel: STAGED_DEAL_ID_LABELS.rehearsalV2,
+    dealIdHex:
+      "6554bc65047df74393d5596eb8bb9d493bb646c30f7f798de1566b150b0db7cc",
+    vault: "4awpxEmXL8fHDFDE9Lu6qHGq6NdBVpLjUUgT3nCHtCpt",
     buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
   },
   [stagedReleasedDeal.id]: {
