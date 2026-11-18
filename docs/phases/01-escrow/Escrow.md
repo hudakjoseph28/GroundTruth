@@ -103,7 +103,11 @@ pnpm --filter @groundtruth/escrow demo:deals run        # devnet; refuses unless
   - `demo:deals stage-prep` rehearses both halves locally, then sends initialize, fund, and the title and survey approvals. It never sends the septic approval, so the deal can't be released early.
   - `demo:deals stage-finish`, run on stage, sends the septic approval and the release. It skips the rehearsal to stay fast, and refuses unless the deal is funded with title and survey approved and no hold.
   - Both halves skip steps already on chain, and both write `escrow/demo-results/devnet-stage-live-v1.{json,md}`.
-  - `check` reports run, stage-prep, and stage-finish readiness, and `simulate` also rehearses the live deal.
+  - `check` reports run, stage-prep, and stage-finish readiness for the live and rehearsal deals, and `simulate` also rehearses both.
+- **Rehearsal deal** (`staged-devnet-deal-rehearsal`, 10 test USDC, `sha256("groundtruth-demo-rehearsal-v1")`, PDA `6KQJYssz…mH5u`): a copy of the live deal for practising the stage moment.
+  - Run it with `stage-prep --deal staged-devnet-deal-rehearsal`, then `stage-finish --deal staged-devnet-deal-rehearsal`.
+  - It has its own PDA and record (`devnet-stage-rehearsal-v1`), so it never consumes the live deal.
+  - It can run once; a second rehearsal needs a `-v2` label.
 - **Output:** `escrow/demo-results/devnet-<runId>.json` and `.md`, with Explorer links. They are rewritten after every transaction, so a partial run is still recorded. Simulation output is gitignored.
 - **Local builds:** `LOCAL_PROGRAM_SO=target/deploy/groundtruth_escrow.so` makes `simulate` run a local build. `run` refuses to start while it (or `ESCROW_PROGRAM_SO`) is set, so its rehearsal always uses the bytecode deployed on devnet.
 - **Held release error:** the spec specifies `DealHeld` (6019), and that is the script's default. In the escrow contract (`release.rs`), the `deal.hold.is_none()` check is placed before the `state == Funded` check so that attempting to release a held deal fails with **DealHeld (6019)** as expected. Once upgraded on devnet, both on-chain runs and simulations verify `DealHeld (6019)`. Local simulation against the rebuilt contract can also be run via `LOCAL_PROGRAM_SO=target/deploy/groundtruth_escrow.so pnpm --filter @groundtruth/escrow demo:deals simulate`.

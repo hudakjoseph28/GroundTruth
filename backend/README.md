@@ -254,6 +254,7 @@ NAIP's response time varies the most. The web waits 10 s for a build (`LAND_BUIL
 | `staged-devnet-deal` | held: release rejected, buyer refunded | `54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW` | `groundtruth-demo-held-v1` |
 | `staged-devnet-deal-released` | released to the seller | `3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu` | `groundtruth-demo-released-v1` |
 | `staged-devnet-deal-live` | released live on stage (10 USDC) | `2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg` | `groundtruth-demo-live-v1` |
+| `staged-devnet-deal-rehearsal` | rehearsal copy of the live deal (10 USDC) | `6KQJYssz234KjxrMkREcxpcKbok34aaFyihDST6DmH5u` | `groundtruth-demo-rehearsal-v1` |
 
 The first two are 25 test USDC and ran on 2026-11-18. The addresses are what `pnpm --filter @groundtruth/escrow demo:deals plan` prints for the staged demo wallets, and `test/stagedDemoDeals.test.ts` re-derives each one. Public keys only. Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 

@@ -9,6 +9,17 @@ This runbook was checked against <https://groundtruth-lac.vercel.app> and its pu
 - `staged-devnet-deal-released` is the preserved fallback: **Released** for **25 test USDC** after all three approvals.
 - The live API does **not** yet contain an ElevenLabs `Evidence received` row, and there is no public recording URL. Do not claim a live callback until the audio gate below passes.
 
+## Rehearsing the live moment
+
+Practise the 2:45–4:00 segment on the rehearsal deal, never on the live one. `staged-devnet-deal-rehearsal` is a copy of `staged-devnet-deal-live`: the same 10 test USDC, reviewers, and two steps, on its own escrow.
+
+1. Backstage, run `pnpm --filter @groundtruth/escrow demo:deals stage-prep --deal staged-devnet-deal-rehearsal`. It sets up the deal: funded, title and survey signed, septic waiting.
+2. Load <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-rehearsal> on the phone.
+3. Run the segment as written, with `pnpm --filter @groundtruth/escrow demo:deals stage-finish --deal staged-devnet-deal-rehearsal` as the command.
+4. Check that the phone updates, and time it.
+
+The rehearsal deal can run once. The buyer needs 10 test USDC free for it, on top of the live deal's 10 already in escrow.
+
 ## Pre-show checklist
 
 - [ ] QuickNode Stream is **resumed**, on **Solana Devnet / Block**, using `backend/quicknode/groundtruth-filter.js`, and delivering to `https://api-production-db8a8106.up.railway.app/api/webhooks/quicknode`.
