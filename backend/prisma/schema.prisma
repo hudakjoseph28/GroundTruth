@@ -77,6 +77,27 @@ model DealRecord {
   reviewers          ReviewerRecord[]
   hold               HoldRecord?
   timelineEvents     TimelineEventRecord[]
+  ownerCalls         OwnerCallRecord[]
+}
+
+/// One staged ElevenLabs owner callback, from a verified post-call webhook.
+/// Holds only what the contract allows: no transcript, audio, or phone
+/// number. Evidence for a reviewer; it never changes deal state.
+model OwnerCallRecord {
+  /// ElevenLabs conversation_id; the webhook dedupe key.
+  conversationId   String     @id
+  dealId           String
+  deal             DealRecord @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  completedAt      DateTime   @db.Timestamptz(3)
+  /// Consenting demo participant, e.g. "Satya (teammate, consented)".
+  participantLabel String
+  /// ElevenLabs analysis.call_successful, or "notConnected".
+  callSuccessful   String
+  /// ownerDeniesSale | ownerConfirmsSale | unclear | noAnswer
+  outcome          String
+  receivedAt       DateTime   @default(now()) @db.Timestamptz(3)
+
+  @@index([dealId])
 }
 
 model ReviewerRecord {
