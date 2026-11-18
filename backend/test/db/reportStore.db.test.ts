@@ -155,7 +155,8 @@ describe("report store against PostgreSQL", () => {
     ).toEqual(live);
 
     // The real seed script, as `db:seed` runs it.
-    execFileSync("npx", ["tsx", "src/seed.ts"], {
+    // Node itself, not `npx`: Windows cannot spawn `npx` without a shell.
+    execFileSync(process.execPath, ["--import", "tsx", "src/seed.ts"], {
       env: process.env,
       stdio: "ignore",
     });
