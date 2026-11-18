@@ -115,7 +115,7 @@ function DealScreen({ live }: { live: LiveDeal }) {
         {deal.hold && <HoldCard hold={deal.hold} />}
       </div>
 
-      <section className="deal-timeline" aria-labelledby="deal-timeline-title">
+      <section className="deal-timeline" id="timeline" aria-labelledby="deal-timeline-title">
         <header className="deal-section-head">
           <h2 id="deal-timeline-title">{TIMELINE.title}</h2>
           <p>{TIMELINE.order}</p>
