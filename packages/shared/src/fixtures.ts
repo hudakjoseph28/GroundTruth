@@ -39,26 +39,42 @@ export const goldenReport: ParcelReport = toReport(golden.report);
 export const secondCountyParcel: Parcel = toParcel(secondCounty.parcel);
 export const secondCountyReport: ParcelReport = toReport(secondCounty.report);
 
-// TODO(Kadhir): Record escrowAddress and transaction signatures after the staged devnet accounts exist. Release stays any fee payer and refund stays the buyer, per Escrow v1.
-export const stagedDeal = {
-  id: "staged-devnet-deal",
+/**
+ * The two staged demo closings on Solana devnet, both on the golden parcel
+ * and both 25 test USDC with required title, survey, and septic reviewers:
+ * `stagedDeal` is held (release rejected, buyer refunded) and
+ * `stagedReleasedDeal` is released to the seller after every approval.
+ *
+ * Public keys only. The wallets are the staged demo keypairs that
+ * escrow/scripts/demo-deals.ts generated (their private keys stay in the
+ * gitignored escrow/.demo-wallets/), and each `escrowAddress` is the deal
+ * PDA for sha256(STAGED_DEAL_ID_LABELS[outcome]), printed by
+ * `demo:deals plan`. backend/test/stagedDemoDeals.test.ts re-derives every
+ * address. Transaction signatures are recorded after the devnet run.
+ */
+export const STAGED_DEAL_ID_LABELS = {
+  held: "groundtruth-demo-held-v1",
+  released: "groundtruth-demo-released-v1",
+} as const;
+
+const stagedParticipants = {
   parcelKey: goldenParcel.key,
-  buyerWallet: "HcLJ8kbrJ3Jxk7oEf84ZGpR8czUr4U2x3jVJosXPgykM",
-  sellerWallet: "27hSFUGN9q65qXAvevvrUvvAunxiBLCFTG3SmdBWQJ6f",
-  sellerTokenAccount: "3rim2iuiaKyoaBcsSyENyn5osJn2Hy93R5c8RL8GY7yC",
+  buyerWallet: "HEDe3DMbVbFRku2Kzxq6usSjUdDJ1vphohTBxAXqEtXJ",
+  sellerWallet: "6XPGX3Vmqh4gtj6UZNcgJTDN1haWivctw8KQ7D6UpMMj",
+  sellerTokenAccount: "CZQyg2JGyjj9vRyvaBYS2tz54kproMxoiNF9hHxTG5Zu",
   reviewers: [
     {
-      wallet: "66EpT1ZYPxzYJAvhkbb8dzphLmdK6grtvv3LxRE8hLeN",
+      wallet: "ExxnTPx24fjXRiAPcnrWqKCfEQDhDmxCDZ57VQ7RkBRW",
       role: "title",
       required: true,
     },
     {
-      wallet: "A4j9LzytgynD8kEMZty7tzP4jndrRDCkBCpAHDiR5xwv",
+      wallet: "CT6Nstaijac7yAVuDNVWQ12JFMYGfggE4VPBK4sYohDa",
       role: "survey",
       required: true,
     },
     {
-      wallet: "HopdTqQ2QWywRpMmPHmdeddowJKdAmZRQLkoNrefaAGx",
+      wallet: "Ab7KLjree8ZgUrgXvtpb84oHKvzakC6VpRcPqnXoYz3F",
       role: "septic",
       required: true,
     },
@@ -67,6 +83,13 @@ export const stagedDeal = {
   mint: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
   cluster: "devnet",
   state: "draft",
+} satisfies Omit<Deal, "id" | "timeline">;
+
+/** The held demo deal. Its ID predates the second deal; the web reads it. */
+export const stagedDeal = {
+  id: "staged-devnet-deal",
+  ...stagedParticipants,
+  escrowAddress: "54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW",
   timeline: [
     {
       id: "staged-devnet-deal-created",
@@ -78,6 +101,57 @@ export const stagedDeal = {
     },
   ],
 } satisfies Deal;
+
+/** The released demo deal. */
+export const stagedReleasedDeal = {
+  id: "staged-devnet-deal-released",
+  ...stagedParticipants,
+  escrowAddress: "3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu",
+  timeline: [
+    {
+      id: "staged-devnet-deal-released-created",
+      at: "2026-11-18T00:00:00.000Z",
+      type: "dealCreated",
+      actorRole: "buyer",
+      buyerMessage: "Staged devnet deal created. No funds have moved.",
+      confirmationStatus: "offChainEvidence",
+    },
+  ],
+} satisfies Deal;
+
+export const stagedDemoDeals = [stagedDeal, stagedReleasedDeal] as const;
+
+/**
+ * On-chain accounts of each staged demo deal that `Deal` does not carry,
+ * keyed by deal ID. Public addresses only.
+ */
+export const stagedDemoChainAccounts = {
+  [stagedDeal.id]: {
+    outcome: "held",
+    dealIdLabel: STAGED_DEAL_ID_LABELS.held,
+    dealIdHex:
+      "156fa2df1ad3e85c616dcb087b3b8f0a393862ed5dbaf4242f069752b8086a9c",
+    vault: "HZUjdzLUAx7dSfQ3DjfFmsZ93Xfcy7Xrr7hKTnR6eecj",
+    buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+  },
+  [stagedReleasedDeal.id]: {
+    outcome: "released",
+    dealIdLabel: STAGED_DEAL_ID_LABELS.released,
+    dealIdHex:
+      "4833f90d34852fcf7bc1e683386a641b485bc2aae4178efefa34fc8565b112e4",
+    vault: "8M4S4zZVgBxMPJ5oyzDngU2tGfUZSf5g4osa1vAXNJ6w",
+    buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+  },
+} as const satisfies Record<
+  string,
+  {
+    outcome: "held" | "released";
+    dealIdLabel: string;
+    dealIdHex: string;
+    vault: string;
+    buyerTokenAccount: string;
+  }
+>;
 
 // JSON imports widen literal types; check the contract's literals at load.
 type RawParcel = Omit<Parcel, "geometry"> & {

@@ -17,6 +17,8 @@ const TX_B = `dbtestB${run}`.padEnd(64, "1");
 const fixture = (id: string): Deal => ({
   ...stagedDeal,
   id,
+  // escrowAddress is unique: the seeded staged deal already holds this PDA.
+  escrowAddress: undefined,
   timeline: stagedDeal.timeline.map((event) => ({
     ...event,
     id: `${id}-created`,
