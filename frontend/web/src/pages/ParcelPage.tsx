@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import type { Parcel } from "@groundtruth/shared";
 import { PARCEL_PAGE } from "../content/parcel";
 import { PARCEL_LOAD } from "../content/search";
+import { formatSiteAddress } from "../data/address";
 import {
   getDeal,
   stagedDealIdsFor,
@@ -16,6 +17,7 @@ import {
   type ParcelOutcome,
   type ReportOutcome,
 } from "../data/parcelSource";
+import { usePageTitle } from "../layout/usePageTitle";
 import { BlockTransition } from "../parcel/BlockTransition/BlockTransition";
 import { readBlockOrigin } from "../parcel/BlockTransition/origin";
 import { Ledger } from "../parcel/Ledger/Ledger";
@@ -28,6 +30,13 @@ export function ParcelPage() {
   const params = useParams();
   const parcelKey = params.parcelKey ? decodeURIComponent(params.parcelKey) : "";
   const { outcome, retry } = useLoaded(parcelKey, getParcel);
+  usePageTitle(
+    outcome?.status === "found"
+      ? PARCEL_PAGE.title(outcome.parcel.sourceParcelId)
+      : outcome?.status === "missing" || !parcelKey
+        ? PARCEL_PAGE.missing.title
+        : null,
+  );
 
   if (!parcelKey || outcome?.status === "missing") {
     return (
@@ -156,10 +165,23 @@ function LoadFailure({
   );
 }
 
+/** Back to the results the visitor came from, or to a fresh search. */
 function BackLink() {
+  const { state } = useLocation();
+  const query =
+    typeof state === "object" &&
+    state !== null &&
+    "fromSearch" in state &&
+    typeof state.fromSearch === "string"
+      ? state.fromSearch
+      : "";
   return (
-    <Link className="parcel-back" to="/search">
-      <span aria-hidden="true">←</span> {PARCEL_PAGE.back}
+    <Link
+      className="parcel-back"
+      to={query ? `/search?q=${encodeURIComponent(query)}` : "/search"}
+    >
+      <span aria-hidden="true">←</span>{" "}
+      {query ? PARCEL_PAGE.backToResults : PARCEL_PAGE.back}
     </Link>
   );
 }
@@ -214,6 +236,7 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
   // Every catalog parcel draws its published OGRIP boundary, so none is a
   // stand-in. Staged closing data is labeled in the ledger instead.
   const staged = false;
+  const address = formatSiteAddress(parcel.siteAddress);
   const place = [
     PARCEL_PAGE.county(parcel.county),
     parcel.township,
@@ -239,6 +262,14 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
           <header className="parcel-title">
             {staged && <p className="parcel-staged">{PARCEL_PAGE.stagedLabel}</p>}
             <h1 ref={heading} tabIndex={-1}>{parcel.sourceParcelId}</h1>
+            {address && (
+              <p className="parcel-address" title={address.published}>
+                {address.text}
+                {address.noHouseNumber && (
+                  <span> ({PARCEL_PAGE.noHouseNumber})</span>
+                )}
+              </p>
+            )}
             <p className="parcel-place">{place}</p>
             <p className="parcel-key">
               {PARCEL_PAGE.keyLabel} <span>{parcel.key}</span>

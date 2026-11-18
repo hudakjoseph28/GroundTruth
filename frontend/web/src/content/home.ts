@@ -34,7 +34,8 @@ export const HERO = {
   eyebrow: "Vacant land · Ohio · Solana escrow",
   /** One line each, so the headline can be set large. */
   headline: ["Know the land", "before the money", "moves."],
-  subhead: "Records checked. Approvals signed on-chain. Your USDC in escrow until both clear.",
+  subhead:
+    "See what public records say about a lot, and what still needs a professional. Your deposit waits in escrow until the reviewers sign off.",
   searchLabel: "Search for a parcel",
   demo: { before: "Try a demo parcel:", parcelId: goldenParcel.sourceParcelId },
   trust: [
@@ -178,7 +179,9 @@ export const REVIEWERS = {
     "Approve or hold with one signature",
     "Your record is on-chain, verifiable by anyone",
   ],
-  cta: { label: "Become a reviewer", todo: "TODO: reviewer signup" },
+  /** There is no reviewer signup. Saying so beats a button that goes nowhere. */
+  demoNote:
+    "In this demo, three staged wallets stand in for the title, survey, and septic reviewers. Reviewer sign-up is not open.",
   roles: {
     title: "Title agent",
     survey: "Surveyor",

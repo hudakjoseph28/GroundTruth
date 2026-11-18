@@ -29,6 +29,10 @@ export interface LedgerRecord {
   signature?: string;
   /** Evidence, review, on-chain. */
   steps: readonly [StepState, StepState, StepState];
+  /** A more exact word than the status's own, for records read from a deal. */
+  statusLabel?: string;
+  /** True when a deal's reviewer or its escrow settles this record. */
+  onDeal: boolean;
 }
 
 export type VerdictTone = "held" | "pending" | "released" | "quiet";
@@ -51,6 +55,10 @@ export interface ParcelLedger {
   biggestOpenQuestion: CheckKind | null;
   records: readonly LedgerRecord[];
   escrow: EscrowSummary | null;
+  /** False for a parcel with no deal: nothing on it is signed or on-chain. */
+  hasDeal: boolean;
+  /** Records with evidence or a decision, out of all of them. */
+  answered: number;
 }
 
 // A reviewer signs one scope (Problem.md): title covers seller authority,
@@ -165,8 +173,8 @@ function closingCheck(deal: Deal, signed: number, required: number): Check {
     case "refunded":
       return {
         ...base,
-        // The hold was never lifted; the deal ended under it.
-        status: deal.hold ? "held" : "needsReview",
+        // Closed, with nothing left to decide: quiet, and labeled "Refunded".
+        status: "unknown",
         finding: CHAIN_FINDINGS.closing.refunded(Boolean(deal.hold)),
         nextAction: CHAIN_FINDINGS.closedNext,
         transactionSignature: settled("refunded"),
@@ -285,7 +293,10 @@ export function buildLedger(
   const approved = required.filter((reviewer) => reviewer.approvedAt).length;
 
   const biggest = report?.biggestOpenQuestion ?? demo?.biggestOpenQuestion ?? null;
-  const kinds = report || demo ? CHECK_KINDS : [];
+  // A closing exists only where there is a deal.
+  const kinds = (report || demo ? CHECK_KINDS : []).filter(
+    (kind) => deal || kind !== "closing",
+  );
   const ordered = biggest
     ? [biggest, ...kinds.filter((kind) => kind !== biggest)]
     : [...kinds];
@@ -306,8 +317,11 @@ export function buildLedger(
     const base = reported ?? demoCheck ?? fromDeal ?? unknownCheck(kind);
     const chain = chainCheck(base, deal);
     const check = chain?.check ?? base;
-    // The program settles the closing; no one reviewer signs it.
-    const role = fromDeal && kind === "closing" ? undefined : ROLE_FOR[kind];
+    // Reviewers sign only where there is a deal, and the program settles the
+    // closing: no one reviewer signs it.
+    const role = !deal || (fromDeal && kind === "closing") ? undefined : ROLE_FOR[kind];
+    const fromDealOnly = fromDeal !== undefined && !chain;
+    const dealClosed = chainDeal ? closed(chainDeal.state) : false;
     const reviewer = role ? deal?.reviewers.find((entry) => entry.role === role) : undefined;
     const signature = chain?.signature ?? check.transactionSignature;
     return {
@@ -318,6 +332,14 @@ export function buildLedger(
       signerWallet: check.reviewerWallet ?? reviewer?.wallet,
       signature,
       steps: stepsFor(check, signature),
+      statusLabel: !fromDealOnly
+        ? undefined
+        : kind !== "closing"
+          ? CHAIN_FINDINGS.undecidedLabel(dealClosed)
+          : chainDeal?.state === "refunded"
+            ? CHAIN_FINDINGS.refundedLabel
+            : undefined,
+      onDeal: Boolean(deal && ROLE_FOR[kind]),
     };
   });
 
@@ -344,6 +366,10 @@ export function buildLedger(
     biggestOpenQuestion: biggest,
     records,
     escrow,
+    hasDeal: Boolean(deal),
+    answered: records.filter(
+      (record) => record.check.status !== "unknown" || record.statusLabel === CHAIN_FINDINGS.refundedLabel,
+    ).length,
   };
 }
 

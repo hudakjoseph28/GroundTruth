@@ -520,6 +520,57 @@ section[tabindex="-1"]:focus {
   }
 }
 
+/* ---------- Search: before a query, and when nothing matched ---------- */
+
+.search-start > p {
+  margin: var(--space-s) 0 0;
+  color: #d7d7d7;
+}
+
+.search-examples {
+  margin-top: var(--space-s);
+}
+
+.search-examples p {
+  margin: 0 0 var(--s-2);
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+.search-examples ul {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.search-examples li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.search-examples a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0 0.95rem;
+  background: var(--surface-1);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.search-examples a:hover {
+  border-color: var(--gold);
+}
+
 /* ---------- Live search: loading and failure ---------- */
 
 .search-loading {

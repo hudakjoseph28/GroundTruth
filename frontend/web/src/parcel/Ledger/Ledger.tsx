@@ -58,9 +58,12 @@ export function Ledger({
         <h2 id="ledger-title">{LEDGER.title}</h2>
         {ledger.staged && <p className="tag">{LEDGER.stagedTag}</p>}
         <p className="ledger-lede">
-          {LEDGER.lede}
+          {ledger.hasDeal ? LEDGER.lede : LEDGER.ledeNoDeal}
           {ledger.staged && <> {LEDGER.stagedNote}</>}
         </p>
+        {count > 0 && (
+          <p className="ledger-summary">{LEDGER.summary(ledger.answered, count)}</p>
+        )}
       </header>
 
       {ledger.escrow && (
@@ -106,6 +109,7 @@ export function Ledger({
               biggest={record.check.kind === ledger.biggestOpenQuestion}
               open={open?.record === record}
               onOpen={(node) => show(record, node)}
+              chain={ledger.hasDeal}
             />
           ))}
         </ol>

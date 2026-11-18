@@ -70,6 +70,26 @@
   outline: none;
 }
 
+/* The address as a person would write it. The ID above it is the county's. */
+.parcel-address {
+  margin-top: 0.5rem;
+  color: var(--text);
+  font-size: var(--step-1);
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.parcel-address span {
+  color: var(--text-2);
+  font-size: var(--step-0);
+  font-weight: 400;
+}
+
+.parcel-address + .parcel-place {
+  margin-top: 0.15rem;
+}
+
 .parcel-place {
   margin-top: 0.5rem;
   color: #d7d7d7;
@@ -493,6 +513,17 @@
   margin: 0;
   color: #8f8f8f;
   font-size: var(--step--1);
+  max-width: 44rem;
+}
+
+/* How much of the ledger is answered, before the reader meets the cards. */
+.ledger-summary {
+  flex-basis: 100%;
+  margin: 0.15rem 0 0;
+  border-left: 2px solid var(--gold);
+  padding-left: 0.75rem;
+  color: #e4e1dc;
+  font-size: 0.95rem;
   max-width: 44rem;
 }
 

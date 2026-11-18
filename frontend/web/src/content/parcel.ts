@@ -7,6 +7,9 @@ import type { CheckKind, DealState, ReviewerRole } from "@groundtruth/shared";
 
 export const PARCEL_PAGE = {
   back: "Back to search",
+  backToResults: "Back to results",
+  noHouseNumber: "no house number",
+  title: (parcelId: string) => `Parcel ${parcelId}`,
   stagedLabel: "Staged sample",
   stagedNote: "A stand-in boundary for the demo, not a surveyed lot.",
   keyLabel: "Parcel key",
@@ -85,6 +88,14 @@ export const CHECK_TITLES: Record<CheckKind, string> = {
 export const LEDGER = {
   title: "Ledger",
   lede: "Each check on this parcel, who decides it, and whether that decision is on-chain.",
+  /** For a parcel with no deal: nothing here is headed for a chain. */
+  ledeNoDeal: "Each check on this lot: what public records show, and who can answer the rest.",
+  summary: (answered: number, total: number) => {
+    const open = total - answered;
+    const lead = `${answered} of ${total} checks ${answered === 1 ? "has" : "have"} evidence or a reviewer's decision so far.`;
+    if (open === 0) return lead;
+    return `${lead} The other ${open} ${open === 1 ? "is" : "are"} open, and ${open === 1 ? "its card names" : "each card names"} who can answer it.`;
+  },
   stagedTag: "Staged demo data",
   stagedNote:
     "The closing statuses are a staged example of how a held closing reads. They are not read from the chain.",
@@ -154,6 +165,8 @@ export const CHAIN_FINDINGS = {
       ? `The ${ROLE_NAMES[role]} reviewer did not sign on this deal before it closed.`
       : `The ${ROLE_NAMES[role]} reviewer has not signed on this deal yet.`,
   undecidedLimit: "No decision by this reviewer is recorded on-chain for this deal.",
+  undecidedLabel: (closed: boolean) => (closed ? "Not signed" : "Waiting"),
+  refundedLabel: "Refunded",
   undecidedNext: (role: ReviewerRole) => `Waiting on the ${ROLE_NAMES[role]} reviewer's signature.`,
   closedNext: "Nothing further. This deal is closed.",
   closingLimit:
