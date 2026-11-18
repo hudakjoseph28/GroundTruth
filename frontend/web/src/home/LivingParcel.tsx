@@ -68,7 +68,7 @@ const HIT_PAD = 6;
 export function LivingParcel({ variant }: { variant: "hero" | "compact" }) {
   const navigate = useNavigate();
   const mode = useRenderMode();
-  const assets = useLandAssets(goldenParcel.sourceParcelId);
+  const { assets } = useLandAssets(goldenParcel);
   const ring = useMemo(() => outerRing(goldenParcel.geometry.geojson), []);
   const spots = useMemo(() => {
     if (!assets) return [];

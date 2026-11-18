@@ -1321,22 +1321,13 @@
   line-height: 1.12;
 }
 
-.rv-cta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
+.rv-note {
   margin: var(--space-m) 0 0;
-}
-
-.rv-cta .btn[aria-disabled="true"] {
+  max-width: 30rem;
+  border-left: 2px solid var(--border-strong);
+  padding-left: 0.85rem;
   color: var(--text-2);
-  cursor: default;
-}
-
-.rv-cta .btn[aria-disabled="true"]:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-1);
+  font-size: 0.95rem;
 }
 
 .rv-scene {

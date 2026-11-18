@@ -14,7 +14,7 @@ function External({ href, children }: { href: string; children: string }) {
   );
 }
 
-/** Quiet but complete. Anything we do not have yet is a visible TODO, not a guess. */
+/** Quiet but complete. A link we do not have yet is left out, not guessed. */
 export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
@@ -58,9 +58,8 @@ export function SiteFooter() {
         <div>
           <h2>{FOOTER.columns.project}</h2>
           <ul>
-            <li>{FOOTER.hackathon}</li>
             <li>
-              {FOOTER.devpost.label} <span className="todo">{FOOTER.devpost.todo}</span>
+              <External href={FOOTER.hackathon.href}>{FOOTER.hackathon.label}</External>
             </li>
             <li>
               <External href={FOOTER.team.href}>{FOOTER.team.label}</External>

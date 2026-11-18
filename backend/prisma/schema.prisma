@@ -155,3 +155,17 @@ model SourceRecord {
   retrievedAt   DateTime    @db.Timestamptz(3)
   effectiveDate DateTime?   @db.Timestamptz(3)
 }
+
+/// Land block assets built on demand by GET /api/parcels/:parcelKey/land
+/// (src/land): NAIP imagery and Terrarium elevation for the parcel's padded
+/// bounding box. A cache, rebuilt after expiresAt or a LandMeta version change.
+model LandAssetRecord {
+  parcelKey String   @id
+  /// LAND_META_VERSION the assets were built with.
+  version   Int
+  meta      Json
+  imagery   Bytes
+  height    Bytes
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+}

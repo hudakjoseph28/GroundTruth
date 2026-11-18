@@ -24,6 +24,7 @@ export const DEAL_PAGE = {
   },
   escrowAddress: "Escrow account",
   dealId: "Deal",
+  title: (state: string) => `Deal · ${state}`,
   loading: "Loading the deal…",
   retry: "Try again",
   missing: {
@@ -138,8 +139,10 @@ export const TIMELINE = {
   title: "Timeline",
   order: "Newest first",
   empty: "Nothing has happened on this deal yet.",
+  /** The deal's record in GroundTruth, before anything exists on-chain. */
+  drafted: "Deal set up",
   types: {
-    dealCreated: "Deal created",
+    dealCreated: "Escrow opened",
     funded: "Deposit",
     evidenceReceived: "Evidence received",
     approvalSigned: "Approval signed",

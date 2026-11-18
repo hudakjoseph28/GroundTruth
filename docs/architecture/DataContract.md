@@ -158,6 +158,8 @@ All responses are JSON. Success returns the named object directly. Failure retur
 | `GET /api/parcels/search?q=` | `200 ParcelSearchResult[]` | Address or source parcel ID; trimmed query length 3–120. `[]` means valid query with no match. `NO_COVERAGE` means outside the supported source. |
 | `GET /api/parcels/:parcelKey` | `200 Parcel` | Key is URL encoded. Returns the published boundary and retrieval metadata. |
 | `GET /api/parcels/:parcelKey/report` | `200 ParcelReport` | Each adapter resolves independently. A timeout yields an `unknown` check inside a successful partial report. |
+| `GET /api/parcels/:parcelKey/land` | `200 LandMeta` | Land block assets for parcels not baked into the web app, built on demand from the OGRIP boundary (USGS NAIP imagery, Terrarium elevation) and cached. `LandMeta` is in `@groundtruth/shared` (`land.ts`). Provider failure is a retryable `502`/`504`, never a substitute image. |
+| `GET /api/parcels/:parcelKey/land/:file` | `200` JPEG or PNG | `imagery.jpg` or `height.png`, the files the `LandMeta` names. |
 | `GET /api/coverage` | `200 Coverage[]` | Each row: county, boundary searchable, evidence kinds, last verified time. No marketing totals without measured data. |
 | `GET /api/deals/:id` | `200 Deal` | Public only for the two staged, non-sensitive demo deals. Unknown/non-demo deals return `404`. |
 | `GET /api/deals/:id/timeline` | `200 TimelineEvent[]` | Stable ascending order by chain slot/event index, then off-chain timestamp. |

@@ -18,7 +18,7 @@ const P = HOW.parcel;
  * is the flat picture and costs no WebGL.
  */
 export function ParcelTile({ focus }: { focus: CalloutId | null }) {
-  const assets = useLandAssets(goldenParcel.sourceParcelId);
+  const { assets } = useLandAssets(goldenParcel);
   const ring = useMemo(() => outerRing(goldenParcel.geometry.geojson), []);
 
   // Heights along the row through the parcel's middle, west to east.

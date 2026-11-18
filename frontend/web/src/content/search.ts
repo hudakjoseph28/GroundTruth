@@ -13,6 +13,8 @@ export const SEARCH_EXAMPLES = [
 ] as const;
 
 export const SEARCH = {
+  title: "Search",
+  lede: "Find any Ohio lot by its street address or by the county's parcel ID.",
   loading: "Searching Ohio parcel records. This can take a few seconds.",
   examplesLabel: "Try",
   matchedAddress: "Matched address",

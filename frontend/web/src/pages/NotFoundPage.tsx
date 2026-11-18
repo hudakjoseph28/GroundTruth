@@ -1,11 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { NOT_FOUND } from "../content/deal";
 import { sampleParcelPath } from "../data/parcelSource";
+import { usePageTitle } from "../layout/usePageTitle";
 import "../deal/deal.css";
 
 /** Any address the app has no page for. */
 export function NotFoundPage() {
   const { pathname } = useLocation();
+  usePageTitle(NOT_FOUND.title);
   return (
     <section className="sheet deal-plain">
       <p className="eyebrow">404</p>

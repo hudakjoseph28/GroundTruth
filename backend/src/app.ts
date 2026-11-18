@@ -10,6 +10,12 @@ import {
   type ElevenLabsWebhookOptions,
 } from "./routes/elevenlabsWebhook.js";
 import { getHealth } from "./routes/health.js";
+import {
+  createLandAssetService,
+  prismaLandAssetStore,
+  type LandAssetService,
+} from "./land/landAssets.js";
+import { landRoutes } from "./routes/land.js";
 import { createOgripClient, type OgripClient } from "./parcels/ogrip.js";
 import { parcelRoutes } from "./routes/parcels.js";
 import {
@@ -26,6 +32,8 @@ export interface AppOptions {
   ogrip?: OgripClient;
   /** FEMA client, report store, flood limit, and clock for live reports. */
   report?: Omit<ReportRouteOptions, "ogrip">;
+  /** Land block assets. Defaults to building from live OGRIP, NAIP, and Terrarium, cached in PostgreSQL. */
+  land?: LandAssetService;
 }
 
 export function createApp(commit: string, options: AppOptions = {}) {
@@ -41,11 +49,26 @@ export function createApp(commit: string, options: AppOptions = {}) {
 
   const ogrip = options.ogrip ?? createOgripClient();
   const parcels = parcelRoutes(ogrip);
+  const land = landRoutes(
+    options.land ??
+      createLandAssetService({
+        ogrip,
+        store: prismaLandAssetStore(prisma),
+        // Tighter than the bake script's 60 s x 3: a visitor is waiting.
+        buildOptions: {
+          requestTimeoutMs: 20_000,
+          attempts: 2,
+          warn: (message) => console.warn(`land: ${message}`),
+        },
+      }),
+  );
 
   app.get("/api/health", getHealth(commit));
   app.get("/api/coverage", parcels.coverage);
   app.get("/api/parcels/search", parcels.search);
   app.get("/api/parcels/:parcelKey", parcels.getParcel);
+  app.get("/api/parcels/:parcelKey/land", land.meta);
+  app.get("/api/parcels/:parcelKey/land/:file", land.file);
   app.get(
     "/api/parcels/:parcelKey/report",
     reportRoute({ ...options.report, ogrip }),

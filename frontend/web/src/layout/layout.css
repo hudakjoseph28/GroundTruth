@@ -326,17 +326,6 @@
   font-size: 0.82rem;
 }
 
-/* Something we still owe: marked so nobody mistakes it for a real link. */
-.todo {
-  border: 1px dashed rgba(196, 161, 90, 0.6);
-  border-radius: 4px;
-  padding: 1px 6px;
-  color: var(--gold-text);
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  white-space: nowrap;
-}
-
 .footer-legal p {
   margin: 0.6rem 0 0;
   max-width: 34rem;

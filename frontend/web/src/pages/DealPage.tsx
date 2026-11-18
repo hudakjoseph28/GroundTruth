@@ -24,6 +24,7 @@ import {
   type TimelineRow,
 } from "../data/dealView";
 import { explorerAddressUrl, explorerTxUrl, shortAddress } from "../data/ledger";
+import { usePageTitle } from "../layout/usePageTitle";
 import { getParcel, parcelPath, sampleParcelPath } from "../data/parcelSource";
 import "../deal/deal.css";
 
@@ -32,6 +33,13 @@ export function DealPage() {
   const params = useParams();
   const dealId = params.dealId ?? "";
   const feed = useDealFeed(dealId);
+  usePageTitle(
+    feed.status === "ready"
+      ? DEAL_PAGE.title(STATE_LABELS[feed.deal.state])
+      : feed.status === "missing"
+        ? DEAL_PAGE.missing.title
+        : null,
+  );
 
   if (feed.status === "loading") {
     return (

@@ -590,6 +590,13 @@ section[tabindex="-1"]:focus {
   }
 }
 
+/* ---------- Search: before a query ---------- */
+
+.search-start > p {
+  margin: var(--space-s) 0 0;
+  color: #d7d7d7;
+}
+
 /* ---------- Live search: loading and failure ---------- */
 
 .search-loading {
