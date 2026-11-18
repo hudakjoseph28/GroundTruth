@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import { asyncRoute } from "../http/asyncRoute.js";
 import { HttpError, logSafeFailure } from "../http/errors.js";
+import { placeOnlyQuery } from "../parcels/addressQuery.js";
 import { countyByFips } from "../parcels/ohioCounties.js";
 import { OgripError, type OgripClient } from "../parcels/ogrip.js";
 import { parseParcelKey } from "../parcels/parcelKey.js";
@@ -24,10 +25,19 @@ export interface ParcelRoutes {
 export function parcelRoutes(ogrip: OgripClient): ParcelRoutes {
   const search = asyncRoute(async (req, res) => {
     const query = readQuery(req.query.q);
+    const byParcelId = looksLikeParcelId(query);
+    // A city or township alone names thousands of lots. Say what to add
+    // instead of answering "no match".
+    if (!byParcelId && placeOnlyQuery(query)) {
+      throw new HttpError(
+        400,
+        "INVALID_REQUEST",
+        `“${query}” is a place, not a street. Add a street name or a full address there, or search by parcel ID.`,
+        false,
+      );
+    }
     const results = await fromOgrip(res.locals.requestId, () =>
-      looksLikeParcelId(query)
-        ? ogrip.searchByParcelId(query)
-        : ogrip.searchByAddress(query),
+      byParcelId ? ogrip.searchByParcelId(query) : ogrip.searchByAddress(query),
     );
     res.json(results);
   });

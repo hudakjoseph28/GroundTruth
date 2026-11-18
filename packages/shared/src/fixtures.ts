@@ -89,6 +89,21 @@ const stagedParticipants = {
   state: "draft",
 } satisfies Omit<Deal, "id" | "timeline">;
 
+/**
+ * When each staged deal was registered with its wallets and escrow address:
+ * the merge that added it to this file (#29 for the held and released deals,
+ * #31 for the live one, #41 for the rehearsal copy). Each is before the
+ * deal's first on-chain transaction, so the off-chain "created" row sorts
+ * first and reads as the same afternoon: the first three deals were created
+ * on devnet at 17:41:17Z, 17:48:33Z, and 18:57:19Z on 2026-11-18, and the
+ * rehearsal deal had no transaction when it was registered.
+ */
+const REGISTERED_AT = {
+  heldAndReleased: "2026-11-18T17:24:49.000Z",
+  live: "2026-11-18T18:48:34.000Z",
+  rehearsal: "2026-11-18T22:40:31.000Z",
+} as const;
+
 /** The held demo deal. Its ID predates the second deal; the web reads it. */
 export const stagedDeal = {
   id: "staged-devnet-deal",
@@ -97,7 +112,7 @@ export const stagedDeal = {
   timeline: [
     {
       id: "staged-devnet-deal-created",
-      at: "2026-11-12T00:00:00.000Z",
+      at: REGISTERED_AT.heldAndReleased,
       type: "dealCreated",
       actorRole: "buyer",
       buyerMessage: "Staged devnet deal created. No funds have moved.",
@@ -114,7 +129,7 @@ export const stagedReleasedDeal = {
   timeline: [
     {
       id: "staged-devnet-deal-released-created",
-      at: "2026-11-18T00:00:00.000Z",
+      at: REGISTERED_AT.heldAndReleased,
       type: "dealCreated",
       actorRole: "buyer",
       buyerMessage: "Staged devnet deal created. No funds have moved.",
@@ -137,7 +152,7 @@ export const stagedLiveDeal = {
   timeline: [
     {
       id: "staged-devnet-deal-live-created",
-      at: "2026-11-18T00:00:00.000Z",
+      at: REGISTERED_AT.live,
       type: "dealCreated",
       actorRole: "buyer",
       buyerMessage: "Staged devnet deal created. No funds have moved.",
@@ -160,7 +175,7 @@ export const stagedRehearsalDeal = {
   timeline: [
     {
       id: "staged-devnet-deal-rehearsal-created",
-      at: "2026-11-18T00:00:00.000Z",
+      at: REGISTERED_AT.rehearsal,
       type: "dealCreated",
       actorRole: "buyer",
       buyerMessage: "Staged devnet deal created. No funds have moved.",

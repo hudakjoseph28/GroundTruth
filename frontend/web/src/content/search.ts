@@ -29,7 +29,7 @@ export const SEARCH = {
   mappedAcres: (value: number) => `About ${formatAcres(value)} acres, mapped`,
   noAcreage: "Acreage not published",
   empty: (query: string) =>
-    `No Ohio parcel matched “${query}”. Try the parcel ID instead: it is on the county auditor’s website and the tax bill, like 230-000918. Street addresses need a house number.`,
+    `No Ohio parcel matched “${query}”. Try the parcel ID instead: it is on the county auditor’s website and the tax bill, like 230-000918. A street name on its own also works, like Dodridge St.`,
   retry: "Try again",
 } as const;
 

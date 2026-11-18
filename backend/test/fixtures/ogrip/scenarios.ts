@@ -31,6 +31,11 @@ export const OGRIP_SCENARIOS = {
   "seaman-0": `/api/parcels/search?q=${encodeURIComponent("0 Seaman Rd")}`,
   "seaman-0-galloway": `/api/parcels/search?q=${encodeURIComponent("0 Seaman Rd, Galloway")}`,
   "seaman-0-locator-down": `/api/parcels/search?q=${encodeURIComponent("0 Seaman Rd")}`,
+  /** A street with no house number: the lots on it, from each street of that name. */
+  "street-seaman-rd": `/api/parcels/search?q=${encodeURIComponent("Seaman Rd")}`,
+  "street-dodridge-st": `/api/parcels/search?q=${encodeURIComponent("Dodridge St")}`,
+  "street-seaman-rd-galloway": `/api/parcels/search?q=${encodeURIComponent("Seaman Rd, Galloway")}`,
+  "street-seaman-rd-locator-down": `/api/parcels/search?q=${encodeURIComponent("Seaman Rd")}`,
 } as const;
 
 /**
@@ -41,6 +46,7 @@ export const LOCATOR_DOWN: ReadonlySet<OgripScenario> = new Set([
   "locator-down-with-city",
   "locator-down-without-city",
   "seaman-0-locator-down",
+  "street-seaman-rd-locator-down",
 ]);
 
 export type OgripScenario = keyof typeof OGRIP_SCENARIOS;

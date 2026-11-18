@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.js";
 import { prisma } from "../../src/db.js";
 import { seedDeal } from "../../src/deals/seedDeal.js";
+import { TEST_DEAL_CREATED_AT } from "../support/testDeal.js";
 
 const app = createApp("db-test");
 const run = randomUUID().slice(0, 8);
@@ -22,6 +23,7 @@ const fixture = (id: string): Deal => ({
   timeline: stagedDeal.timeline.map((event) => ({
     ...event,
     id: `${id}-created`,
+    at: TEST_DEAL_CREATED_AT,
   })),
 });
 
@@ -166,5 +168,35 @@ describe("deals against PostgreSQL", () => {
     expect(res.body.escrowAddress).toBe("dbtestEscrow");
     expect(res.body.reviewers[0].approvalTransaction).toBe(TX_B);
     expect(res.body.timeline).toHaveLength(5);
+  });
+
+  it("moves the seed row to the fixture's new time and leaves confirmed rows alone", async () => {
+    const confirmedBefore = await prisma.timelineEventRecord.findMany({
+      where: { dealId: publicId, confirmationStatus: "confirmed" },
+      orderBy: { id: "asc" },
+    });
+    expect(confirmedBefore.length).toBeGreaterThan(0);
+
+    // The fixture with the time the real staged deal now carries.
+    const retimed: Deal = {
+      ...fixture(publicId),
+      timeline: stagedDeal.timeline.map((event) => ({
+        ...event,
+        id: `${publicId}-created`,
+      })),
+    };
+    await prisma.$transaction((tx) => seedDeal(tx, retimed));
+
+    const seedRow = await prisma.timelineEventRecord.findUniqueOrThrow({
+      where: { id: `${publicId}-created` },
+    });
+    expect(seedRow.at.toISOString()).toBe(stagedDeal.timeline[0].at);
+    expect(seedRow.confirmationStatus).toBe("offChainEvidence");
+    expect(seedRow.transactionSignature).toBeNull();
+    const confirmedAfter = await prisma.timelineEventRecord.findMany({
+      where: { dealId: publicId, confirmationStatus: "confirmed" },
+      orderBy: { id: "asc" },
+    });
+    expect(confirmedAfter).toEqual(confirmedBefore);
   });
 });

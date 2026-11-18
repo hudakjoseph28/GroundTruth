@@ -42,7 +42,7 @@
             "latitude": 39.97762697364092,
             "longitude": -83.00318936871533
           },
-          "siteAddress": "750 N HIGH ST",
+          "siteAddress": "750 N High St",
           "mappedAcreage": 0.77
         },
         "matchedOn": "siteAddress"
@@ -57,7 +57,7 @@
             "latitude": 39.946830689274606,
             "longitude": -82.99729076173298
           },
-          "siteAddress": "750 S HIGH ST",
+          "siteAddress": "750 S High St",
           "mappedAcreage": 0.08
         },
         "matchedOn": "siteAddress"

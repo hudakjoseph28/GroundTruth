@@ -46,7 +46,7 @@ function storedDeal(overrides: Record<string, unknown> = {}) {
     timelineEvents: <StoredTimelineEvent[]>[
       {
         id: "staged-devnet-deal-created",
-        at: new Date("2026-11-12T00:00:00.000Z"),
+        at: new Date(stagedDeal.timeline[0].at),
         type: "dealCreated",
         actorRole: "buyer",
         buyerMessage: "Staged devnet deal created. No funds have moved.",

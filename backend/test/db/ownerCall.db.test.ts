@@ -5,6 +5,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../../src/app.js";
 import { prisma } from "../../src/db.js";
 import { seedDeal } from "../../src/deals/seedDeal.js";
+import { TEST_DEAL_CREATED_AT } from "../support/testDeal.js";
 import { recordOwnerCall } from "../../src/voice/ownerCall.js";
 import {
   NOW,
@@ -27,7 +28,11 @@ function seedFixture(id: string): Deal {
     id,
     // escrowAddress is unique: the seeded staged deal already holds this PDA.
     escrowAddress: undefined,
-    timeline: stagedDeal.timeline.map((e) => ({ ...e, id: `${id}-created` })),
+    timeline: stagedDeal.timeline.map((e) => ({
+      ...e,
+      id: `${id}-created`,
+      at: TEST_DEAL_CREATED_AT,
+    })),
   };
 }
 

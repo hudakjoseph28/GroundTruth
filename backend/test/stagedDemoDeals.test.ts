@@ -2,6 +2,7 @@
 // escrow/scripts/demo-deals.ts creates on devnet, or every delivery for them
 // is skipped as unknownDeal. Re-derives each address from public inputs.
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { web3 } from "@anchor-lang/core";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -108,5 +109,66 @@ describe("staged demo deals", () => {
     expect(participants(stagedReleasedDeal)).toEqual(participants(stagedDeal));
     expect(participants(stagedLiveDeal)).toEqual(participants(stagedDeal));
     expect(participants(stagedRehearsalDeal)).toEqual(participants(stagedDeal));
+  });
+});
+
+describe('the off-chain "created" row of each staged deal', () => {
+  /** Block time of a deal's first devnet transaction, from the recording. */
+  const firstRecorded = (dealId: string) => {
+    const run = JSON.parse(
+      readFileSync(
+        new URL(`./fixtures/devnet/demo-run/${dealId}.json`, import.meta.url),
+        "utf8",
+      ),
+    ) as { transactions: { blockTime: number }[] };
+    return Math.min(...run.transactions.map((tx) => tx.blockTime)) * 1000;
+  };
+  // staged-devnet-deal-live has no recording in the repo. Its first
+  // confirmed row, read from GET /api/deals/staged-devnet-deal-live on
+  // 2026-11-18, is the escrow's creation at 18:57:19Z.
+  const FIRST_ON_CHAIN: Record<string, number> = {
+    [stagedDeal.id]: firstRecorded(stagedDeal.id),
+    [stagedReleasedDeal.id]: firstRecorded(stagedReleasedDeal.id),
+    [stagedLiveDeal.id]: Date.parse("2026-11-18T18:57:19.000Z"),
+  };
+
+  it.each(stagedDemoDeals.map((deal) => [deal.id, deal] as const))(
+    "%s: one off-chain row, at a real time of day",
+    (_id, deal) => {
+      expect(deal.timeline).toHaveLength(1);
+      const [row] = deal.timeline;
+      expect(row.confirmationStatus).toBe("offChainEvidence");
+      expect(row).not.toHaveProperty("transactionSignature");
+      expect(row.at.endsWith("T00:00:00.000Z")).toBe(false);
+    },
+  );
+
+  it.each(
+    [stagedDeal, stagedReleasedDeal, stagedLiveDeal].map(
+      (deal) => [deal.id, deal] as const,
+    ),
+  )("%s: shortly before its first on-chain event", (_id, deal) => {
+    const at = Date.parse(deal.timeline[0].at);
+    const firstOnChain = FIRST_ON_CHAIN[deal.id] ?? Number.NaN;
+    expect(at).toBeLessThan(firstOnChain);
+    // The same afternoon: within the hour, not days or a midnight earlier.
+    expect(firstOnChain - at).toBeLessThanOrEqual(60 * 60 * 1000);
+  });
+
+  it("registers the rehearsal deal after the live one it copies", () => {
+    // It had no devnet transaction when it was registered (its PDA held no
+    // signatures on 2026-11-18T22:46Z), so any event it gets sorts after.
+    expect(Date.parse(stagedRehearsalDeal.timeline[0].at)).toBeGreaterThan(
+      Date.parse(stagedLiveDeal.timeline[0].at),
+    );
+  });
+
+  it("reads the recorded first transactions it compares against", () => {
+    expect(new Date(FIRST_ON_CHAIN[stagedDeal.id] ?? 0).toISOString()).toBe(
+      "2026-11-18T17:41:17.000Z",
+    );
+    expect(
+      new Date(FIRST_ON_CHAIN[stagedReleasedDeal.id] ?? 0).toISOString(),
+    ).toBe("2026-11-18T17:48:33.000Z");
   });
 });

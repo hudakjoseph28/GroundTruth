@@ -86,7 +86,7 @@ describe("GET /api/parcels/search with recorded OGRIP responses", () => {
         sourceParcelId: "010-042534",
         county: "Franklin",
         countyFips: "39049",
-        siteAddress: "84 W DODRIDGE ST",
+        siteAddress: "84 W Dodridge St",
         // OGRIP publishes no LandArea for Franklin; this is the boundary's area.
         mappedAcreage: 0.09,
         centroid: {
@@ -543,7 +543,7 @@ describe("address search fallbacks", () => {
     expect(res.body[0]).toMatchObject({
       parcel: {
         key: "ohio:39089:05317758800000",
-        siteAddress: "57 S MAIN ST JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+        siteAddress: "57 S Main St, Johnstown, OH 43031",
       },
       matchedOn: "siteAddress",
     });
@@ -626,7 +626,7 @@ describe("house number 0: lots with no assigned address (recorded live)", () => 
     expect(results.map((r) => r.parcel.key)).toContain(GOLDEN);
     // Franklin publishes seven 0 SEAMAN RD lots; each is a real match.
     for (const { parcel } of results) {
-      expect(parcel.siteAddress).toMatch(/^0 SEAMAN RD\b/);
+      expect(parcel.siteAddress).toMatch(/^0 Seaman Rd\b/);
     }
     // The locator has no point for house number 0, so it is never asked
     // for one: only for the street.
@@ -710,6 +710,191 @@ describe("house number 0: lots with no assigned address (recorded live)", () => 
   });
 });
 
+describe("a street with no house number (recorded live)", () => {
+  const boxWheres = (recording: OgripRecording) =>
+    recording.exchanges.flatMap(({ url }) => {
+      const params = new URL(url).searchParams;
+      return params.has("geometry") ? [params.get("where") ?? ""] : [];
+    });
+  const locatorQueries = (recording: OgripRecording) =>
+    recording.exchanges.flatMap(({ url }) =>
+      url.startsWith(OGRIP_LOCATOR)
+        ? [new URL(url).searchParams.get("SingleLine")]
+        : [],
+    );
+
+  it("returns up to ten lots on Seaman Rd, each with its address, from every street of that name", async () => {
+    const { app, recording } = scenarioApp("street-seaman-rd");
+
+    const res = await request(app).get(OGRIP_SCENARIOS["street-seaman-rd"]);
+
+    expect(res.status).toBe(200);
+    const results = res.body as ParcelSearchResult[];
+    expect(results).toHaveLength(10);
+    for (const result of results) {
+      expect(result.matchedOn).toBe("siteAddress");
+      expect(result.parcel.siteAddress).toMatch(/^\d+ Seaman Rd(,|$)/);
+      expect(result.parcel).not.toHaveProperty("geometry");
+    }
+    expect(new Set(results.map((r) => r.parcel.key)).size).toBe(10);
+    // Seaman Rd is several streets: the golden parcel's in Franklin County,
+    // and others in Adams and Lucas. Each is represented, in turn.
+    expect(new Set(results.map((r) => r.parcel.county))).toEqual(
+      new Set(["Adams", "Franklin", "Lucas"]),
+    );
+    expect(results.slice(0, 3).map((r) => r.parcel.county)).toEqual([
+      "Adams",
+      "Franklin",
+      "Lucas",
+    ]);
+    // One locator request for the street, never one for a house number.
+    expect(locatorQueries(recording)).toEqual(["SEAMAN RD"]);
+    for (const where of boxWheres(recording)) {
+      expect(where).toBe(
+        "LocalParcelID IS NOT NULL AND SitusAddressAll LIKE '%SEAMAN%'",
+      );
+    }
+    expect(res.body).toEqual(recording.apiResponse.body);
+  });
+
+  it("returns the lots on Dodridge St, the Franklin address parcel among them", async () => {
+    const { app, recording } = scenarioApp("street-dodridge-st");
+
+    const res = await request(app).get(OGRIP_SCENARIOS["street-dodridge-st"]);
+
+    expect(res.status).toBe(200);
+    const results = res.body as ParcelSearchResult[];
+    expect(results).toHaveLength(10);
+    expect(results.map((r) => r.parcel.key)).toContain("ohio:39049:010-042534");
+    for (const { parcel } of results) {
+      expect(parcel.county).toBe("Franklin");
+      expect(parcel.siteAddress).toMatch(/^\d+ W Dodridge St$/);
+    }
+    // One street of that name, so one box.
+    expect(recording.exchanges).toHaveLength(2);
+  });
+
+  it("keeps a typed city out of the results it contradicts", async () => {
+    const { app, recording } = scenarioApp("street-seaman-rd-galloway");
+
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["street-seaman-rd-galloway"],
+    );
+
+    expect(res.status).toBe(200);
+    const results = res.body as ParcelSearchResult[];
+    expect(results.length).toBeGreaterThan(0);
+    // The Lucas County lots publish Toledo or Oregon, so they are dropped.
+    // Adams and Franklin publish no city for these lots, and Galloway is not
+    // in the Census place table, so those cannot be ruled out and stay.
+    expect(results.some((r) => r.parcel.county === "Lucas")).toBe(false);
+    expect(results.some((r) => r.parcel.county === "Franklin")).toBe(true);
+    for (const { parcel } of results) {
+      expect(parcel.siteAddress).not.toMatch(/Toledo|Oregon/);
+    }
+    // With the city first, then without it: the locator holds no Galloway
+    // for this street.
+    expect(locatorQueries(recording)).toEqual([
+      "SEAMAN RD, GALLOWAY",
+      "SEAMAN RD",
+    ]);
+  });
+
+  it("tells Seaman Rd, Seaman St, and Seaman Dr apart by the typed suffix", async () => {
+    // The recorded boxes also hold lots on Seaman St (Oregon, Curtice) and
+    // Seaman Dr (Dayton). None of them answers "Seaman Rd" (checked above:
+    // every result reads "Seaman Rd"). Asked for "Seaman St" over the same
+    // recorded boxes, only the Seaman St lots come back.
+    const recorded = load("street-seaman-rd");
+    const fetchImpl = vi.fn<typeof fetch>(async (input) => {
+      const url = new URL(String(input));
+      const match = recorded.exchanges.find((exchange) => {
+        const saved = new URL(exchange.url);
+        return String(input).startsWith(OGRIP_LOCATOR)
+          ? exchange.url.startsWith(OGRIP_LOCATOR)
+          : saved.searchParams.get("geometry") ===
+              url.searchParams.get("geometry");
+      });
+      if (!match) throw new Error(`unrecorded OGRIP request: ${String(input)}`);
+      return new Response(JSON.stringify(match.body), { status: match.status });
+    });
+
+    const res = await request(appWith(fetchImpl)).get(searchUrl("Seaman St"));
+
+    expect(res.status).toBe(200);
+    const addresses = (res.body as ParcelSearchResult[])
+      .map((r) => r.parcel.siteAddress)
+      .sort();
+    expect(addresses).toEqual([
+      "2601 Seaman St, Oregon, OH 43616",
+      "2605 Seaman St, Oregon, OH 43616",
+      "8808 Seaman St, Curtice, OH 43412",
+    ]);
+  });
+
+  it("reports a locator outage instead of answering no match", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { app } = scenarioApp("street-seaman-rd-locator-down");
+
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["street-seaman-rd-locator-down"],
+    );
+
+    expect(res.status).toBe(502);
+    expect(res.body.error).toMatchObject({ retryable: true });
+  });
+
+  it("answers [] for a street name the locator does not hold", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify({ candidates: [] })),
+    );
+
+    const res = await request(appWith(fetchImpl)).get(searchUrl("asdfqwerzzz"));
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+    // One locator request, and no parcel query.
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toMatch(
+      new RegExp(`^${OGRIP_LOCATOR}/findAddressCandidates\\?`),
+    );
+  });
+});
+
+describe("a city or township alone", () => {
+  it.each(["Columbus", "columbus, oh", "Johnstown OH 43031", "Mt Vernon"])(
+    "asks %s for a street or parcel ID, with no OGRIP call",
+    async (query) => {
+      const fetchImpl = vi.fn<typeof fetch>();
+
+      const res = await request(appWith(fetchImpl)).get(searchUrl(query));
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatchObject({
+        code: "INVALID_REQUEST",
+        retryable: false,
+      });
+      expect(res.body.error.message).toContain(query);
+      expect(res.body.error.message).toMatch(/street name or a full address/);
+      expect(res.body.error.message).toMatch(/parcel ID/);
+      expect(fetchImpl).not.toHaveBeenCalled();
+    },
+  );
+
+  it("still searches a street that shares a city's name", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify({ candidates: [] })),
+    );
+
+    const res = await request(appWith(fetchImpl)).get(
+      searchUrl("Columbus St"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("coverage claims only what was measured", () => {
   it("every row claims a searchable boundary, flood only where NFHL has a study, zoning only in Franklin, and the count's time", async () => {
     const { app, recording } = scenarioApp("coverage");
@@ -788,7 +973,7 @@ describe("street direction in address search (recorded live)", () => {
     const { app } = scenarioApp("high-1739-south");
     const res = await request(app).get(OGRIP_SCENARIOS["high-1739-south"]);
     expect(keys(res.body)).toEqual(["ohio:39049:010-026093"]);
-    expect(res.body[0].parcel.siteAddress).toBe("1739 S HIGH ST");
+    expect(res.body[0].parcel.siteAddress).toBe("1739 S High St");
   });
 
   it("treats a spelled-out North like N", async () => {

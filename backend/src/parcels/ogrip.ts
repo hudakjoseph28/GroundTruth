@@ -10,6 +10,7 @@ import {
   PARCEL_FIELDS,
   polygonCentroid,
   siteAddressMatches,
+  siteAddressOnStreet,
   toParcelSummary,
   type ParcelSummary,
 } from "./normalize.js";
@@ -17,6 +18,7 @@ import { countyByFips, countyByName, OHIO_COUNTIES } from "./ohioCounties.js";
 import {
   MAX_PLACE_COUNTIES,
   parseAddressQuery,
+  parseStreetQuery,
   placeCounties,
   siteAddressAgrees,
   sitePlace,
@@ -52,6 +54,11 @@ const MAX_STREET_CANDIDATES = 10;
  * locator holds no point for it, so it is searched along the street.
  */
 const NO_HOUSE_NUMBER = "0";
+/**
+ * Rows asked for per box when a street is searched with no house number. A
+ * 500 m box on a long street can hold hundreds of lots; ten are returned.
+ */
+const STREET_BOX_ROWS = 200;
 /**
  * Half-widths of the box searched around a locator point. The points are
  * interpolated along street ranges and can land hundreds of meters from the
@@ -185,6 +192,7 @@ const ADDRESS_MATCH_TYPES = new Set([
 ]);
 
 interface LocatedAddress {
+  /** Digits, or `""` when the whole street is wanted. */
   houseNumber: string;
   streetName: string;
   longitude: number;
@@ -302,7 +310,8 @@ export function createOgripClient(
    *    When the locator did find the street, a miss is a real miss
    *    (`123 Main St, Johnstown` has a street but no such parcel).
    *
-   * A house number of 0 takes its own path (`searchUnnumbered`).
+   * A house number of 0, and a street typed with no number at all
+   * (`Seaman Rd`), are searched along the street (`searchAlongStreet`).
    *
    * Every step keeps only parcels consistent with a typed city. If the
    * locator failed and step 3 could not run, the failure is reported, not
@@ -312,6 +321,12 @@ export function createOgripClient(
     const budget = searchBudget();
     const parsed = parseAddressQuery(query);
     if (parsed?.outOfState) return [];
+    // No house number: a street on its own, unless the locator can still
+    // find a number in the query. Without a digit there is none to find.
+    const street = parsed ? null : parseStreetQuery(query);
+    if (street && !/\d/.test(query)) {
+      return searchStreetOnly(street, budget);
+    }
     const counties = parsed?.place ? placeCounties(parsed.place) : [];
     const keep = (results: ParcelSearchResult[]) =>
       uniqueByKey(
@@ -334,7 +349,9 @@ export function createOgripClient(
       ...(parsed?.suffix ? { suffix: parsed.suffix } : {}),
     };
     if (parsed?.houseNumber === NO_HOUSE_NUMBER) {
-      return keep(await searchUnnumbered(parsed, wanted, counties, budget));
+      return keep(
+        (await searchAlongStreet(parsed, wanted, counties, budget)).flat(),
+      );
     }
     let locatorFailure: OgripError | undefined;
     let locatorFoundStreet = false;
@@ -377,7 +394,42 @@ export function createOgripClient(
       return keep(await parcelsBySiteAddress(parsed, counties, budget));
     }
     if (locatorFailure) throw locatorFailure;
+    // `5th Ave` has a digit but no house number: the street on its own.
+    if (street) return searchStreetOnly(street, budget);
     return [];
+  }
+
+  /**
+   * `Seaman Rd`: the lots on a street, up to ten, each with its published
+   * address. A street name is often several streets (`Seaman Rd` is eight,
+   * in four counties), so results are taken from each located street in
+   * turn, nearest its located point first, and a typed city keeps only the
+   * lots that fit it.
+   */
+  async function searchStreetOnly(
+    street: AddressQuery,
+    budget: AbortSignal,
+  ): Promise<ParcelSearchResult[]> {
+    if (street.outOfState) return [];
+    const counties = street.place ? placeCounties(street.place) : [];
+    const wanted = {
+      ...(street.direction ? { direction: street.direction } : {}),
+      ...(street.suffix ? { suffix: street.suffix } : {}),
+    };
+    const perStreet = (
+      await searchAlongStreet(street, wanted, counties, budget)
+    ).map((results) =>
+      results.filter((result) => placeConsistent(result, street, counties)),
+    );
+    const inTurn: ParcelSearchResult[] = [];
+    const longest = Math.max(0, ...perStreet.map((results) => results.length));
+    for (let rank = 0; rank < longest; rank += 1) {
+      for (const results of perStreet) {
+        const result = results[rank];
+        if (result) inTurn.push(result);
+      }
+    }
+    return uniqueByKey(inTurn).slice(0, MAX_RESULTS);
   }
 
   /**
@@ -389,13 +441,20 @@ export function createOgripClient(
    * match `0 <street>` in a box around each located street. Once the
    * locator has found the street, a miss is final. If the locator is down,
    * a typed city narrows a direct site-address match, as in the main search.
+   *
+   * A street typed with no number (`houseNumber` is `""`) takes the same
+   * path and keeps every lot on the street. It has no direct match to fall
+   * back on (the field is not indexed and the pattern has no leading
+   * number), so a locator outage is reported.
+   *
+   * Returns one list per located street, each nearest-first.
    */
-  async function searchUnnumbered(
+  async function searchAlongStreet(
     parsed: AddressQuery,
     wanted: Pick<AddressQuery, "direction" | "suffix">,
     counties: readonly string[],
     budget: AbortSignal,
-  ): Promise<ParcelSearchResult[]> {
+  ): Promise<ParcelSearchResult[][]> {
     const street = parsed.streetOnly.slice(parsed.houseNumber.length).trim();
     const attempts = parsed.place
       ? [`${street}, ${parsed.place}`, street]
@@ -419,22 +478,23 @@ export function createOgripClient(
         streets.map((point) => parcelsAtAddress(point, wanted, budget)),
       );
       const found = perStreet.flatMap((settled) =>
-        settled.status === "fulfilled" ? settled.value : [],
+        settled.status === "fulfilled" ? [settled.value] : [],
       );
       const failed = perStreet.find(
         (settled): settled is PromiseRejectedResult =>
           settled.status === "rejected",
       );
-      if (found.length > 0 || !failed) return found;
+      if (found.some((results) => results.length > 0) || !failed) return found;
       throw failed.reason;
     }
     if (
       locatorFailure &&
+      parsed.houseNumber &&
       parsed.place &&
       counties.length > 0 &&
       counties.length <= MAX_PLACE_COUNTIES
     ) {
-      return parcelsBySiteAddress(parsed, counties, budget);
+      return [await parcelsBySiteAddress(parsed, counties, budget)];
     }
     if (locatorFailure) throw locatorFailure;
     return [];
@@ -520,7 +580,9 @@ export function createOgripClient(
   /**
    * Points the locator holds for a street name with no house number, one
    * per street of that name. Only exact matches on the typed name count:
-   * the locator also offers similar names.
+   * the locator also offers similar names. For a numbered street it keeps
+   * the suffix in the name (`5TH AVE`), so the typed name with its suffix
+   * counts too.
    */
   async function locateStreet(
     query: string,
@@ -535,18 +597,24 @@ export function createOgripClient(
       f: "json",
     });
     const result = await getJson(url, locatorSchema, budget);
+    const names = new Set([
+      parsed.streetName,
+      ...(parsed.suffix ? [`${parsed.streetName} ${parsed.suffix}`] : []),
+    ]);
     const seen = new Set<string>();
     const located: LocatedAddress[] = [];
     for (const candidate of result.candidates) {
       const { Addr_type, StName } = candidate.attributes;
       if (candidate.score < MIN_LOCATOR_SCORE) continue;
-      if (Addr_type !== "StreetName" || StName !== parsed.streetName) continue;
+      if (Addr_type !== "StreetName" || !StName || !names.has(StName)) continue;
       const id = `${candidate.location.x.toFixed(3)}|${candidate.location.y.toFixed(3)}`;
       if (seen.has(id)) continue;
       seen.add(id);
       located.push({
         houseNumber: parsed.houseNumber,
-        streetName: StName,
+        // The parsed name, without a suffix: site addresses are matched on
+        // the name and the suffix separately.
+        streetName: parsed.streetName,
         longitude: candidate.location.x,
         latitude: candidate.location.y,
       });
@@ -559,9 +627,15 @@ export function createOgripClient(
     wanted: Pick<AddressQuery, "direction" | "suffix">,
     budget: AbortSignal,
   ): Promise<ParcelSearchResult[]> {
+    // With no house number, every lot on the street in the box is wanted.
+    const wholeStreet = address.houseNumber === "";
     for (const radius of SEARCH_RADII_METERS) {
       const url = layerQueryUrl({
-        where: `LocalParcelID IS NOT NULL AND ${houseNumberWhere(address.houseNumber)}`,
+        where: `LocalParcelID IS NOT NULL AND ${
+          wholeStreet
+            ? streetNameWhere(address.streetName)
+            : houseNumberWhere(address.houseNumber)
+        }`,
         // An explicit WGS84 box: with outSR=4326 the service shrinks a
         // point-plus-distance search (821 parcels without outSR, 99 with).
         geometry: envelopeAround(address, radius),
@@ -572,17 +646,23 @@ export function createOgripClient(
         returnGeometry: "false",
         returnCentroid: "true",
         outSR: "4326",
+        ...(wholeStreet ? { resultRecordCount: String(STREET_BOX_ROWS) } : {}),
         f: "json",
       });
       const result = await getJson(url, featureQuerySchema, budget);
       const matches = result.features
         .filter(
           (feature) =>
-            siteAddressMatches(
-              feature.attributes.SitusAddressAll,
-              address.houseNumber,
-              address.streetName,
-            ) &&
+            (wholeStreet
+              ? siteAddressOnStreet(
+                  feature.attributes.SitusAddressAll,
+                  address.streetName,
+                )
+              : siteAddressMatches(
+                  feature.attributes.SitusAddressAll,
+                  address.houseNumber,
+                  address.streetName,
+                )) &&
             siteAddressAgrees(
               feature.attributes.SitusAddressAll ?? "",
               address.streetName,
@@ -754,6 +834,15 @@ function summaryFromFeature(feature: QueryFeature): ParcelSummary | null {
  */
 function houseNumberWhere(houseNumber: string): string {
   return `(SitusAddressAll LIKE ${sqlString(`${houseNumber} %`)} OR SitusAddressAll LIKE ${sqlString(` %${houseNumber} %`)})`;
+}
+
+/**
+ * Server-side filter on the street name, for a street searched with no
+ * house number. `streetName` is the parsed name in capitals, as counties
+ * publish it; whole-word matching happens on the rows that come back.
+ */
+function streetNameWhere(streetName: string): string {
+  return `SitusAddressAll LIKE ${sqlString(`%${streetName}%`)}`;
 }
 
 function layerQueryUrl(params: Record<string, string>): string {
