@@ -37,6 +37,19 @@ const dynamicVariables = z
   .object({ dynamic_variables: z.record(z.string(), z.unknown()).optional() })
   .optional();
 
+/**
+ * One data-collection result. Workspace-shared data points are keyed by an
+ * internal item ID (e.g. `aitem_6401m7…`), not by their name, so the name
+ * may only appear in `name` or `data_collection_id`.
+ */
+const dataCollectionResult = z.object({
+  value: z.unknown().optional(),
+  data_collection_id: z.string().optional(),
+  name: z.string().optional(),
+});
+
+type DataCollectionResult = z.infer<typeof dataCollectionResult>;
+
 const transcription = z.object({
   type: z.literal("post_call_transcription"),
   event_timestamp: z.number().int().positive(),
@@ -53,8 +66,9 @@ const transcription = z.object({
       .object({
         call_successful: z.string().optional(),
         data_collection_results: z
-          .record(z.string(), z.object({ value: z.unknown().optional() }))
+          .record(z.string(), dataCollectionResult)
           .optional(),
+        data_collection_results_list: z.array(dataCollectionResult).optional(),
       })
       .nullish(),
     conversation_initiation_client_data: dynamicVariables.nullable(),
@@ -105,7 +119,10 @@ export function parseOwnerCallWebhook(body: unknown): ParsedWebhook | null {
         participantLabel: readLabel(vars?.participant_label),
         callSuccessful,
         outcome: toOutcome(
-          data.analysis?.data_collection_results?.[SALE_ANSWER_FIELD]?.value,
+          findSaleAnswer(
+            data.analysis?.data_collection_results,
+            data.analysis?.data_collection_results_list,
+          )?.value,
         ),
       },
     };
@@ -133,6 +150,25 @@ export function parseOwnerCallWebhook(body: unknown): ParsedWebhook | null {
 
   // post_call_audio and anything newer: acknowledged, never stored.
   return { kind: "ignored", type: head.data.type };
+}
+
+/**
+ * The `sale_answer` result, whether ElevenLabs keys it by the field name,
+ * by a workspace item ID (with the name in `name` or `data_collection_id`),
+ * or sends it in the list form.
+ */
+function findSaleAnswer(
+  byKey: Record<string, DataCollectionResult> | undefined,
+  list: DataCollectionResult[] | undefined,
+): DataCollectionResult | undefined {
+  const isSaleAnswer = (key: string | undefined, r: DataCollectionResult) =>
+    key === SALE_ANSWER_FIELD ||
+    r.data_collection_id === SALE_ANSWER_FIELD ||
+    r.name === SALE_ANSWER_FIELD;
+  for (const [key, result] of Object.entries(byKey ?? {})) {
+    if (isSaleAnswer(key, result)) return result;
+  }
+  return (list ?? []).find((result) => isSaleAnswer(undefined, result));
 }
 
 /** The agent reports one of these; anything else is not an answer. */

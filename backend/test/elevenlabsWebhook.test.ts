@@ -270,3 +270,80 @@ describe("POST /api/webhooks/elevenlabs", () => {
     expect(res.status).toBe(500);
   });
 });
+
+describe("sale_answer in workspace data points", () => {
+  // Workspace-shared data points are keyed by an item ID, not the name
+  // (seen on the real agent: platform_settings.data_collection.aitem_…).
+  const ITEM = "aitem_6401m7qwc98bfh0rv197rpyekyvq";
+  const withResults = (analysis: Record<string, unknown>) => {
+    const payload = transcription();
+    payload.data.analysis = {
+      call_successful: "success",
+      transcript_summary: "",
+      evaluation_criteria_results: {},
+      data_collection_results: {},
+      ...analysis,
+    };
+    return payload;
+  };
+  const outcomeOf = (payload: unknown) => {
+    const parsed = parseOwnerCallWebhook(payload);
+    if (parsed?.kind !== "call") throw new Error("expected a call");
+    return parsed.call.outcome;
+  };
+
+  it("finds the answer keyed by item ID with the name in `name`", () => {
+    const payload = withResults({
+      data_collection_results: {
+        [ITEM]: {
+          data_collection_id: ITEM,
+          name: "sale_answer",
+          value: "not_selling",
+          rationale: "",
+        },
+      },
+    });
+    expect(outcomeOf(payload)).toBe("ownerDeniesSale");
+  });
+
+  it("finds the answer when data_collection_id is the name", () => {
+    const payload = withResults({
+      data_collection_results: {
+        [ITEM]: {
+          data_collection_id: "sale_answer",
+          value: "selling",
+          rationale: "",
+        },
+      },
+    });
+    expect(outcomeOf(payload)).toBe("ownerConfirmsSale");
+  });
+
+  it("finds the answer in the list form", () => {
+    const payload = withResults({
+      data_collection_results_list: [
+        {
+          data_collection_id: ITEM,
+          name: "sale_answer",
+          value: "not_selling",
+          rationale: "",
+        },
+      ],
+    });
+    expect(outcomeOf(payload)).toBe("ownerDeniesSale");
+  });
+
+  it("ignores other fields, even when they say not_selling", () => {
+    const payload = withResults({
+      data_collection_results: {
+        aitem_other: {
+          data_collection_id: "aitem_other",
+          name: "mood",
+          value: "not_selling",
+          rationale: "",
+        },
+      },
+    });
+    expect(outcomeOf(payload)).toBe("unclear");
+  });
+});
