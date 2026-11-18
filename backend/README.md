@@ -171,7 +171,16 @@ The report recordings include the OGRIP parcel request. A change to the OGRIP qu
 
 ## Deals
 
-`GET /api/deals/:id` returns a `Deal`, and `GET /api/deals/:id/timeline` returns its `TimelineEvent[]`. Only deals seeded as public demos are readable; any other ID returns `404`. `db:seed` upserts the shared `stagedDeal` (`staged-devnet-deal`). Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
+`GET /api/deals/:id` returns a `Deal`, and `GET /api/deals/:id/timeline` returns its `TimelineEvent[]`. Only deals seeded as public demos are readable; any other ID returns `404`.
+
+`db:seed` upserts the two staged demo closings from `stagedDemoDeals` in `@groundtruth/shared`. Both are on the golden parcel, 25 test USDC, with the same buyer, seller, and required title/survey/septic reviewers:
+
+| Deal ID | Outcome | Deal PDA (`escrowAddress`) | deal_id = sha256 of |
+| --- | --- | --- | --- |
+| `staged-devnet-deal` | held: release rejected, buyer refunded | `54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW` | `groundtruth-demo-held-v1` |
+| `staged-devnet-deal-released` | released to the seller | `3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu` | `groundtruth-demo-released-v1` |
+
+The addresses are what `pnpm --filter @groundtruth/escrow demo:deals plan` prints for the staged demo wallets, and `test/stagedDemoDeals.test.ts` re-derives each one. Public keys only. Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 
 Timeline rows are ordered by time, then chain slot, then event index. A confirmed row is unique by transaction signature + event index, which is the QuickNode replay guard.
 
@@ -213,9 +222,24 @@ Timeline rows are ordered by time, then chain slot, then event index. A confirme
 
 Replays are harmless: a timeline row is unique by transaction signature + event index (a rejected release is index 0 of its transaction), and re-applying finds it and does nothing. The timestamp is not checked against a window. QuickNode does not document its format, and deduplication already makes a replayed delivery a no-op.
 
-**Test data.** Two kinds, kept apart:
-- **IDL-encoded** logs built with the IDL's own coder ([test/support/escrowLogs.ts](test/support/escrowLogs.ts)) drive the decoder, filter, webhook, and database tests through all six events, a spoofed log, and a held flow (init → fund → hold → rejected release → refund) and a released flow.
-- **Recorded devnet data** ([test/fixtures/devnet/program-history.json](test/fixtures/devnet/program-history.json)): every transaction that touched the deployed program, the program account, and its on-chain IDL, from the public RPC via `pnpm --filter @groundtruth/backend record:devnet` (no keys). [test/devnetRecorded.test.ts](test/devnetRecorded.test.ts) checks the on-chain IDL is the checked-in one and runs each recorded transaction through the real filter, webhook, and decoder. As of Nov 17 the history is only the deploy and two IDL uploads, so no real event logs exist yet. After the demo deals run on devnet, re-record and add each escrow transaction to `EXPECTED_SENT` in that test with the events it must decode to.
+**Test data.** Three kinds, kept apart:
+- **IDL-encoded** logs built with the IDL's own coder ([test/support/escrowLogs.ts](test/support/escrowLogs.ts)) drive the decoder, filter, webhook, and database tests. They cover all six events, a spoofed log, a held flow (init → fund → hold → rejected release → refund), and a released flow.
+- **Recorded devnet data** ([test/fixtures/devnet/program-history.json](test/fixtures/devnet/program-history.json)) holds every transaction that touched the deployed program, the program account, and its on-chain IDL. `pnpm --filter @groundtruth/backend record:devnet` fetches it from the public RPC (no keys). [test/devnetRecorded.test.ts](test/devnetRecorded.test.ts) checks that the on-chain IDL is the checked-in one, and runs each recorded transaction through the real filter, webhook, and decoder. The recording (Nov 17) is the deploy and two IDL uploads. Kadhir's upgrade at slot 523474592 came later and is not in it. Neither demo deal PDA exists on devnet yet.
+- **Simulated demo closings** ([test/fixtures/devnet/demo-deals.simulated.json](test/fixtures/devnet/demo-deals.simulated.json)) are **not devnet data**. They are both staged closings, run by `demo:deals simulate` in LiteSVM on the deployed (upgraded) bytecode for the staged deals' real PDAs, and shaped like `getTransaction` output. They drive the replay tests. After the devnet run, save the real transactions with `replay:devnet --save` and test them the same way.
+
+### Replay from devnet (backup for missed deliveries)
+
+```bash
+pnpm --filter @groundtruth/backend replay:devnet --deal staged-devnet-deal
+pnpm --filter @groundtruth/backend replay:devnet --deal <id> --dry-run          # print events, write nothing
+pnpm --filter @groundtruth/backend replay:devnet --deal <id> --save <file.json> # also keep the fetched transactions
+```
+
+The command reads the deal's PDA (`escrowAddress`) from `DATABASE_URL`. It then fetches every finalized transaction that touched that PDA, failed releases included, from the public devnet RPC (or `SOLANA_RPC_URL`), oldest first.
+
+Each transaction is run through `quicknode/groundtruth-filter.js` as its own Block entry, then through the webhook's payload schema and the IDL decoder ([src/chain/streamPayload.ts](src/chain/streamPayload.ts), shared with the route), then applied with `applyConfirmedEvent`. That is the same path a live delivery takes.
+
+Replay is idempotent. Rows are unique by signature + event index, so a second run, or a run after QuickNode already delivered some events, reports them as `duplicate` and changes nothing. [test/devnetReplay.test.ts](test/devnetReplay.test.ts) and [test/db/devnetReplay.db.test.ts](test/db/devnetReplay.db.test.ts) replay the simulated closings twice.
 
 ### Filters
 
@@ -284,7 +308,7 @@ pnpm --filter @groundtruth/backend test      # unit and route tests; no database
 pnpm --filter @groundtruth/backend test:db   # against DATABASE_URL after db:migrate
 ```
 
-`test:db` creates and deletes its own `dbtest-*` deals; it does not touch the seeded demo rows.
+`test:db` creates and deletes its own `dbtest-*` deals. `devnetReplay.db.test.ts` needs the staged deals' PDAs, so it moves them off the seeded rows while it runs and puts them back afterwards. It never changes those rows' state or timeline, and `db:seed` restores the addresses if a run is interrupted.
 
 ## Deployment
 

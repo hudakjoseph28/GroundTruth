@@ -15,6 +15,7 @@
     "time:search": "tsx scripts/time-address-search.ts",
     "record:report": "tsx scripts/record-report-fixtures.ts",
     "record:devnet": "tsx scripts/record-devnet-transactions.ts",
+    "replay:devnet": "node --env-file-if-exists=.env --import tsx scripts/replay-devnet.ts",
     "call:owner": "node --env-file-if-exists=.env --import tsx scripts/call-owner.ts",
     "check:zoning": "tsx scripts/live-zoning-check.ts",
     "generate:id-formats": "tsx scripts/generate-parcel-id-formats.ts && prettier --write src/parcels/parcelIdFormats.ts",

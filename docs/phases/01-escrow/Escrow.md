@@ -78,6 +78,7 @@ The local state machine and balance assertions are non-negotiable. If devnet tes
 
 ```bash
 pnpm --filter @groundtruth/shared build                 # once, for the IDL and fixtures
+pnpm --filter @groundtruth/escrow demo:deals plan       # deal IDs, PDAs, vaults, wallets, token accounts; sends nothing
 pnpm --filter @groundtruth/escrow demo:deals            # check: wallets, balances, what to fund
 pnpm --filter @groundtruth/escrow demo:deals simulate   # both closings in LiteSVM on the deployed bytecode
 pnpm --filter @groundtruth/escrow demo:deals run        # devnet; refuses unless funded and the rehearsal passes
@@ -90,7 +91,7 @@ pnpm --filter @groundtruth/escrow demo:deals run        # devnet; refuses unless
   - held: initialize → fund → title hold → rejected release → refund;
   - released: initialize → fund → three approvals → release.
 
-  The parcel is `ohio:39049:230-000918`, and each deal ID is the sha256 of a string naming that parcel. The script checks the deal state and the buyer, vault and seller balances at every settlement.
+  The parcel is `ohio:39049:230-000918`. Deal IDs are fixed: `sha256("groundtruth-demo-held-v1")` and `sha256("groundtruth-demo-released-v1")`. So the PDAs are known in advance and are registered as the backend's staged deals `staged-devnet-deal` (held) and `staged-devnet-deal-released`. `plan` and `run` refuse if the wallets don't produce those fixtures, and `run` refuses if either PDA already exists on devnet; a second pair needs `-v2` labels. The script checks the deal state and the buyer, vault and seller balances at every settlement.
 - **Output:** `escrow/demo-results/devnet-<runId>.json` and `.md`, with Explorer links. They are rewritten after every transaction, so a partial run is still recorded. Simulation output is gitignored.
 - **Local builds:** `LOCAL_PROGRAM_SO=target/deploy/groundtruth_escrow.so` makes `simulate` run a local build. `run` refuses to start while it (or `ESCROW_PROGRAM_SO`) is set, so its rehearsal always uses the bytecode deployed on devnet.
 - **Held release error:** the spec specifies `DealHeld` (6019), and that is the script's default. In the escrow contract (`release.rs`), the `deal.hold.is_none()` check is placed before the `state == Funded` check so that attempting to release a held deal fails with **DealHeld (6019)** as expected. Once upgraded on devnet, both on-chain runs and simulations verify `DealHeld (6019)`. Local simulation against the rebuilt contract can also be run via `LOCAL_PROGRAM_SO=target/deploy/groundtruth_escrow.so pnpm --filter @groundtruth/escrow demo:deals simulate`.

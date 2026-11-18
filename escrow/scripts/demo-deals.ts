@@ -4,12 +4,23 @@
  * Solana CLI).
  *
  *   pnpm --filter @groundtruth/escrow demo:deals                 # check (default)
+ *   pnpm --filter @groundtruth/escrow demo:deals plan            # addresses, no tx
  *   pnpm --filter @groundtruth/escrow demo:deals simulate        # local, no devnet tx
  *   pnpm --filter @groundtruth/escrow demo:deals run             # sends devnet txs
  *   ... demo:deals <mode> --amount 20                            # deal size in USDC
  *   ... demo:deals <mode> --held-error InvalidDealState          # see below
  *
+ * Deal IDs are fixed: deal_id = sha256(STAGED_DEAL_ID_LABELS[outcome]) from
+ * @groundtruth/shared ("groundtruth-demo-held-v1", "groundtruth-demo-released-v1"),
+ * so each deal PDA is known before anything is sent and the backend's staged
+ * deals (stagedDeal, stagedReleasedDeal) carry the same addresses. A PDA can
+ * be initialized only once: `run` refuses if either already exists, and a
+ * fresh pair needs new labels (and fixtures) such as "...-v2".
+ *
  * Modes:
+ *   plan      Prints each deal's deal_id, deal PDA, vault, wallets, reviewer
+ *             roles, and token accounts, checks them against the shared
+ *             fixtures, and reads whether the PDAs exist on devnet. Sends nothing.
  *   check     Generates (or loads) the demo keypairs, prints their public keys,
  *             reads SOL and USDC balances on devnet, and prints exactly what to
  *             fund. Sends nothing.
@@ -17,7 +28,8 @@
  *             own bytecode (read from devnet). The USDC mint is replaced by a
  *             local stand-in at Circle's address so the buyer can be funded;
  *             nothing touches devnet. Output: demo-results/simulation.* (gitignored).
- *   run       Refuses unless `check` passes and a `simulate` rehearsal of the
+ *   run       Refuses unless the plan matches the fixtures, neither deal PDA
+ *             exists on devnet yet, `check` passes, and a `simulate` rehearsal of the
  *             same run passes, then runs both closings on devnet and writes
  *             demo-results/devnet-<runId>.{json,md}, updated after every
  *             transaction so a partial run is still recorded. Refuses to start
@@ -57,7 +69,11 @@ import {
   GROUNDTRUTH_ESCROW_IDL,
   GROUNDTRUTH_PROGRAM_ID,
   USDC_MINT_DEVNET,
+  STAGED_DEAL_ID_LABELS,
   stagedDeal,
+  stagedDemoChainAccounts,
+  stagedReleasedDeal,
+  type Deal,
 } from "@groundtruth/shared";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -96,6 +112,8 @@ const FEE_PER_SIGNATURE = 5000n;
 const SIGNATURES_PER_RUN = 16n;
 /** Headroom on top of the computed SOL need. */
 const SOL_MARGIN = 10_000_000n; // 0.01 SOL
+/** Stand-in block time for simulated transactions (2026-11-18T00:00:00Z). */
+const SIMULATED_BLOCK_TIME = 1_795_478_400;
 
 /** Circle faucet: 20 USDC per request, one request per address every 2 hours. */
 const CIRCLE_FAUCET_USDC_PER_REQUEST = 20n * 10n ** 6n;
@@ -205,6 +223,153 @@ function loadOrCreateWallets(): { wallets: Wallets; created: Role[] } {
     return [role, Keypair.fromSecretKey(secret)] as const;
   });
   return { wallets: Object.fromEntries(entries) as Wallets, created };
+}
+
+// ---------------------------------------------------------------- plan
+
+const OUTCOMES = ["held", "released"] as const;
+type Outcome = (typeof OUTCOMES)[number];
+const FIXTURES: Record<Outcome, Deal> = {
+  held: stagedDeal,
+  released: stagedReleasedDeal,
+};
+
+interface DealPlan {
+  outcome: Outcome;
+  fixtureId: string;
+  dealIdLabel: string;
+  dealId: Buffer;
+  dealPda: PublicKey;
+  vault: PublicKey;
+  buyerTokenAccount: PublicKey;
+  sellerTokenAccount: PublicKey;
+}
+
+/** Every address of both deals, derived from the wallets and fixed labels. */
+function planDeals(wallets: Wallets): DealPlan[] {
+  return OUTCOMES.map((outcome) => {
+    const dealIdLabel = STAGED_DEAL_ID_LABELS[outcome];
+    const dealId = createHash("sha256").update(dealIdLabel).digest();
+    const [dealPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("deal"), wallets.buyer.publicKey.toBuffer(), dealId],
+      PROGRAM,
+    );
+    return {
+      outcome,
+      fixtureId: FIXTURES[outcome].id,
+      dealIdLabel,
+      dealId,
+      dealPda,
+      vault: getAssociatedTokenAddressSync(MINT, dealPda, true),
+      buyerTokenAccount: getAssociatedTokenAddressSync(
+        MINT,
+        wallets.buyer.publicKey,
+      ),
+      sellerTokenAccount: getAssociatedTokenAddressSync(
+        MINT,
+        wallets.seller.publicKey,
+      ),
+    };
+  });
+}
+
+/**
+ * Differences between the plan and the backend's staged deals. Any
+ * difference means the API would skip these deals' events as unknownDeal or
+ * reject them as drift.
+ */
+function fixtureMismatches(
+  wallets: Wallets,
+  plans: DealPlan[],
+  amount: bigint,
+): string[] {
+  const out: string[] = [];
+  const same = (what: string, fixture: unknown, planned: unknown) => {
+    if (fixture !== planned)
+      out.push(`${what}: fixture ${fixture}, plan ${planned}`);
+  };
+  for (const plan of plans) {
+    const deal = FIXTURES[plan.outcome];
+    const chain = stagedDemoChainAccounts[deal.id];
+    const at = `${deal.id}`;
+    same(`${at} escrowAddress`, deal.escrowAddress, plan.dealPda.toBase58());
+    same(
+      `${at} buyerWallet`,
+      deal.buyerWallet,
+      wallets.buyer.publicKey.toBase58(),
+    );
+    same(
+      `${at} sellerWallet`,
+      deal.sellerWallet,
+      wallets.seller.publicKey.toBase58(),
+    );
+    same(
+      `${at} sellerTokenAccount`,
+      deal.sellerTokenAccount,
+      plan.sellerTokenAccount.toBase58(),
+    );
+    same(`${at} amountBaseUnits`, deal.amountBaseUnits, amount.toString());
+    same(`${at} parcelKey`, deal.parcelKey, PARCEL_KEY);
+    same(
+      `${at} reviewers`,
+      JSON.stringify(deal.reviewers),
+      JSON.stringify(
+        REVIEWERS.map((r) => ({
+          wallet: wallets[r.role].publicKey.toBase58(),
+          role: r.role,
+          required: true,
+        })),
+      ),
+    );
+    same(`${at} dealIdLabel`, chain?.dealIdLabel, plan.dealIdLabel);
+    same(`${at} dealIdHex`, chain?.dealIdHex, plan.dealId.toString("hex"));
+    same(`${at} vault`, chain?.vault, plan.vault.toBase58());
+    same(
+      `${at} buyerTokenAccount`,
+      chain?.buyerTokenAccount,
+      plan.buyerTokenAccount.toBase58(),
+    );
+  }
+  return out;
+}
+
+function printPlan(wallets: Wallets, plans: DealPlan[]) {
+  for (const plan of plans) {
+    console.log(`
+${plan.outcome} deal (${plan.fixtureId})`);
+    console.log(`  deal_id label     ${plan.dealIdLabel}`);
+    console.log(`  deal_id (hex)     ${plan.dealId.toString("hex")}`);
+    console.log(`  deal PDA          ${plan.dealPda.toBase58()}`);
+    console.log(`  vault             ${plan.vault.toBase58()}`);
+    console.log(`  buyer             ${wallets.buyer.publicKey.toBase58()}`);
+    console.log(`  buyer USDC        ${plan.buyerTokenAccount.toBase58()}`);
+    console.log(`  seller            ${wallets.seller.publicKey.toBase58()}`);
+    console.log(`  seller USDC       ${plan.sellerTokenAccount.toBase58()}`);
+    for (const r of REVIEWERS) {
+      console.log(
+        `  ${`${r.role} reviewer`.padEnd(17)} ${wallets[
+          r.role
+        ].publicKey.toBase58()} (required)`,
+      );
+    }
+  }
+}
+
+/** Deal PDAs that already exist on devnet, with their state. */
+async function existingDeals(chain: Chain, plans: DealPlan[]) {
+  const found: string[] = [];
+  for (const plan of plans) {
+    if (await chain.account(plan.dealPda)) {
+      found.push(
+        `${
+          plan.outcome
+        } deal ${plan.dealPda.toBase58()} already exists (state ${
+          (await readDeal(chain, plan.dealPda)).state
+        })`,
+      );
+    }
+  }
+  return found;
 }
 
 // ---------------------------------------------------------------- chains
@@ -397,6 +562,10 @@ async function simulationChain(wallets: Wallets, usdc: bigint) {
   );
 
   const decoder = getTransactionDecoder();
+  // Every simulated transaction in getTransaction's jsonParsed shape, for
+  // backend replay tests. Slots and block times are local stand-ins.
+  const recorded: unknown[] = [];
+  let slot = 0;
   const chain: Chain = {
     kind: "simulation",
     async send(ixs, feePayer, signers) {
@@ -426,12 +595,55 @@ async function simulationChain(wallets: Wallets, usdc: bigint) {
           err = e.toString();
         }
       }
-      return {
-        signature: utils.bytes.bs58.encode(meta.signature()),
-        slot: null,
-        err,
-        logs: meta.logs(),
-      };
+      const signature = utils.bytes.bs58.encode(meta.signature());
+      const message = tx.compileMessage();
+      const keys = message.accountKeys.map((k) => k.toBase58());
+      slot += 1;
+      recorded.push({
+        slot,
+        blockTime: SIMULATED_BLOCK_TIME + slot,
+        version: "legacy",
+        transaction: {
+          signatures: [signature],
+          message: {
+            accountKeys: keys.map((pubkey, i) => ({
+              pubkey,
+              signer: message.isAccountSigner(i),
+              writable: message.isAccountWritable(i),
+              source: "transaction",
+            })),
+            recentBlockhash: message.recentBlockhash,
+            instructions: message.instructions.map((ix) => ({
+              programId: keys[ix.programIdIndex],
+              accounts: ix.accounts.map((i) => keys[i]),
+              data: ix.data,
+              stackHeight: null,
+            })),
+          },
+        },
+        meta: {
+          err,
+          status: err === null ? { Ok: null } : { Err: err },
+          fee: 5000 * message.header.numRequiredSignatures,
+          logMessages: meta.logs(),
+          innerInstructions: meta
+            .innerInstructions()
+            .map((group, index) => ({
+              index,
+              instructions: group.map((inner) => {
+                const compiled = inner.instruction();
+                return {
+                  programId: keys[compiled.programIdIndex()],
+                  accounts: Array.from(compiled.accounts()).map((i) => keys[i]),
+                  data: utils.bytes.bs58.encode(compiled.data()),
+                  stackHeight: inner.stackHeight(),
+                };
+              }),
+            }))
+            .filter((group) => group.instructions.length > 0),
+        },
+      });
+      return { signature, slot, err, logs: meta.logs() };
     },
     async account(key) {
       const acct = svm.getAccount(address(key.toBase58()));
@@ -464,7 +676,7 @@ async function simulationChain(wallets: Wallets, usdc: bigint) {
   );
   if (faucet.err)
     throw new Error(`simulated faucet failed: ${JSON.stringify(faucet.err)}`);
-  return { chain, deployed };
+  return { chain, deployed, recorded };
 }
 
 // ---------------------------------------------------------------- reads
@@ -640,7 +852,8 @@ interface Balances {
 
 interface DealResult {
   label: "held" | "released";
-  dealIdPreimage: string;
+  fixtureId: string;
+  dealIdLabel: string;
   dealIdHex: string;
   dealPda: string;
   vault: string;
@@ -762,7 +975,8 @@ function proofMarkdown(r: Results): string {
       "",
       `- Deal PDA: ${addr(deal.dealPda)}`,
       `- Vault: ${addr(deal.vault)}`,
-      `- Deal ID: \`${deal.dealIdHex}\` = sha256(\`${deal.dealIdPreimage}\`)`,
+      `- Backend deal: \`${deal.fixtureId}\``,
+      `- Deal ID: \`${deal.dealIdHex}\` = sha256(\`${deal.dealIdLabel}\`)`,
       ...(deal.finalState ? [`- Final state: **${deal.finalState}**`] : []),
       "",
       "| Step | Signer | Result | State after | Signature |",
@@ -810,6 +1024,7 @@ function programError(name: string): ProgramError {
 async function runClosings(
   chain: Chain,
   wallets: Wallets,
+  plans: DealPlan[],
   amount: bigint,
   heldError: ProgramError,
   results: Results,
@@ -879,17 +1094,12 @@ async function runClosings(
     );
   }
 
-  for (const label of ["held", "released"] as const) {
-    const preimage = `groundtruth-demo|${PARCEL_KEY}|${label}|${results.runId}`;
-    const dealId = createHash("sha256").update(preimage).digest();
-    const [dealPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from("deal"), buyer.publicKey.toBuffer(), dealId],
-      PROGRAM,
-    );
-    const vault = getAssociatedTokenAddressSync(MINT, dealPda, true);
+  for (const plan of plans) {
+    const { outcome: label, dealId, dealPda, vault } = plan;
     const deal: DealResult = {
       label,
-      dealIdPreimage: preimage,
+      fixtureId: plan.fixtureId,
+      dealIdLabel: plan.dealIdLabel,
       dealIdHex: dealId.toString("hex"),
       dealPda: dealPda.toBase58(),
       vault: vault.toBase58(),
@@ -1139,9 +1349,12 @@ async function main() {
   );
   if (unknownFlags.length) throw new Error(`unknown flags: ${unknownFlags}`);
   const mode = positional[0] ?? "check";
-  if (positional.length > 1 || !["check", "simulate", "run"].includes(mode)) {
+  if (
+    positional.length > 1 ||
+    !["plan", "check", "simulate", "run"].includes(mode)
+  ) {
     throw new Error(
-      `usage: demo-deals.ts [check|simulate|run] [--amount <usdc>] [--held-error <IDL error name>]`,
+      `usage: demo-deals.ts [plan|check|simulate|run] [--amount <usdc>] [--held-error <IDL error name>]`,
     );
   }
   // The rehearsal guards the devnet run only if it executes the same bytecode
@@ -1186,10 +1399,41 @@ async function main() {
     ).toBase58(),
   };
 
+  const plans = planDeals(wallets);
+  const mismatches = fixtureMismatches(wallets, plans, amount);
+  const reportMismatches = () => {
+    if (!mismatches.length) {
+      console.log(
+        "\nPlan matches the backend's staged deals (packages/shared fixtures).",
+      );
+      return;
+    }
+    console.log("\nPLAN DOES NOT MATCH the backend's staged deals:");
+    for (const m of mismatches) console.log(`  - ${m}`);
+  };
+
   const devnet = devnetChain();
   const program = await devnet.connection.getAccountInfo(PROGRAM, "confirmed");
   if (!program?.executable)
     throw new Error(`program ${PROGRAM} is not executable on devnet`);
+  const reportExisting = async () => {
+    const existing = await existingDeals(devnet, plans);
+    console.log(
+      existing.length
+        ? `\nOn devnet:\n${existing.map((e) => `  - ${e}`).join("\n")}`
+        : "\nOn devnet: neither deal PDA exists yet.",
+    );
+    return existing;
+  };
+
+  if (mode === "plan") {
+    printPlan(wallets, plans);
+    reportMismatches();
+    await reportExisting();
+    console.log("\nplan sends nothing.");
+    process.exitCode = mismatches.length ? 1 : 0;
+    return;
+  }
 
   const base: Omit<Results, "mode" | "note"> = {
     status: "running",
@@ -1208,7 +1452,10 @@ async function main() {
   };
 
   const simulate = async () => {
-    const { chain, deployed } = await simulationChain(wallets, amount);
+    const { chain, deployed, recorded } = await simulationChain(
+      wallets,
+      amount,
+    );
     const results: Results = {
       ...base,
       mode: "simulation",
@@ -1219,20 +1466,58 @@ async function main() {
         sha256: deployed.sha256,
       },
     };
-    return finish(results, () =>
-      runClosings(chain, wallets, amount, heldError, results),
+    const status = await finish(results, () =>
+      runClosings(chain, wallets, plans, amount, heldError, results),
     );
+    const file = join(RESULTS_DIR, "simulation.transactions.json");
+    writeFileSync(
+      file,
+      `${JSON.stringify(
+        {
+          note: "LOCAL LITESVM SIMULATION, not devnet data. Transactions of both demo closings run on the deployed program's bytecode, in getTransaction jsonParsed shape (every instruction unparsed). Slots and block times are local stand-ins; signatures are real signatures over local transactions that were never sent to devnet.",
+          status,
+          programId: PROGRAM.toBase58(),
+          simulatedProgram: results.simulatedProgram,
+          deals: Object.fromEntries(
+            plans.map((p) => [p.fixtureId, p.dealPda.toBase58()]),
+          ),
+          transactions: recorded,
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    console.log(`transactions: ${relative(process.cwd(), file)}`);
+    return status;
   };
 
   if (mode === "simulate") {
+    if (mismatches.length) reportMismatches();
     await simulate();
     return;
   }
 
+  reportMismatches();
+  const existing = await reportExisting();
   const funding = await checkFunding(devnet, wallets, amount);
   printFunding(wallets, funding);
+  const ready = funding.ok && !mismatches.length && !existing.length;
   if (mode === "check") {
-    process.exitCode = funding.ok ? 0 : 1;
+    process.exitCode = ready ? 0 : 1;
+    return;
+  }
+  if (mismatches.length) {
+    process.exitCode = 1;
+    console.log(
+      "\nNot running: the plan differs from the backend's staged deals, so the API would not record these closings.",
+    );
+    return;
+  }
+  if (existing.length) {
+    process.exitCode = 1;
+    console.log(
+      "\nNot running: a deal PDA already exists. Deal IDs are fixed, so a new pair needs new labels in STAGED_DEAL_ID_LABELS (and fixtures).",
+    );
     return;
   }
   if (!funding.ok) {
@@ -1255,7 +1540,7 @@ async function main() {
     note: "Staged GroundTruth demo closings on Solana devnet with Circle test USDC, recorded by escrow/scripts/demo-deals.ts. Public keys and signatures only.",
   };
   await finish(results, () =>
-    runClosings(devnet, wallets, amount, heldError, results),
+    runClosings(devnet, wallets, plans, amount, heldError, results),
   );
 }
 

@@ -4,7 +4,7 @@ import {
   goldenReport,
   secondCountyParcel,
   secondCountyReport,
-  stagedDeal,
+  stagedDemoDeals,
   type Parcel,
   type ParcelReport,
 } from "@groundtruth/shared";
@@ -30,7 +30,7 @@ async function main(): Promise<void> {
       secondCountyParcel,
       seededReport(secondCountyParcel, secondCountyReport),
     );
-    await seedDeal(tx, stagedDeal);
+    for (const deal of stagedDemoDeals) await seedDeal(tx, deal);
     await tx.parcelRecord.deleteMany({
       where: { key: { in: RETIRED_FIXTURE_KEYS } },
     });
@@ -47,10 +47,14 @@ async function main(): Promise<void> {
       `seeded ${report.parcelKey} with ${checks} checks and ${sources} sources`,
     );
   }
-  const events = await prisma.timelineEventRecord.count({
-    where: { dealId: stagedDeal.id },
-  });
-  console.log(`seeded deal ${stagedDeal.id} (${events} timeline events)`);
+  for (const deal of stagedDemoDeals) {
+    const events = await prisma.timelineEventRecord.count({
+      where: { dealId: deal.id },
+    });
+    console.log(
+      `seeded deal ${deal.id} at ${deal.escrowAddress} (${events} timeline events)`,
+    );
+  }
 }
 
 /** Upserts a parcel and replaces its report's checks and sources. */

@@ -28,7 +28,11 @@ export {
   goldenReport,
   secondCountyParcel,
   secondCountyReport,
+  STAGED_DEAL_ID_LABELS,
   stagedDeal,
+  stagedDemoChainAccounts,
+  stagedDemoDeals,
+  stagedReleasedDeal,
 } from "./fixtures.js";
 
 export {

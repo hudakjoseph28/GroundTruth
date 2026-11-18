@@ -25,6 +25,8 @@ function seedFixture(id: string): Deal {
   return {
     ...stagedDeal,
     id,
+    // escrowAddress is unique: the seeded staged deal already holds this PDA.
+    escrowAddress: undefined,
     timeline: stagedDeal.timeline.map((e) => ({ ...e, id: `${id}-created` })),
   };
 }

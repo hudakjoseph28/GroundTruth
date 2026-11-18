@@ -30,7 +30,7 @@ function storedDeal(overrides: Record<string, unknown> = {}) {
     mint: stagedDeal.mint,
     cluster: "devnet",
     state: "draft",
-    escrowAddress: null,
+    escrowAddress: stagedDeal.escrowAddress,
     publicDemo: true,
     reviewers: stagedDeal.reviewers.map(
       (reviewer, position): StoredReviewer => ({
