@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { ESCROW } from "../../content/parcel";
+import { dealPath } from "../../data/dealSource";
 import { explorerAddressUrl, shortAddress, type EscrowSummary } from "../../data/ledger";
 import { CopyButton } from "./CopyButton";
 
@@ -38,7 +40,7 @@ export function EscrowStrip({
       <div className="escrow-head">
         <h3 id="escrow-title">{ESCROW.title}</h3>
         <p>
-          {escrow.staged && <span className="tag">{ESCROW.staged}</span>}
+          <span className="tag">{escrow.staged ? ESCROW.staged : ESCROW.stagedRoles}</span>
           {ESCROW.cluster}
         </p>
       </div>
@@ -66,7 +68,12 @@ export function EscrowStrip({
           </dd>
         </div>
       </dl>
-      {escrow.escrowAddress && (
+      <p className="escrow-open">
+        <Link to={dealPath(escrow.dealId)}>
+          {ESCROW.open} <span aria-hidden="true">→</span>
+        </Link>
+      </p>
+      {escrow.escrowAddress && !escrow.staged && (
         <p className="escrow-address">
           {ESCROW.address}{" "}
           <a

@@ -87,7 +87,7 @@ export const LEDGER = {
   lede: "Each check on this parcel, who decides it, and whether that decision is on-chain.",
   stagedTag: "Staged demo data",
   stagedNote:
-    "These statuses show how a held closing reads. Nothing here is on-chain yet, and no funds have moved.",
+    "The closing statuses are a staged example of how a held closing reads. They are not read from the chain.",
   biggest: "Biggest open question",
   signs: "Signs",
   confirms: "Confirms",
@@ -112,6 +112,13 @@ export const ESCROW = {
   unit: "test USDC",
   cluster: "Solana devnet",
   staged: "Staged",
+  stagedRoles: "Staged roles",
+  open: "Open the deal timeline",
+  others: "All staged deals on this parcel",
+  deal: "Deal",
+  loading: "Reading the deal's state…",
+  unavailable: "The deal's state could not be loaded, so no closing status is shown here.",
+  retry: "Try again",
   signOffs: "Sign-offs",
   state: "State",
   amount: "Deposit",
@@ -140,6 +147,28 @@ export const CHAIN_FINDINGS = {
   signedLimit: "The approval covers this reviewer's scope only.",
   held: (role: ReviewerRole) => `The ${ROLE_NAMES[role]} reviewer placed a hold on the escrow.`,
   heldLimit: "A hold blocks the payout until it is resolved. It is not a finding of fraud.",
+  reviewer: (role: ReviewerRole) => `${ROLE_NAMES[role].charAt(0).toUpperCase()}${ROLE_NAMES[role].slice(1)} reviewer`,
+  program: "Escrow program",
+  undecided: (role: ReviewerRole, closed: boolean) =>
+    closed
+      ? `The ${ROLE_NAMES[role]} reviewer did not sign on this deal before it closed.`
+      : `The ${ROLE_NAMES[role]} reviewer has not signed on this deal yet.`,
+  undecidedLimit: "No decision by this reviewer is recorded on-chain for this deal.",
+  undecidedNext: (role: ReviewerRole) => `Waiting on the ${ROLE_NAMES[role]} reviewer's signature.`,
+  closedNext: "Nothing further. This deal is closed.",
+  closingLimit:
+    "This is the escrow's state for one staged deal in test USDC. It is not a deed transfer or a real closing.",
+  closing: {
+    released: "Every required reviewer signed, and the escrow paid the bound seller.",
+    refunded: (held: boolean) =>
+      `The escrow returned the deposit to the buyer${held ? " while a reviewer's hold was active" : ""}. Nothing was paid to the seller.`,
+    held: "A reviewer's hold is active, so the escrow cannot pay the seller.",
+    heldNext: "The reviewer who placed the hold investigates. The buyer can take a refund while it is active.",
+    open: (signed: number, required: number, funded: boolean) =>
+      `${signed} of ${required} required sign-offs are in. ${funded ? "The deposit is in escrow." : "The escrow is not funded yet."}`,
+    readyNext: "Anyone can submit the release. The program pays only the bound seller.",
+    waitingNext: "Collect the remaining required sign-offs.",
+  },
 } as const;
 
 export const INSPECTOR = {

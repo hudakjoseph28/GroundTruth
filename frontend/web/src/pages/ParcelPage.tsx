@@ -3,7 +3,12 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import type { Parcel } from "@groundtruth/shared";
 import { PARCEL_PAGE } from "../content/parcel";
 import { PARCEL_LOAD } from "../content/search";
-import { getParcelLedger } from "../data/ledger";
+import {
+  getDeal,
+  stagedDealIdsFor,
+  type DealOutcome,
+} from "../data/dealSource";
+import { getParcelLedger, summarizeDeal } from "../data/ledger";
 import {
   getParcel,
   getParcelReport,
@@ -95,6 +100,43 @@ function useLoaded<T extends ParcelOutcome | ReportOutcome>(
   return { outcome: current ? settled.outcome : null, retry };
 }
 
+/**
+ * The staged deals on a parcel, each read from the API. `outcomes` is null
+ * while they load, and empty for a parcel with no deal.
+ */
+function useParcelDeals(parcelKey: string): {
+  outcomes: DealOutcome[] | null;
+  retry: () => void;
+} {
+  const ids = useMemo(() => stagedDealIdsFor(parcelKey), [parcelKey]);
+  const [attempt, setAttempt] = useState(0);
+  const [settled, setSettled] = useState<{
+    key: string;
+    attempt: number;
+    outcomes: DealOutcome[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (ids.length === 0) return;
+    const controller = new AbortController();
+    Promise.all(ids.map((id) => getDeal(id, controller.signal))).then(
+      (outcomes) => setSettled({ key: parcelKey, attempt, outcomes }),
+      () => {
+        // Aborted: the key changed or the page closed.
+      },
+    );
+    return () => controller.abort();
+  }, [ids, parcelKey, attempt]);
+
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  if (ids.length === 0) return { outcomes: NO_DEALS, retry };
+  const current =
+    settled && settled.key === parcelKey && settled.attempt === attempt;
+  return { outcomes: current ? settled.outcomes : null, retry };
+}
+
+const NO_DEALS: DealOutcome[] = [];
+
 function LoadFailure({
   failure,
   onRetry,
@@ -131,9 +173,30 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
   );
   const report =
     reportOutcome?.status === "found" ? reportOutcome.report : null;
+  // Deal state comes from the API. The first staged deal on the parcel is the
+  // one the ledger's reviewer cards and escrow strip describe.
+  const { outcomes: dealOutcomes, retry: retryDeals } = useParcelDeals(
+    parcel.key,
+  );
+  const primary = dealOutcomes?.[0];
+  const primaryDeal = primary?.status === "found" ? primary.deal : null;
   const ledger = useMemo(
-    () => getParcelLedger(parcel.key, report),
-    [parcel.key, report],
+    () => getParcelLedger(parcel.key, report, primaryDeal),
+    [parcel.key, report, primaryDeal],
+  );
+  const deals = useMemo(
+    () =>
+      (dealOutcomes ?? []).flatMap((outcome) =>
+        outcome.status === "found" ? [summarizeDeal(outcome.deal)] : [],
+      ),
+    [dealOutcomes],
+  );
+  const dealNotice = useMemo(
+    () =>
+      primary && primary.status !== "found"
+        ? { message: primary.message, onRetry: retryDeals }
+        : null,
+    [primary, retryDeals],
   );
   // A block carried over from the page the visitor came from, read once.
   const location = useLocation();
@@ -183,15 +246,17 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
           </header>
           <LandBlock parcel={parcel} assets={assets} mode={mode} staged={staged} revealed={revealed} onReady={markLandReady} />
         </div>
-        {reportOutcome?.status === "found" ? (
+        {reportOutcome?.status === "found" && dealOutcomes !== null ? (
           <Ledger
             ledger={ledger}
+            deals={deals}
+            dealNotice={dealNotice}
             revealed={revealed}
             animated={mode !== "reduced"}
           />
         ) : (
           <section className="ledger ledger-pending" aria-live="polite">
-            {reportOutcome === null ? (
+            {reportOutcome === null || reportOutcome.status === "found" ? (
               <p className="notice" role="status">
                 {PARCEL_LOAD.reportLoading}
               </p>
