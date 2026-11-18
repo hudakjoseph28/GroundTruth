@@ -121,10 +121,88 @@ describe("replay pipeline on the simulated demo closings", () => {
 });
 
 describe("replay pipeline on the real devnet program history", () => {
-  it("finds nothing to apply in the deploy and IDL transactions", async () => {
+  it("applies nothing from the deploy, IDL, and upgrade transactions", async () => {
     const apply = vi.fn();
-    const txs = loadDevnetRecording().transactions as RpcTransaction[];
+    const txs = (loadDevnetRecording().transactions as RpcTransaction[]).filter(
+      (tx) =>
+        !JSON.stringify(tx.transaction.message).includes(
+          stagedDeal.escrowAddress,
+        ) &&
+        !JSON.stringify(tx.transaction.message).includes(
+          stagedReleasedDeal.escrowAddress,
+        ),
+    );
+    expect(txs).toHaveLength(4);
     expect(await replayTransactions(txs, { decode, apply })).toEqual([]);
     expect(apply).not.toHaveBeenCalled();
+  });
+});
+
+describe("replay pipeline on the real devnet demo run", () => {
+  // Saved by `replay:devnet --deal <id> --save` after the run on 2026-11-18.
+  const recorded = (id: string) =>
+    JSON.parse(
+      readFileSync(
+        new URL(`./fixtures/devnet/demo-run/${id}.json`, import.meta.url),
+        "utf8",
+      ),
+    ) as { dealPda: string; transactions: RpcTransaction[] };
+
+  it.each([
+    [
+      stagedDeal,
+      [
+        "DealInitialized",
+        "DealFunded",
+        "HoldPlaced",
+        "ReleaseRejected",
+        "DealRefunded",
+      ],
+    ],
+    [
+      stagedReleasedDeal,
+      [
+        "DealInitialized",
+        "DealFunded",
+        "ApprovalSigned",
+        "ApprovalSigned",
+        "ApprovalSigned",
+        "DealReleased",
+      ],
+    ],
+  ] as const)(
+    "%s.id: every transaction of the PDA decodes in order",
+    async (deal, names) => {
+      const file = recorded(deal.id);
+      expect(file.dealPda).toBe(deal.escrowAddress);
+      const apply = vi.fn<(e: ConfirmedEvent) => Promise<ApplyResult>>(
+        async () => "applied",
+      );
+      const applied = await replayTransactions(file.transactions, {
+        decode,
+        apply,
+      });
+      expect(applied.map((a) => a.event.event.name)).toEqual(names);
+      expect(
+        applied.every((a) => a.event.event.dealPda === deal.escrowAddress),
+      ).toBe(true);
+    },
+  );
+
+  it("held deal: the rejected release is DealHeld (6019) with its real signature", async () => {
+    const applied = await replayTransactions(
+      recorded(stagedDeal.id).transactions,
+      { decode, apply: async () => "applied" },
+    );
+    const rejected = applied.find(
+      (a) => a.event.event.name === "ReleaseRejected",
+    );
+    expect(rejected?.event.signature).toBe(
+      "Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz",
+    );
+    expect(rejected?.event.event).toMatchObject({
+      errorName: "DealHeld",
+      errorNumber: 6019,
+    });
   });
 });

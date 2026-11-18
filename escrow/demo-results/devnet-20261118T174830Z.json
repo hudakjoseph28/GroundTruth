@@ -1,0 +1,208 @@
+{
+  "status": "complete",
+  "cluster": "devnet",
+  "rpc": "https://api.devnet.solana.com",
+  "programId": "ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG",
+  "mint": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+  "parcelKey": "ohio:39049:230-000918",
+  "amountBaseUnits": "25000000",
+  "expectedHeldReleaseError": "DealHeld (6019)",
+  "runId": "20261118T174830Z",
+  "startedAt": "2026-11-18T17:48:30.276Z",
+  "wallets": {
+    "buyer": "HEDe3DMbVbFRku2Kzxq6usSjUdDJ1vphohTBxAXqEtXJ",
+    "seller": "6XPGX3Vmqh4gtj6UZNcgJTDN1haWivctw8KQ7D6UpMMj",
+    "title": "ExxnTPx24fjXRiAPcnrWqKCfEQDhDmxCDZ57VQ7RkBRW",
+    "survey": "CT6Nstaijac7yAVuDNVWQ12JFMYGfggE4VPBK4sYohDa",
+    "septic": "Ab7KLjree8ZgUrgXvtpb84oHKvzakC6VpRcPqnXoYz3F",
+    "buyer USDC": "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+    "seller USDC": "CZQyg2JGyjj9vRyvaBYS2tz54kproMxoiNF9hHxTG5Zu"
+  },
+  "setup": [
+    {
+      "step": "create seller USDC account",
+      "signer": "buyer (fee payer)",
+      "signature": "gt4YyXbYC7mfDTEPgMB68UAAP7vPzhGHPBt6SDNLnbDhVsCjRCm2b2hma8h4dTFFjZDGoL6XLxXkqNYfwGWbx6b",
+      "slot": 523708502,
+      "ok": true,
+      "stateAfter": "-"
+    }
+  ],
+  "deals": [
+    {
+      "label": "held",
+      "fixtureId": "staged-devnet-deal",
+      "dealIdLabel": "groundtruth-demo-held-v1",
+      "dealIdHex": "156fa2df1ad3e85c616dcb087b3b8f0a393862ed5dbaf4242f069752b8086a9c",
+      "dealPda": "54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW",
+      "vault": "HZUjdzLUAx7dSfQ3DjfFmsZ93Xfcy7Xrr7hKTnR6eecj",
+      "steps": [
+        {
+          "step": "initialize_deal",
+          "signer": "buyer",
+          "signature": "4ZscUVnfZ3W5ukt7H8tSBrQZNrvY5Hu3Qq9oRNJeTbHj61UvwcPAAssZJ4DtaxzeVQAb2rcFPYyRGWsQuaoPKjNv",
+          "slot": 523708506,
+          "ok": true,
+          "stateAfter": "draft"
+        },
+        {
+          "step": "fund",
+          "signer": "buyer",
+          "signature": "grkKU9YqV1xpAkHySCjdhLgavpd5dW3mJsvbiZ1tjEyvuHC9T373Hmscubsm8UapaA7j93pHrseJMepw1C3dd74",
+          "slot": 523708510,
+          "ok": true,
+          "stateAfter": "funded"
+        },
+        {
+          "step": "place_hold (title)",
+          "signer": "title reviewer",
+          "signature": "5QovFTbAMquUY5M5NpJwZPUJhtcKAcmQ5xmZhvFWT46KfPh3UBkaQMhgQhcuphBqvTiYLUgTmNNS7b8tyR7JJ2ib",
+          "slot": 523708514,
+          "ok": true,
+          "stateAfter": "held"
+        },
+        {
+          "step": "release (held)",
+          "signer": "buyer (fee payer)",
+          "signature": "Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz",
+          "slot": 523709901,
+          "ok": false,
+          "err": {
+            "InstructionError": [
+              0,
+              {
+                "Custom": 6019
+              }
+            ]
+          },
+          "programError": "DealHeld (6019)",
+          "stateAfter": "held"
+        },
+        {
+          "step": "refund",
+          "signer": "buyer",
+          "signature": "SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo",
+          "slot": 523709905,
+          "ok": true,
+          "stateAfter": "-",
+          "recovered": true
+        }
+      ],
+      "balances": [
+        {
+          "moment": "after fund",
+          "buyerUsdc": "15000000",
+          "vaultUsdc": "25000000",
+          "sellerUsdc": "0"
+        },
+        {
+          "moment": "before release attempt (held)",
+          "buyerUsdc": "15000000",
+          "vaultUsdc": "25000000",
+          "sellerUsdc": "0"
+        },
+        {
+          "moment": "after rejected release",
+          "buyerUsdc": "15000000",
+          "vaultUsdc": "25000000",
+          "sellerUsdc": "0"
+        },
+        {
+          "moment": "after refund (read when resuming)",
+          "buyerUsdc": "40000000",
+          "vaultUsdc": null,
+          "sellerUsdc": "0"
+        }
+      ],
+      "finalState": "refunded"
+    },
+    {
+      "label": "released",
+      "fixtureId": "staged-devnet-deal-released",
+      "dealIdLabel": "groundtruth-demo-released-v1",
+      "dealIdHex": "4833f90d34852fcf7bc1e683386a641b485bc2aae4178efefa34fc8565b112e4",
+      "dealPda": "3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu",
+      "vault": "8M4S4zZVgBxMPJ5oyzDngU2tGfUZSf5g4osa1vAXNJ6w",
+      "steps": [
+        {
+          "step": "initialize_deal",
+          "signer": "buyer",
+          "signature": "ZFo3g36XTKCaVkLJKpgD2S2sGf4zqNVp3tsFkpSPeJ9mNyfJbWCHtjPDbAV8oUvdXGZs7Ag7n9jTxGbRhh2hM9M",
+          "slot": 523710333,
+          "ok": true,
+          "stateAfter": "draft"
+        },
+        {
+          "step": "fund",
+          "signer": "buyer",
+          "signature": "4a2HxSta9rKio7BsFMVzTvKfA9yBBSzr9uFzJEtDDNG3wJi7hzsJCgkM8SuCt3qQfkUCg4VUM8VCwxHykhDwtxgR",
+          "slot": 523710343,
+          "ok": true,
+          "stateAfter": "funded"
+        },
+        {
+          "step": "sign_approval (title)",
+          "signer": "title reviewer",
+          "signature": "5Rnsas4nLpLJM8ss63dB2768wbTRJteEWBMCE7Z4njzE1JNk547WQ7nQdp38W8Go25tX2YsQtvvn5nRNdEV5jBqt",
+          "slot": 523710375,
+          "ok": true,
+          "stateAfter": "funded"
+        },
+        {
+          "step": "sign_approval (survey)",
+          "signer": "survey reviewer",
+          "signature": "3D8ahBLYuhCiZfNZcMgQZZ3UQnHeoNcBFCgu9NLbyao1TZUMCKBn4RjWcKYJhQupNiZy1JiXnyN8UUARFM57jL9P",
+          "slot": 523710380,
+          "ok": true,
+          "stateAfter": "funded"
+        },
+        {
+          "step": "sign_approval (septic)",
+          "signer": "septic reviewer",
+          "signature": "7tnvjTxYw6vu7xFKCDTJ4fJGjerS6SCJ3QfSkFn3N916bXaBVEmBnrYwrF9hHSFyCurox1Kct9YdcJGxm4XS2fb",
+          "slot": 523710386,
+          "ok": true,
+          "stateAfter": "funded"
+        },
+        {
+          "step": "release",
+          "signer": "buyer (fee payer)",
+          "signature": "5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC",
+          "slot": 523710396,
+          "ok": true,
+          "stateAfter": "released"
+        }
+      ],
+      "balances": [
+        {
+          "moment": "after fund",
+          "buyerUsdc": "15000000",
+          "vaultUsdc": "25000000",
+          "sellerUsdc": "0"
+        },
+        {
+          "moment": "before release (all approved)",
+          "buyerUsdc": "15000000",
+          "vaultUsdc": "25000000",
+          "sellerUsdc": "0"
+        },
+        {
+          "moment": "after release",
+          "buyerUsdc": "15000000",
+          "vaultUsdc": null,
+          "sellerUsdc": "25000000"
+        }
+      ],
+      "finalState": "released"
+    }
+  ],
+  "mode": "devnet",
+  "note": "Staged GroundTruth demo closings on Solana devnet with Circle test USDC, recorded by escrow/scripts/demo-deals.ts. Public keys and signatures only.",
+  "resumedFrom": {
+    "file": "demo-results/devnet-20261118T174645Z.json",
+    "runId": "20261118T174645Z",
+    "keptSignatures": 5,
+    "droppedSignatures": 0
+  },
+  "finishedAt": "2026-11-18T17:48:50.183Z"
+}

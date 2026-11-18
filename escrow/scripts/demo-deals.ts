@@ -93,7 +93,36 @@ import {
 
 // ---------------------------------------------------------------- constants
 
-const RPC_URL = "https://api.devnet.solana.com";
+const RPC_URL = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
+
+/**
+ * Retries a devnet RPC call through rate limits (HTTP 429) and transient
+ * network errors with backoff up to about a minute. The public devnet RPC
+ * rate-limits bursts; web3.js's own retry gives up after a few seconds.
+ * Resending a signed transaction is safe: it has the same signature.
+ */
+async function withRpcRetry<T>(what: string, fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const transient =
+        /429|rate limit|fetch failed|ECONNRESET|ETIMEDOUT|503|502/i.test(
+          message,
+        );
+      if (!transient || attempt >= 8) throw error;
+      const wait = Math.min(1000 * 2 ** attempt, 15_000);
+      console.log(
+        `  (rpc ${what}: ${(message.split("\n")[0] ?? "").slice(
+          0,
+          80,
+        )}; retrying in ${wait / 1000}s)`,
+      );
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+}
 const PROGRAM = new PublicKey(GROUNDTRUTH_PROGRAM_ID);
 const MINT = new PublicKey(USDC_MINT_DEVNET);
 const PARCEL_KEY = stagedDeal.parcelKey; // ohio:39049:230-000918
@@ -360,11 +389,15 @@ async function existingDeals(chain: Chain, plans: DealPlan[]) {
   const found: string[] = [];
   for (const plan of plans) {
     if (await chain.account(plan.dealPda)) {
+      const view = await readDeal(chain, plan.dealPda);
+      const failed = (await chain.failedReleases?.(plan.dealPda)) ?? [];
       found.push(
         `${
           plan.outcome
         } deal ${plan.dealPda.toBase58()} already exists (state ${
-          (await readDeal(chain, plan.dealPda)).state
+          view.state
+        }, approvals ${JSON.stringify(view.approvals)}, failed transactions ${
+          failed.length
         })`,
       );
     }
@@ -388,6 +421,15 @@ interface AccountView {
   lamports: bigint;
 }
 
+interface HistoryEntry {
+  signature: string;
+  slot: number;
+  err: unknown;
+  logs: string[];
+  /** The top-level GroundTruth instruction, decoded with the IDL. */
+  instruction: { name: string; data: Record<string, unknown> } | null;
+}
+
 interface Chain {
   kind: "devnet" | "simulation";
   send(
@@ -397,6 +439,12 @@ interface Chain {
     opts?: { expectFailure?: boolean },
   ): Promise<Sent>;
   account(key: PublicKey): Promise<AccountView | null>;
+  /** Devnet only: signatures of failed transactions that touched `key`. */
+  failedReleases?(key: PublicKey): Promise<string[]>;
+  /** Devnet only: every confirmed transaction that touched `key`, oldest first. */
+  history?(key: PublicKey): Promise<HistoryEntry[]>;
+  /** Devnet only: which of `signatures` are confirmed or finalized on chain. */
+  confirmed?(signatures: string[]): Promise<Set<string>>;
   rent(space: number): Promise<bigint>;
 }
 
@@ -419,28 +467,46 @@ async function signedTx(
 }
 
 function devnetChain(): Chain & { connection: Connection } {
-  const connection = new Connection(RPC_URL, "confirmed");
+  const connection = new Connection(RPC_URL, {
+    commitment: "confirmed",
+    disableRetryOnRateLimit: true,
+  });
   return {
     kind: "devnet",
     connection,
     async send(ixs, feePayer, signers, opts = {}) {
-      const latest = await connection.getLatestBlockhash("confirmed");
+      const latest = await withRpcRetry("getLatestBlockhash", () =>
+        connection.getLatestBlockhash("confirmed"),
+      );
       const tx = await signedTx(ixs, feePayer, signers, latest.blockhash);
       // A transaction expected to fail skips preflight, so the program's
       // rejection is recorded on chain instead of only in a simulation.
-      const signature = await connection.sendRawTransaction(tx.serialize(), {
-        skipPreflight: Boolean(opts.expectFailure),
-        preflightCommitment: "confirmed",
-      });
-      await connection.confirmTransaction(
-        { signature, ...latest },
-        "confirmed",
+      const signature = await withRpcRetry("sendRawTransaction", () =>
+        connection.sendRawTransaction(tx.serialize(), {
+          skipPreflight: Boolean(opts.expectFailure),
+          preflightCommitment: "confirmed",
+        }),
       );
+      // Poll the status ourselves: web3's confirmTransaction makes
+      // background RPC calls whose rate-limit errors escape any retry.
+      for (let attempt = 0; ; attempt++) {
+        const { value } = await withRpcRetry("getSignatureStatuses", () =>
+          connection.getSignatureStatuses([signature]),
+        );
+        const status = value[0];
+        if (status && status.confirmationStatus !== "processed") break;
+        if (attempt >= 90) {
+          throw new Error(`${signature} not confirmed after 90s`);
+        }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
       for (let attempt = 0; attempt < 20; attempt++) {
-        const got = await connection.getTransaction(signature, {
-          commitment: "confirmed",
-          maxSupportedTransactionVersion: 0,
-        });
+        const got = await withRpcRetry("getTransaction", () =>
+          connection.getTransaction(signature, {
+            commitment: "confirmed",
+            maxSupportedTransactionVersion: 0,
+          }),
+        );
         if (got?.meta) {
           return {
             signature,
@@ -454,7 +520,9 @@ function devnetChain(): Chain & { connection: Connection } {
       throw new Error(`${signature} confirmed but not readable yet`);
     },
     async account(key) {
-      const info = await connection.getAccountInfo(key, "confirmed");
+      const info = await withRpcRetry("getAccountInfo", () =>
+        connection.getAccountInfo(key, "confirmed"),
+      );
       return info
         ? {
             data: info.data,
@@ -464,7 +532,68 @@ function devnetChain(): Chain & { connection: Connection } {
         : null;
     },
     async rent(space) {
-      return BigInt(await connection.getMinimumBalanceForRentExemption(space));
+      return BigInt(
+        await withRpcRetry("getMinimumBalanceForRentExemption", () =>
+          connection.getMinimumBalanceForRentExemption(space),
+        ),
+      );
+    },
+    async failedReleases(key) {
+      const sigs = await withRpcRetry("getSignaturesForAddress", () =>
+        connection.getSignaturesForAddress(key, { limit: 1000 }, "confirmed"),
+      );
+      return sigs.filter((s) => s.err !== null).map((s) => s.signature);
+    },
+    async history(key) {
+      const sigs = await withRpcRetry("getSignaturesForAddress", () =>
+        connection.getSignaturesForAddress(key, { limit: 1000 }, "confirmed"),
+      );
+      const out: HistoryEntry[] = [];
+      for (const { signature } of [...sigs].reverse()) {
+        const tx = await withRpcRetry("getTransaction", () =>
+          connection.getTransaction(signature, {
+            commitment: "confirmed",
+            maxSupportedTransactionVersion: 0,
+          }),
+        );
+        if (!tx?.meta) continue;
+        const message = tx.transaction.message;
+        const keys = message.staticAccountKeys;
+        const ix = message.compiledInstructions.find((c) =>
+          keys[c.programIdIndex]?.equals(PROGRAM),
+        );
+        const decoded = ix
+          ? coder.instruction.decode(Buffer.from(ix.data))
+          : null;
+        out.push({
+          signature,
+          slot: tx.slot,
+          err: tx.meta.err,
+          logs: tx.meta.logMessages ?? [],
+          instruction: decoded
+            ? {
+                name: decoded.name,
+                data: decoded.data as Record<string, unknown>,
+              }
+            : null,
+        });
+      }
+      return out;
+    },
+    async confirmed(signatures) {
+      const out = new Set<string>();
+      for (let i = 0; i < signatures.length; i += 200) {
+        const batch = signatures.slice(i, i + 200);
+        const { value } = await withRpcRetry("getSignatureStatuses", () =>
+          connection.getSignatureStatuses(batch, {
+            searchTransactionHistory: true,
+          }),
+        );
+        value.forEach((v, j) => {
+          if (v && v.confirmationStatus !== "processed") out.add(batch[j]!);
+        });
+      }
+      return out;
     },
   };
 }
@@ -510,10 +639,14 @@ async function deployedProgramBytes(connection: Connection) {
     }
   }
 
-  const program = await connection.getAccountInfo(PROGRAM, "confirmed");
+  const program = await withRpcRetry("getAccountInfo", () =>
+    connection.getAccountInfo(PROGRAM, "confirmed"),
+  );
   if (!program?.executable) throw new Error("program not found on devnet");
   const programData = new PublicKey(program.data.subarray(4, 36));
-  const data = await connection.getAccountInfo(programData, "confirmed");
+  const data = await withRpcRetry("getAccountInfo", () =>
+    connection.getAccountInfo(programData, "confirmed"),
+  );
   if (!data) throw new Error("ProgramData account not found");
   const elf = data.data.subarray(45);
   return {
@@ -529,7 +662,10 @@ async function simulationChain(wallets: Wallets, usdc: bigint) {
   const { address, getTransactionDecoder, lamports } =
     await import("@solana/kit");
   const deployed = await deployedProgramBytes(
-    new Connection(RPC_URL, "confirmed"),
+    new Connection(RPC_URL, {
+      commitment: "confirmed",
+      disableRetryOnRateLimit: true,
+    }),
   );
 
   const svm = new LiteSVM();
@@ -742,17 +878,21 @@ async function checkFunding(
   chain: Chain,
   wallets: Wallets,
   amount: bigint,
+  /** USDC that returns to the buyer before it is needed (a resumed refund). */
+  credit = 0n,
 ): Promise<FundingCheck> {
   const buyer = wallets.buyer.publicKey;
   const sellerAta = getAssociatedTokenAddressSync(
     MINT,
     wallets.seller.publicKey,
   );
-  const [buyerAcct, buyerUsdc, sellerAta_] = await Promise.all([
-    chain.account(buyer),
-    tokenBalance(chain, getAssociatedTokenAddressSync(MINT, buyer)),
-    chain.account(sellerAta),
-  ]);
+  // One at a time: the public devnet RPC rate-limits bursts.
+  const buyerAcct = await chain.account(buyer);
+  const buyerUsdc = await tokenBalance(
+    chain,
+    getAssociatedTokenAddressSync(MINT, buyer),
+  );
+  const sellerAta_ = await chain.account(sellerAta);
   const dealRent = await chain.rent(DEAL_ACCOUNT_SPACE);
   const tokenRent = await chain.rent(TOKEN_ACCOUNT_SPACE);
   // Two deal accounts stay open (terminal deals are not closed). Each vault
@@ -766,11 +906,12 @@ async function checkFunding(
     SOL_MARGIN;
   const buyerSol = buyerAcct?.lamports ?? 0n;
   return {
-    ok: buyerSol >= needSol && (buyerUsdc ?? 0n) >= amount,
+    ok: buyerSol >= needSol && (buyerUsdc ?? 0n) + credit >= amount,
     buyerSol,
     buyerUsdc,
     needSol,
-    needUsdc: amount,
+    // What must already be in the buyer's account now.
+    needUsdc: amount > credit ? amount - credit : 0n,
     sellerAtaExists: Boolean(sellerAta_),
   };
 }
@@ -841,6 +982,8 @@ interface Step {
   err?: unknown;
   programError?: string;
   stateAfter: string;
+  /** Sent by an earlier, interrupted run; recovered from chain history. */
+  recovered?: boolean;
 }
 
 interface Balances {
@@ -876,6 +1019,12 @@ interface Results {
   expectedHeldReleaseError: string;
   runId: string;
   startedAt: string;
+  resumedFrom?: {
+    file: string;
+    runId: string;
+    keptSignatures: number;
+    droppedSignatures: number;
+  };
   finishedAt?: string;
   simulatedProgram?: {
     programData: string;
@@ -935,6 +1084,11 @@ function proofMarkdown(r: Results): string {
     `| Run | \`${r.runId}\`, ${r.startedAt}${
       r.finishedAt ? ` → ${r.finishedAt}` : ""
     } |`,
+    ...(r.resumedFrom
+      ? [
+          `| Resumed from | \`${r.resumedFrom.runId}\` (kept ${r.resumedFrom.keptSignatures} devnet signatures, dropped ${r.resumedFrom.droppedSignatures} not on devnet) |`,
+        ]
+      : []),
     ...(r.simulatedProgram
       ? [
           `| Program bytes | ProgramData \`${
@@ -983,7 +1137,9 @@ function proofMarkdown(r: Results): string {
       "| --- | --- | --- | --- | --- |",
       ...deal.steps.map(
         (s) =>
-          `| ${s.step} | ${s.signer} | ${
+          `| ${s.step}${s.recovered ? " (recovered from chain)" : ""} | ${
+            s.signer
+          } | ${
             s.ok
               ? "ok"
               : `**failed on-chain: ${
@@ -1028,6 +1184,7 @@ async function runClosings(
   amount: bigint,
   heldError: ProgramError,
   results: Results,
+  resume = false,
 ) {
   const buyer = wallets.buyer;
   const buyerAta = getAssociatedTokenAddressSync(MINT, buyer.publicKey);
@@ -1096,7 +1253,9 @@ async function runClosings(
 
   for (const plan of plans) {
     const { outcome: label, dealId, dealPda, vault } = plan;
-    const deal: DealResult = {
+    // A resumed run continues the deal's record from the previous run.
+    const prior = results.deals.find((d) => d.dealPda === dealPda.toBase58());
+    const deal: DealResult = prior ?? {
       label,
       fixtureId: plan.fixtureId,
       dealIdLabel: plan.dealIdLabel,
@@ -1106,16 +1265,64 @@ async function runClosings(
       steps: [],
       balances: [],
     };
-    results.deals.push(deal);
+    if (!prior) results.deals.push(deal);
     console.log(`\n${label} deal ${dealPda.toBase58()}`);
+    // On-chain state decides which steps a resumed run still has to send.
+    const onChain = async () =>
+      resume && (await chain.account(dealPda))
+        ? readDeal(chain, dealPda)
+        : null;
+    const skip = (step: string, why: string) =>
+      console.log(`  skip   ${step.padEnd(22)} ${why}`);
+    // A transaction an interrupted run sent but did not record (it crashed
+    // while confirming) is recovered from the deal's on-chain history.
+    if (resume && chain.history) {
+      const known = new Set(deal.steps.map((st) => st.signature));
+      for (const h of await chain.history(dealPda)) {
+        if (known.has(h.signature)) continue;
+        const name = h.instruction?.name ?? "unknown instruction";
+        const role = h.instruction?.data.role
+          ? Object.keys(h.instruction.data.role as object)[0]!.toLowerCase()
+          : null;
+        const errorLine = h.logs.map((l) => ANCHOR_ERROR.exec(l)).find(Boolean);
+        const step =
+          name === "release" && label === "held"
+            ? "release (held)"
+            : role
+            ? `${name} (${role})`
+            : name;
+        deal.steps.push({
+          step,
+          signer:
+            role !== null
+              ? `${role} reviewer`
+              : name === "release"
+              ? "buyer (fee payer)"
+              : "buyer",
+          signature: h.signature,
+          slot: h.slot,
+          ok: h.err === null,
+          ...(h.err !== null && { err: h.err }),
+          ...(errorLine && {
+            programError: `${errorLine[1]} (${errorLine[2]})`,
+          }),
+          stateAfter: "-",
+          recovered: true,
+        });
+        console.log(
+          `  found  ${step.padEnd(22)} recovered from chain ${h.signature}`,
+        );
+      }
+      deal.steps.sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0));
+      save();
+    }
 
     const state = async () => (await readDeal(chain, dealPda)).state;
     const snapshot = async (moment: string) => {
-      const [b, v, s] = await Promise.all([
-        tokenBalance(chain, buyerAta),
-        tokenBalance(chain, vault),
-        tokenBalance(chain, sellerAta),
-      ]);
+      // One at a time: the public devnet RPC rate-limits bursts.
+      const b = await tokenBalance(chain, buyerAta);
+      const v = await tokenBalance(chain, vault);
+      const s = await tokenBalance(chain, sellerAta);
       const entry: Balances = {
         moment,
         buyerUsdc: String(b ?? 0n),
@@ -1131,62 +1338,71 @@ async function runClosings(
     };
     const dealAccounts = { deal: dealPda, vault, mint: MINT };
 
-    await send(
-      deal.steps,
-      "initialize_deal",
-      "buyer",
-      [
-        instruction(
-          "initialize_deal",
-          {
-            deal_id: Array.from(dealId),
-            amount: new BN(amount.toString()),
-            reviewers: REVIEWERS.map((r) => ({
-              wallet: wallets[r.role].publicKey,
-              role: { [r.variant]: {} },
-              required: true,
-            })),
-          },
-          {
-            buyer: buyer.publicKey,
-            ...dealAccounts,
-            seller: wallets.seller.publicKey,
-            seller_token_account: sellerAta,
-          },
-        ),
-      ],
-      [],
-      state,
-    );
+    const existing = await onChain();
+    if (existing) {
+      skip("initialize_deal", `already on chain (${existing.state})`);
+    } else
+      await send(
+        deal.steps,
+        "initialize_deal",
+        "buyer",
+        [
+          instruction(
+            "initialize_deal",
+            {
+              deal_id: Array.from(dealId),
+              amount: new BN(amount.toString()),
+              reviewers: REVIEWERS.map((r) => ({
+                wallet: wallets[r.role].publicKey,
+                role: { [r.variant]: {} },
+                required: true,
+              })),
+            },
+            {
+              buyer: buyer.publicKey,
+              ...dealAccounts,
+              seller: wallets.seller.publicKey,
+              seller_token_account: sellerAta,
+            },
+          ),
+        ],
+        [],
+        state,
+      );
     const initialized = await readDeal(chain, dealPda);
+    expect(initialized.amount === amount, "deal amount differs from --amount");
     expect(
-      initialized.state === "draft" && initialized.amount === amount,
-      "initialize did not bind the amount in draft",
+      resume || initialized.state === "draft",
+      "initialize did not leave the deal in draft",
     );
 
-    await send(
-      deal.steps,
-      "fund",
-      "buyer",
-      [
-        instruction(
-          "fund",
-          {},
-          {
-            buyer: buyer.publicKey,
-            ...dealAccounts,
-            buyer_token_account: buyerAta,
-          },
-        ),
-      ],
-      [],
-      state,
-    );
-    const funded = await snapshot("after fund");
-    expect(
-      funded.vault === amount,
-      `vault holds ${funded.vault}, expected ${amount}`,
-    );
+    if (initialized.state !== "draft") {
+      skip("fund", `already funded (${initialized.state})`);
+    } else {
+      await send(
+        deal.steps,
+        "fund",
+        "buyer",
+        [
+          instruction(
+            "fund",
+            {},
+            {
+              buyer: buyer.publicKey,
+              ...dealAccounts,
+              buyer_token_account: buyerAta,
+            },
+          ),
+        ],
+        [],
+        state,
+      );
+      const funded = await snapshot("after fund");
+      expect(
+        funded.vault === amount,
+        `vault holds ${funded.vault}, expected ${amount}`,
+      );
+    }
 
     const releaseIx = instruction(
       "release",
@@ -1201,23 +1417,46 @@ async function runClosings(
     );
 
     if (label === "held") {
-      await send(
-        deal.steps,
-        "place_hold (title)",
-        "title reviewer",
-        [
-          instruction(
-            "place_hold",
-            {
-              role: { Title: {} },
-              reason_code: { SellerIdentityDisputed: {} },
-            },
-            { reviewer: wallets.title.publicKey, deal: dealPda },
-          ),
-        ],
-        [wallets.title],
-        state,
-      );
+      const atHold = (await readDeal(chain, dealPda)).state;
+      if (atHold === "held" || atHold === "refunded") {
+        skip("place_hold (title)", `already ${atHold}`);
+      } else
+        await send(
+          deal.steps,
+          "place_hold (title)",
+          "title reviewer",
+          [
+            instruction(
+              "place_hold",
+              {
+                role: { Title: {} },
+                reason_code: { SellerIdentityDisputed: {} },
+              },
+              { reviewer: wallets.title.publicKey, deal: dealPda },
+            ),
+          ],
+          [wallets.title],
+          state,
+        );
+      if ((await readDeal(chain, dealPda)).state === "refunded") {
+        skip("release (held)", "already refunded");
+        skip("refund", "already refunded");
+        if (deal.balances.at(-1)?.moment.startsWith("after refund") !== true) {
+          // Nothing else moves these accounts between the refund and now.
+          await snapshot("after refund (read when resuming)");
+        }
+        deal.finalState = "refunded";
+        save();
+        continue;
+      }
+      const rejectedBefore = resume
+        ? (await chain.failedReleases?.(dealPda)) ?? []
+        : [];
+      if (rejectedBefore.length) {
+        throw new Error(
+          `held deal already has a failed release on chain (${rejectedBefore[0]}); refusing to guess where to resume`,
+        );
+      }
       const before = await snapshot("before release attempt (held)");
 
       const { entry, sent } = await send(
@@ -1286,7 +1525,18 @@ async function runClosings(
         "seller balance changed on refund",
       );
     } else {
+      if ((await readDeal(chain, dealPda)).state === "released") {
+        skip("approvals and release", "already released");
+        deal.finalState = "released";
+        save();
+        continue;
+      }
+      const approvedBefore = (await readDeal(chain, dealPda)).approvals;
       for (const r of REVIEWERS) {
+        if (approvedBefore[r.role]) {
+          skip(`sign_approval (${r.role})`, "already approved");
+          continue;
+        }
         await send(
           deal.steps,
           `sign_approval (${r.role})`,
@@ -1345,7 +1595,7 @@ async function main() {
     } else positional.push(arg);
   }
   const unknownFlags = Object.keys(flags).filter(
-    (f) => f !== "amount" && f !== "held-error",
+    (f) => f !== "amount" && f !== "held-error" && f !== "resume",
   );
   if (unknownFlags.length) throw new Error(`unknown flags: ${unknownFlags}`);
   const mode = positional[0] ?? "check";
@@ -1354,8 +1604,11 @@ async function main() {
     !["plan", "check", "simulate", "run"].includes(mode)
   ) {
     throw new Error(
-      `usage: demo-deals.ts [plan|check|simulate|run] [--amount <usdc>] [--held-error <IDL error name>]`,
+      `usage: demo-deals.ts [plan|check|simulate|run] [--amount <usdc>] [--held-error <IDL error name>] [--resume <previous devnet-*.json>]`,
     );
+  }
+  if (flags.resume && mode !== "run") {
+    throw new Error("--resume only applies to run");
   }
   // The rehearsal guards the devnet run only if it executes the same bytecode
   // devnet will. A local build would let a rehearsal pass that devnet fails.
@@ -1413,7 +1666,9 @@ async function main() {
   };
 
   const devnet = devnetChain();
-  const program = await devnet.connection.getAccountInfo(PROGRAM, "confirmed");
+  const program = await withRpcRetry("getAccountInfo", () =>
+    devnet.connection.getAccountInfo(PROGRAM, "confirmed"),
+  );
   if (!program?.executable)
     throw new Error(`program ${PROGRAM} is not executable on devnet`);
   const reportExisting = async () => {
@@ -1435,7 +1690,9 @@ async function main() {
     return;
   }
 
-  const base: Omit<Results, "mode" | "note"> = {
+  // Each results object gets its own setup/deals arrays (fresh below): the
+  // rehearsal must never write into the devnet record.
+  const base: Omit<Results, "mode" | "note" | "setup" | "deals"> = {
     status: "running",
     cluster: "devnet",
     rpc: RPC_URL,
@@ -1447,8 +1704,6 @@ async function main() {
     runId: new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "Z"),
     startedAt: new Date().toISOString(),
     wallets: publicWallets,
-    setup: [],
-    deals: [],
   };
 
   const simulate = async () => {
@@ -1458,6 +1713,8 @@ async function main() {
     );
     const results: Results = {
       ...base,
+      setup: [],
+      deals: [],
       mode: "simulation",
       note: "LOCAL LITESVM SIMULATION of the deployed program's bytecode with a stand-in USDC mint. Not on chain; not proof of a devnet outcome.",
       simulatedProgram: {
@@ -1499,7 +1756,28 @@ async function main() {
 
   reportMismatches();
   const existing = await reportExisting();
-  const funding = await checkFunding(devnet, wallets, amount);
+  // Resuming: the held deal's escrowed amount comes back to the buyer on
+  // refund before the released deal is funded, so it counts toward the need.
+  let credit = 0n;
+  if (flags.resume) {
+    const [heldPlan, releasedPlan] = plans as [DealPlan, DealPlan];
+    const held = (await devnet.account(heldPlan.dealPda))
+      ? await readDeal(devnet, heldPlan.dealPda)
+      : null;
+    const released = (await devnet.account(releasedPlan.dealPda))
+      ? await readDeal(devnet, releasedPlan.dealPda)
+      : null;
+    if (held && !["draft", "funded", "held", "refunded"].includes(held.state)) {
+      throw new Error(`held deal is ${held.state}; cannot resume`);
+    }
+    if (released && ["held", "refunded"].includes(released.state)) {
+      throw new Error(`released deal is ${released.state}; cannot resume`);
+    }
+    if (held && (held.state === "funded" || held.state === "held")) {
+      credit = (await tokenBalance(devnet, heldPlan.vault)) ?? 0n;
+    }
+  }
+  const funding = await checkFunding(devnet, wallets, amount, credit);
   printFunding(wallets, funding);
   const ready = funding.ok && !mismatches.length && !existing.length;
   if (mode === "check") {
@@ -1513,7 +1791,7 @@ async function main() {
     );
     return;
   }
-  if (existing.length) {
+  if (existing.length && !flags.resume) {
     process.exitCode = 1;
     console.log(
       "\nNot running: a deal PDA already exists. Deal IDs are fixed, so a new pair needs new labels in STAGED_DEAL_ID_LABELS (and fixtures).",
@@ -1536,11 +1814,52 @@ async function main() {
   console.log("\nRehearsal passed. Sending devnet transactions:");
   const results: Results = {
     ...base,
+    setup: [],
+    deals: [],
     mode: "devnet",
     note: "Staged GroundTruth demo closings on Solana devnet with Circle test USDC, recorded by escrow/scripts/demo-deals.ts. Public keys and signatures only.",
   };
+  if (flags.resume) {
+    // Carry over only what the previous run really sent: entries whose
+    // signatures are confirmed on devnet (drops anything else, such as
+    // rehearsal entries a buggy earlier version mixed in).
+    const previous = JSON.parse(readFileSync(flags.resume, "utf8")) as Results;
+    const all = [
+      ...previous.setup,
+      ...previous.deals.flatMap((d) => d.steps),
+    ].map((step) => step.signature);
+    const onDevnet = (await devnet.confirmed?.(all)) ?? new Set<string>();
+    results.resumedFrom = {
+      file: relative(process.cwd(), flags.resume),
+      runId: previous.runId,
+      keptSignatures: onDevnet.size,
+      droppedSignatures: all.length - onDevnet.size,
+    };
+    results.setup = previous.setup.filter((st) => onDevnet.has(st.signature));
+    results.deals = previous.deals
+      .filter((d) => d.steps.some((st) => onDevnet.has(st.signature)))
+      .map((d) => ({
+        ...d,
+        steps: d.steps.filter((st) => onDevnet.has(st.signature)),
+      }));
+    console.log(
+      `\nResuming ${previous.runId}: kept ${
+        onDevnet.size
+      } devnet signatures, dropped ${
+        all.length - onDevnet.size
+      } not on devnet.`,
+    );
+  }
   await finish(results, () =>
-    runClosings(devnet, wallets, plans, amount, heldError, results),
+    runClosings(
+      devnet,
+      wallets,
+      plans,
+      amount,
+      heldError,
+      results,
+      Boolean(flags.resume),
+    ),
   );
 }
 

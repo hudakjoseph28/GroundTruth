@@ -224,8 +224,11 @@ Replays are harmless: a timeline row is unique by transaction signature + event 
 
 **Test data.** Three kinds, kept apart:
 - **IDL-encoded** logs built with the IDL's own coder ([test/support/escrowLogs.ts](test/support/escrowLogs.ts)) drive the decoder, filter, webhook, and database tests. They cover all six events, a spoofed log, a held flow (init → fund → hold → rejected release → refund), and a released flow.
-- **Recorded devnet data** ([test/fixtures/devnet/program-history.json](test/fixtures/devnet/program-history.json)) holds every transaction that touched the deployed program, the program account, and its on-chain IDL. `pnpm --filter @groundtruth/backend record:devnet` fetches it from the public RPC (no keys). [test/devnetRecorded.test.ts](test/devnetRecorded.test.ts) checks that the on-chain IDL is the checked-in one, and runs each recorded transaction through the real filter, webhook, and decoder. The recording (Nov 17) is the deploy and two IDL uploads. Kadhir's upgrade at slot 523474592 came later and is not in it. Neither demo deal PDA exists on devnet yet.
-- **Simulated demo closings** ([test/fixtures/devnet/demo-deals.simulated.json](test/fixtures/devnet/demo-deals.simulated.json)) are **not devnet data**. They are both staged closings, run by `demo:deals simulate` in LiteSVM on the deployed (upgraded) bytecode for the staged deals' real PDAs, and shaped like `getTransaction` output. They drive the replay tests. After the devnet run, save the real transactions with `replay:devnet --save` and test them the same way.
+- **Recorded devnet data** ([test/fixtures/devnet/program-history.json](test/fixtures/devnet/program-history.json)) holds every transaction that touched the deployed program, plus the program account and its on-chain IDL. `pnpm --filter @groundtruth/backend record:devnet` fetches it from the public RPC (no keys).
+  - Re-recorded 2026-11-18, it has the deploy, two IDL uploads, the upgrade, and the **11 transactions of both demo closings**, the held deal's failed release included.
+  - [test/devnetRecorded.test.ts](test/devnetRecorded.test.ts) checks that the on-chain IDL is the checked-in one. It also runs each transaction through the real filter, webhook, and decoder against `EXPECTED_SENT`: DealHeld (6019) for the rejected release, and exactly 25 USDC for the refund and the release.
+  - [test/fixtures/devnet/demo-run/](test/fixtures/devnet/demo-run/) holds each deal's transactions as `replay:devnet --save` fetched them.
+- **Simulated demo closings** (kept alongside the real ones) ([test/fixtures/devnet/demo-deals.simulated.json](test/fixtures/devnet/demo-deals.simulated.json)) are **not devnet data**. They are both staged closings, run by `demo:deals simulate` in LiteSVM on the deployed (upgraded) bytecode for the staged deals' real PDAs, and shaped like `getTransaction` output. They drive the replay tests. The replay tests run on both the recorded devnet run and the simulation.
 
 ### Replay from devnet (backup for missed deliveries)
 
@@ -239,7 +242,7 @@ The command reads the deal's PDA (`escrowAddress`) from `DATABASE_URL`. It then 
 
 Each transaction is run through `quicknode/groundtruth-filter.js` as its own Block entry, then through the webhook's payload schema and the IDL decoder ([src/chain/streamPayload.ts](src/chain/streamPayload.ts), shared with the route), then applied with `applyConfirmedEvent`. That is the same path a live delivery takes.
 
-Replay is idempotent. Rows are unique by signature + event index, so a second run, or a run after QuickNode already delivered some events, reports them as `duplicate` and changes nothing. [test/devnetReplay.test.ts](test/devnetReplay.test.ts) and [test/db/devnetReplay.db.test.ts](test/db/devnetReplay.db.test.ts) replay the simulated closings twice.
+Replay is idempotent. Rows are unique by signature + event index, so a second run, or a run after QuickNode already delivered some events, reports them as `duplicate` and changes nothing. [test/devnetReplay.test.ts](test/devnetReplay.test.ts) and [test/db/devnetReplay.db.test.ts](test/db/devnetReplay.db.test.ts) replay the recorded devnet run and the simulated closings, twice each. The database test skips the real run, with a reason, in a database that already holds those events, because rows are unique by signature + index across deals; in CI it fails instead.
 
 ### Filters
 
