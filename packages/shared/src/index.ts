@@ -32,6 +32,7 @@ export {
   stagedDeal,
   stagedDemoChainAccounts,
   stagedDemoDeals,
+  stagedLiveDeal,
   stagedReleasedDeal,
 } from "./fixtures.js";
 

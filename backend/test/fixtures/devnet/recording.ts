@@ -3,9 +3,10 @@
  * RPC by scripts/record-devnet-transactions.ts (program-history.json). This
  * is REAL CHAIN DATA, unlike the IDL-encoded logs in test/support.
  *
- * Recorded 2026-11-17, after #22 deployed the program: the history is the
- * deploy and the two IDL metadata writes. No escrow instruction (initialize,
- * fund, approve, hold, release, refund) had run on devnet yet.
+ * Re-recorded 2026-11-18 after the demo run: the deploy (#22), the two IDL
+ * metadata writes, Kadhir's upgrade (#25, slot 523474592), and the 11
+ * transactions of the two staged demo closings (escrow/demo-results), the
+ * held deal's failed release included.
  */
 import { readFileSync } from "node:fs";
 import { inflateSync } from "node:zlib";

@@ -7,13 +7,19 @@ import { readFileSync } from "node:fs";
 import {
   GROUNDTRUTH_ESCROW_IDL,
   GROUNDTRUTH_PROGRAM_ID,
+  stagedDeal,
+  stagedDemoChainAccounts,
+  stagedReleasedDeal,
 } from "@groundtruth/shared";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.js";
 import type { ApplyResult } from "../src/chain/applyEvent.js";
 import { createEscrowDecoder } from "../src/chain/escrowDecoder.js";
-import type { ConfirmedEvent } from "../src/chain/programEvents.js";
+import type {
+  ConfirmedEvent,
+  ConfirmedTransaction,
+} from "../src/chain/programEvents.js";
 import {
   idlFromMetadataAccount,
   IDL_METADATA_ACCOUNT,
@@ -41,11 +47,38 @@ const asBlock = (tx: RecordedTransaction) => ({
 });
 
 /**
- * Recorded transactions the filter must send to the API. Empty until the
- * demo deals run on devnet: after re-recording, add each escrow transaction
- * here with the events it must decode to.
+ * Recorded transactions the filter must send to the API, with the events
+ * each must decode to: the two staged demo closings run on devnet on
+ * 2026-11-18 by escrow/scripts/demo-deals.ts (escrow/demo-results). The
+ * deploy, IDL, and upgrade transactions are not sent.
  */
-const EXPECTED_SENT: Record<string, ConfirmedEvent["event"]["name"][]> = {};
+const EXPECTED_SENT: Record<string, ConfirmedEvent["event"]["name"][]> = {
+  // staged-devnet-deal (held), PDA 54Va6qKN...E4tW
+  "4ZscUVnfZ3W5ukt7H8tSBrQZNrvY5Hu3Qq9oRNJeTbHj61UvwcPAAssZJ4DtaxzeVQAb2rcFPYyRGWsQuaoPKjNv":
+    ["DealInitialized"],
+  grkKU9YqV1xpAkHySCjdhLgavpd5dW3mJsvbiZ1tjEyvuHC9T373Hmscubsm8UapaA7j93pHrseJMepw1C3dd74:
+    ["DealFunded"],
+  "5QovFTbAMquUY5M5NpJwZPUJhtcKAcmQ5xmZhvFWT46KfPh3UBkaQMhgQhcuphBqvTiYLUgTmNNS7b8tyR7JJ2ib":
+    ["HoldPlaced"],
+  // The failed release: sent with its accounts, decoded as ReleaseRejected.
+  Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz:
+    ["ReleaseRejected"],
+  SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo:
+    ["DealRefunded"],
+  // staged-devnet-deal-released, PDA 3uBECmkG...y2yu
+  ZFo3g36XTKCaVkLJKpgD2S2sGf4zqNVp3tsFkpSPeJ9mNyfJbWCHtjPDbAV8oUvdXGZs7Ag7n9jTxGbRhh2hM9M:
+    ["DealInitialized"],
+  "4a2HxSta9rKio7BsFMVzTvKfA9yBBSzr9uFzJEtDDNG3wJi7hzsJCgkM8SuCt3qQfkUCg4VUM8VCwxHykhDwtxgR":
+    ["DealFunded"],
+  "5Rnsas4nLpLJM8ss63dB2768wbTRJteEWBMCE7Z4njzE1JNk547WQ7nQdp38W8Go25tX2YsQtvvn5nRNdEV5jBqt":
+    ["ApprovalSigned"],
+  "3D8ahBLYuhCiZfNZcMgQZZ3UQnHeoNcBFCgu9NLbyao1TZUMCKBn4RjWcKYJhQupNiZy1JiXnyN8UUARFM57jL9P":
+    ["ApprovalSigned"],
+  "7tnvjTxYw6vu7xFKCDTJ4fJGjerS6SCJ3QfSkFn3N916bXaBVEmBnrYwrF9hHSFyCurox1Kct9YdcJGxm4XS2fb":
+    ["ApprovalSigned"],
+  "5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC":
+    ["DealReleased"],
+};
 
 describe("recorded devnet state of the GroundTruth program", () => {
   it("is the deployed, executable program the API is built for", () => {
@@ -81,16 +114,49 @@ describe("recorded devnet transactions through the filter and decoder", () => {
   it.each(recording.transactions.map((tx) => [signatureOf(tx), tx] as const))(
     "reads the real runtime logs of %s",
     (signature, tx) => {
-      const events = decode({
-        signature,
-        slot: tx.slot,
-        blockTime: tx.blockTime ?? 0,
-        logMessages: tx.meta.logMessages,
-        err: tx.meta.err,
-      });
+      // What the API sees: the filter's entry if it sends this transaction
+      // (a failed release carries its accounts), else the raw logs.
+      const sent = filter(asBlock(tx))?.transactions[0] as
+        | ConfirmedTransaction
+        | undefined;
+      const events = decode(
+        sent ?? {
+          signature,
+          slot: tx.slot,
+          blockTime: tx.blockTime ?? 0,
+          logMessages: tx.meta.logMessages,
+          err: tx.meta.err,
+        },
+      );
       expect(events.map((e) => e.name)).toEqual(EXPECTED_SENT[signature] ?? []);
     },
   );
+
+  it("decodes the held deal's rejected release as DealHeld (6019) and both settlements as exactly 25 USDC", () => {
+    const events = recording.transactions.flatMap((tx) => {
+      const sent = filter(asBlock(tx))?.transactions[0] as
+        | ConfirmedTransaction
+        | undefined;
+      return sent ? decode(sent) : [];
+    });
+    expect(events.find((e) => e.name === "ReleaseRejected")).toEqual({
+      name: "ReleaseRejected",
+      dealPda: stagedDeal.escrowAddress,
+      errorName: "DealHeld",
+      errorNumber: 6019,
+    });
+    expect(events.find((e) => e.name === "DealRefunded")).toMatchObject({
+      dealPda: stagedDeal.escrowAddress,
+      amountBaseUnits: "25000000",
+      destinationTokenAccount:
+        stagedDemoChainAccounts[stagedDeal.id]!.buyerTokenAccount,
+    });
+    expect(events.find((e) => e.name === "DealReleased")).toMatchObject({
+      dealPda: stagedReleasedDeal.escrowAddress,
+      amountBaseUnits: "25000000",
+      destinationTokenAccount: stagedReleasedDeal.sellerTokenAccount,
+    });
+  });
 
   it("posts every sent transaction through the real webhook and decoder", async () => {
     const token = "devnet-recording-token";
