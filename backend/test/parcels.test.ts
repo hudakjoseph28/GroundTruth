@@ -600,6 +600,109 @@ describe("address search fallbacks", () => {
   });
 });
 
+describe("house number 0: lots with no assigned address (recorded live)", () => {
+  const GOLDEN = "ohio:39049:230-000918";
+  const locatorQueries = (recording: OgripRecording) =>
+    recording.exchanges.flatMap(({ url }) =>
+      url.startsWith(OGRIP_LOCATOR)
+        ? [new URL(url).searchParams.get("SingleLine")]
+        : [],
+    );
+
+  it("finds the golden parcel's published 0 SEAMAN RD by locating the street", async () => {
+    const { app, recording } = scenarioApp("seaman-0");
+
+    const res = await request(app).get(OGRIP_SCENARIOS["seaman-0"]);
+
+    expect(res.status).toBe(200);
+    const results = res.body as ParcelSearchResult[];
+    expect(results.map((r) => r.parcel.key)).toContain(GOLDEN);
+    // Franklin publishes seven 0 SEAMAN RD lots; each is a real match.
+    for (const { parcel } of results) {
+      expect(parcel.siteAddress).toMatch(/^0 SEAMAN RD\b/);
+    }
+    // The locator has no point for house number 0, so it is never asked
+    // for one: only for the street.
+    expect(locatorQueries(recording)).toEqual(["SEAMAN RD"]);
+    for (const { url } of recording.exchanges) {
+      const where = new URL(url).searchParams.get("where");
+      if (where) expect(where).toContain("SitusAddressAll LIKE '0 %'");
+    }
+  });
+
+  it("retries without a city the locator does not hold, and keeps only lots that fit it", async () => {
+    const { app, recording } = scenarioApp("seaman-0-galloway");
+
+    const res = await request(app).get(OGRIP_SCENARIOS["seaman-0-galloway"]);
+
+    expect(res.status).toBe(200);
+    const results = res.body as ParcelSearchResult[];
+    expect(results.map((r) => r.parcel.key)).toContain(GOLDEN);
+    // 0 SEAMAN RD OREGON 43616 names another city, so it is dropped.
+    expect(results.every((r) => r.parcel.countyFips === "39049")).toBe(true);
+    expect(locatorQueries(recording)).toEqual([
+      "SEAMAN RD, GALLOWAY",
+      "SEAMAN RD",
+    ]);
+  });
+
+  /** The seaman-0 recording, with chosen box queries answering 503. */
+  function seamanWithFailingBoxes(fails: (body: unknown) => boolean) {
+    const recorded = replay("seaman-0");
+    const failing = new Set(
+      load("seaman-0")
+        .exchanges.filter(
+          ({ url, body }) =>
+            new URL(url).searchParams.has("geometry") && fails(body),
+        )
+        .map(({ url }) => url),
+    );
+    const fetchImpl = vi.fn<typeof fetch>(async (input, init) =>
+      failing.has(String(input))
+        ? new Response("{}", { status: 503 })
+        : recorded(input, init),
+    );
+    return { app: appWith(fetchImpl), failing };
+  }
+
+  it("keeps the lots it found when a box on another street fails", async () => {
+    // Every box except the one that holds the golden parcel fails.
+    const { app, failing } = seamanWithFailingBoxes(
+      (body) => !JSON.stringify(body).includes("230-000918"),
+    );
+    expect(failing.size).toBeGreaterThan(0);
+
+    const res = await request(app).get(OGRIP_SCENARIOS["seaman-0"]);
+
+    expect(res.status).toBe(200);
+    expect(
+      (res.body as ParcelSearchResult[]).map((r) => r.parcel.key),
+    ).toContain(GOLDEN);
+  });
+
+  it("reports the failure when every box fails, instead of answering no match", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { app } = seamanWithFailingBoxes(() => true);
+
+    const res = await request(app).get(OGRIP_SCENARIOS["seaman-0"]);
+
+    expect(res.status).toBe(502);
+    expect(res.body.error).toMatchObject({ retryable: true });
+  });
+
+  it("reports a locator outage instead of answering no match", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { app } = scenarioApp("seaman-0-locator-down");
+
+    const res = await request(app).get(
+      OGRIP_SCENARIOS["seaman-0-locator-down"],
+    );
+
+    expect(res.status).toBe(502);
+    expect(res.body.error).toMatchObject({ retryable: true });
+  });
+});
+
 describe("coverage claims only what was measured", () => {
   it("every row claims a searchable boundary, flood only where NFHL has a study, zoning only in Franklin, and the count's time", async () => {
     const { app, recording } = scenarioApp("coverage");

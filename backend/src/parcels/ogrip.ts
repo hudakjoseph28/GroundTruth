@@ -42,6 +42,17 @@ const MIN_LOCATOR_SCORE = 80;
 const MAX_LOCATOR_SCORE_GAP = 5;
 const MAX_LOCATOR_CANDIDATES = 3;
 /**
+ * Streets of one name the locator returns statewide: `Seaman Rd` alone is
+ * eight streets in four counties (measured 2026-11-18).
+ */
+const MAX_STREET_CANDIDATES = 10;
+/**
+ * The house number counties publish for a lot with no assigned address:
+ * rear lots and vacant land (the golden parcel is `0 SEAMAN RD`). The
+ * locator holds no point for it, so it is searched along the street.
+ */
+const NO_HOUSE_NUMBER = "0";
+/**
  * Half-widths of the box searched around a locator point. The points are
  * interpolated along street ranges and can land hundreds of meters from the
  * lot (84 W Dodridge St lands about 400 m away). Boxes are filtered by house
@@ -290,6 +301,8 @@ export function createOgripClient(
    *    When the locator did find the street, a miss is a real miss
    *    (`123 Main St, Johnstown` has a street but no such parcel).
    *
+   * A house number of 0 takes its own path (`searchUnnumbered`).
+   *
    * Every step keeps only parcels consistent with a typed city. If the
    * locator failed and step 3 could not run, the failure is reported, not
    * hidden behind `[]`.
@@ -319,6 +332,9 @@ export function createOgripClient(
       ...(parsed?.direction ? { direction: parsed.direction } : {}),
       ...(parsed?.suffix ? { suffix: parsed.suffix } : {}),
     };
+    if (parsed?.houseNumber === NO_HOUSE_NUMBER) {
+      return keep(await searchUnnumbered(parsed, wanted, counties, budget));
+    }
     let locatorFailure: OgripError | undefined;
     let locatorFoundStreet = false;
     let locatedTypedStreet = false;
@@ -358,6 +374,66 @@ export function createOgripClient(
       counties.length <= MAX_PLACE_COUNTIES
     ) {
       return keep(await parcelsBySiteAddress(parsed, counties, budget));
+    }
+    if (locatorFailure) throw locatorFailure;
+    return [];
+  }
+
+  /**
+   * `0 Seaman Rd`: the locator interpolates house numbers along a street, so
+   * for 0 it answers a point at a street's low end, and for `0 Seaman Rd`
+   * only on the Whitehall and Toledo streets of that name, not the golden
+   * parcel's in Pleasant Township. Instead,
+   * locate the street itself, with the typed city and then without, and
+   * match `0 <street>` in a box around each located street. Once the
+   * locator has found the street, a miss is final. If the locator is down,
+   * a typed city narrows a direct site-address match, as in the main search.
+   */
+  async function searchUnnumbered(
+    parsed: AddressQuery,
+    wanted: Pick<AddressQuery, "direction" | "suffix">,
+    counties: readonly string[],
+    budget: AbortSignal,
+  ): Promise<ParcelSearchResult[]> {
+    const street = parsed.streetOnly.slice(parsed.houseNumber.length).trim();
+    const attempts = parsed.place
+      ? [`${street}, ${parsed.place}`, street]
+      : [street];
+    let locatorFailure: OgripError | undefined;
+    for (const text of attempts) {
+      let streets: LocatedAddress[];
+      try {
+        streets = await locateStreet(text, parsed, budget);
+      } catch (error) {
+        if (!(error instanceof OgripError)) throw error;
+        locatorFailure = error;
+        break;
+      }
+      if (streets.length === 0) continue;
+      // One street's box can take 8 s while the others answer in 0.3 s
+      // (measured 2026-11-18), so a slow street elsewhere in Ohio does not
+      // discard lots already found. A box that failed may have held a
+      // match, so with nothing found its failure is reported, not `[]`.
+      const perStreet = await Promise.allSettled(
+        streets.map((point) => parcelsAtAddress(point, wanted, budget)),
+      );
+      const found = perStreet.flatMap((settled) =>
+        settled.status === "fulfilled" ? settled.value : [],
+      );
+      const failed = perStreet.find(
+        (settled): settled is PromiseRejectedResult =>
+          settled.status === "rejected",
+      );
+      if (found.length > 0 || !failed) return found;
+      throw failed.reason;
+    }
+    if (
+      locatorFailure &&
+      parsed.place &&
+      counties.length > 0 &&
+      counties.length <= MAX_PLACE_COUNTIES
+    ) {
+      return parcelsBySiteAddress(parsed, counties, budget);
     }
     if (locatorFailure) throw locatorFailure;
     return [];
@@ -436,6 +512,43 @@ export function createOgripClient(
         latitude: candidate.location.y,
       });
       if (located.length === MAX_LOCATOR_CANDIDATES) break;
+    }
+    return located;
+  }
+
+  /**
+   * Points the locator holds for a street name with no house number, one
+   * per street of that name. Only exact matches on the typed name count:
+   * the locator also offers similar names.
+   */
+  async function locateStreet(
+    query: string,
+    parsed: AddressQuery,
+    budget: AbortSignal,
+  ): Promise<LocatedAddress[]> {
+    const url = withParams(`${OGRIP_LOCATOR}/findAddressCandidates`, {
+      SingleLine: query,
+      maxLocations: String(MAX_STREET_CANDIDATES),
+      outSR: "4326",
+      outFields: "Addr_type,StName",
+      f: "json",
+    });
+    const result = await getJson(url, locatorSchema, budget);
+    const seen = new Set<string>();
+    const located: LocatedAddress[] = [];
+    for (const candidate of result.candidates) {
+      const { Addr_type, StName } = candidate.attributes;
+      if (candidate.score < MIN_LOCATOR_SCORE) continue;
+      if (Addr_type !== "StreetName" || StName !== parsed.streetName) continue;
+      const id = `${candidate.location.x.toFixed(3)}|${candidate.location.y.toFixed(3)}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      located.push({
+        houseNumber: parsed.houseNumber,
+        streetName: StName,
+        longitude: candidate.location.x,
+        latitude: candidate.location.y,
+      });
     }
     return located;
   }

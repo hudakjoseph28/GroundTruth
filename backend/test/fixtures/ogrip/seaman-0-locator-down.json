@@ -1,0 +1,24 @@
+{
+  "scenario": "seaman-0-locator-down",
+  "path": "/api/parcels/search?q=0%20Seaman%20Rd",
+  "recordedAt": "2026-11-18T18:34:51.622Z",
+  "exchanges": [
+    {
+      "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=SEAMAN+RD&maxLocations=10&outSR=4326&outFields=Addr_type%2CStName&f=json",
+      "status": 503,
+      "body": {"forcedOutage":"recorder answered 503 for the locator"},
+      "forcedFailure": true
+    }
+  ],
+  "apiResponse": {
+    "status": 502,
+    "body": {
+      "error": {
+        "code": "INTERNAL_ERROR",
+        "message": "Ohio's parcel service could not be reached. Try again in a moment.",
+        "requestId": "fc3a4e4e-7c79-46bc-80d3-d3dd328b6891",
+        "retryable": true
+      }
+    }
+  }
+}

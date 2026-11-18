@@ -1,4 +1,4 @@
-import { goldenParcel, type CheckKind, type CheckStatus, type ReviewerRole } from "@groundtruth/shared";
+import { goldenParcel, stagedDeal, type CheckKind, type CheckStatus, type ReviewerRole } from "@groundtruth/shared";
 
 // Homepage copy. Claims follow docs/context/Problem.md: a public record, a
 // professional's sign-off, and an escrow receipt stay separate, and every
@@ -23,8 +23,8 @@ export const SOURCES = {
 
 export type SourceLink = (typeof SOURCES)[keyof typeof SOURCES];
 
-/** The amount the diagrams move. An example figure, not the staged deal's. */
-export const EXAMPLE_AMOUNT = 25_000;
+/** The amount the diagrams move: the staged devnet deal's, in whole test USDC (6 decimals). */
+export const EXAMPLE_AMOUNT = Number(stagedDeal.amountBaseUnits) / 1_000_000;
 
 // ---------- Hero ----------
 
@@ -39,7 +39,7 @@ export const HERO = {
   demo: { before: "Try a demo parcel:", parcelId: goldenParcel.sourceParcelId },
   trust: [
     { icon: "record", label: "Public records cited" },
-    { icon: "signature", label: "Licensed reviewers sign" },
+    { icon: "signature", label: "Reviewers sign" },
     { icon: "escrow", label: "USDC escrow on Solana" },
   ] satisfies readonly { icon: TrustIcon; label: string }[],
   land: {
@@ -122,7 +122,7 @@ export const HOW = {
       boundary: "Boundary: outlined in gold on the imagery",
     },
     profile: "Elevation, west to east",
-    note: "Shown: the demo parcel, with a stand-in boundary.",
+    note: "Shown: the demo parcel, with the boundary Ohio publishes.",
     description:
       "The demo parcel from above: aerial imagery with the boundary outlined in gold, over a profile of the ground's elevation from west to east.",
   },
@@ -143,7 +143,7 @@ export const HOW = {
     buyer: "Buyer",
     escrow: "Escrow",
     seller: "Seller",
-    unit: "USDC",
+    unit: "test USDC",
     locked: "locked",
     paid: "paid out",
     waiting: "Locked until three reviewers sign",
@@ -160,7 +160,7 @@ export const HOW = {
     } satisfies Record<Outcome, string>,
     note: "Illustration.",
     description: {
-      lock: "Diagram: USDC flows from the buyer's wallet into the escrow and locks there, with three reviewer sign-offs still waiting.",
+      lock: "Diagram: test USDC flows from the buyer's wallet into the escrow and locks there, with three reviewer sign-offs still waiting.",
       held: "Diagram: the title reviewer has placed a hold, so the release is rejected and the escrow's balance is unchanged.",
       cleared:
         "Diagram: title, survey, and septic have all signed, and the escrow pays the bound seller.",

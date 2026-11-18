@@ -27,6 +27,10 @@ export const OGRIP_SCENARIOS = {
   "high-750-no-direction": `/api/parcels/search?q=${encodeURIComponent("750 High St, Columbus")}`,
   "high-750-north": `/api/parcels/search?q=${encodeURIComponent("750 N High St, Columbus")}`,
   "high-750-north-spelled": `/api/parcels/search?q=${encodeURIComponent("750 North High Street, Columbus")}`,
+  /** The golden parcel publishes `0 SEAMAN RD`: a rear lot with no number. */
+  "seaman-0": `/api/parcels/search?q=${encodeURIComponent("0 Seaman Rd")}`,
+  "seaman-0-galloway": `/api/parcels/search?q=${encodeURIComponent("0 Seaman Rd, Galloway")}`,
+  "seaman-0-locator-down": `/api/parcels/search?q=${encodeURIComponent("0 Seaman Rd")}`,
 } as const;
 
 /**
@@ -36,6 +40,7 @@ export const OGRIP_SCENARIOS = {
 export const LOCATOR_DOWN: ReadonlySet<OgripScenario> = new Set([
   "locator-down-with-city",
   "locator-down-without-city",
+  "seaman-0-locator-down",
 ]);
 
 export type OgripScenario = keyof typeof OGRIP_SCENARIOS;
