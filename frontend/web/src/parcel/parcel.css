@@ -201,6 +201,39 @@
   outline: none;
 }
 
+/* The API is building this parcel's land block. */
+.land-stage[data-building] {
+  display: grid;
+  place-items: center;
+  cursor: progress;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  animation: land-building 1.6s ease-in-out infinite alternate;
+}
+
+.land-building {
+  max-width: 28ch;
+  margin: 0;
+  padding-inline: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  opacity: 0.75;
+}
+
+@keyframes land-building {
+  from {
+    background: color-mix(in srgb, currentColor 4%, transparent);
+  }
+  to {
+    background: color-mix(in srgb, currentColor 9%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .land-stage[data-building] {
+    animation: none;
+  }
+}
+
 .land-stage:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: -2px;

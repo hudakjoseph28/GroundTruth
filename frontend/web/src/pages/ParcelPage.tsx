@@ -165,7 +165,7 @@ function BackLink() {
 }
 
 function ParcelView({ parcel }: { parcel: Parcel }) {
-  const assets = useLandAssets(parcel.sourceParcelId);
+  const { assets, building } = useLandAssets(parcel);
   const mode = useRenderMode();
   const { outcome: reportOutcome, retry: retryReport } = useLoaded(
     parcel.key,
@@ -244,7 +244,7 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
               {PARCEL_PAGE.keyLabel} <span>{parcel.key}</span>
             </p>
           </header>
-          <LandBlock parcel={parcel} assets={assets} mode={mode} staged={staged} revealed={revealed} onReady={markLandReady} />
+          <LandBlock parcel={parcel} assets={assets} building={building} mode={mode} staged={staged} revealed={revealed} onReady={markLandReady} />
         </div>
         {reportOutcome?.status === "found" && dealOutcomes !== null ? (
           <Ledger

@@ -30,6 +30,10 @@ export const LAND = {
     chosen: "Flat aerial view of the parcel.",
   },
   loading: "Loading the land…",
+  /** While the API builds a land block for a parcel that is not baked. */
+  building: "Building the 3D land from USGS aerial imagery and elevation…",
+  /** When that build fails or takes too long; the flat boundary is shown instead. */
+  unavailable: "The 3D land isn't ready for this parcel yet, so its boundary is shown flat. Try again in a minute.",
   /** What the land block says when it has keyboard focus. */
   stage: {
     turning: "Land block. Arrow keys turn it. Enter opens Explore the area.",
