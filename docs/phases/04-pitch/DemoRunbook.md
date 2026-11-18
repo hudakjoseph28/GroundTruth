@@ -18,7 +18,36 @@ Practise the 2:45–4:00 segment on the rehearsal deal, never on the live one. `
 3. Run the segment as written, with `pnpm --filter @groundtruth/escrow demo:deals stage-finish --deal staged-devnet-deal-rehearsal` as the command.
 4. Check that the phone updates, and time it.
 
-The rehearsal deal can run once. The buyer needs 10 test USDC free for it, on top of the live deal's 10 already in escrow.
+The rehearsal deal can run once. **`staged-devnet-deal-rehearsal` (v1) is used up.** On Nov 18 it tested the reviewer portal: `stage-prep`, then the septic approval and the release through `/review` ([approval](https://explorer.solana.com/tx/5im6Vt5iBhkRxmcJxRzPcgf2demRR4bBY2oTtZZX5Y4DkuyrDnxcB8Dst2qAPnn8krAJe4ocswMh9TY1rjKmskYY?cluster=devnet), [release](https://explorer.solana.com/tx/3z7BNJH6xrXmoMHY9cvpD37c775prm2PgS4c2xL1SFTEevoe3UnJc2cUgWLXUfYEuzLncLw7J1djRDqhZ4FGsr4z?cluster=devnet)). Another rehearsal needs a `-v2` rehearsal deal. Each one needs 10 test USDC free in the buyer's wallet, on top of the live deal's 10 already in escrow.
+
+## Septic reviewer's staged key in Phantom (for the stage)
+
+The reviewer portal (<https://groundtruth-lac.vercel.app/review>) lets the septic reviewer sign the live deal's last approval from Phantom on stage, then submit the release. It replaces `stage-finish` in the 2:45–4:00 segment. The septic reviewer's staged keypair is `escrow/.demo-wallets/septic.json`, on the laptop that ran the demo deals. It is gitignored. Never commit, project, paste into chat, or screen-share it.
+
+1. **Use a demo-only Phantom wallet** on the device that will sign: the presenter's phone, or the driver's laptop. Never use a wallet that holds real funds.
+2. **Put Phantom on devnet:** Settings → Developer Settings → **Testnet mode** on, network **Solana Devnet**. The portal always sends to devnet, but Phantom's own preview should match.
+3. **Copy the key to the clipboard without showing it.** On the laptop, from the repository root:
+
+   ```bash
+   cd escrow && node -e 'const { utils } = require("@anchor-lang/core"); process.stdout.write(utils.bytes.bs58.encode(Uint8Array.from(require("./.demo-wallets/septic.json"))))' | pbcopy
+   ```
+
+   It converts the keypair file to the base58 private key Phantom imports, straight into the clipboard. Get it to the phone only over a private channel you control, such as AirDrop to yourself, and never paste it anywhere else.
+4. **Import it:** Phantom → account menu → **Add / Connect Wallet** → **Import Private Key** → paste → name it `GroundTruth septic (staged)`. Then clear the clipboard with `pbcopy < /dev/null`.
+5. **Check the address.** The imported account must be `Ab7KLjree8ZgUrgXvtpb84oHKvzakC6VpRcPqnXoYz3F`, the septic reviewer bound to the deals. Any other address means the wrong file.
+6. **Fee SOL:** the reviewer pays its own network fee. The septic wallet has about 0.05 devnet SOL, enough for hundreds of fees. Top it up at <https://faucet.solana.com> if it drops below 0.01.
+7. **Before the segment:** in Phantom's in-app browser, open <https://groundtruth-lac.vercel.app/review> and tap **Connect Phantom**. The `staged-devnet-deal-live` card must show `10 test USDC`, `Funded`, Title and Survey `Signed`, Septic `Waiting`, and **Approve as septic reviewer**. Do not tap it until the segment.
+8. **On stage:**
+   - tap **Approve as septic reviewer** and approve in Phantom;
+   - wait for `Confirmed on Solana devnet`;
+   - tap **Release payment to the seller** and approve again.
+
+   Each step shows its signature and an Explorer link, and the deal page updates through the Stream as usual.
+9. **After the show,** remove the imported account from Phantom (Settings → Manage Accounts → the account → Remove).
+
+**Prerequisite:** the portal reads deals from the production API, so it needs this web build deployed (Vercel). The live deal is already seeded there.
+
+**If Phantom or the portal fails on stage:** use `pnpm --filter @groundtruth/escrow demo:deals stage-finish` from the laptop, as written in the segment below.
 
 ## Pre-show checklist
 
