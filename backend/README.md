@@ -39,13 +39,23 @@ These routes query Ohio's statewide parcel layer and address locator from the AP
 
 **Parcel ID search.** A query is a parcel ID when every space-separated part has a digit (`010-042534`, `010042534`, `010 042534`). The typed ID is tried as typed, without separators, and re-punctuated in every separator layout measured in the live layer ([src/parcels/parcelIdFormats.ts](src/parcels/parcelIdFormats.ts), e.g. Franklin's `3-6`), all in one indexed `LocalParcelID IN (...)` query. So `010042534` finds `010-042534`, and `001-000006-01.000` finds `00100000601000`. The statewide form `39049-010-042534` also works. Regenerate the layouts with `pnpm --filter @groundtruth/backend generate:id-formats`.
 
-**Address search.** It needs a house number. It stops at the first step that finds a match:
+**Address search.** With a house number, it stops at the first step that finds a match (a street typed without one is covered below):
 
 1. The [OGRIP locator](https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer) normalizes the query as typed. The API then searches a 500 m box around each located point, and a 1,500 m box only if 500 m finds nothing. Each box is **filtered by house number on the server** (`SitusAddressAll LIKE '<number> %'`, plus a pattern for the few site addresses with leading spaces), with `returnGeometry=false` and a centroid, so it returns a handful of rows instead of up to 2,000. It keeps only parcels whose **published site address** has the same house number and street name. Locator points are interpolated along street ranges and can land hundreds of meters from the lot (84 W Dodridge St lands about 400 m away), so the point alone never picks a parcel. The boundary is fetched only by `GET /api/parcels/:parcelKey`.
 2. If the locator located nothing, or located a different street than the one typed, the API retries it. First it tries the query with spelled-out directions and suffixes abbreviated, because the locator reads "South" in `37 South High Street` as a street named SOUTH. Then it tries house number + street only, because the locator rejects some city names it does not hold for a street: `10034 Appleton Rd Johnstown OH` fails, `10034 Appleton Rd` works. Once the locator has located the typed street, a miss is final.
 3. If the locator is down or knows no such street, `SitusAddressAll` is matched directly in the counties the typed city lies in, using Census 2020 place and township names ([src/parcels/ohioPlaces.ts](src/parcels/ohioPlaces.ts), regenerated with `generate:places`). This step is slow because the field is not indexed (0.5–40 s per county), so it runs only when a city narrows it to at most three counties. Without a city, a locator outage is reported as `502`.
 
 **House number 0.** Counties publish `0` for a lot with no assigned address, such as the golden parcel's `0 SEAMAN RD`. The locator has no point for house number 0: for `0 Seaman Rd` it answers only the Whitehall and Toledo streets. So for `0` the API asks the locator for the street name alone (with the typed city, then without), keeps candidates of type `StreetName` that equal the typed name, and searches the same 500 m / 1,500 m boxes, filtered to `0 <street>`, around each one. `Seaman Rd` locates eight streets statewide, and the Franklin one returns all seven `0 SEAMAN RD` lots, including `230-000918`. One street's box can stall for 8 s while the others answer in 0.3 s (measured 2026-11-18). Lots already found are returned even if another street's box failed. With nothing found and a box failed, the failure is reported, not `[]`.
+
+**Street with no house number.** `Seaman Rd` or `Dodridge St` returns up to ten lots on that street, each with its address. It reuses the house-number-0 path: the locator is asked for the street name alone, and each located street's box is filtered on the server to the street name (`SitusAddressAll LIKE '%SEAMAN%'`, at most 200 rows a box) and then to whole-word matches, so `Seaman Rd` never returns `SEAMANS LN`. A typed direction or suffix must still agree, which keeps `Seaman St` and `Seaman Dr` out of `Seaman Rd`.
+
+- **A name is often several streets.** `Seaman Rd` locates eight statewide. Results are taken from each located street in turn, nearest its located point first, so the first three are one lot each in Adams, Franklin, and Lucas.
+- **A typed city** drops lots whose published address names another city. `Seaman Rd, Galloway` drops the Lucas lots (published as Toledo or Oregon). It keeps Adams and Franklin, which publish no city for these lots, because Galloway is a postal city and not in the Census place table.
+- **Measured live on 2026-11-18:** `Seaman Rd` 0.9 s over 13 requests, `Dodridge St` 0.2 s over 2.
+- **A locator outage is reported as `502`.** There is no direct match to fall back on without a house number.
+- **`5th Ave`** is read as a street, not as house number 5.
+
+**A city alone.** `Columbus`, `Johnstown OH 43031`, or `Mt Vernon` (any Census 2020 place or township name with nothing else) answers `400 INVALID_REQUEST` without calling OGRIP: "“Columbus” is a place, not a street. Add a street name or a full address there, or search by parcel ID." The village of Seaman is a place too, so `Seaman` gets that message and `Seaman Rd` gets the street.
 
 **Direction and suffix.** The locator drops street directions (`1739 N High St` and `1739 S High St` both locate as `1739 HIGH`), so the typed text decides:
 - A typed direction (`N`, or spelled out as `North`, before or after the name) must equal the published one. `1739 N High St` returns `[]`, because OGRIP publishes only `1739 S HIGH ST`.
@@ -64,13 +74,33 @@ An address naming another state (`…, Washington, DC 20500`) returns `[]` witho
 | --- | --- |
 | `sourceParcelId` | `LocalParcelID` (only IDs matching `[A-Za-z0-9][A-Za-z0-9._-]*`; placeholders, vacated-road labels, and blanks are skipped) |
 | `county`, `countyFips` | `County`, mapped to its Census FIPS code; must agree with the `StateParcelID` prefix (`39049-…`) |
-| `siteAddress` | `SitusAddressAll`, with whitespace collapsed |
+| `siteAddress` | `SitusAddressAll`, cleaned for display: one copy of a repeated city and ZIP, title case, single spaces (`10034 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031` becomes `10034 Appleton Rd, Johnstown, OH 43031`). See [Site address](#site-address). |
 | `acreage` | `LandArea` when above 0 (it tracks polygon area in acres in every county that fills it) |
 | `mappedAcreage` | `Shape__Area` ÷ 43,560, to two decimals. The layer is EPSG:3735 (US survey feet), so this is the boundary's own area in acres. Franklin publishes `LandArea` 0, so search shows this instead, labeled "mapped". A parcel published as several polygons sums its parts on the parcel route; in search, copies that disagree drop it rather than show one part's area. Never a recorded or legal acreage. |
 | `centroid` | ArcGIS centroid in search results; area-weighted centroid of the boundary on the parcel route |
 | `geometry.geojson` | Layer geometry in WGS84; a parcel published as several polygons becomes one `MultiPolygon` |
 | `geometry.sourceUrl` | The exact query URL the API fetched |
 | `township` | Not published by OGRIP; omitted |
+
+### Site address
+
+Counties publish `SitusAddressAll` in capitals, padded with spaces, and in several layouts. [src/parcels/siteAddress.ts](src/parcels/siteAddress.ts) turns each into one readable line:
+
+| County | Published | `siteAddress` |
+| --- | --- | --- |
+| Licking | `10034 APPLETON RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031` | `10034 Appleton Rd, Johnstown, OH 43031` |
+| Lucas | `7522  SEAMAN RD  TOLEDO 43616` | `7522 Seaman Rd, Toledo, OH 43616` |
+| Vinton | `68475 PRATTSVILLE RD MC ARTHUR 45651` | `68475 Prattsville Rd, Mc Arthur, OH 45651` |
+| Franklin | `84 W DODRIDGE ST   ` | `84 W Dodridge St` |
+| Wyandot | `310 W  CHURCH                 ST  ` | `310 W Church St` |
+
+- **Nothing is invented.** The only word added is `OH`, before a published ZIP. Franklin publishes no city, so its addresses get none. The only words dropped are a repeated city and ZIP.
+- **Where the comma goes.** Between street and city only where the county repeats the city, separates it with a wider gap, or the street ends in a Census 2020 Ohio place name. Otherwise the words stay as published.
+- **House number 0 stays** (`0 Seaman Rd`): it is how a county says a lot has no assigned number. A field holding only `0` is no address and is omitted.
+- **Search is unaffected.** It matches on the published text before cleaning.
+- **The published text is not a field.** `Parcel` in [DataContract](../docs/architecture/DataContract.md) has one `siteAddress`, so the API returns only the cleaned value. The county's own text is in the OGRIP record at the parcel's `geometry.sourceUrl`.
+
+After a change to the cleaning, `pnpm --filter @groundtruth/backend record:ogrip --refresh` re-derives each recording's saved API response from its saved OGRIP responses, with no live call.
 
 Owner mailing fields (`MailAddressAll`, `MailCity`, …) are never requested, and the response schema drops them if they arrive.
 

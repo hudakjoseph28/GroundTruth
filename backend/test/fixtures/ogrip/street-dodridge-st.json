@@ -1,0 +1,172 @@
+{
+  "scenario": "street-dodridge-st",
+  "path": "/api/parcels/search?q=Dodridge%20St",
+  "recordedAt": "2026-11-18T22:46:29.889Z",
+  "exchanges": [
+    {
+      "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=DODRIDGE+ST&maxLocations=10&outSR=4326&outFields=Addr_type%2CStName&f=json",
+      "status": 200,
+      "body": {"spatialReference":{"wkid":4326,"latestWkid":4326},"candidates":[{"address":"DODRIDGE, COLUMBUS, 43202","location":{"x":-83.016067946713,"y":40.01610927128},"score":84,"attributes":{"Addr_type":"StreetName","StName":"DODRIDGE"},"extent":{"xmin":-83.017067946713,"ymin":40.01510927128,"xmax":-83.015067946713,"ymax":40.01710927128}}]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25DODRIDGE%25%27&geometry=-83.021933%2C40.011618%2C-83.010203%2C40.020601&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Franklin","LocalParcelID":"010-042534","StateParcelID":"39049-010-042534","SitusAddressAll":"84 W DODRIDGE ST   ","LandArea":0,"Shape__Area":4030.744873046875},"centroid":{"x":-83.01437922572335,"y":40.01657008028699}},{"attributes":{"County":"Franklin","LocalParcelID":"010-003419","StateParcelID":"39049-010-003419","SitusAddressAll":"70 W DODRIDGE ST   ","LandArea":0,"Shape__Area":2662.01611328125},"centroid":{"x":-83.01392638888247,"y":40.01658607744745}},{"attributes":{"County":"Franklin","LocalParcelID":"010-003416","StateParcelID":"39049-010-003416","SitusAddressAll":"52 W DODRIDGE ST   ","LandArea":0,"Shape__Area":4213.8701171875},"centroid":{"x":-83.01344253190223,"y":40.01672845197138}},{"attributes":{"County":"Franklin","LocalParcelID":"010-054306","StateParcelID":"39049-010-054306","SitusAddressAll":"0  DODRIDGE ST   ","LandArea":0,"Shape__Area":3866.19287109375},"centroid":{"x":-83.0129784174452,"y":40.01678132591919}},{"attributes":{"County":"Franklin","LocalParcelID":"010-037195","StateParcelID":"39049-010-037195","SitusAddressAll":"105 W DODRIDGE ST   ","LandArea":0,"Shape__Area":4820.652099609375},"centroid":{"x":-83.01468482668062,"y":40.01594547760654}},{"attributes":{"County":"Franklin","LocalParcelID":"010-026497","StateParcelID":"39049-010-026497","SitusAddressAll":"40  DODRIDGE ST   ","LandArea":0,"Shape__Area":5315.1417236328125},"centroid":{"x":-83.0108539497142,"y":40.01717239652812}},{"attributes":{"County":"Franklin","LocalParcelID":"010-056491","StateParcelID":"39049-010-056491","SitusAddressAll":"64  DODRIDGE ST   ","LandArea":0,"Shape__Area":3704.7122802734375},"centroid":{"x":-83.01016348858145,"y":40.01719756060165}},{"attributes":{"County":"Franklin","LocalParcelID":"010-077045","StateParcelID":"39049-010-077045","SitusAddressAll":"39 E DODRIDGE ST   ","LandArea":0,"Shape__Area":3198.5008544921875},"centroid":{"x":-83.01072338624058,"y":40.01664839523769}},{"attributes":{"County":"Franklin","LocalParcelID":"010-013765","StateParcelID":"39049-010-013765","SitusAddressAll":"54 W DODRIDGE ST   ","LandArea":0,"Shape__Area":4123.8077392578125},"centroid":{"x":-83.01358672237876,"y":40.01669339223055}},{"attributes":{"County":"Franklin","LocalParcelID":"010-049307","StateParcelID":"39049-010-049307","SitusAddressAll":"38 W DODRIDGE ST   ","LandArea":0,"Shape__Area":3827.917236328125},"centroid":{"x":-83.01309192066377,"y":40.01676320455015}},{"attributes":{"County":"Franklin","LocalParcelID":"010-032928","StateParcelID":"39049-010-032928","SitusAddressAll":"0  DODRIDGE ST   ","LandArea":0,"Shape__Area":27121.288818359375},"centroid":{"x":-83.01309054315061,"y":40.01619407053287}},{"attributes":{"County":"Franklin","LocalParcelID":"010-062815","StateParcelID":"39049-010-062815","SitusAddressAll":"101 W DODRIDGE ST   ","LandArea":0,"Shape__Area":4154.3370361328125},"centroid":{"x":-83.01459127969247,"y":40.016013868667834}},{"attributes":{"County":"Franklin","LocalParcelID":"010-001128","StateParcelID":"39049-010-001128","SitusAddressAll":"34  DODRIDGE ST   ","LandArea":0,"Shape__Area":5508.9547119140625},"centroid":{"x":-83.01096805589685,"y":40.017152817744716}},{"attributes":{"County":"Franklin","LocalParcelID":"010-015946","StateParcelID":"39049-010-015946","SitusAddressAll":"56  DODRIDGE ST   ","LandArea":0,"Shape__Area":7113.2999267578125},"centroid":{"x":-83.01033859720113,"y":40.017168941776355}},{"attributes":{"County":"Franklin","LocalParcelID":"010-041260","StateParcelID":"39049-010-041260","SitusAddressAll":"63 E DODRIDGE ST   ","LandArea":0,"Shape__Area":4466.327392578125},"centroid":{"x":-83.01009282493837,"y":40.01665943486725}},{"attributes":{"County":"Franklin","LocalParcelID":"010-028424","StateParcelID":"39049-010-028424","SitusAddressAll":"43 E DODRIDGE ST   ","LandArea":0,"Shape__Area":3435.964599609375},"centroid":{"x":-83.01060672941924,"y":40.016666037573124}},{"attributes":{"County":"Franklin","LocalParcelID":"010-025936","StateParcelID":"39049-010-025936","SitusAddressAll":"29 E DODRIDGE ST   ","LandArea":0,"Shape__Area":3518.0877685546875},"centroid":{"x":-83.0110627759958,"y":40.01658416043357}},{"attributes":{"County":"Franklin","LocalParcelID":"010-023573","StateParcelID":"39049-010-023573","SitusAddressAll":"114 W DODRIDGE ST   ","LandArea":0,"Shape__Area":360.550048828125},"centroid":{"x":-83.01492867911755,"y":40.01672947407226}},{"attributes":{"County":"Franklin","LocalParcelID":"010-066219","StateParcelID":"39049-010-066219","SitusAddressAll":"62 W DODRIDGE ST   ","LandArea":0,"Shape__Area":3034.010986328125},"centroid":{"x":-83.01369258285493,"y":40.01662283451364}},{"attributes":{"County":"Franklin","LocalParcelID":"010-049308","StateParcelID":"39049-010-049308","SitusAddressAll":"44 W DODRIDGE ST   ","LandArea":0,"Shape__Area":3987.982666015625},"centroid":{"x":-83.01320688887901,"y":40.016751258004106}},{"attributes":{"County":"Franklin","LocalParcelID":"010-040674","StateParcelID":"39049-010-040674","SitusAddressAll":"0  DODRIDGE ST   ","LandArea":0,"Shape__Area":4037.4483642578125},"centroid":{"x":-83.01268195289107,"y":40.01643241325002}},{"attributes":{"County":"Franklin","LocalParcelID":"010-023020","StateParcelID":"39049-010-023020","SitusAddressAll":"89 W DODRIDGE ST   ","LandArea":0,"Shape__Area":9073.49951171875},"centroid":{"x":-83.01440885928214,"y":40.01604592189557}},{"attributes":{"County":"Franklin","LocalParcelID":"010-040247","StateParcelID":"39049-010-040247","SitusAddressAll":"125 W DODRIDGE ST   ","LandArea":0,"Shape__Area":65864.59985351562},"centroid":{"x":-83.01555672791086,"y":40.015803093697635}},{"attributes":{"County":"Franklin","LocalParcelID":"010-014398","StateParcelID":"39049-010-014398","SitusAddressAll":"30 E DODRIDGE ST   ","LandArea":0,"Shape__Area":5599.611572265625},"centroid":{"x":-83.01108514987303,"y":40.0171331814751}},{"attributes":{"County":"Franklin","LocalParcelID":"010-026018","StateParcelID":"39049-010-026018","SitusAddressAll":"31 E DODRIDGE ST   ","LandArea":0,"Shape__Area":3420.4229736328125},"centroid":{"x":-83.01094864130124,"y":40.01660266974557}},{"attributes":{"County":"Franklin","LocalParcelID":"010-014412","StateParcelID":"39049-010-014412","SitusAddressAll":"80 W DODRIDGE ST   ","LandArea":0,"Shape__Area":2158.2633056640625},"centroid":{"x":-83.01424644736186,"y":40.01651486022573}},{"attributes":{"County":"Franklin","LocalParcelID":"010-032941","StateParcelID":"39049-010-032941","SitusAddressAll":"66 W DODRIDGE ST   ","LandArea":0,"Shape__Area":2913.0948486328125},"centroid":{"x":-83.01381323013284,"y":40.01660402711085}},{"attributes":{"County":"Franklin","LocalParcelID":"010-003415","StateParcelID":"39049-010-003415","SitusAddressAll":"46 W DODRIDGE ST   ","LandArea":0,"Shape__Area":4392.4208984375},"centroid":{"x":-83.01332542140379,"y":40.0167397677679}},{"attributes":{"County":"Franklin","LocalParcelID":"010-040735","StateParcelID":"39049-010-040735","SitusAddressAll":"0  DODRIDGE ST   ","LandArea":0,"Shape__Area":3744.2596435546875},"centroid":{"x":-83.01286232239441,"y":40.016791924521776}},{"attributes":{"County":"Franklin","LocalParcelID":"010-006727","StateParcelID":"39049-010-006727","SitusAddressAll":"81 W DODRIDGE ST   ","LandArea":0,"Shape__Area":7553.935302734375},"centroid":{"x":-83.01417688076953,"y":40.01608222271902}},{"attributes":{"County":"Franklin","LocalParcelID":"010-039883","StateParcelID":"39049-010-039883","SitusAddressAll":"107 W DODRIDGE ST   ","LandArea":0,"Shape__Area":6066.477783203125},"centroid":{"x":-83.01479877563392,"y":40.015924684247146}},{"attributes":{"County":"Franklin","LocalParcelID":"010-015478","StateParcelID":"39049-010-015478","SitusAddressAll":"57 E DODRIDGE ST   ","LandArea":0,"Shape__Area":4701.3128662109375},"centroid":{"x":-83.0102520843034,"y":40.016729832395534}},{"attributes":{"County":"Franklin","LocalParcelID":"010-005945","StateParcelID":"39049-010-005945","SitusAddressAll":"37 E DODRIDGE ST   ","LandArea":0,"Shape__Area":3482.6617431640625},"centroid":{"x":-83.01083494006794,"y":40.016621626643115}},{"attributes":{"County":"Franklin","LocalParcelID":"010-103672","StateParcelID":"39049-010-103672","SitusAddressAll":"0  DODRIDGE ST   ","LandArea":50.45,"Shape__Area":1991746.4718017578},"centroid":{"x":-83.01810315734257,"y":40.019580314078866}},{"attributes":{"County":"Franklin","LocalParcelID":"010-103670","StateParcelID":"39049-010-103670","SitusAddressAll":"250  DODRIDGE ST   ","LandArea":50.45,"Shape__Area":411557.0606689453},"centroid":{"x":-83.01921310702978,"y":40.01698041402111}},{"attributes":{"County":"Franklin","LocalParcelID":"010-103681","StateParcelID":"39049-010-103681","SitusAddressAll":"316  DODRIDGE ST   ","LandArea":65.84,"Shape__Area":140486.267578125},"centroid":{"x":-83.02097912665472,"y":40.01705820374143}}]}
+    }
+  ],
+  "apiResponse": {
+    "status": 200,
+    "body": [
+      {
+        "parcel": {
+          "key": "ohio:39049:010-040247",
+          "sourceParcelId": "010-040247",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.015803093697635,
+            "longitude": -83.01555672791086
+          },
+          "siteAddress": "125 W Dodridge St",
+          "mappedAcreage": 1.51
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:010-039883",
+          "sourceParcelId": "010-039883",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.015924684247146,
+            "longitude": -83.01479877563392
+          },
+          "siteAddress": "107 W Dodridge St",
+          "mappedAcreage": 0.14
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:010-023573",
+          "sourceParcelId": "010-023573",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.01672947407226,
+            "longitude": -83.01492867911755
+          },
+          "siteAddress": "114 W Dodridge St",
+          "mappedAcreage": 0.01
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:010-037195",
+          "sourceParcelId": "010-037195",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.01594547760654,
+            "longitude": -83.01468482668062
+          },
+          "siteAddress": "105 W Dodridge St",
+          "mappedAcreage": 0.11
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:010-062815",
+          "sourceParcelId": "010-062815",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.016013868667834,
+            "longitude": -83.01459127969247
+          },
+          "siteAddress": "101 W Dodridge St",
+          "mappedAcreage": 0.1
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:010-023020",
+          "sourceParcelId": "010-023020",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.01604592189557,
+            "longitude": -83.01440885928214
+          },
+          "siteAddress": "89 W Dodridge St",
+          "mappedAcreage": 0.21
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:010-042534",
+          "sourceParcelId": "010-042534",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.01657008028699,
+            "longitude": -83.01437922572335
+          },
+          "siteAddress": "84 W Dodridge St",
+          "mappedAcreage": 0.09
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:010-006727",
+          "sourceParcelId": "010-006727",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.01608222271902,
+            "longitude": -83.01417688076953
+          },
+          "siteAddress": "81 W Dodridge St",
+          "mappedAcreage": 0.17
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:010-014412",
+          "sourceParcelId": "010-014412",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.01651486022573,
+            "longitude": -83.01424644736186
+          },
+          "siteAddress": "80 W Dodridge St",
+          "mappedAcreage": 0.05
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:010-003419",
+          "sourceParcelId": "010-003419",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 40.01658607744745,
+            "longitude": -83.01392638888247
+          },
+          "siteAddress": "70 W Dodridge St",
+          "mappedAcreage": 0.06
+        },
+        "matchedOn": "siteAddress"
+      }
+    ]
+  }
+}

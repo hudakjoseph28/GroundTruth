@@ -119,7 +119,7 @@ Run on `main` at `ce33d40` with `vitest run test/report.test.ts test/parcels.tes
 
 ## Known limits
 
-- **House number required.** Address search needs a leading house number; a street name alone returns `[]`. Vacant lots without a number are found by parcel ID.
+- **A city alone is not searched.** A street name without a house number returns up to ten lots on that street, and `0 <street>` finds lots with no assigned number. A city or township on its own answers `400` asking for a street or a parcel ID.
 - **OGRIP publishes 0 acreage for Franklin.** `LandArea` is 0 for Franklin parcels, so `Parcel.acreage` is omitted there. The golden parcel's 3.015 legal acres come from the Franklin County Auditor and are cited only inside its zoning check.
 - **5 counties have no NFHL data.** Fayette (39047), Henry (39069), Vinton (39163), Williams (39171) and Wyandot (39175) have no FEMA NFHL study, so flood is always `unknown` there.
 - **The web search isn't on the live API yet.** `frontend/web/src/data/parcelSource.ts` searches the two canonical parcels only; `GET /api/parcels/search` is live, but the web doesn't call it yet.

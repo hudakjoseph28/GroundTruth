@@ -5,6 +5,7 @@ import type {
 } from "@groundtruth/shared";
 import { countyByName } from "./ohioCounties.js";
 import { formatParcelKey, isKeyableParcelId } from "./parcelKey.js";
+import { cleanSiteAddress } from "./siteAddress.js";
 
 /**
  * The only OGRIP fields GroundTruth reads. The layer also publishes owner
@@ -45,6 +46,9 @@ export type ParcelSummary = Omit<Parcel, "geometry">;
  * - `sourceParcelId` is `LocalParcelID`, the county's published ID.
  * - `countyFips` comes from the county name and must agree with the
  *   `StateParcelID` prefix when one is published.
+ * - `siteAddress` is `SitusAddressAll` cleaned for display (one copy of the
+ *   city and ZIP, title case; see siteAddress.ts). Search matches on the
+ *   published text before this runs.
  * - `acreage` is `LandArea`, which tracks the polygon's area in acres in every
  *   county that fills it (0 means not recorded, so it is omitted).
  * - `mappedAcreage` is the boundary's own area (`Shape__Area`) in acres, to
@@ -72,7 +76,7 @@ export function toParcelSummary(
     countyFips: county.fips,
     centroid,
   };
-  const siteAddress = cleanAddress(attributes.SitusAddressAll);
+  const siteAddress = cleanSiteAddress(attributes.SitusAddressAll);
   if (siteAddress) summary.siteAddress = siteAddress;
   const acreage = attributes.LandArea;
   if (typeof acreage === "number" && Number.isFinite(acreage) && acreage > 0) {
@@ -86,11 +90,6 @@ export function toParcelSummary(
   return summary;
 }
 
-function cleanAddress(value: string | null | undefined): string | undefined {
-  const cleaned = value?.replace(/\s+/g, " ").trim();
-  return cleaned ? cleaned : undefined;
-}
-
 /**
  * True when a published site address starts with the house number and
  * contains the street name as whole words. Directions and street types are
@@ -102,11 +101,30 @@ export function siteAddressMatches(
   streetName: string,
 ): boolean {
   const words = addressWords(siteAddress ?? "");
-  const street = addressWords(streetName);
-  if (words[0] !== houseNumber.toUpperCase() || street.length === 0) {
-    return false;
-  }
-  for (let start = 1; start + street.length <= words.length; start += 1) {
+  if (words[0] !== houseNumber.toUpperCase()) return false;
+  return holdsStreet(words, addressWords(streetName), 1);
+}
+
+/**
+ * True when a published site address is on the street, whatever its house
+ * number: `0 SEAMAN RD`, `5771 SEAMAN RD`, and Adams County's unnumbered
+ * `MAIN ST` all count. The name must appear as whole words, so `SEAMAN`
+ * does not match `SEAMANS LN`.
+ */
+export function siteAddressOnStreet(
+  siteAddress: string | null | undefined,
+  streetName: string,
+): boolean {
+  return holdsStreet(
+    addressWords(siteAddress ?? ""),
+    addressWords(streetName),
+    0,
+  );
+}
+
+function holdsStreet(words: string[], street: string[], from: number): boolean {
+  if (street.length === 0) return false;
+  for (let start = from; start + street.length <= words.length; start += 1) {
     if (street.every((word, offset) => words[start + offset] === word)) {
       return true;
     }

@@ -28,6 +28,7 @@ import {
 import { createEscrowDecoder } from "../../src/chain/escrowDecoder.js";
 import { prisma } from "../../src/db.js";
 import { seedDeal } from "../../src/deals/seedDeal.js";
+import { TEST_DEAL_CREATED_AT } from "../support/testDeal.js";
 
 const load = (file: string) =>
   (
@@ -60,7 +61,11 @@ let detached: { id: string; escrowAddress: string | null }[] = [];
 const copy = (deal: Deal, id: string): Deal => ({
   ...deal,
   id,
-  timeline: deal.timeline.map((e) => ({ ...e, id: `${id}-created` })),
+  timeline: deal.timeline.map((e) => ({
+    ...e,
+    id: `${id}-created`,
+    at: TEST_DEAL_CREATED_AT,
+  })),
 });
 
 const replay = (txs: RpcTransaction[]) =>

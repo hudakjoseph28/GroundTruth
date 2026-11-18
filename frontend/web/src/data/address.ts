@@ -1,15 +1,17 @@
 /**
- * A parcel's published site address, made readable. County records come in
- * capitals, some repeat the city and ZIP, and a vacant lot often has the house
- * number 0. This changes how the address is shown, never which parcel it is:
- * the record's own text stays available as `published`.
+ * A parcel's site address, made readable. The API already answers one clean,
+ * title-cased address ("10034 Appleton Rd, Johnstown, OH 43031"); this adds
+ * the one thing left for the page, a vacant lot's house number 0. It still
+ * tidies a county record in capitals, as the bundled fixtures and an older
+ * API response carry. This changes how the address is shown, never which
+ * parcel it is.
  */
 export interface SiteAddress {
   /** For example "93 Woody Knoll Dr, Thornville, OH 43076" or "Seaman Rd". */
   text: string;
   /** True when the record's house number is 0: the lot has no street number. */
   noHouseNumber: boolean;
-  /** The address exactly as the county published it. */
+  /** The address as the API gave it, with its house number. */
   published: string;
 }
 
@@ -39,13 +41,16 @@ export function formatSiteAddress(published: string | undefined): SiteAddress | 
   const noHouseNumber = /^0+ /.test(text);
   if (noHouseNumber) text = text.replace(/^0+ /, "");
 
-  text = text
-    .split(" ")
-    .map((part) => {
-      const [, word = part, tail = ""] = /^(.*?)(,?)$/.exec(part) ?? [];
-      return titleWord(word.toUpperCase()) + tail;
-    })
-    .join(" ");
+  // Mixed case is the API's own cleaning ("McDaniel", "SR 73"): keep it.
+  if (!/[a-z]/.test(text)) {
+    text = text
+      .split(" ")
+      .map((part) => {
+        const [, word = part, tail = ""] = /^(.*?)(,?)$/.exec(part) ?? [];
+        return titleWord(word) + tail;
+      })
+      .join(" ");
+  }
 
   return { text, noHouseNumber, published: original };
 }

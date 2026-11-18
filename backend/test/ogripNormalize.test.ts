@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   polygonCentroid,
   siteAddressMatches,
+  siteAddressOnStreet,
   toParcelSummary,
 } from "../src/parcels/normalize.js";
 import {
@@ -11,7 +12,9 @@ import {
 } from "../src/parcels/ohioCounties.js";
 import {
   parseAddressQuery,
+  parseStreetQuery,
   placeCounties,
+  placeOnlyQuery,
   siteAddressAgrees,
   sitePlace,
 } from "../src/parcels/addressQuery.js";
@@ -163,6 +166,94 @@ describe("parseAddressQuery", () => {
   });
 });
 
+describe("parseStreetQuery: a street with no house number", () => {
+  it.each([
+    ["Seaman Rd", { streetName: "SEAMAN", streetOnly: "SEAMAN RD", suffix: "RD" }],
+    ["dodridge st", { streetName: "DODRIDGE", streetOnly: "DODRIDGE ST" }],
+    [
+      "W Dodridge Street",
+      { streetName: "DODRIDGE", streetOnly: "W DODRIDGE ST", direction: "W" },
+    ],
+    [
+      "Seaman Rd, Galloway",
+      { streetName: "SEAMAN", streetOnly: "SEAMAN RD", place: "GALLOWAY" },
+    ],
+    [
+      "Seaman Road Oregon OH 43616",
+      { streetName: "SEAMAN", streetOnly: "SEAMAN RD", place: "OREGON" },
+    ],
+    ["5th Ave", { streetName: "5TH", streetOnly: "5TH AVE" }],
+    ["Dodridge", { streetName: "DODRIDGE", streetOnly: "DODRIDGE" }],
+  ])("%s", (query, expected) => {
+    expect(parseStreetQuery(query)).toMatchObject({
+      ...expected,
+      houseNumber: "",
+      outOfState: false,
+    });
+  });
+
+  it("leaves a query that starts with a number to the address parser", () => {
+    expect(parseStreetQuery("84 W Dodridge St")).toBeNull();
+    expect(parseStreetQuery("0 Seaman Rd")).toBeNull();
+    expect(parseStreetQuery("1' OR '1'='1")).toBeNull();
+    expect(parseAddressQuery("Seaman Rd")).toBeNull();
+  });
+
+  it("flags another state", () => {
+    expect(parseStreetQuery("Pennsylvania Ave, Washington, DC")?.outOfState).toBe(
+      true,
+    );
+  });
+});
+
+describe("placeOnlyQuery: a city or township and nothing else", () => {
+  it.each([
+    ["Columbus", "COLUMBUS"],
+    ["columbus, oh", "COLUMBUS"],
+    ["Johnstown OH 43031", "JOHNSTOWN"],
+    ["Mt Vernon", "MOUNT VERNON"],
+    ["North Lima", "NORTH LIMA"],
+    // A village in Adams County, and also the golden parcel's road.
+    ["Seaman", "SEAMAN"],
+  ])("%s is a place", (query, place) => {
+    expect(placeOnlyQuery(query)).toBe(place);
+  });
+
+  it.each([
+    "Seaman Rd",
+    "Columbus St",
+    "Dodridge St, Columbus",
+    "84 W Dodridge St, Columbus",
+    "Dodridge",
+    "asdfqwerzzz",
+    "43031",
+  ])("%s is not just a place", (query) => {
+    expect(placeOnlyQuery(query)).toBeNull();
+  });
+});
+
+describe("siteAddressOnStreet", () => {
+  it.each([
+    ["0  SEAMAN RD   ", "SEAMAN"],
+    ["5771 SEAMAN RD", "seaman"],
+    ["7522  SEAMAN RD  TOLEDO 43616", "SEAMAN"],
+    ["MAIN ST   ", "MAIN"],
+    ["8804  STAGE COACH RD", "STAGE COACH"],
+  ])("%s is on %s", (situs, street) =>
+    expect(siteAddressOnStreet(situs, street)).toBe(true),
+  );
+
+  it.each([
+    ["12 SEAMANS LN", "SEAMAN"],
+    ["0  GEO WRIGHTSVILLE RD", "SEAMAN"],
+    ["8804 COACH STAGE RD", "STAGE COACH"],
+    [null, "SEAMAN"],
+    ["5771 SEAMAN RD", ""],
+  ])("%s is not on %s", (situs, street) =>
+    expect(siteAddressOnStreet(situs, street)).toBe(false),
+  );
+});
+
 describe("sitePlace", () => {
   it.each([
     [
@@ -221,7 +312,7 @@ describe("toParcelSummary", () => {
       sourceParcelId: "010-042534",
       county: "Franklin",
       countyFips: "39049",
-      siteAddress: "84 W DODRIDGE ST",
+      siteAddress: "84 W Dodridge St",
       centroid,
     });
   });

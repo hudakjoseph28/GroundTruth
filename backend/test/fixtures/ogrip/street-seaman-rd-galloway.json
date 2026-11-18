@@ -1,0 +1,237 @@
+{
+  "scenario": "street-seaman-rd-galloway",
+  "path": "/api/parcels/search?q=Seaman%20Rd%2C%20Galloway",
+  "recordedAt": "2026-11-18T22:46:30.082Z",
+  "exchanges": [
+    {
+      "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=SEAMAN+RD%2C+GALLOWAY&maxLocations=10&outSR=4326&outFields=Addr_type%2CStName&f=json",
+      "status": 200,
+      "body": {"spatialReference":{"wkid":4326,"latestWkid":4326},"candidates":[]}
+    },
+    {
+      "url": "https://maps.ohio.gov/arcgis/rest/services/OGRIP/Ogrip_locator/GeocodeServer/findAddressCandidates?SingleLine=SEAMAN+RD&maxLocations=10&outSR=4326&outFields=Addr_type%2CStName&f=json",
+      "status": 200,
+      "body": {"spatialReference":{"wkid":4326,"latestWkid":4326},"candidates":[{"address":"SEAMAN, 45660","location":{"x":-83.39317236993,"y":38.994924385135},"score":80,"attributes":{"Addr_type":"StreetName","StName":"SEAMAN"},"extent":{"xmin":-83.39417236993,"ymin":38.993924385135,"xmax":-83.39217236993,"ymax":38.995924385135}},{"address":"SEAMAN, 43123","location":{"x":-83.246534576251,"y":39.882045178751},"score":80,"attributes":{"Addr_type":"StreetName","StName":"SEAMAN"},"extent":{"xmin":-83.247534576251,"ymin":39.881045178751,"xmax":-83.245534576251,"ymax":39.883045178751}},{"address":"SEAMAN, WHITEHALL, 43213","location":{"x":-82.882260581819,"y":39.978730979614},"score":80,"attributes":{"Addr_type":"StreetName","StName":"SEAMAN"},"extent":{"xmin":-82.883260581819,"ymin":39.977730979614,"xmax":-82.881260581819,"ymax":39.979730979614}},{"address":"SEAMAN, 43412","location":{"x":-83.322057644346,"y":41.653171348174},"score":80,"attributes":{"Addr_type":"StreetName","StName":"SEAMAN"},"extent":{"xmin":-83.323057644346,"ymin":41.652171348174,"xmax":-83.321057644346,"ymax":41.654171348174}},{"address":"SEAMAN, 43616","location":{"x":-83.363383988087,"y":41.652863704432},"score":80,"attributes":{"Addr_type":"StreetName","StName":"SEAMAN"},"extent":{"xmin":-83.364383988087,"ymin":41.651863704432,"xmax":-83.362383988087,"ymax":41.653863704432}},{"address":"SEAMAN, OREGON, 43616","location":{"x":-83.431313712598,"y":41.65227372105},"score":80,"attributes":{"Addr_type":"StreetName","StName":"SEAMAN"},"extent":{"xmin":-83.432313712598,"ymin":41.65127372105,"xmax":-83.430313712598,"ymax":41.65327372105}},{"address":"SEAMAN, TOLEDO, 43605","location":{"x":-83.49561217471,"y":41.65101277371},"score":80,"attributes":{"Addr_type":"StreetName","StName":"SEAMAN"},"extent":{"xmin":-83.49661217471,"ymin":41.65001277371,"xmax":-83.49461217471,"ymax":41.65201277371}},{"address":"SEAMAN, HUBER HEIGHTS, 45424","location":{"x":-84.124576851843,"y":39.838699985184},"score":80,"attributes":{"Addr_type":"StreetName","StName":"SEAMAN"},"extent":{"xmin":-84.125576851843,"ymin":39.837699985184,"xmax":-84.123576851843,"ymax":39.839699985184}}]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-83.252388%2C39.877554%2C-83.240681%2C39.886537&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Franklin","LocalParcelID":"230-001188","StateParcelID":"39049-230-001188","SitusAddressAll":"3275  SEAMAN RD   ","LandArea":0,"Shape__Area":374983.8103027344},"centroid":{"x":-83.24687448544177,"y":39.879529735189436}},{"attributes":{"County":"Franklin","LocalParcelID":"230-001005","StateParcelID":"39049-230-001005","SitusAddressAll":"3177  SEAMAN RD   ","LandArea":0,"Shape__Area":177668.26904296875},"centroid":{"x":-83.24784138845862,"y":39.881688121626034}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000919","StateParcelID":"39049-230-000919","SitusAddressAll":"0  SEAMAN RD   ","LandArea":0,"Shape__Area":173800.7559814453},"centroid":{"x":-83.24794629294699,"y":39.88425605251218}},{"attributes":{"County":"Franklin","LocalParcelID":"230-003241","StateParcelID":"39049-230-003241","SitusAddressAll":"0  SEAMAN RD   ","LandArea":0,"Shape__Area":139305.72326660156},"centroid":{"x":-83.24596848787351,"y":39.884202153203304}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000332","StateParcelID":"39049-230-000332","SitusAddressAll":"3037  SEAMAN RD   ","LandArea":0,"Shape__Area":25456.0595703125},"centroid":{"x":-83.24474697193861,"y":39.88505999130626}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000442","StateParcelID":"39049-230-000442","SitusAddressAll":"2925  SEAMAN RD   ","LandArea":0,"Shape__Area":224212.84399414062},"centroid":{"x":-83.24756924259508,"y":39.88676399117109}},{"attributes":{"County":"Franklin","LocalParcelID":"230-001145","StateParcelID":"39049-230-001145","SitusAddressAll":"0  SEAMAN RD   ","LandArea":0,"Shape__Area":3109218.185913086},"centroid":{"x":-83.24396150580242,"y":39.87508411687184}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000254","StateParcelID":"39049-230-000254","SitusAddressAll":"3303  SEAMAN RD   ","LandArea":0,"Shape__Area":206936.67749023438},"centroid":{"x":-83.24639710992005,"y":39.87901008693971}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000972","StateParcelID":"39049-230-000972","SitusAddressAll":"3211  SEAMAN RD   ","LandArea":0,"Shape__Area":252632.2127685547},"centroid":{"x":-83.24749135521499,"y":39.88100876135942}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000915","StateParcelID":"39049-230-000915","SitusAddressAll":"0  SEAMAN RD   ","LandArea":0,"Shape__Area":4000.9056396484375},"centroid":{"x":-83.24917053397617,"y":39.88503471966685}},{"attributes":{"County":"Franklin","LocalParcelID":"230-001199","StateParcelID":"39049-230-001199","SitusAddressAll":"3139  SEAMAN RD   ","LandArea":0,"Shape__Area":109691.14099121094},"centroid":{"x":-83.24582655496596,"y":39.88354250179891}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000333","StateParcelID":"39049-230-000333","SitusAddressAll":"3051  SEAMAN RD   ","LandArea":0,"Shape__Area":44788.56701660156},"centroid":{"x":-83.24479147025264,"y":39.88467733275518}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000514","StateParcelID":"39049-230-000514","SitusAddressAll":"2957  SEAMAN RD   ","LandArea":0,"Shape__Area":224714.8380126953},"centroid":{"x":-83.24707421561149,"y":39.8861739468501}},{"attributes":{"County":"Franklin","LocalParcelID":"230-001187","StateParcelID":"39049-230-001187","SitusAddressAll":"3321  SEAMAN RD   ","LandArea":0,"Shape__Area":399286.3963623047},"centroid":{"x":-83.2462975183549,"y":39.87837763921269}},{"attributes":{"County":"Franklin","LocalParcelID":"230-001144","StateParcelID":"39049-230-001144","SitusAddressAll":"3233  SEAMAN RD   ","LandArea":0,"Shape__Area":34887.123779296875},"centroid":{"x":-83.24605563795821,"y":39.8809732813178}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000918","StateParcelID":"39049-230-000918","SitusAddressAll":"0  SEAMAN RD   ","LandArea":0,"Shape__Area":132393.54370117188},"centroid":{"x":-83.24857245467427,"y":39.883872218843365}},{"attributes":{"County":"Franklin","LocalParcelID":"230-001377","StateParcelID":"39049-230-001377","SitusAddressAll":"3159  SEAMAN RD   ","LandArea":0,"Shape__Area":196715.24877929688},"centroid":{"x":-83.24737222004423,"y":39.882891889661686}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000335","StateParcelID":"39049-230-000335","SitusAddressAll":"3063  SEAMAN RD   ","LandArea":0,"Shape__Area":25341.501708984375},"centroid":{"x":-83.24431830490005,"y":39.88455354706386}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000576","StateParcelID":"39049-230-000576","SitusAddressAll":"2987  SEAMAN RD   ","LandArea":0,"Shape__Area":225609.30920410156},"centroid":{"x":-83.24656758475952,"y":39.88558629530659}},{"attributes":{"County":"Franklin","LocalParcelID":"230-002203","StateParcelID":"39049-230-002203","SitusAddressAll":"3092  SEAMAN RD   ","LandArea":0,"Shape__Area":217997.46447753906},"centroid":{"x":-83.24293150344621,"y":39.88367983916954}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000897","StateParcelID":"39049-230-000897","SitusAddressAll":"3245  SEAMAN RD   ","LandArea":0,"Shape__Area":232537.43322753906},"centroid":{"x":-83.24738611400514,"y":39.88017500256131}},{"attributes":{"County":"Franklin","LocalParcelID":"230-001309","StateParcelID":"39049-230-001309","SitusAddressAll":"0  SEAMAN RD   ","LandArea":0,"Shape__Area":146134.5078125},"centroid":{"x":-83.24869365287732,"y":39.88257002848446}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000920","StateParcelID":"39049-230-000920","SitusAddressAll":"0  SEAMAN RD   ","LandArea":0,"Shape__Area":112692.33666992188},"centroid":{"x":-83.24875416766763,"y":39.88550898573938}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000364","StateParcelID":"39049-230-000364","SitusAddressAll":"3125  SEAMAN RD   ","LandArea":0,"Shape__Area":82532.28869628906},"centroid":{"x":-83.24445948278812,"y":39.88414991572146}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000486","StateParcelID":"39049-230-000486","SitusAddressAll":"3011  SEAMAN RD   ","LandArea":0,"Shape__Area":223831.27575683594},"centroid":{"x":-83.24606947767796,"y":39.884996475159845}},{"attributes":{"County":"Franklin","LocalParcelID":"230-000601","StateParcelID":"39049-230-000601","SitusAddressAll":"2895  SEAMAN RD   ","LandArea":0,"Shape__Area":218706.98071289062},"centroid":{"x":-83.24803696745442,"y":39.88735909540879}},{"attributes":{"County":"Franklin","LocalParcelID":"230-001186","StateParcelID":"39049-230-001186","SitusAddressAll":"4120  SEAMAN RD   ","LandArea":0,"Shape__Area":6063384.648193359},"centroid":{"x":-83.24195499423189,"y":39.88433020694126}},{"attributes":{"County":"Franklin","LocalParcelID":"230-001174","StateParcelID":"39049-230-001174","SitusAddressAll":"3371  SEAMAN RD   ","LandArea":0,"Shape__Area":619181.0560302734},"centroid":{"x":-83.24595541276543,"y":39.877504776951206}},{"attributes":{"County":"Franklin","LocalParcelID":"230-003227","StateParcelID":"39049-230-003227","SitusAddressAll":"3370  SEAMAN RD   ","LandArea":0,"Shape__Area":109390.55908203125},"centroid":{"x":-83.24270772542951,"y":39.87914335433558}},{"attributes":{"County":"Madison","LocalParcelID":"07-00611.001","StateParcelID":"39097-07-00611.001","SitusAddressAll":"3211 SEAMAN RD  ","LandArea":0.86,"Shape__Area":37578.2861328125},"centroid":{"x":-83.24907876191008,"y":39.88024002081048}},{"attributes":{"County":"Madison","LocalParcelID":"07-00642.000","StateParcelID":"39097-07-00642.000","SitusAddressAll":"3321 SEAMAN RD  ","LandArea":0.86,"Shape__Area":38268.28991699219},"centroid":{"x":-83.24887609891877,"y":39.87740941835852}},{"attributes":{"County":"Madison","LocalParcelID":"07-00434.000","StateParcelID":"39097-07-00434.000","SitusAddressAll":"SEAMAN RD  ","LandArea":0.35,"Shape__Area":14661.581420898438},"centroid":{"x":-83.24891517239669,"y":39.87797184728544}},{"attributes":{"County":"Madison","LocalParcelID":"07-00531.000","StateParcelID":"39097-07-00531.000","SitusAddressAll":"SEAMAN RD  ","LandArea":207.32,"Shape__Area":9045728.21862793},"centroid":{"x":-83.25314491209541,"y":39.873685862352055}},{"attributes":{"County":"Madison","LocalParcelID":"07-00611.000","StateParcelID":"39097-07-00611.000","SitusAddressAll":"4261 SEAMAN RD  ","LandArea":0.84,"Shape__Area":36988.689697265625},"centroid":{"x":-83.24914511015008,"y":39.881019059536555}},{"attributes":{"County":"Madison","LocalParcelID":"07-00522.000","StateParcelID":"39097-07-00522.000","SitusAddressAll":"SEAMAN RD  ","LandArea":0.99,"Shape__Area":43773.8779296875},"centroid":{"x":-83.2489587263923,"y":39.878593414786934}},{"attributes":{"County":"Madison","LocalParcelID":"07-00612.000","StateParcelID":"39097-07-00612.000","SitusAddressAll":"SEAMAN RD  ","LandArea":0.85,"Shape__Area":37020.692626953125},"centroid":{"x":-83.24902042694546,"y":39.87945084865139}}]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-83.398952%2C38.990433%2C-83.387393%2C38.999416&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Adams","LocalParcelID":"0290000031000","StateParcelID":"39001-0290000031000","SitusAddressAll":"134  SEAMAN RD   ","LandArea":9.53,"Shape__Area":414605.20025634766},"centroid":{"x":-83.38741396934607,"y":38.993178827060824}},{"attributes":{"County":"Adams","LocalParcelID":"0290000035000","StateParcelID":"39001-0290000035000","SitusAddressAll":"464  SEAMAN RD   ","LandArea":1.4,"Shape__Area":60946.809143066406},"centroid":{"x":-83.39419988121651,"y":38.99454422022416}},{"attributes":{"County":"Adams","LocalParcelID":"0290000037000","StateParcelID":"39001-0290000037000","SitusAddressAll":"818  SEAMAN RD  PEEBLES 45660","LandArea":5,"Shape__Area":216072.8539428711},"centroid":{"x":-83.3943390221483,"y":38.99267164818323}},{"attributes":{"County":"Adams","LocalParcelID":"0290000041000","StateParcelID":"39001-0290000041000","SitusAddressAll":"544  SEAMAN RD   ","LandArea":21.77,"Shape__Area":911269.9603271484},"centroid":{"x":-83.3976800509475,"y":38.99010772300591}},{"attributes":{"County":"Adams","LocalParcelID":"0290000045008","StateParcelID":"39001-0290000045008","SitusAddressAll":"619  SEAMAN RD  PEEBLES 45660","LandArea":0.01,"Shape__Area":480.04486083984375},"centroid":{"x":-83.39885542883466,"y":38.99702371002637}},{"attributes":{"County":"Adams","LocalParcelID":"0290000034000","StateParcelID":"39001-0290000034000","SitusAddressAll":"134  SEAMAN RD   ","LandArea":8.77,"Shape__Area":364108.82958984375},"centroid":{"x":-83.39275267250271,"y":38.99395547696644}},{"attributes":{"County":"Adams","LocalParcelID":"0290000036000","StateParcelID":"39001-0290000036000","SitusAddressAll":"585  SEAMAN RD  PEEBLES 45660","LandArea":6.97,"Shape__Area":309254.31884765625},"centroid":{"x":-83.3953746880343,"y":38.9939154528314}},{"attributes":{"County":"Adams","LocalParcelID":"0290000044004","StateParcelID":"39001-0290000044004","SitusAddressAll":"619  SEAMAN RD  PEEBLES 45660","LandArea":9.19,"Shape__Area":388639.07403564453},"centroid":{"x":-83.3975033665429,"y":38.99748842623218}},{"attributes":{"County":"Adams","LocalParcelID":"0290000033000","StateParcelID":"39001-0290000033000","SitusAddressAll":"134  SEAMAN RD   ","LandArea":20,"Shape__Area":848880.3430786133},"centroid":{"x":-83.39049504033781,"y":38.993357431340115}},{"attributes":{"County":"Adams","LocalParcelID":"0290000035002","StateParcelID":"39001-0290000035002","SitusAddressAll":"468  SEAMAN RD   ","LandArea":1.6,"Shape__Area":73026.57806396484},"centroid":{"x":-83.39372097308194,"y":38.993653963480384}},{"attributes":{"County":"Adams","LocalParcelID":"0290000039000","StateParcelID":"39001-0290000039000","SitusAddressAll":"SEAMAN RD  PEEBLES 45660","LandArea":23.28,"Shape__Area":1005091.3721923828},"centroid":{"x":-83.39513265339961,"y":38.98928744075047}},{"attributes":{"County":"Adams","LocalParcelID":"0290000044003","StateParcelID":"39001-0290000044003","SitusAddressAll":"900  SEAMAN RD   ","LandArea":7.88,"Shape__Area":329443.47357177734},"centroid":{"x":-83.39686521481636,"y":38.9959446943941}},{"attributes":{"County":"Adams","LocalParcelID":"0290000044007","StateParcelID":"39001-0290000044007","SitusAddressAll":"585  SEAMAN RD  PEEBLES 45660","LandArea":4.97,"Shape__Area":206520.7637939453},"centroid":{"x":-83.39740823299672,"y":38.99428755141602}},{"attributes":{"County":"Adams","LocalParcelID":"0290000045010","StateParcelID":"39001-0290000045010","SitusAddressAll":"615  SEAMAN RD   ","LandArea":4.58,"Shape__Area":174538.03662109375},"centroid":{"x":-83.3986486488288,"y":38.99431210432185}},{"attributes":{"County":"Adams","LocalParcelID":"0290000032000","StateParcelID":"39001-0290000032000","SitusAddressAll":"134  SEAMAN RD   ","LandArea":5.12,"Shape__Area":217970.51434326172},"centroid":{"x":-83.38853058250977,"y":38.99322476945119}},{"attributes":{"County":"Adams","LocalParcelID":"0290000035001","StateParcelID":"39001-0290000035001","SitusAddressAll":"813  SEAMAN RD  PEEBLES 45660","LandArea":2,"Shape__Area":88997.52325439453},"centroid":{"x":-83.39338387835353,"y":38.992773943394596}},{"attributes":{"County":"Adams","LocalParcelID":"0290000038000","StateParcelID":"39001-0290000038000","SitusAddressAll":"SEAMAN RD   ","LandArea":4.56,"Shape__Area":204093.1124267578},"centroid":{"x":-83.39543369285232,"y":38.992330608192674}},{"attributes":{"County":"Adams","LocalParcelID":"0290000045009","StateParcelID":"39001-0290000045009","SitusAddressAll":"SEAMAN RD  PEEBLES 45660","LandArea":17.2,"Shape__Area":738515.8376464844},"centroid":{"x":-83.40046562609756,"y":38.9949478156093}}]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-82.888122%2C39.974239%2C-82.876399%2C39.983223&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","features":[]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-83.501623%2C41.646521%2C-83.489601%2C41.655504&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","features":[]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-83.369395%2C41.648372%2C-83.357373%2C41.657355&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Lucas","LocalParcelID":"3328691","StateParcelID":"39095-3328691","SitusAddressAll":"7900  SEAMAN RD  OREGON 43616","LandArea":0,"Shape__Area":3607608.97265625},"centroid":{"x":-83.35853535231008,"y":41.64925956845822}},{"attributes":{"County":"Lucas","LocalParcelID":"3329411","StateParcelID":"39095-3329411","SitusAddressAll":"7660  SEAMAN RD  OREGON 43616","LandArea":0,"Shape__Area":3295910.809814453},"centroid":{"x":-83.36330615155917,"y":41.64905084503077}},{"attributes":{"County":"Lucas","LocalParcelID":"3329774","StateParcelID":"39095-3329774","SitusAddressAll":"7522  SEAMAN RD  TOLEDO 43616","LandArea":0,"Shape__Area":1227120.4174804688},"centroid":{"x":-83.36705268282897,"y":41.650291466255005}},{"attributes":{"County":"Lucas","LocalParcelID":"3316343","StateParcelID":"39095-3316343","SitusAddressAll":"7435  SEAMAN RD  OREGON 43616","LandArea":0,"Shape__Area":431344.3654785156},"centroid":{"x":-83.36903052962955,"y":41.65464462471462}}]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-83.437325%2C41.647782%2C-83.425302%2C41.656765&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Lucas","LocalParcelID":"4410834","StateParcelID":"39095-4410834","SitusAddressAll":"4651  SEAMAN RD  OREGON 43616","LandArea":0,"Shape__Area":433404.06689453125},"centroid":{"x":-83.43689216541841,"y":41.65400326454223}},{"attributes":{"County":"Lucas","LocalParcelID":"4410797","StateParcelID":"39095-4410797","SitusAddressAll":"4745  SEAMAN RD  OREGON 43616","LandArea":0,"Shape__Area":449978.69482421875},"centroid":{"x":-83.43567612865117,"y":41.654029962565126}},{"attributes":{"County":"Lucas","LocalParcelID":"4410648","StateParcelID":"39095-4410648","SitusAddressAll":"4955  SEAMAN RD  OREGON 43616","LandArea":0,"Shape__Area":446802.39208984375},"centroid":{"x":-83.43109553004408,"y":41.6535275008322}},{"attributes":{"County":"Lucas","LocalParcelID":"4493028","StateParcelID":"39095-4493028","SitusAddressAll":"5011  SEAMAN RD  OREGON 43616","LandArea":0,"Shape__Area":23824.59521484375},"centroid":{"x":-83.42855467749355,"y":41.652731332151625}}]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-83.328069%2C41.648680%2C-83.316046%2C41.657663&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","features":[]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-84.130426%2C39.834208%2C-84.118727%2C39.843192&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0004","StateParcelID":"39113-P70 01010 0004","SitusAddressAll":"5224  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7770.054138183594},"centroid":{"x":-84.12448340558109,"y":39.83849316681921}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0008","StateParcelID":"39113-P70 01010 0008","SitusAddressAll":"5207  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7559.781311035156},"centroid":{"x":-84.12519272329524,"y":39.838959033495826}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0012","StateParcelID":"39113-P70 01010 0012","SitusAddressAll":"5231  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7662.556884765625},"centroid":{"x":-84.12416087298676,"y":39.83890187759335}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01011 0013","StateParcelID":"39113-P70 01011 0013","SitusAddressAll":"5307  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7798.9537353515625},"centroid":{"x":-84.12290837055966,"y":39.83883261517391}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0002","StateParcelID":"39113-P70 01010 0002","SitusAddressAll":"5236  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7770.0404052734375},"centroid":{"x":-84.12395771403568,"y":39.838464067137714}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0006","StateParcelID":"39113-P70 01010 0006","SitusAddressAll":"5212  SEAMAN DR  HUBER HEIGHTS 45424","LandArea":0,"Shape__Area":7770.068603515625},"centroid":{"x":-84.12500909738135,"y":39.83852226435193}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0010","StateParcelID":"39113-P70 01010 0010","SitusAddressAll":"5219  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7663.683654785156},"centroid":{"x":-84.12467946184613,"y":39.83893060412415}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0003","StateParcelID":"39113-P70 01010 0003","SitusAddressAll":"5230  SEAMAN DR  HUBER HEIGHTS 45424","LandArea":0,"Shape__Area":7770.070068359375},"centroid":{"x":-84.12422055985164,"y":39.838478617181345}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0007","StateParcelID":"39113-P70 01010 0007","SitusAddressAll":"5206  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7770.0303955078125},"centroid":{"x":-84.12527194349686,"y":39.83853681234903}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0011","StateParcelID":"39113-P70 01010 0011","SitusAddressAll":"5225  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7663.127197265625},"centroid":{"x":-84.1244201672252,"y":39.838916241481776}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01011 0012","StateParcelID":"39113-P70 01011 0012","SitusAddressAll":"5313  SEAMAN DR  HUBER HEIGHTS 45424","LandArea":0,"Shape__Area":9783.245422363281},"centroid":{"x":-84.1226162324618,"y":39.838813963581174}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0005","StateParcelID":"39113-P70 01010 0005","SitusAddressAll":"5218  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7770.043701171875},"centroid":{"x":-84.1247462512596,"y":39.83850771608146}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0009","StateParcelID":"39113-P70 01010 0009","SitusAddressAll":"5213  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7559.2330322265625},"centroid":{"x":-84.12493698064138,"y":39.83894486839858}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0013","StateParcelID":"39113-P70 01010 0013","SitusAddressAll":"5237  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7662.007507324219},"centroid":{"x":-84.12390157889048,"y":39.83888751333224}}]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-83.340092%2C41.639697%2C-83.304024%2C41.666646&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Lucas","LocalParcelID":"3326767","StateParcelID":"39095-3326767","SitusAddressAll":"8808  SEAMAN ST  CURTICE 43412","LandArea":0,"Shape__Area":447764.4069824219},"centroid":{"x":-83.33701216403762,"y":41.649381176666004}}]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-82.899845%2C39.965256%2C-82.864676%2C39.992206&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","features":[]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-83.513646%2C41.637538%2C-83.477579%2C41.664487&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Lucas","LocalParcelID":"4456324","StateParcelID":"39095-4456324","SitusAddressAll":"2605  SEAMAN ST  OREGON 43616","LandArea":0,"Shape__Area":4201.858154296875},"centroid":{"x":-83.48685805633684,"y":41.65148482050028}},{"attributes":{"County":"Lucas","LocalParcelID":"4456321","StateParcelID":"39095-4456321","SitusAddressAll":"2601  SEAMAN ST  OREGON 43616","LandArea":0,"Shape__Area":4518.426513671875},"centroid":{"x":-83.48697190355765,"y":41.6514825009449}}]}
+    },
+    {
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=LocalParcelID+IS+NOT+NULL+AND+SitusAddressAll+LIKE+%27%25SEAMAN%25%27&geometry=-84.142125%2C39.825225%2C-84.107028%2C39.852175&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=false&returnCentroid=true&outSR=4326&resultRecordCount=200&f=json",
+      "status": 200,
+      "body": {"objectIdFieldName":"OBJECTID","uniqueIdField":{"name":"OBJECTID","isSystemMaintained":true},"globalIdFieldName":"GlobalID","geometryType":"esriGeometryPolygon","spatialReference":{"wkid":4326,"latestWkid":4326},"fields":[{"name":"County","type":"esriFieldTypeString","alias":"County","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"LocalParcelID","type":"esriFieldTypeString","alias":"LocalParcelID","sqlType":"sqlTypeOther","length":30,"domain":null,"defaultValue":null},{"name":"StateParcelID","type":"esriFieldTypeString","alias":"StateParcelID","sqlType":"sqlTypeOther","length":50,"domain":null,"defaultValue":null},{"name":"SitusAddressAll","type":"esriFieldTypeString","alias":"Situs Address All","sqlType":"sqlTypeOther","length":255,"domain":null,"defaultValue":null},{"name":"LandArea","type":"esriFieldTypeDouble","alias":"LandArea","sqlType":"sqlTypeOther","domain":null,"defaultValue":null},{"name":"Shape__Area","type":"esriFieldTypeDouble","alias":"Shape__Area","sqlType":"sqlTypeDouble","domain":null,"defaultValue":null}],"features":[{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0004","StateParcelID":"39113-P70 01010 0004","SitusAddressAll":"5224  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7770.054138183594},"centroid":{"x":-84.12448340558109,"y":39.83849316681921}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0008","StateParcelID":"39113-P70 01010 0008","SitusAddressAll":"5207  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7559.781311035156},"centroid":{"x":-84.12519272329524,"y":39.838959033495826}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0012","StateParcelID":"39113-P70 01010 0012","SitusAddressAll":"5231  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7662.556884765625},"centroid":{"x":-84.12416087298676,"y":39.83890187759335}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01011 0013","StateParcelID":"39113-P70 01011 0013","SitusAddressAll":"5307  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7798.9537353515625},"centroid":{"x":-84.12290837055966,"y":39.83883261517391}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0002","StateParcelID":"39113-P70 01010 0002","SitusAddressAll":"5236  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7770.0404052734375},"centroid":{"x":-84.12395771403568,"y":39.838464067137714}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0006","StateParcelID":"39113-P70 01010 0006","SitusAddressAll":"5212  SEAMAN DR  HUBER HEIGHTS 45424","LandArea":0,"Shape__Area":7770.068603515625},"centroid":{"x":-84.12500909738135,"y":39.83852226435193}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0010","StateParcelID":"39113-P70 01010 0010","SitusAddressAll":"5219  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7663.683654785156},"centroid":{"x":-84.12467946184613,"y":39.83893060412415}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0003","StateParcelID":"39113-P70 01010 0003","SitusAddressAll":"5230  SEAMAN DR  HUBER HEIGHTS 45424","LandArea":0,"Shape__Area":7770.070068359375},"centroid":{"x":-84.12422055985164,"y":39.838478617181345}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0007","StateParcelID":"39113-P70 01010 0007","SitusAddressAll":"5206  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7770.0303955078125},"centroid":{"x":-84.12527194349686,"y":39.83853681234903}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0011","StateParcelID":"39113-P70 01010 0011","SitusAddressAll":"5225  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7663.127197265625},"centroid":{"x":-84.1244201672252,"y":39.838916241481776}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01011 0012","StateParcelID":"39113-P70 01011 0012","SitusAddressAll":"5313  SEAMAN DR  HUBER HEIGHTS 45424","LandArea":0,"Shape__Area":9783.245422363281},"centroid":{"x":-84.1226162324618,"y":39.838813963581174}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0005","StateParcelID":"39113-P70 01010 0005","SitusAddressAll":"5218  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7770.043701171875},"centroid":{"x":-84.1247462512596,"y":39.83850771608146}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0009","StateParcelID":"39113-P70 01010 0009","SitusAddressAll":"5213  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7559.2330322265625},"centroid":{"x":-84.12493698064138,"y":39.83894486839858}},{"attributes":{"County":"Montgomery","LocalParcelID":"P70 01010 0013","StateParcelID":"39113-P70 01010 0013","SitusAddressAll":"5237  SEAMAN DR  DAYTON 45424","LandArea":0,"Shape__Area":7662.007507324219},"centroid":{"x":-84.12390157889048,"y":39.83888751333224}}]}
+    }
+  ],
+  "apiResponse": {
+    "status": 200,
+    "body": [
+      {
+        "parcel": {
+          "key": "ohio:39001:0290000035000",
+          "sourceParcelId": "0290000035000",
+          "county": "Adams",
+          "countyFips": "39001",
+          "centroid": {
+            "latitude": 38.99454422022416,
+            "longitude": -83.39419988121651
+          },
+          "siteAddress": "464 Seaman Rd",
+          "acreage": 1.4,
+          "mappedAcreage": 1.4
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:230-001377",
+          "sourceParcelId": "230-001377",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 39.882891889661686,
+            "longitude": -83.24737222004423
+          },
+          "siteAddress": "3159 Seaman Rd",
+          "mappedAcreage": 4.52
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39001:0290000034000",
+          "sourceParcelId": "0290000034000",
+          "county": "Adams",
+          "countyFips": "39001",
+          "centroid": {
+            "latitude": 38.99395547696644,
+            "longitude": -83.39275267250271
+          },
+          "siteAddress": "134 Seaman Rd",
+          "acreage": 8.77,
+          "mappedAcreage": 8.36
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:230-001005",
+          "sourceParcelId": "230-001005",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 39.881688121626034,
+            "longitude": -83.24784138845862
+          },
+          "siteAddress": "3177 Seaman Rd",
+          "mappedAcreage": 4.08
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39001:0290000035002",
+          "sourceParcelId": "0290000035002",
+          "county": "Adams",
+          "countyFips": "39001",
+          "centroid": {
+            "latitude": 38.993653963480384,
+            "longitude": -83.39372097308194
+          },
+          "siteAddress": "468 Seaman Rd",
+          "acreage": 1.6,
+          "mappedAcreage": 1.68
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:230-001144",
+          "sourceParcelId": "230-001144",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 39.8809732813178,
+            "longitude": -83.24605563795821
+          },
+          "siteAddress": "3233 Seaman Rd",
+          "mappedAcreage": 0.8
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39001:0290000033000",
+          "sourceParcelId": "0290000033000",
+          "county": "Adams",
+          "countyFips": "39001",
+          "centroid": {
+            "latitude": 38.993357431340115,
+            "longitude": -83.39049504033781
+          },
+          "siteAddress": "134 Seaman Rd",
+          "acreage": 20,
+          "mappedAcreage": 19.49
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:230-000972",
+          "sourceParcelId": "230-000972",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 39.88100876135942,
+            "longitude": -83.24749135521499
+          },
+          "siteAddress": "3211 Seaman Rd",
+          "mappedAcreage": 5.8
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39001:0290000044003",
+          "sourceParcelId": "0290000044003",
+          "county": "Adams",
+          "countyFips": "39001",
+          "centroid": {
+            "latitude": 38.9959446943941,
+            "longitude": -83.39686521481636
+          },
+          "siteAddress": "900 Seaman Rd",
+          "acreage": 7.88,
+          "mappedAcreage": 7.56
+        },
+        "matchedOn": "siteAddress"
+      },
+      {
+        "parcel": {
+          "key": "ohio:39049:230-001199",
+          "sourceParcelId": "230-001199",
+          "county": "Franklin",
+          "countyFips": "39049",
+          "centroid": {
+            "latitude": 39.88354250179891,
+            "longitude": -83.24582655496596
+          },
+          "siteAddress": "3139 Seaman Rd",
+          "mappedAcreage": 2.52
+        },
+        "matchedOn": "siteAddress"
+      }
+    ]
+  }
+}

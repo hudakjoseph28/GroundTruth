@@ -119,12 +119,14 @@ const ZIP = /^\d{5}(-\d{4})?$/;
 export const MAX_PLACE_COUNTIES = 3;
 
 export interface AddressQuery {
+  /** Digits, or `""` for a street typed with no house number. */
   houseNumber: string;
   /** Street name without house number, direction, or suffix: `MAIN`. */
   streetName: string;
   /**
    * `57 S MAIN ST`: the query without city, state, or ZIP, with spelled-out
    * directions and suffixes abbreviated (`North High Street` → `N HIGH ST`).
+   * A street query has no number here: `SEAMAN RD`.
    */
   streetOnly: string;
   /** Typed direction, abbreviated (`N`), before or after the street name. */
@@ -145,26 +147,71 @@ export interface AddressQuery {
 
 /**
  * Splits a typed address into house number, street, and place. Returns null
- * without a leading house number: a parcel's site address can only be
- * matched on number + street.
+ * without a leading house number; `parseStreetQuery` reads those.
  */
 export function parseAddressQuery(query: string): AddressQuery | null {
-  const segments = query
+  const segments = querySegments(query);
+  const houseNumber = segments[0]?.[0];
+  if (!houseNumber || !/^\d+$/.test(houseNumber)) return null;
+  return parseSegments(segments, houseNumber);
+}
+
+/**
+ * Reads a street typed with no house number: `Seaman Rd`, `W Dodridge St`,
+ * `Seaman Rd, Galloway`. Returns null when the query starts with a number
+ * (an ordinal such as `5th Ave` is a name, not a number) or holds no street
+ * name. A place name alone is not a street: see `placeOnlyQuery`.
+ */
+export function parseStreetQuery(query: string): AddressQuery | null {
+  const segments = querySegments(query);
+  const lead = segments[0]?.[0] ?? "";
+  if (!/^([A-Z]|\d+(ST|ND|RD|TH)$)/.test(lead)) return null;
+  return parseSegments(segments, "");
+}
+
+/**
+ * The place a query names when it names nothing else: `Columbus`,
+ * `Mount Vernon, OH`, `Johnstown 43031`. A street cannot be searched from a
+ * city alone, so the caller asks for a street or a parcel ID. Returns the
+ * place in the Census spelling, or null when the query is not just a place.
+ */
+export function placeOnlyQuery(query: string): string | null {
+  const tokens = words(query.toUpperCase().replace(/,/g, " "));
+  while (tokens.length > 1) {
+    const last = tokens[tokens.length - 1] ?? "";
+    if (!ZIP.test(last) && !OHIO.has(last)) break;
+    tokens.pop();
+  }
+  if (tokens.length === 0 || tokens.some((token) => /\d/.test(token))) {
+    return null;
+  }
+  const place = normalizePlaceName(tokens.join(" "));
+  return placeCounties(place).length > 0 ? place : null;
+}
+
+function querySegments(query: string): string[][] {
+  return query
     .toUpperCase()
     .split(",")
     .map((segment) => words(segment))
     .filter((segment) => segment.length > 0);
+}
+
+/** `houseNumber` is the first word of the first segment, or `""` for none. */
+function parseSegments(
+  segments: string[][],
+  houseNumber: string,
+): AddressQuery | null {
   const first = segments[0] ?? [];
-  const houseNumber = first[0];
-  if (!houseNumber || !/^\d+$/.test(houseNumber)) return null;
+  const lead = houseNumber ? 1 : 0;
 
   let street: string[];
   let rest: string[];
   if (segments.length > 1) {
-    street = first.slice(1);
+    street = first.slice(lead);
     rest = segments.slice(1).flat();
   } else {
-    const tokens = first.slice(1);
+    const tokens = first.slice(lead);
     let end = -1;
     tokens.forEach((token, index) => {
       if (index > 0 && STREET_SUFFIXES.has(token)) end = index;
@@ -206,7 +253,7 @@ export function parseAddressQuery(query: string): AddressQuery | null {
   ]
     .filter(Boolean)
     .join(" ");
-  const typed = [houseNumber, ...street].join(" ");
+  const typed = [houseNumber, ...street].filter(Boolean).join(" ");
   return {
     houseNumber,
     streetName: core.join(" "),

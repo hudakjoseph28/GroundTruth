@@ -14,6 +14,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../../src/app.js";
 import { prisma } from "../../src/db.js";
 import { seedDeal } from "../../src/deals/seedDeal.js";
+import { TEST_DEAL_CREATED_AT } from "../support/testDeal.js";
 import {
   dealKeys,
   events,
@@ -83,7 +84,11 @@ async function seed(id: string, k: DealKeys) {
         role,
         required: true,
       })),
-      timeline: stagedDeal.timeline.map((e) => ({ ...e, id: `${id}-created` })),
+      timeline: stagedDeal.timeline.map((e) => ({
+        ...e,
+        id: `${id}-created`,
+        at: TEST_DEAL_CREATED_AT,
+      })),
     }),
   );
 }

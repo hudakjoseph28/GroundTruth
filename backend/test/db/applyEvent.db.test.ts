@@ -14,10 +14,11 @@ import type {
 } from "../../src/chain/programEvents.js";
 import { prisma } from "../../src/db.js";
 import { seedDeal } from "../../src/deals/seedDeal.js";
+import { TEST_DEAL_CREATED_AT } from "../support/testDeal.js";
 
 // Base58 has no 0, so swap it out of the hex run id used in signatures.
 const run = randomUUID().slice(0, 8).replace(/0/g, "z");
-// 2026-11-15T00:00:00Z: after the staged fixture's off-chain event.
+// 2026-11-15T00:00:00Z: after this test's copy of the deal is registered.
 const BLOCK_TIME = 1_794_700_800;
 const dealId = `dbtest-${run}-chain`;
 const PDA = `dbtestPda${run}`.padEnd(44, "1");
@@ -86,6 +87,7 @@ beforeEach(async () => {
       timeline: stagedDeal.timeline.map((e) => ({
         ...e,
         id: `${dealId}-created`,
+        at: TEST_DEAL_CREATED_AT,
       })),
     }),
   );
