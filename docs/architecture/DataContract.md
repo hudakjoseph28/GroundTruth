@@ -160,9 +160,9 @@ All responses are JSON. Success returns the named object directly. Failure retur
 | `GET /api/coverage` | `200 Coverage[]` | Each row: county, boundary searchable, evidence kinds, last verified time. No marketing totals without measured data. |
 | `GET /api/deals/:id` | `200 Deal` | Public only for the two staged, non-sensitive demo deals. Unknown/non-demo deals return `404`. |
 | `GET /api/deals/:id/timeline` | `200 TimelineEvent[]` | Stable ascending order by chain slot/event index, then off-chain timestamp. |
-| `POST /api/deals/:id/evidence/owner-call` | `201 TimelineEvent` | Internal service use after a verified ElevenLabs webhook; never callable by the public browser. |
+| `POST /api/deals/:id/evidence/owner-call` | `201 TimelineEvent` | Internal service use after a verified ElevenLabs webhook; never callable by the public browser. Implemented as the in-process `recordOwnerCall` step of the webhook, not an HTTP route, so nothing outside the API can reach it. |
 | `POST /api/webhooks/quicknode` | `204` | Verify HMAC/raw body, dedupe by signature + event index, write confirmed program events. |
-| `POST /api/webhooks/elevenlabs` | `204` | Verify signature/raw body, dedupe by conversation ID, store minimum staged call outcome. |
+| `POST /api/webhooks/elevenlabs` | `200` | Verify signature/raw body, dedupe by conversation ID, store minimum staged call outcome. `200`, not `204`: ElevenLabs counts only `200` as delivered. |
 
 `Coverage` has this shape:
 
