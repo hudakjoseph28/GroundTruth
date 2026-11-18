@@ -59,6 +59,9 @@ export interface ParcelSearchResult {
 export const CHECK_KINDS = [
   "zoning",
   "flood",
+  // Wetlands (National Wetlands Inventory) and, in Franklin County, stream
+  // setbacks. Added Nov 18, 2026; additive, so the v1 shapes are unchanged.
+  "environmental",
   "access",
   "utilities",
   "easements",

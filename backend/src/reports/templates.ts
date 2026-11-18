@@ -4,6 +4,8 @@ import type {
   Parcel,
   ResponsibleParty,
 } from "@groundtruth/shared";
+import { wetlandsParty } from "./environmentalCheck.js";
+import { NWI_MAPPER } from "./nwiWetlands.js";
 
 /**
  * Checks with no evidence adapter yet. Each one is `unknown` and says so
@@ -17,6 +19,7 @@ import type {
  */
 export const TEMPLATE_KINDS = [
   "zoning",
+  "environmental",
   "access",
   "utilities",
   "easements",
@@ -65,6 +68,13 @@ const TEMPLATES: Record<TemplateKind, (parcel: Parcel) => Template> = {
     },
     nextAction:
       "Ask the zoning office that covers this lot which district applies and whether it allows what you plan to build.",
+  }),
+  environmental: (parcel) => ({
+    finding: "No wetland or stream-setback map has been checked for this lot.",
+    limitation:
+      "Wetlands and stream setbacks can limit where you build, and filling a wetland can need a permit. None are ruled in or out.",
+    responsibleParty: wetlandsParty(parcel),
+    nextAction: `Look the lot up on the NWI Wetlands Mapper (${NWI_MAPPER}), and ask the county soil and water conservation district or a wetland consultant whether wetlands are on it.`,
   }),
   access: (parcel) => ({
     finding: "No record of legal road access has been checked for this lot.",

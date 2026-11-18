@@ -82,6 +82,7 @@ export const AREA_VIEW = {
 export const CHECK_TITLES: Record<CheckKind, string> = {
   zoning: "Can you build here?",
   flood: "Flood",
+  environmental: "Wetlands & streams",
   access: "Road access",
   utilities: "Water & sewer",
   easements: "Easements",
@@ -90,6 +91,21 @@ export const CHECK_TITLES: Record<CheckKind, string> = {
   septic: "Septic",
   closing: "Closing",
 };
+
+/**
+ * A card's title. A kind this build does not know (a newer API) reads as
+ * its own words, `radonTest` → "Radon test", instead of an empty heading.
+ */
+export function checkTitle(kind: string): string {
+  const known = (CHECK_TITLES as Partial<Record<string, string>>)[kind];
+  if (known) return known;
+  const words = kind
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .toLowerCase();
+  return words ? `${words.charAt(0).toUpperCase()}${words.slice(1)}` : "Other check";
+}
 
 export const LEDGER = {
   title: "Ledger",

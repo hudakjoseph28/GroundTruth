@@ -44,6 +44,7 @@ jobs:
       - run: pnpm -r typecheck
       - run: pnpm lint
       - run: pnpm --filter @groundtruth/backend test
+      - run: pnpm --filter @groundtruth/web test
       - run: pnpm --filter @groundtruth/web build
 
   backend-db:

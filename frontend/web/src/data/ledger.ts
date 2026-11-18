@@ -335,6 +335,34 @@ export function summarizeDeal(deal: Deal): EscrowSummary {
   };
 }
 
+/**
+ * Kinds listed only when a report carries them. `environmental` was added on
+ * Nov 18, 2026; seeded reports verified before then (the golden and Licking
+ * parcels) do not have it, and their ledgers read exactly as verified.
+ */
+const LISTED_WHEN_REPORTED: ReadonlySet<CheckKind> = new Set(["environmental"]);
+
+/**
+ * The ledger's cards, in contract order. Every other contract kind is listed
+ * whether or not the report has it (a missing one reads as unknown); a
+ * closing exists only where there is a deal. A kind this build does not know,
+ * from a newer API, is listed last rather than dropped or allowed to break
+ * the page.
+ */
+export function ledgerKinds(report: ParcelReport | null, hasDeal: boolean): CheckKind[] {
+  if (!report) return [];
+  const reported = new Set<string>(report.checks.map((check) => check.kind));
+  const known = CHECK_KINDS.filter(
+    (kind) =>
+      (hasDeal || kind !== "closing") &&
+      (!LISTED_WHEN_REPORTED.has(kind) || reported.has(kind)),
+  );
+  const newer = [...reported].filter(
+    (kind) => !(CHECK_KINDS as readonly string[]).includes(kind),
+  ) as CheckKind[];
+  return [...known, ...newer];
+}
+
 export function buildLedger(
   report: ParcelReport | null,
   deal: Deal | null,
@@ -344,10 +372,7 @@ export function buildLedger(
   const approved = required.filter((reviewer) => reviewer.approvedAt).length;
 
   const biggest = report?.biggestOpenQuestion ?? null;
-  // A closing exists only where there is a deal.
-  const kinds = (report ? CHECK_KINDS : []).filter(
-    (kind) => deal || kind !== "closing",
-  );
+  const kinds = ledgerKinds(report, Boolean(deal));
   const ordered = biggest
     ? [biggest, ...kinds.filter((kind) => kind !== biggest)]
     : [...kinds];

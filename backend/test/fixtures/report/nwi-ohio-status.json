@@ -1,0 +1,26 @@
+{
+  "recordedAt": "2026-11-18T23:49:13.315Z",
+  "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands_Status/MapServer/0/query?geometry=%7B%22xmin%22%3A-84.83%2C%22ymin%22%3A38.4%2C%22xmax%22%3A-80.51%2C%22ymax%22%3A42.33%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=STATUS&returnGeometry=false&f=json",
+  "status": 200,
+  "body": {
+    "displayFieldName": "STATUS",
+    "fieldAliases": {
+      "STATUS": "STATUS"
+    },
+    "fields": [
+      {
+        "name": "STATUS",
+        "type": "esriFieldTypeString",
+        "alias": "STATUS",
+        "length": 50
+      }
+    ],
+    "features": [
+      {
+        "attributes": {
+          "STATUS": "Digital"
+        }
+      }
+    ]
+  }
+}

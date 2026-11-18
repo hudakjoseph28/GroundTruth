@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, type MouseEvent } from "react";
 import { StatusPill } from "../../components/StatusPill";
-import { CHECK_TITLES, INSPECTOR, LEDGER } from "../../content/parcel";
+import { checkTitle, INSPECTOR, LEDGER } from "../../content/parcel";
 import { explorerTxUrl, shortAddress, type LedgerRecord } from "../../data/ledger";
 import { ApprovalAnimation, type Outcome } from "./ApprovalAnimation";
 
@@ -78,7 +78,7 @@ function InspectorBody({ record, onClose }: { record: LedgerRecord; onClose: () 
       <header className="inspector-head">
         <div>
           {record.staged && <p className="tag">{LEDGER.stagedTag}</p>}
-          <h2 id="inspector-title">{CHECK_TITLES[check.kind]}</h2>
+          <h2 id="inspector-title">{checkTitle(check.kind)}</h2>
           <StatusPill status={check.status} label={record.statusLabel} />
         </div>
         <button type="button" className="inspector-close" onClick={onClose} autoFocus>

@@ -1,6 +1,7 @@
 /**
- * Records live OGRIP, FEMA NFHL, and Franklin County zoning, right-of-way,
- * and road responses for the report route tests.
+ * Records live OGRIP, FEMA NFHL, National Wetlands Inventory, and Franklin
+ * County zoning, right-of-way, road, and stream-buffer responses for the
+ * report route tests.
  *
  *   pnpm --filter @groundtruth/backend record:report                   # every scenario
  *   pnpm --filter @groundtruth/backend record:report franklin-floodway # one scenario
@@ -9,14 +10,23 @@
  * nothing, and saves every upstream request (URL, POST body) and response
  * to test/fixtures/report/<name>.json, with the API's own response for
  * review. Tests replay those exact requests, so a changed query shows up as
- * a missing recording, not as made-up data.
+ * a missing recording, not as made-up data. NWI's drawing of a lot is saved
+ * as base64 PNG. A JSON answer over LARGE_BODY_CHARS (a watershed's setback
+ * outline) is saved compact in bodies/, named by its request, and shared by
+ * every scenario that made that request.
  *
  *   pnpm --filter @groundtruth/backend record:report nfhl-ohio-studies
  *
  * records FEMA's list of Ohio NFHL studies, which backs
  * OHIO_COUNTIES_WITHOUT_NFHL and the `flood` entry in /api/coverage.
+ *
+ *   pnpm --filter @groundtruth/backend record:report nwi-ohio-status
+ *
+ * records NWI's mapping status across Ohio, which backs the `environmental`
+ * entry in /api/coverage.
  */
-import { writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import request from "supertest";
@@ -27,7 +37,12 @@ import {
   NFHL_OHIO_STUDIES_QUERY,
 } from "../src/reports/femaFlood.js";
 import { createFranklinAccessClient } from "../src/reports/franklinAccess.js";
+import { createFranklinStreamBuffersClient } from "../src/reports/franklinStreamBuffers.js";
 import { createFranklinZoningClient } from "../src/reports/franklinZoning.js";
+import {
+  createNwiWetlandsClient,
+  NWI_OHIO_STATUS_QUERY,
+} from "../src/reports/nwiWetlands.js";
 import {
   REPORT_SCENARIOS,
   reportPath,
@@ -41,20 +56,49 @@ const fixtureDir = join(
   "../test/fixtures/report",
 );
 
+const LARGE_BODY_CHARS = 1_000_000;
+
 async function record(name: ReportScenario): Promise<void> {
   const parcelKey = REPORT_SCENARIOS[name];
   const exchanges: RecordedExchange[] = [];
   const recordingFetch: typeof fetch = async (input, init) => {
     const response = await fetch(input, init);
-    const text = await response.text();
-    exchanges.push({
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get("content-type") ?? "";
+    const exchange: RecordedExchange = {
       method: init?.method ?? "GET",
       url: String(input),
       ...(typeof init?.body === "string" && { requestBody: init.body }),
       status: response.status,
-      body: JSON.parse(text) as unknown,
+    };
+    if (contentType.startsWith("image/")) {
+      exchange.contentType = contentType;
+      exchange.bodyBase64 = bytes.toString("base64");
+    } else {
+      const text = bytes.toString("utf8");
+      const body = JSON.parse(text) as unknown;
+      if (text.length > LARGE_BODY_CHARS) {
+        const id = createHash("sha256")
+          .update(
+            `${exchange.method} ${exchange.url}\n${exchange.requestBody ?? ""}`,
+          )
+          .digest("hex")
+          .slice(0, 16);
+        exchange.bodyFile = `bodies/${id}.json`;
+        await mkdir(join(fixtureDir, "bodies"), { recursive: true });
+        await writeFile(
+          join(fixtureDir, exchange.bodyFile),
+          JSON.stringify(body),
+        );
+      } else {
+        exchange.body = body;
+      }
+    }
+    exchanges.push(exchange);
+    return new Response(bytes, {
+      status: response.status,
+      ...(contentType && { headers: { "content-type": contentType } }),
     });
-    return new Response(text, { status: response.status });
   };
   const recordedAt = new Date();
   const app = createApp("record", {
@@ -79,6 +123,16 @@ async function record(name: ReportScenario): Promise<void> {
         now: () => recordedAt,
       }),
       accessTimeoutMs: 30_000,
+      wetlands: createNwiWetlandsClient({
+        fetch: recordingFetch,
+        now: () => recordedAt,
+      }),
+      wetlandsTimeoutMs: 60_000,
+      streamBuffers: createFranklinStreamBuffersClient({
+        fetch: recordingFetch,
+        now: () => recordedAt,
+      }),
+      streamBuffersTimeoutMs: 60_000,
       now: () => recordedAt,
       store: { read: async () => null, write: async () => {} },
     },
@@ -109,7 +163,7 @@ async function record(name: ReportScenario): Promise<void> {
   console.log(
     `${name}: ${res.status} in ${Date.now() - started} ms, ${exchanges.length} upstream calls`,
   );
-  for (const kind of ["flood", "zoning", "access"]) {
+  for (const kind of ["flood", "zoning", "environmental", "access"]) {
     if (finding(kind)) console.log(`  ${kind}: ${finding(kind)}`);
   }
 }
@@ -137,15 +191,43 @@ async function recordNfhlStudies(): Promise<void> {
   console.log(`${NFHL_STUDIES}: ${response.status}`);
 }
 
+const NWI_STATUS = "nwi-ohio-status";
+
+async function recordNwiStatus(): Promise<void> {
+  const response = await fetch(NWI_OHIO_STATUS_QUERY, {
+    headers: { accept: "application/json" },
+  });
+  const body = (await response.json()) as unknown;
+  await writeFile(
+    join(fixtureDir, `${NWI_STATUS}.json`),
+    `${JSON.stringify(
+      {
+        recordedAt: new Date().toISOString(),
+        url: NWI_OHIO_STATUS_QUERY,
+        status: response.status,
+        body,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  console.log(`${NWI_STATUS}: ${response.status}`);
+}
+
 const requested = process.argv.slice(2);
 if (requested.length === 0 || requested.includes(NFHL_STUDIES)) {
   await recordNfhlStudies();
+}
+if (requested.length === 0 || requested.includes(NWI_STATUS)) {
+  await recordNwiStatus();
 }
 const names = (
   requested.length > 0 ? requested : Object.keys(REPORT_SCENARIOS)
 ) as ReportScenario[];
 for (const name of names) {
-  if ((name as string) === NFHL_STUDIES) continue;
+  if ((name as string) === NFHL_STUDIES || (name as string) === NWI_STATUS) {
+    continue;
+  }
   if (!(name in REPORT_SCENARIOS)) {
     throw new Error(`unknown scenario ${name}`);
   }

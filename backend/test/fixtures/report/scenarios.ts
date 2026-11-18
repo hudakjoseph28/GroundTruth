@@ -1,7 +1,10 @@
+import { readFileSync } from "node:fs";
+
 /**
- * Report calls recorded against live OGRIP and FEMA NFHL by
+ * Report calls recorded against live OGRIP, FEMA NFHL, the National
+ * Wetlands Inventory, and Franklin County's layers by
  * scripts/record-report-fixtures.ts. Parcels were picked by looking them up
- * in both services on 2026-11-16, not invented:
+ * in the live services (2026-11-16 to 2026-11-18), not invented:
  */
 export const REPORT_SCENARIOS = {
   /** 84 W Dodridge St, Columbus: Zone X (minimal), three effective LOMRs. */
@@ -26,6 +29,18 @@ export const REPORT_SCENARIOS = {
    * Found 2026-11-17 by scanning parcels along district boundaries.
    */
   "franklin-split": "ohio:39049:230-000397",
+  /**
+   * 0 Harrisburg Georgesville Rd, Pleasant Township, by Big Darby Creek: NWI
+   * maps riverine, emergent wetland, and pond on it, and the county's Big
+   * Darby riparian setback covers part of it. Found 2026-11-18 by querying
+   * NWI emergent wetlands near Big Darby Creek, then OGRIP at each one.
+   */
+  "franklin-wetland-setback": "ohio:39049:230-002100",
+  /**
+   * 8391 Cooper Rd, Johnstown, 2.9 ac: NWI maps a forested wetland (PFO1A)
+   * on about 31% of it. Found 2026-11-18 the same way, near Johnstown.
+   */
+  "licking-wetland": "ohio:39089:04011612400001",
   /** A well-formed Franklin key OGRIP does not publish. */
   "missing-parcel": "ohio:39049:999-999999",
 } as const;
@@ -38,7 +53,37 @@ export interface RecordedExchange {
   /** Form body of a POST (FEMA queries), exactly as sent. */
   requestBody?: string;
   status: number;
-  body: unknown;
+  /** A JSON answer. */
+  body?: unknown;
+  /** An image answer (NWI's drawing of a lot), base64. */
+  bodyBase64?: string;
+  contentType?: string;
+  /**
+   * A JSON answer too large to keep inline (a watershed's stream-setback
+   * outline, 5.5 MB), saved compact under bodies/ and shared by every
+   * recording that made the same request.
+   */
+  bodyFile?: string;
+}
+
+/** The recorded answer as the provider sent it. */
+export function recordedResponse(exchange: RecordedExchange): Response {
+  const init = {
+    status: exchange.status,
+    ...(exchange.contentType && {
+      headers: { "content-type": exchange.contentType },
+    }),
+  };
+  if (exchange.bodyBase64 !== undefined) {
+    return new Response(Buffer.from(exchange.bodyBase64, "base64"), init);
+  }
+  if (exchange.bodyFile !== undefined) {
+    return new Response(
+      readFileSync(new URL(exchange.bodyFile, import.meta.url), "utf8"),
+      init,
+    );
+  }
+  return new Response(JSON.stringify(exchange.body), init);
 }
 
 export interface ReportRecording {

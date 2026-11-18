@@ -13,7 +13,22 @@ describe("readServerEnv", () => {
       femaTimeoutMs: 6000,
       zoningTimeoutMs: 6000,
       accessTimeoutMs: 6000,
+      wetlandsTimeoutMs: 10000,
+      streamBuffersTimeoutMs: 6000,
     });
+  });
+
+  it("reads the two environmental limits separately", () => {
+    const env = readServerEnv({
+      DATABASE_URL,
+      WETLANDS_TIMEOUT_MS: "12000",
+      STREAM_BUFFERS_TIMEOUT_MS: "4000",
+    });
+    expect(env.wetlandsTimeoutMs).toBe(12000);
+    expect(env.streamBuffersTimeoutMs).toBe(4000);
+    expect(() =>
+      readServerEnv({ DATABASE_URL, WETLANDS_TIMEOUT_MS: "100" }),
+    ).toThrow("WETLANDS_TIMEOUT_MS must be between 500 and 60000");
   });
 
   it("reads FEMA_TIMEOUT_MS and rejects an out-of-range value", () => {
