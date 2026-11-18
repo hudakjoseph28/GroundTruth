@@ -6,7 +6,7 @@
 
 > Submission note: Keep every `[PENDING]` label until the named owner confirms the integration and supplies the required proof. Remove the label only after that proof is recorded in the repository.
 >
-> Checked Nov 18, 12:25 p.m. ET ([Readiness.md](Readiness.md)): no deal has run on devnet, the ElevenLabs callback is merged but not yet answering on the live API and no call is recorded, and no escrow event has gone through the QuickNode Stream. Every `[PENDING]` below stays.
+> Checked Nov 18, 12:55 p.m. ET ([Readiness.md](Readiness.md)): both demo closings ran on devnet at 12:41 to 12:48 p.m. ET, and every escrow claim below was read back from the public RPC and opened on Solana Explorer. ElevenLabs and QuickNode Streams stay `[PENDING]`: no staged call is recorded, and the API and the website still show both deals as `draft`, so the Stream has not projected these transactions.
 
 ## What it does
 
@@ -22,7 +22,12 @@ The second fixture is a real 1.2-acre vacant parcel in Licking County. Its bound
 
 ALTA's 2026 survey of 245 title insurance professionals found that 59% of respondents reported at least one seller-impersonation attempt during 2025, compared with 28% of respondents in ALTA's 2024 survey reporting experience during 2023. Those are respondent-level reports of attempts, including failed attempts. They are not a per-sale probability or a count of successful frauds. This is why GroundTruth treats seller authority as a professional decision rather than a fact inferred from a parcel record.
 
-**[PENDING] Solana escrow:** The planned closing flow holds staged test USDC until the required staged reviewers sign. A reviewer hold should block release, while a fully approved deal should pay only the bound seller. Do not describe either outcome as working until the escrow owner confirms devnet transactions, Explorer links, and before-and-after balances.
+**Solana escrow:** When the buyer proceeds, staged test USDC sits in a Solana devnet escrow until the staged reviewers sign. We ran both outcomes on devnet on the golden parcel, with staged wallets standing in for the buyer, the seller, and the title, survey, and septic reviewers.
+
+- **A hold blocks the payout.** The buyer funded 25 test USDC. The staged title reviewer signed a hold. A [release was then attempted](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet) and the program rejected it with `DealHeld`: the vault still held 25 and the seller still held 0. The buyer then took a [refund](https://explorer.solana.com/tx/SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo?cluster=devnet).
+- **Cleared sign-offs release it.** On a second deal, the title, survey, and septic reviewers each signed an approval, and the [release](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet) paid exactly 25 test USDC to the bound seller and closed the vault.
+
+**[PENDING] Closing in the product:** The website and API do not show these two outcomes yet. Until they do, the proof is the Explorer links in this document, not a screen in the app.
 
 **[PENDING] ElevenLabs:** The planned owner callback supplies evidence to a staged title reviewer. The call never approves, holds, releases, or refunds a deal by itself. Do not enter the ElevenLabs bounty until the owner confirms a real consenting-participant call, verified webhook delivery, and audible demo footage.
 
@@ -42,9 +47,32 @@ The web is built with React, Vite, TypeScript, Three.js, and react-globe.gl. The
 
 **Escrow program on devnet:** The Rust and Anchor escrow program is deployed to Solana devnet as [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet) ([deploy transaction](https://explorer.solana.com/tx/4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU?cluster=devnet)). Its published Anchor IDL ([metadata account](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)) is identical to the IDL our backend decodes events with.
 
-**[PENDING] Escrow outcomes:** No deal has run on devnet yet. The submission must not claim a held payout, a released payout, a refund, or a USDC balance change until the escrow owner records those devnet transactions, their Explorer links, and before-and-after balances.
+**Escrow outcomes on devnet (Nov 18, 2026):** Both deals use the golden parcel, 25 test USDC (Circle's devnet mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`), and the same staged wallets. Every transaction below is finalized.
 
-**[PENDING] Sponsor integrations:** QuickNode Streams and ElevenLabs must remain described as planned integrations until their owners confirm the end-to-end acceptance checks.
+Held deal, [`54Va6q…E4tW`](https://explorer.solana.com/address/54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW?cluster=devnet):
+
+| Step | Transaction | Buyer | Vault | Seller |
+| --- | --- | --- | --- | --- |
+| Initialize | [`4ZscUV…KjNv`](https://explorer.solana.com/tx/4ZscUVnfZ3W5ukt7H8tSBrQZNrvY5Hu3Qq9oRNJeTbHj61UvwcPAAssZJ4DtaxzeVQAb2rcFPYyRGWsQuaoPKjNv?cluster=devnet) | 40 | 0 | 0 |
+| Fund | [`grkKU9…dd74`](https://explorer.solana.com/tx/grkKU9YqV1xpAkHySCjdhLgavpd5dW3mJsvbiZ1tjEyvuHC9T373Hmscubsm8UapaA7j93pHrseJMepw1C3dd74?cluster=devnet) | 15 | 25 | 0 |
+| Title reviewer places hold | [`5QovFT…J2ib`](https://explorer.solana.com/tx/5QovFTbAMquUY5M5NpJwZPUJhtcKAcmQ5xmZhvFWT46KfPh3UBkaQMhgQhcuphBqvTiYLUgTmNNS7b8tyR7JJ2ib?cluster=devnet) | 15 | 25 | 0 |
+| Release attempted: **rejected**, `DealHeld` (6019) | [`Rro8WA…vwGz`](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet) | 15 | 25 | 0 |
+| Buyer refund | [`SgPJ9j…yaSo`](https://explorer.solana.com/tx/SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo?cluster=devnet) | 40 | closed | 0 |
+
+Released deal, [`3uBECm…2yu`](https://explorer.solana.com/address/3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu?cluster=devnet):
+
+| Step | Transaction | Buyer | Vault | Seller |
+| --- | --- | --- | --- | --- |
+| Initialize | [`ZFo3g3…hM9M`](https://explorer.solana.com/tx/ZFo3g36XTKCaVkLJKpgD2S2sGf4zqNVp3tsFkpSPeJ9mNyfJbWCHtjPDbAV8oUvdXGZs7Ag7n9jTxGbRhh2hM9M?cluster=devnet) | 40 | 0 | 0 |
+| Fund | [`4a2HxS…txgR`](https://explorer.solana.com/tx/4a2HxSta9rKio7BsFMVzTvKfA9yBBSzr9uFzJEtDDNG3wJi7hzsJCgkM8SuCt3qQfkUCg4VUM8VCwxHykhDwtxgR?cluster=devnet) | 15 | 25 | 0 |
+| Three reviewer approvals | [`5Rnsas…jBqt`](https://explorer.solana.com/tx/5Rnsas4nLpLJM8ss63dB2768wbTRJteEWBMCE7Z4njzE1JNk547WQ7nQdp38W8Go25tX2YsQtvvn5nRNdEV5jBqt?cluster=devnet) · [`3D8ahB…jL9P`](https://explorer.solana.com/tx/3D8ahBLYuhCiZfNZcMgQZZ3UQnHeoNcBFCgu9NLbyao1TZUMCKBn4RjWcKYJhQupNiZy1JiXnyN8UUARFM57jL9P?cluster=devnet) · [`7tnvjT…S2fb`](https://explorer.solana.com/tx/7tnvjTxYw6vu7xFKCDTJ4fJGjerS6SCJ3QfSkFn3N916bXaBVEmBnrYwrF9hHSFyCurox1Kct9YdcJGxm4XS2fb?cluster=devnet) | 15 | 25 | 0 |
+| Release to the bound seller | [`5kWpcH…vHdC`](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet) | 15 | closed | 25 |
+
+Balances are test USDC after each step, read from the transactions' token balances on the public devnet RPC. Where a step does not touch an account, its value is carried from the steps on either side. The rejected release's log reads: "Error Code: DealHeld. Error Number: 6019. Error Message: Cannot release funds while deal is under active hold."
+
+Not shown on devnet: a second release attempt on the released deal. The vault is closed, and the local test suite covers repeated settlement.
+
+**[PENDING] Sponsor integrations:** QuickNode Streams and ElevenLabs must remain described as planned integrations until their owners confirm the end-to-end acceptance checks. Both webhooks are deployed and reject unsigned requests, but the API has no timeline rows for the Nov 18 closings and no staged call is recorded.
 
 ## Challenges we ran into
 
@@ -66,7 +94,9 @@ Finally, we had to keep three kinds of truth separate: a public record supplies 
 - We handle provider timeouts without guessing, and recorded tests cover parcel-ID variations, addresses, missing parcels, flood-zone combinations, and missing FEMA studies.
 - We built a responsive buyer experience with real parcel geometry, baked aerial imagery and elevation for the staged parcels, and clear evidence and limitation states.
 
-**[PENDING] Do not add escrow, ElevenLabs, or Streams to this accomplishments list until their owners confirm the required proof.**
+- We ran both closings on Solana devnet: a reviewer's hold made the program reject a release with the vault balance unchanged, and three reviewer approvals released exactly 25 test USDC to the bound seller. Each step has an Explorer link above.
+
+**[PENDING] Do not add ElevenLabs or Streams to this accomplishments list until their owners confirm the required proof.**
 
 ## What we learned
 
@@ -82,7 +112,7 @@ Our immediate product step is to add verified local zoning and access adapters b
 
 We will test the report with first-time land buyers and title or closing professionals. The pilot questions are practical: Can a buyer explain the biggest open issue? Do they know who acts next? Does the report help them pause, negotiate, or walk away before sending money?
 
-- **[PENDING] Escrow:** program ID and deploy links are recorded above. Still confirm devnet held, released, and refund outcomes; record deal addresses, transaction Explorer links, and balance changes.
+- **[PENDING] Closing in the product:** the held, refunded, and released outcomes are on devnet with their links above. Still show them in the website's deal view and the API timeline.
 - **[PENDING] QuickNode Streams:** confirm the filtered devnet Stream, verified webhook, idempotent timeline projection, and second-device update.
 - **[PENDING] ElevenLabs:** confirm a real staged callback with a consenting teammate, verified webhook evidence, reviewer handoff, and audible video footage.
 - Add authenticated, private evidence handling before any real buyer, seller, identity, title, or call data enters the product.
@@ -93,6 +123,7 @@ We will test the report with first-time land buyers and title or closing profess
 ### Working on `main`
 
 - Rust and Anchor: the escrow program is deployed to Solana devnet (see the program link above)
+- Solana devnet escrow deals: SPL Token transfers of Circle test USDC (two deals run, links above)
 - TypeScript and pnpm workspaces
 - React, Vite, Three.js, and react-globe.gl
 - Node.js, Express, and Zod
@@ -105,6 +136,5 @@ We will test the report with first-time land buyers and title or closing profess
 
 ### Awaiting owner confirmation
 
-- **[PENDING]** Solana devnet escrow deals: SPL Token transfers of Circle test USDC (no deal has run on devnet yet)
 - **[PENDING]** QuickNode Streams
 - **[PENDING]** ElevenLabs

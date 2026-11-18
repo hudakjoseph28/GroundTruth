@@ -2,14 +2,14 @@
 
 **Length:** 2:40 target, 3:00 hard limit. Narration is about 390 words.
 **Story:** the [five-minute stage run](../../ubc/UBC-Hackathon.md#demo-and-submission), compressed: find the lot, see the open question, a held payout blocked on-chain, a released payout with its Explorer link.
-**Status on Nov 18:** shots 1 to 6 can be recorded today from the live site. Shots 7 to 13 cannot be recorded yet. See [Readiness.md](Readiness.md).
+**Status on Nov 18, 12:55 p.m. ET:** shots 1 to 6 and 13 can be recorded today from the live site. Both demo deals have run on devnet, so the Explorer fallbacks for shots 9 to 12 can be recorded too, using the links in [Devpost.md](Devpost.md). Shots 7 and 8 and the in-product versions of 9 and 11 cannot be recorded yet. See [Readiness.md](Readiness.md).
 
 ## Tags
 
 | Tag | Meaning |
 | --- | --- |
 | `[READY]` | Works on <https://groundtruth-lac.vercel.app> today. |
-| `[NEEDS DEVNET RUN]` | Needs the two demo deals run on devnet, with their saved signatures and balances. |
+| `[NEEDS DEVNET RUN]` | Needs the two demo deals run on devnet, with their saved signatures and balances. The run happened on Nov 18; the tag stays so each shot is checked against the real links. |
 | `[NEEDS ELEVENLABS]` | Needs the real staged ElevenLabs call, recorded with audio. |
 | `[NEEDS DEAL PAGE]` | Needs a deal or timeline page on the website. Until it exists, film the fallback in the same row. |
 
@@ -37,7 +37,7 @@ Do not film a mock-up, a simulation, or an edited database row for any tagged sh
 | 7 | 1:10–1:28 | `[NEEDS ELEVENLABS]` | A phone on speaker beside the deal screen. On-screen label: **Staged call · consenting teammate plays the owner**. Let the agent's question and the answer play in full. | "So before this deal closes, an ElevenLabs voice agent calls the owner on record." Then the call audio only: the agent asks whether they are selling the lot, and the owner answers, "I'm not selling." |
 | 8 | 1:28–1:36 | `[NEEDS ELEVENLABS]` `[NEEDS DEAL PAGE]` | The deal timeline: a new row, "Owner callback: owner denies sale", marked as evidence for the title reviewer. Fallback: none. Cut this shot. | "The call is evidence. It approves nothing. A human title reviewer reads it." |
 | 9 | 1:36–1:50 | `[NEEDS DEVNET RUN]` `[NEEDS DEAL PAGE]` | The title reviewer's hold appears on the held deal. Then a release is attempted and the row reads **Release rejected: DealHeld**. Fallback: the failed release transaction on Solana Explorer, with the `DealHeld` log line highlighted. | "The reviewer signs a hold. Now watch someone try to release the money anyway. The Solana program rejects it." |
-| 10 | 1:50–2:00 | `[NEEDS DEVNET RUN]` | Balance table from `escrow/demo-results/`: buyer, vault, and seller before and after the rejected release, all unchanged. Then the Explorer link for that transaction. | "Buyer, vault, and seller are unchanged. Twenty-five test dollars are still in escrow, and the buyer can take a refund." |
+| 10 | 1:50–2:00 | `[NEEDS DEVNET RUN]` | Balance table from `escrow/demo-results/` or Devpost.md: buyer, vault, and seller before and after the rejected release, all unchanged. Then the Explorer page for the refund. | "Buyer, vault, and seller are unchanged. Twenty-five test dollars stayed in escrow, and the buyer took a refund." |
 | 11 | 2:00–2:16 | `[NEEDS DEVNET RUN]` `[NEEDS DEAL PAGE]` | Second deal on the same lot. Laptop and phone side by side. Title, survey, and septic approvals arrive one by one; the phone updates without a refresh. Fallback: the three approval transactions on Explorer, and do not mention the phone or QuickNode. | "A second deal, with nothing in dispute. Title, survey, and septic each sign. A QuickNode Stream carries every confirmed signature to the buyer's phone." |
 | 12 | 2:16–2:30 | `[NEEDS DEVNET RUN]` | The release transaction on Solana Explorer: 25 USDC from the vault to the seller's token account. Then the balance table: seller up by exactly 25, vault closed. | "With every approval in and no hold, the program pays the seller the exact amount, once. Both outcomes are on Solana Explorer for anyone to check." |
 | 13 | 2:30–2:40 | `[READY]` | End card: **GroundTruth** · groundtruth-lac.vercel.app · the repo URL · the program ID · **Consumer Applications · Best Use of Solana** · "Staged roles and test USDC on Solana devnet. Not legal or title advice." | "GroundTruth does not replace the professionals. It makes their evidence and their decisions understandable to the buyer, and it makes the payment obey them." |
@@ -48,7 +48,7 @@ Do not film a mock-up, a simulation, or an edited database row for any tagged sh
 | --- | --- |
 | The ElevenLabs call | Cut shots 7 and 8. In shot 9, say "A title reviewer disputes the seller's authority and signs a hold." Do not select the ElevenLabs bounty. |
 | The deal page | Use the Explorer fallbacks in shots 9 and 11. Do not select the QuickNode bounty unless a second device is shown updating from the Stream. |
-| The devnet run | There is no submission video without it. Shots 9 to 12 are the Solana proof, and nothing stands in for them. |
+| Results in the product (API and deal page) | The devnet run is done, so film shots 9 to 12 from Solana Explorer and the balance tables in Devpost.md. These shots are the Solana proof; do not cut them. |
 
 ## Claim guardrails
 
@@ -58,7 +58,7 @@ Do not film a mock-up, a simulation, or an edited database row for any tagged sh
 - Say "test USDC" or "test dollars" and "devnet" whenever money appears.
 - The call is evidence for a reviewer. Never say the AI blocked, approved, or verified anything.
 - Never say GroundTruth verifies an owner, gives legal advice, or confirms that a lot is buildable.
-- The held deal's demo run ends with a refund to the buyer. If the final state is on screen, say so.
+- The held deal's demo run ended with a refund to the buyer, so its account now reads refunded and its vault is closed. Film the rejected release transaction itself for shot 9, and if the final state is on screen, say so.
 
 ## After recording
 
