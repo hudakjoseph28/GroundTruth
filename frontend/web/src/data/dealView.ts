@@ -217,7 +217,10 @@ export function viewTimeline(timeline: readonly TimelineEvent[]): TimelineRow[] 
       return {
         id: event.id,
         at: event.at,
-        label: TIMELINE.types[event.type],
+        label:
+          event.type === "dealCreated" && !confirmed
+            ? TIMELINE.drafted
+            : TIMELINE.types[event.type],
         actor: actorLabel(event.actorRole),
         message: event.buyerMessage,
         tone: ROW_TONES[event.type],

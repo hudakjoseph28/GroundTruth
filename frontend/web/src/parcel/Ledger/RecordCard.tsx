@@ -15,6 +15,7 @@ export function RecordCard({
   biggest,
   open,
   onOpen,
+  chain = true,
 }: {
   record: LedgerRecord;
   /** Position in the chain; sets when this record arrives. */
@@ -25,6 +26,8 @@ export function RecordCard({
   open: boolean;
   /** Called with the record's node, which the details grow out of. */
   onOpen: (node: Element | null) => void;
+  /** False on a parcel with no deal: no on-chain step and no signature line. */
+  chain?: boolean;
 }) {
   const { check, signerWallet, signature, role } = record;
   const position: Record<`--${string}`, number> = { "--i": index };
@@ -57,11 +60,11 @@ export function RecordCard({
             >
               {CHECK_TITLES[check.kind]}
               <span className="visually-hidden">
-                : {STATUS_LABELS[check.status]}. {LEDGER.details}
+                : {record.statusLabel ?? STATUS_LABELS[check.status]}. {LEDGER.details}
               </span>
             </button>
           </h3>
-          <StatusPill status={check.status} />
+          <StatusPill status={check.status} label={record.statusLabel} />
         </div>
         {biggest && <p className="record-flag">{LEDGER.biggest}</p>}
         <p className="record-signer">
@@ -77,8 +80,8 @@ export function RecordCard({
           )}
         </p>
         <div className="record-foot">
-          <ProgressTrack steps={record.steps} />
-          {signature ? (
+          <ProgressTrack steps={record.steps} chain={chain} />
+          {!chain ? null : signature ? (
             <p className="record-address">
               <span className="mono" title={signature}>
                 {shortAddress(signature)}

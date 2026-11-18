@@ -79,18 +79,22 @@ function InspectorBody({ record, onClose }: { record: LedgerRecord; onClose: () 
         <div>
           {record.staged && <p className="tag">{LEDGER.stagedTag}</p>}
           <h2 id="inspector-title">{CHECK_TITLES[check.kind]}</h2>
-          <StatusPill status={check.status} />
+          <StatusPill status={check.status} label={record.statusLabel} />
         </div>
         <button type="button" className="inspector-close" onClick={onClose} autoFocus>
           {INSPECTOR.close}
         </button>
       </header>
 
-      <ApprovalAnimation
-        outcome={outcomeOf(record)}
-        from={signerWallet ? shortAddress(signerWallet) : INSPECTOR.party}
-        confirmed={Boolean(signature)}
-      />
+      {/* Only a deal's reviewers sign into an escrow. A flood map or a utility
+          record has no wallet and no chain step, so it gets no diagram. */}
+      {(record.onDeal || signature) && (
+        <ApprovalAnimation
+          outcome={outcomeOf(record)}
+          from={signerWallet ? shortAddress(signerWallet) : INSPECTOR.party}
+          confirmed={Boolean(signature)}
+        />
+      )}
 
       <dl className="inspector-facts">
         <div>
@@ -162,15 +166,17 @@ function InspectorBody({ record, onClose }: { record: LedgerRecord; onClose: () 
         </div>
       </dl>
 
-      <footer className="inspector-foot">
-        {signature ? (
-          <a className="inspector-explorer" href={explorerTxUrl(signature)} target="_blank" rel="noreferrer">
-            {INSPECTOR.explorer} <span aria-hidden="true">↗</span>
-          </a>
-        ) : (
-          <p>{INSPECTOR.unsigned}</p>
-        )}
-      </footer>
+      {(record.onDeal || signature) && (
+        <footer className="inspector-foot">
+          {signature ? (
+            <a className="inspector-explorer" href={explorerTxUrl(signature)} target="_blank" rel="noreferrer">
+              {INSPECTOR.explorer} <span aria-hidden="true">↗</span>
+            </a>
+          ) : (
+            <p>{INSPECTOR.unsigned}</p>
+          )}
+        </footer>
+      )}
     </div>
   );
 }

@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { SearchForm } from "../components/SearchForm";
 import { SEARCH } from "../content/search";
+import { formatSiteAddress } from "../data/address";
 import {
   invalidQuery,
   parcelPath,
   searchParcels,
   type SearchOutcome,
 } from "../data/parcelSource";
+import { usePageTitle } from "../layout/usePageTitle";
 import { readDevnetSlot } from "../parcel/BlockTransition/devnetSlot";
 
 // The parcel transition shows real devnet slots; asking as the visitor reaches
@@ -22,10 +24,13 @@ export function SearchPage() {
   const [attempt, setAttempt] = useState(0);
   const [settled, setSettled] = useState<SearchState | null>(null);
 
-  const invalid = invalidQuery(query);
+  // No query yet is the start of a search, not a mistake.
+  const blank = query.trim() === "";
+  const invalid = blank ? null : invalidQuery(query);
+  usePageTitle(blank ? SEARCH.title : `${query} · ${SEARCH.title}`);
 
   useEffect(() => {
-    if (invalidQuery(query)) return;
+    if (query.trim() === "" || invalidQuery(query)) return;
     const controller = new AbortController();
     searchParcels(query, controller.signal).then(
       (outcome) => setSettled({ query, attempt, outcome }),
@@ -45,9 +50,14 @@ export function SearchPage() {
 
   return (
     <section className="sheet">
-      <h1>Search</h1>
+      <h1>{SEARCH.title}</h1>
       <SearchForm initialQuery={query} />
-      {outcome === null ? (
+      {blank ? (
+        <div className="search-start">
+          <p>{SEARCH.lede}</p>
+          <Examples />
+        </div>
+      ) : outcome === null ? (
         <SearchLoading />
       ) : outcome.status === "results" ? (
         <ul className="results">
@@ -55,21 +65,20 @@ export function SearchPage() {
             <li key={result.parcel.key}>
               <Link
                 to={parcelPath(result.parcel.key)}
+                state={{ fromSearch: query }}
                 onPointerDown={warmSlot}
                 onFocus={warmSlot}
               >
                 <span className="result-id">
                   {result.parcel.sourceParcelId}
                 </span>
-                <span>{result.parcel.county} County</span>
-                {result.parcel.siteAddress ? (
-                  <span>{result.parcel.siteAddress}</span>
-                ) : null}
+                <span>{SEARCH.county(result.parcel.county)}</span>
+                <ResultAddress published={result.parcel.siteAddress} />
                 {result.parcel.township ? (
                   <span>{result.parcel.township}</span>
                 ) : null}
                 {result.parcel.acreage !== undefined ? (
-                  <span>{result.parcel.acreage} acres</span>
+                  <span>{SEARCH.acres(result.parcel.acreage)}</span>
                 ) : null}
                 <span className="quiet">
                   {result.matchedOn === "siteAddress"
@@ -94,11 +103,47 @@ export function SearchPage() {
           ) : null}
         </div>
       ) : (
-        <p className="notice" role="status">
-          {outcome.message}
-        </p>
+        <>
+          <p className="notice" role="status">
+            {outcome.message}
+          </p>
+          {outcome.status === "empty" ? <Examples /> : null}
+        </>
       )}
     </section>
+  );
+}
+
+/** The address as a person would write it, with the county's own text on hover. */
+function ResultAddress({ published }: { published: string | undefined }) {
+  const address = formatSiteAddress(published);
+  if (!address) return null;
+  return (
+    <span title={address.published}>
+      {address.text}
+      {address.noHouseNumber ? (
+        <span className="quiet"> ({SEARCH.noHouseNumber})</span>
+      ) : null}
+    </span>
+  );
+}
+
+/** Searches known to return a parcel, so nobody starts from a blank field. */
+function Examples() {
+  return (
+    <div className="search-examples">
+      <p>{SEARCH.examplesLabel}</p>
+      <ul>
+        {SEARCH.examples.map((example) => (
+          <li key={example.query}>
+            <Link to={`/search?q=${encodeURIComponent(example.query)}`}>
+              {example.query}
+            </Link>
+            <span className="quiet">{example.note}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

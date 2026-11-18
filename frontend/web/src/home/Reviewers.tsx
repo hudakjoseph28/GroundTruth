@@ -23,13 +23,7 @@ export function Reviewers() {
               <li key={bullet}>{bullet}</li>
             ))}
           </ul>
-          <p className="rv-cta">
-            {/* No signup exists yet: a marked placeholder, not a link that goes nowhere. */}
-            <span className="btn btn-quiet" aria-disabled="true">
-              {REVIEWERS.cta.label}
-            </span>
-            <span className="todo">{REVIEWERS.cta.todo}</span>
-          </p>
+          <p className="rv-note">{REVIEWERS.demoNote}</p>
         </div>
       </section>
     </Reveal>

@@ -7,9 +7,9 @@ const FIRST_CHECK_MS = 1200;
 const RECHECK_MS = 60_000;
 
 /**
- * Which network this is, and whether the page has actually reached it. It
- * reads "live" only after Solana devnet answers; until then, and whenever the
- * request fails, it reads "preview".
+ * Which network the deals run on, and whether the page has actually reached
+ * it. It adds "live" only after Solana devnet answers; until then, and
+ * whenever the request fails, it shows the network's name alone.
  */
 export function NetworkChip() {
   const [slot, setSlot] = useState<number | null>(null);
@@ -39,7 +39,8 @@ export function NetworkChip() {
       title={live ? NETWORK.liveTitle(slot) : NETWORK.previewTitle}
     >
       <span className="net-dot" aria-hidden="true" />
-      {NETWORK.name} <span className="net-state">{live ? NETWORK.live : NETWORK.preview}</span>
+      {NETWORK.name}
+      {live && <span className="net-state"> {NETWORK.live}</span>}
     </p>
   );
 }
