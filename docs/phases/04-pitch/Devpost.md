@@ -6,7 +6,7 @@
 
 > Submission note: Keep every `[PENDING]` label until the named owner confirms the integration and supplies the required proof. Remove the label only after that proof is recorded in the repository.
 >
-> Checked Nov 18, 12:55 p.m. ET ([Readiness.md](Readiness.md)): both demo closings ran on devnet at 12:41 to 12:48 p.m. ET, and every escrow claim below was read back from the public RPC and opened on Solana Explorer. ElevenLabs and QuickNode Streams stay `[PENDING]`: no staged call is recorded, and the API and the website still show both deals as `draft`, so the Stream has not projected these transactions.
+> Checked Nov 18, 12:55 p.m. ET ([Readiness.md](Readiness.md)): both demo closings ran on devnet at 12:41 to 12:48 p.m. ET, and every escrow claim below was read back from the public RPC and opened on Solana Explorer. ElevenLabs and QuickNode Streams stay `[PENDING]`. No staged call is recorded. The two closings' timeline rows were backfilled with `replay:devnet`, not delivered by the Stream, so they are not Stream proof. The only QuickNode deliveries are the live stage deal's 4 `stage-prep` transactions, which appeared 1.8–3.3 s after their blocks. The second-device check is still open.
 
 ## What it does
 
@@ -72,7 +72,7 @@ Balances are test USDC after each step, read from the transactions' token balanc
 
 Not shown on devnet: a second release attempt on the released deal. The vault is closed, and the local test suite covers repeated settlement.
 
-**[PENDING] Sponsor integrations:** QuickNode Streams and ElevenLabs must remain described as planned integrations until their owners confirm the end-to-end acceptance checks. Both webhooks are deployed and reject unsigned requests, but the API has no timeline rows for the Nov 18 closings and no staged call is recorded.
+**[PENDING] Sponsor integrations:** QuickNode Streams and ElevenLabs must remain described as planned integrations until their owners confirm the end-to-end acceptance checks. Both webhooks are deployed and reject unsigned requests. The Nov 18 closings' timeline rows came from `replay:devnet`, not the Stream. Only the live stage deal's `stage-prep` transactions were delivered by QuickNode. No staged call is recorded.
 
 ## Challenges we ran into
 
