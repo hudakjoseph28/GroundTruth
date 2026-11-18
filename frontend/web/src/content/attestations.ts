@@ -44,7 +44,7 @@ const by = (
 /** In the order they appear, so neighbors differ in color and kind. */
 export const ATTESTATIONS: readonly Attestation[] = [
   by("authority", TITLE, "approved", "Seller authority", "signed", "check"),
-  by("funded", ESCROW, "funded", "25,000 USDC", "pending", "lock"),
+  by("funded", ESCROW, "funded", "25 test USDC", "pending", "lock"),
   by("survey", SURVEY, "survey recorded", "Boundary matches plat", "signed", "check"),
   by("septic-hold", SEPTIC, "placed a hold", "Septic permit missing", "held", "cross"),
   by("access", "7xKX…q9f2", "signed off", "Road access", "signed", "check"),

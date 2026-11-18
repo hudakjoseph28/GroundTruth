@@ -10,15 +10,37 @@ Built for the [UBC 2026 Hackathon](docs/ubc/UBC-Hackathon.md). **Main track: Con
 
 By the first end-to-end checkpoint, a judge can open the public site, search real Ohio parcels, inspect one honest source-backed report, and run two staged closings: one payout rejected because a title hold is active and one payout released to the bound seller after every required approval. The result is not a marketplace, legal opinion, title product, or deed-transfer system. It is a polished decision-and-payment prototype with verifiable evidence.
 
-**Repository status on Nov 12:** `@groundtruth/shared` is the v1 contract. `@groundtruth/web` can search the staged parcel and open it. `@groundtruth/backend` serves `GET /api/health` and `GET /api/parcels/:parcelKey/report` from a local Postgres seed.
+## What's live
 
-**Escrow status on Nov 17:** Anchor escrow program implements all 6 instructions (`initialize_deal`, `fund`, `sign_approval`, `place_hold`, `release`, `refund`) and 6 on-chain events on Solana devnet. Tested with 78 Anchor integration tests covering authorization, reviewer quorum, blocking holds, exact USDC settlement, and conditional vault closure. Shared IDL and PDA derivation helpers checked into `@groundtruth/shared`.
+Checked Nov 18, 2026 against the deployed site and API and the public devnet RPC.
 
-**Escrow on devnet since Nov 17 (#22):** program `ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG` ([Explorer](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet)), deployed in [`4jSbDsp…P8NU`](https://explorer.solana.com/tx/4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU?cluster=devnet). Its on-chain Anchor IDL ([`uQZLX7r…wZma`](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)) is identical to the checked-in one, and the QuickNode filter targets this program. No deal has run on devnet yet: the program's only transactions are the deploy and two IDL uploads ([recorded](backend/test/fixtures/devnet/program-history.json)). The held and released demo closings, with their Explorer links, are still to come.
+| Surface | Where | What it does today |
+| --- | --- | --- |
+| Web | <https://groundtruth-lac.vercel.app> (Vercel) | Homepage, search of live Ohio parcels by address or parcel ID, and a parcel page with the boundary Ohio publishes, a 3D land view, and a source-backed report. The golden parcel's closing strip still reads a bundled staged fixture, not the API, and there is no deal page yet. |
+| API | <https://api-production-db8a8106.up.railway.app> (Railway, with its own Postgres) | `GET /api/health`, `/api/coverage`, `/api/parcels/search`, `/api/parcels/:parcelKey`, `/api/parcels/:parcelKey/report`, `/api/deals/:id`, `/api/deals/:id/timeline`, and signed webhooks for QuickNode and ElevenLabs. The web forwards `/api/*` here, so browser code calls relative paths. |
+| Escrow | Solana devnet, program [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet) | Anchor program with 6 instructions (`initialize_deal`, `fund`, `sign_approval`, `place_hold`, `release`, `refund`) and 6 events, covered by 78 Anchor integration tests. Both demo closings ran on Nov 18. |
 
-**Parcel data on Nov 17:** `GET /api/parcels/search`, `GET /api/parcels/:parcelKey`, and `GET /api/coverage` query live Ohio OGRIP parcels in all 88 counties. `GET /api/parcels/:parcelKey/report` builds live reports with a FEMA flood check, and serves seeded reports for the golden parcel `ohio:39049:230-000918` (Franklin) and the second-county parcel `ohio:39089:00500729609000` (Licking). The web still searches those two fixture parcels; switching it to the live search route is open. What was tested and where checks return evidence: [Coverage](docs/phases/02-parcel-research/Coverage.md).
+Merging to `main` does not redeploy; see [backend/README.md](backend/README.md#deployment).
 
-**Deployed on Nov 14:** web at <https://groundtruth-lac.vercel.app> (Vercel) and API at <https://api-production-db8a8106.up.railway.app> (Railway, with its own Postgres). The web forwards `/api/*` to the API, so browser code calls relative `/api/...` paths. The API serves health, the staged parcel report, and the staged deal and timeline. How to redeploy: [backend/README.md](backend/README.md#deployment).
+**Parcel data.** Search and boundaries come from Ohio's statewide OGRIP parcel layer, which covers all 88 counties. We tested it in Franklin and Licking counties. On `main`, a lot published with house number 0, such as the golden parcel at `0 SEAMAN RD`, is found by locating the street, because the address locator has no point for house number 0. The deployed API picks this up at its next deploy. Live reports add a FEMA flood check in the 83 counties with an NFHL study, and a zoning check in Franklin County. Seeded reports cover the golden parcel `ohio:39049:230-000918` (Franklin) and the second-county parcel `ohio:39089:00500729609000` (Licking). Missing or timed-out evidence stays `unknown`. What was tested: [Coverage](docs/phases/02-parcel-research/Coverage.md).
+
+**Escrow on devnet.** Program [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet), deployed in [`4jSbDsp…P8NU`](https://explorer.solana.com/tx/4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU?cluster=devnet) (#22). Its on-chain Anchor IDL ([`uQZLX7r…wZma`](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)) is identical to the checked-in one. Both closings use the golden parcel, 25 test USDC (Circle's devnet mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`), and staged wallets for the buyer, the seller, and the title, survey, and septic reviewers. All eleven transactions are finalized.
+
+| Deal | Outcome | Key transactions |
+| --- | --- | --- |
+| Held, [`54Va6q…E4tW`](https://explorer.solana.com/address/54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW?cluster=devnet) | The title reviewer's hold blocked the payout. The release was **rejected** with `DealHeld (6019)`: vault 25 → 25, seller 0 → 0. The buyer was then refunded. | Fund [`grkKU9…dd74`](https://explorer.solana.com/tx/grkKU9YqV1xpAkHySCjdhLgavpd5dW3mJsvbiZ1tjEyvuHC9T373Hmscubsm8UapaA7j93pHrseJMepw1C3dd74?cluster=devnet) · hold [`5QovFT…J2ib`](https://explorer.solana.com/tx/5QovFTbAMquUY5M5NpJwZPUJhtcKAcmQ5xmZhvFWT46KfPh3UBkaQMhgQhcuphBqvTiYLUgTmNNS7b8tyR7JJ2ib?cluster=devnet) · rejected release [`Rro8WA…vwGz`](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet) · refund [`SgPJ9j…yaSo`](https://explorer.solana.com/tx/SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo?cluster=devnet) |
+| Released, [`3uBECm…y2yu`](https://explorer.solana.com/address/3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu?cluster=devnet) | After three reviewer approvals, the release **paid exactly 25 test USDC** to the bound seller (0 → 25) and closed the vault. | Fund [`4a2HxS…txgR`](https://explorer.solana.com/tx/4a2HxSta9rKio7BsFMVzTvKfA9yBBSzr9uFzJEtDDNG3wJi7hzsJCgkM8SuCt3qQfkUCg4VUM8VCwxHykhDwtxgR?cluster=devnet) · approvals [`5Rnsas…jBqt`](https://explorer.solana.com/tx/5Rnsas4nLpLJM8ss63dB2768wbTRJteEWBMCE7Z4njzE1JNk547WQ7nQdp38W8Go25tX2YsQtvvn5nRNdEV5jBqt?cluster=devnet) [`3D8ahB…jL9P`](https://explorer.solana.com/tx/3D8ahBLYuhCiZfNZcMgQZZ3UQnHeoNcBFCgu9NLbyao1TZUMCKBn4RjWcKYJhQupNiZy1JiXnyN8UUARFM57jL9P?cluster=devnet) [`7tnvjT…S2fb`](https://explorer.solana.com/tx/7tnvjTxYw6vu7xFKCDTJ4fJGjerS6SCJ3QfSkFn3N916bXaBVEmBnrYwrF9hHSFyCurox1Kct9YdcJGxm4XS2fb?cluster=devnet) · release [`5kWpcH…vHdC`](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet) |
+
+The API reports the held deal as `refunded`, and its timeline includes the confirmed `releaseRejected` row. The released deal still reads `draft` and has no chain rows. The repo does not record whether the held deal's rows came from a Stream delivery or from `replay:devnet`. The run's recorded output and each step's balances are in [#31](https://github.com/hudakjoseph28/UBC-Hackathon/pull/31).
+
+## Sponsor integrations
+
+| Sponsor | Product and role | Configuration | Status |
+| --- | --- | --- | --- |
+| **QuickNode** | **Streams** push confirmed escrow events into the deal timeline. Confirmed chain state wins over cached state. | Network **Solana Devnet**, dataset **Block**. The filter, [`groundtruth-filter.js`](backend/quicknode/groundtruth-filter.js), keeps successful transactions of program `ASQoBt…EBZG` and failed `release` attempts. Destination: **Webhook** → `https://api-production-db8a8106.up.railway.app/api/webhooks/quicknode`, HMAC-signed with the Stream's token. | Webhook deployed: an unsigned POST gets `401`. A Nov 15 heartbeat Stream delivered 117 of 117 payloads with `204`. No live delivery of a closing event is recorded yet. |
+| **ElevenLabs** | **ElevenLabs Agents** outbound call (via a Twilio number). An agent phones a consenting teammate who plays the owner of record and asks whether they are selling. The answer becomes **evidence** for the title reviewer and never approves, holds, or releases a deal. | Post-call webhook `POST /api/webhooks/elevenlabs`, HMAC-verified. It stores the outcome and conversation ID, never the transcript, audio, or phone number. | Webhook deployed: an unsigned POST gets `401`. No staged call is recorded yet. |
+
+Setup, payload shapes, and proofs: [backend/README.md](backend/README.md#quicknode-stream-webhook) and [ElevenLabs owner callback](backend/README.md#elevenlabs-owner-callback).
 
 Do not describe a route, test, deployment, or integration as working until the corresponding artifact exists and has been run.
 
@@ -66,7 +88,7 @@ docs/
   phases/                 build order, owners, acceptance checks
   agents/Prompt.md        task template for handing work to an agent
 packages/shared/          `@groundtruth/shared` v1 types, golden and second-county parcel fixtures, staged deal
-frontend/web/             Vite app: homepage, search over the two fixture parcels, parcel view
+frontend/web/             Vite app: homepage, live Ohio parcel search, parcel view and report
 frontend/mobile/          reserved; native app is out of core scope
 backend/                  Express API: live OGRIP search, live and seeded parcel reports, staged deals
 escrow/                   Anchor program: 6 instructions, USDC vault, reviewer holds, release, and refund
@@ -74,16 +96,27 @@ escrow/                   Anchor program: 6 instructions, USDC vault, reviewer h
 
 ## Quickstart
 
-Use Node 26 (`.nvmrc`). From a fresh clone, `npm run setup` installs the locked packages with pnpm 12.18.0 and builds them. pnpm does not need to be on `PATH`.
+Use Node 26 (`.nvmrc`). From a fresh clone, `npm run setup` installs the locked packages with pnpm 12.18.0 and builds them. pnpm does not need to be on `PATH`: where a command below says `pnpm`, `npx --yes pnpm@12.18.0` works the same.
 
 ```bash
 npm run setup
 pnpm -r typecheck
 pnpm lint
-pnpm format
+pnpm --filter @groundtruth/backend test        # unit and route tests; no database or network
+pnpm --filter @groundtruth/web build
 ```
 
-These five commands passed on Nov 12, 2026. `pnpm dev`, `pnpm test`, and `pnpm escrow:test` are not set up yet.
+**Run the web against the deployed API** (no database needed):
+
+```bash
+GROUNDTRUTH_API=https://api-production-db8a8106.up.railway.app pnpm --filter @groundtruth/web dev
+```
+
+Then open <http://localhost:5173> and search `230-000918` or `84 W Dodridge St`.
+
+**Run the API locally.** Start Postgres 16, then follow [backend/README.md](backend/README.md#local-database) (`db:migrate`, `db:seed`, `dev`, port 3001). Without `GROUNDTRUTH_API`, the web dev server forwards `/api` to `http://localhost:3001`. `pnpm --filter @groundtruth/backend test:db` runs the database tests.
+
+**Escrow:** `pnpm escrow:test` runs the 78 Anchor tests. It needs the Solana CLI, Anchor CLI, and Rust. [escrow/scripts/demo-deals.ts](escrow/scripts/demo-deals.ts) runs the two demo closings on devnet.
 
 **CI:** [GitHub Actions](.github/workflows/ci.yml) runs on every PR to `main` and every push to it. It typechecks shared and all packages, lints, runs backend unit tests, builds the web app, and runs backend `test:db` against Postgres 16. It skips escrow/Anchor tests because they need the Solana toolchain.
 
