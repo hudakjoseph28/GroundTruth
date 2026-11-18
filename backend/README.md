@@ -171,6 +171,52 @@ pnpm --filter @groundtruth/backend record:report franklin-floodway  # one scenar
 
 The report recordings include the OGRIP parcel request. A change to the OGRIP query shows up here as an "unrecorded request" until you re-record.
 
+## Land block assets (built on demand)
+
+The parcel page draws the lot as a 3D block of land: aerial imagery on its terrain, from the parcel's padded bounding box (`landRegion` in `@groundtruth/shared`). The golden and Licking parcels have their assets baked into the web app (`frontend/web/public/parcels/`). Every other parcel gets them from the API:
+
+| Route | Returns |
+| --- | --- |
+| `GET /api/parcels/:parcelKey/land` | `LandMeta` JSON (`@groundtruth/shared`). Its file names are relative to `…/land/`. |
+| `GET /api/parcels/:parcelKey/land/imagery.jpg` | Aerial imagery, JPEG, at most 1.4 MB |
+| `GET /api/parcels/:parcelKey/land/height.png` | 257×257 grayscale heights: 0 is `minMeters`, 255 is `maxMeters` |
+
+**How it builds** ([src/land/buildLandAssets.ts](src/land/buildLandAssets.ts)):
+- The parcel comes from its OGRIP boundary.
+- Imagery is USGS NAIP (`exportImage`, 1536 px). If NAIP has nothing usable, the builder falls back to USGS imagery tiles (z16, 1024 px).
+- Elevation comes from AWS Terrarium tiles (z15).
+- The builder downloads imagery and elevation in parallel. Each upstream request gets 20 s and 2 tries.
+- It is the same code `frontend/web/scripts/bake-parcel.ts` runs. Rebuilding the golden parcel with it reproduces its committed `meta.json` exactly (same box, ground size, and elevation range); only `retrievedAt` differs.
+
+**Caching** ([src/land/landAssets.ts](src/land/landAssets.ts)):
+- Builds are held in memory (24 parcels) and in PostgreSQL (`LandAssetRecord`) for 30 days, so a restart does not rebuild them.
+- Each parcel builds at most once at a time.
+- A build runs to completion and is cached even if the browser stopped waiting.
+- Responses carry `Cache-Control: public, max-age=86400`.
+- A database failure only costs a rebuild.
+
+**Errors**, all retryable except the 404s and the 400:
+
+| Case | Status | Code |
+| --- | --- | --- |
+| Bad key | 400 | `INVALID_REQUEST` |
+| Not an Ohio county | 404 | `NO_COVERAGE` |
+| No such parcel, or no drawable boundary | 404 | `NOT_FOUND` |
+| OGRIP, imagery, or elevation timeout | 504 | `PROVIDER_TIMEOUT` |
+| Other provider failure | 502 | `INTERNAL_ERROR` |
+
+The API never invents a land block.
+
+Measured locally on 2026-11-18 (cold cache, live services):
+
+| Parcel | Build | Imagery |
+| --- | --- | --- |
+| 84 W Dodridge St (`ohio:39049:010-042534`) | 0.4–1.7 s | NAIP, 51 m square |
+| 10034 Appleton Rd (`ohio:39089:00100000601000`) | 0.5–11.7 s | NAIP, 303 m |
+| 0 Groveport Pike, 15.2 ac (`ohio:39049:185-002765`) | 13.1 s | NAIP |
+
+NAIP's response time varies the most. The web waits 10 s for a build (`LAND_BUILD_DEADLINE_MS`) and then shows the flat boundary. The next visit is served from the cache.
+
 ## Deals
 
 `GET /api/deals/:id` returns a `Deal`, and `GET /api/deals/:id/timeline` returns its `TimelineEvent[]`. Only deals seeded as public demos are readable; any other ID returns `404`.

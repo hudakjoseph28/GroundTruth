@@ -41,6 +41,7 @@ const KEY_TILT = 0.08;
 export function LandBlock({
   parcel,
   assets,
+  building = false,
   mode,
   staged,
   revealed,
@@ -49,6 +50,8 @@ export function LandBlock({
   parcel: Parcel;
   staged: boolean;
   assets: LandAssets | null | undefined;
+  /** The API is building the land block (the parcel is not baked). */
+  building?: boolean;
   mode: RenderMode;
   revealed: boolean;
   onReady: () => void;
@@ -164,8 +167,14 @@ export function LandBlock({
   if (loading) {
     return (
       <figure className="land">
-        <div className="land-stage" data-land-stage>
-          <p className="visually-hidden">{LAND.loading}</p>
+        <div className="land-stage" data-land-stage data-building={building || undefined}>
+          {building ? (
+            <p className="land-building" role="status">
+              {LAND.building}
+            </p>
+          ) : (
+            <p className="visually-hidden">{LAND.loading}</p>
+          )}
         </div>
         <figcaption className="land-caption">
           <div className="land-credit" aria-hidden="true">
@@ -182,7 +191,14 @@ export function LandBlock({
     return (
       <div className="land">
         <ParcelBoundary geometry={parcel.geometry} />
-        <div className="land-caption">{explore}</div>
+        <div className="land-caption">
+          {assets === null && ring.length >= 3 && (
+            <div className="land-credit">
+              <p data-land-unavailable>{LAND.unavailable}</p>
+            </div>
+          )}
+          {explore}
+        </div>
         {areaView}
       </div>
     );
