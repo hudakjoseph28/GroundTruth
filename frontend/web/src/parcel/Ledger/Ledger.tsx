@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { LEDGER } from "../../content/parcel";
-import type { LedgerRecord, ParcelLedger } from "../../data/ledger";
+import { Link } from "react-router-dom";
+import { ESCROW, LEDGER } from "../../content/parcel";
+import { dealPath } from "../../data/dealSource";
+import type { EscrowSummary, LedgerRecord, ParcelLedger } from "../../data/ledger";
 import { motionVars } from "../motion";
 import { usePageHidden } from "../usePageHidden";
 import { EscrowStrip } from "./EscrowStrip";
@@ -16,10 +18,16 @@ import { RecordCard } from "./RecordCard";
  */
 export function Ledger({
   ledger,
+  deals,
+  dealNotice,
   revealed,
   animated,
 }: {
   ledger: ParcelLedger;
+  /** Every staged deal on this parcel the API returned, for the links under the escrow. */
+  deals: readonly EscrowSummary[];
+  /** Set when the parcel has a deal the API could not return. */
+  dealNotice: { message: string; onRetry: () => void } | null;
   /** False while the transition still covers the page. */
   revealed: boolean;
   /** False when the visitor asked for reduced motion. */
@@ -57,6 +65,34 @@ export function Ledger({
 
       {ledger.escrow && (
         <EscrowStrip escrow={ledger.escrow} counting={revealed} animated={animated} />
+      )}
+      {dealNotice && (
+        <div className="notice notice-error" role="alert">
+          <p>
+            {ESCROW.unavailable} {dealNotice.message}
+          </p>
+          <button type="button" className="btn btn-small" onClick={dealNotice.onRetry}>
+            {ESCROW.retry}
+          </button>
+        </div>
+      )}
+      {deals.length > 1 && (
+        <nav className="deal-links" aria-labelledby="deal-links-title">
+          <h3 id="deal-links-title">{ESCROW.others}</h3>
+          <ul>
+            {deals.map((deal) => (
+              <li key={deal.dealId} data-tone={deal.verdict.tone}>
+                <Link to={dealPath(deal.dealId)}>
+                  <strong>{ESCROW.states[deal.state]}</strong>
+                  <span>
+                    <span className="mono">{deal.amount}</span> {ESCROW.unit} · {deal.verdict.text}
+                  </span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       )}
 
       {count > 0 ? (

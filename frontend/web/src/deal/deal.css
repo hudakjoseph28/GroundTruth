@@ -1,0 +1,700 @@
+/* The deal page, and the plain pages beside it (deal not found, 404).
+   Phone first: amount, status, and why come before anything else. From 60rem
+   the summary sits beside the timeline. Tokens come from index.css. */
+
+.deal-page {
+  --tone: #a9a9a9;
+  --tone-text: #e4e1dc;
+  --tone-wash: rgba(255, 255, 255, 0.04);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-s);
+  padding: var(--s-3) var(--pad) var(--space-l);
+}
+
+.deal-page[data-tone="pending"],
+.deal-row[data-tone="pending"] {
+  --tone: var(--gold);
+  --tone-text: var(--gold-text);
+  --tone-wash: rgba(196, 161, 90, 0.1);
+}
+
+.deal-page[data-tone="held"],
+.deal-row[data-tone="held"] {
+  --tone: var(--red);
+  --tone-text: var(--red-text);
+  --tone-wash: rgba(214, 69, 69, 0.1);
+}
+
+.deal-page[data-tone="released"],
+.deal-row[data-tone="released"] {
+  --tone: var(--green);
+  --tone-text: var(--green-text);
+  --tone-wash: rgba(63, 168, 106, 0.1);
+}
+
+.deal-row[data-tone="quiet"] {
+  --tone: #6b6b6b;
+  --tone-text: #d7d7d7;
+  --tone-wash: rgba(255, 255, 255, 0.04);
+}
+
+.deal-page a {
+  text-underline-offset: 3px;
+}
+
+/* ---------- Top line ---------- */
+
+.deal-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-1) var(--s-4);
+  min-height: 2rem;
+}
+
+.deal-id {
+  margin-left: 0.4em;
+  color: var(--text);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.deal-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0;
+  color: var(--green-text);
+  font-size: var(--step--1);
+}
+
+.deal-live span:not(.deal-live-dot) {
+  color: var(--text-2);
+}
+
+.deal-live-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: deal-pulse 2s ease-in-out infinite;
+}
+
+.deal-live[data-stale="true"] {
+  color: var(--gold-text);
+}
+
+.deal-live[data-stale="true"] .deal-live-dot {
+  background: var(--gold);
+  animation: none;
+}
+
+@keyframes deal-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(63, 168, 106, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(63, 168, 106, 0);
+  }
+}
+
+/* ---------- Summary: hero, reviewers, hold ---------- */
+
+.deal-summary {
+  display: grid;
+  gap: var(--space-s);
+  align-content: start;
+}
+
+.deal-hero,
+.deal-reviewers,
+.deal-hold,
+.deal-handoff {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background: var(--surface-1);
+}
+
+.deal-hero {
+  border-top: 3px solid var(--tone);
+  padding: var(--s-4);
+}
+
+.deal-hero-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+}
+
+.deal-amount {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--step-0);
+  white-space: nowrap;
+}
+
+.deal-amount .mono {
+  margin-right: 0.15em;
+  color: var(--text);
+  font-size: clamp(2.1rem, 1.6rem + 2.6vw, 3.2rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* The big status badge. The word carries the state; the color repeats it. */
+.deal-state {
+  margin: 0;
+  border: 2px solid var(--tone);
+  border-radius: var(--radius-m);
+  padding: 0.3em 0.7em;
+  background: var(--tone-wash);
+  color: var(--tone-text);
+  font-size: clamp(1.25rem, 1.05rem + 1vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.deal-state[data-live="true"] {
+  animation: deal-state-flip 1400ms var(--ease-out);
+}
+
+@keyframes deal-state-flip {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 var(--tone);
+  }
+  30% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 18px transparent;
+  }
+}
+
+.deal-headline {
+  margin: var(--s-4) 0 var(--s-1);
+  color: var(--tone-text);
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.deal-message {
+  margin: 0;
+  color: #d7d7d7;
+}
+
+.deal-next,
+.deal-parcel {
+  display: flex;
+  gap: 0.75em;
+  margin: var(--s-3) 0 0;
+  border-top: 1px solid var(--line-soft);
+  padding-top: var(--s-3);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.deal-parcel {
+  margin-top: var(--s-2);
+  border-top: 0;
+  padding-top: 0;
+}
+
+.deal-next > span:first-child,
+.deal-parcel > span:first-child {
+  flex: none;
+  min-width: 3.4rem;
+  padding-top: 0.22em;
+  color: var(--text-2);
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.deal-parcel a {
+  padding: 0.2em 0;
+}
+
+.deal-staged {
+  margin-top: var(--s-3);
+  white-space: normal;
+}
+
+.deal-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-4);
+}
+
+.deal-section-head h2,
+.deal-hold h2,
+.deal-handoff h2 {
+  margin: 0;
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #d7d7d7;
+}
+
+.deal-section-head p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+/* Reviewers */
+
+.deal-reviewers {
+  padding: var(--s-3) var(--s-4);
+}
+
+.deal-reviewers ul {
+  display: grid;
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deal-reviewers li {
+  --mark: #6b6b6b;
+  --mark-text: var(--text-2);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+  border-top: 1px solid var(--line-soft);
+  padding: 0.55rem 0;
+}
+
+.deal-reviewers li:last-child {
+  padding-bottom: 0.15rem;
+}
+
+.deal-reviewers li[data-status="signed"] {
+  --mark: var(--green);
+  --mark-text: var(--green-text);
+}
+
+.deal-reviewers li[data-status="held"] {
+  --mark: var(--red);
+  --mark-text: var(--red-text);
+}
+
+.deal-reviewers li[data-status="waiting"] {
+  --mark: var(--gold);
+  --mark-text: var(--gold-text);
+}
+
+.deal-reviewer-mark {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 2px solid var(--mark);
+  border-radius: 50%;
+  color: var(--mark-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.deal-reviewers li[data-status="waiting"] .deal-reviewer-mark {
+  border-style: dashed;
+}
+
+.deal-reviewers li[data-status="signed"] .deal-reviewer-mark {
+  background: rgba(63, 168, 106, 0.16);
+}
+
+.deal-reviewer-who,
+.deal-reviewer-status {
+  display: grid;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.deal-reviewer-who {
+  font-weight: 560;
+}
+
+.deal-reviewer-who .mono,
+.deal-reviewer-status a {
+  color: var(--text-2);
+  font-size: var(--step--1);
+  font-weight: 400;
+}
+
+.deal-reviewer-status {
+  justify-items: end;
+  text-align: right;
+}
+
+.deal-reviewer-status strong {
+  color: var(--mark-text);
+  font-weight: 600;
+}
+
+/* Hold */
+
+.deal-hold {
+  border-color: rgba(214, 69, 69, 0.5);
+  border-left: 3px solid var(--red);
+  padding: var(--s-3) var(--s-4);
+}
+
+.deal-hold[data-active="false"] {
+  border-color: var(--line);
+  border-left-color: #7a4a4a;
+}
+
+.deal-hold h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2em 0.9em;
+  color: var(--red-text);
+}
+
+.deal-hold h2 span {
+  color: var(--text);
+  font-size: var(--step-0);
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+.deal-hold-message {
+  margin: var(--s-2) 0;
+  color: #d7d7d7;
+}
+
+.deal-hold-foot {
+  margin: var(--s-1) 0 0;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+/* ---------- Timeline ---------- */
+
+.deal-timeline {
+  min-width: 0;
+}
+
+.deal-timeline > .deal-section-head {
+  padding: var(--s-2) 0;
+}
+
+.deal-rows {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deal-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s-3);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--tone);
+  border-radius: var(--radius-m);
+  padding: 0.7rem 0.85rem;
+  background: var(--surface-1);
+}
+
+/* Off-chain records are visibly not chain events: dashed, and quieter. */
+.deal-row[data-confirmed="false"] {
+  border-style: dashed;
+  border-left-style: dashed;
+  background: transparent;
+}
+
+.deal-row[data-blocked="true"] {
+  border-color: rgba(214, 69, 69, 0.55);
+  border-left-color: var(--red);
+  background: rgba(214, 69, 69, 0.07);
+}
+
+.deal-row-mark {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.12rem;
+  border: 2px solid var(--tone);
+  border-radius: 50%;
+  color: var(--tone-text);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.deal-row[data-confirmed="true"]:not([data-blocked="true"]) .deal-row-mark {
+  background: var(--tone);
+}
+
+.deal-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25em 0.7em;
+  margin: 0;
+}
+
+.deal-row-head strong {
+  color: var(--tone-text);
+  font-weight: 600;
+}
+
+.deal-row-head time {
+  margin-left: auto;
+  color: var(--text-2);
+  font-family: var(--mono);
+  font-size: var(--step--1);
+  white-space: nowrap;
+}
+
+.deal-row-blocked,
+.deal-row-new {
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.deal-row-blocked {
+  background: var(--red);
+  color: #fff;
+}
+
+.deal-row-new {
+  background: var(--gold-text);
+  color: #0a0a0a;
+}
+
+.deal-row-message {
+  margin: 0.3rem 0;
+  color: var(--text);
+}
+
+.deal-row-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15em 0;
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+.deal-row-foot > * + *::before {
+  content: "·";
+  margin: 0 0.5em;
+  color: var(--text-3);
+}
+
+/* The receipt: its own line, and a full-height tap target on a phone. */
+.deal-row-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  min-height: 2.25rem;
+  margin-bottom: -0.45rem;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.deal-row-link .mono {
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+/* A row that arrived while the page was open. The "New" tag says it in
+   words; the glow fades over the time the tag stays. */
+.deal-row[data-fresh="true"] {
+  animation:
+    deal-row-in 520ms var(--ease-out),
+    deal-row-glow 8s ease-out;
+}
+
+@keyframes deal-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+  }
+}
+
+@keyframes deal-row-glow {
+  0%,
+  35% {
+    box-shadow:
+      0 0 0 2px var(--gold-text),
+      0 0 28px rgba(209, 168, 78, 0.45);
+  }
+  100% {
+    box-shadow:
+      0 0 0 2px transparent,
+      0 0 0 transparent;
+  }
+}
+
+/* ---------- Aside: phone handoff and the escrow account ---------- */
+
+.deal-aside {
+  display: grid;
+  gap: var(--s-3);
+  align-content: start;
+}
+
+.deal-account {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+.deal-account a {
+  margin-left: 0.4em;
+  color: var(--text);
+}
+
+/* The QR is for handing the page to a phone, so a phone does not show it. */
+.deal-handoff {
+  display: none;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-3);
+}
+
+.deal-handoff p {
+  margin: var(--s-1) 0 0;
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+.deal-handoff .deal-handoff-url {
+  color: var(--text);
+  font-size: var(--step--1);
+  overflow-wrap: anywhere;
+}
+
+.qr {
+  display: block;
+  width: 8.5rem;
+  height: 8.5rem;
+  border-radius: var(--radius-s);
+}
+
+/* ---------- Plain pages: loading, deal not found, 404 ---------- */
+
+.deal-plain .eyebrow {
+  margin-bottom: var(--s-2);
+}
+
+.deal-plain h1.mono {
+  font-size: var(--step-2);
+  letter-spacing: -0.02em;
+}
+
+.deal-plain .result-skeleton {
+  margin-top: 10px;
+}
+
+.plain-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin: var(--space-s) 0 0;
+}
+
+/* ---------- Wide: summary beside the timeline ---------- */
+
+@container page (min-width: 60rem) {
+  .deal-page {
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+    grid-template-areas:
+      "top top"
+      "summary timeline"
+      "aside timeline";
+    grid-template-rows: auto auto 1fr;
+    column-gap: var(--space-m);
+    padding-top: var(--space-s);
+  }
+
+  .deal-top {
+    grid-area: top;
+  }
+
+  .deal-summary {
+    grid-area: summary;
+  }
+
+  .deal-timeline {
+    grid-area: timeline;
+  }
+
+  .deal-aside {
+    grid-area: aside;
+  }
+
+  .deal-timeline > .deal-section-head {
+    padding-top: 0;
+  }
+
+  .deal-handoff {
+    display: grid;
+  }
+}
+
+/* Wider still: the phone handoff gets its own column, in the first screen. */
+@container page (min-width: 78rem) {
+  .deal-page {
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr) minmax(0, 13rem);
+    grid-template-areas:
+      "top top top"
+      "summary timeline aside";
+    grid-template-rows: auto 1fr;
+  }
+
+  .deal-handoff {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    gap: var(--s-3);
+  }
+
+  .qr {
+    width: 100%;
+    height: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deal-live-dot,
+  .deal-state[data-live="true"] {
+    animation: none;
+  }
+
+  /* No movement, but the new row still stands out while it is new. */
+  .deal-row[data-fresh="true"] {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--gold-text);
+  }
+}

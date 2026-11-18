@@ -16,7 +16,7 @@ Checked Nov 18, 2026 against the deployed site and API and the public devnet RPC
 
 | Surface | Where | What it does today |
 | --- | --- | --- |
-| Web | <https://groundtruth-lac.vercel.app> (Vercel) | Homepage, search of live Ohio parcels by address or parcel ID, and a parcel page with the boundary Ohio publishes, a 3D land view, and a source-backed report. The golden parcel's closing strip still reads a bundled staged fixture, not the API, and there is no deal page yet. |
+| Web | <https://groundtruth-lac.vercel.app> (Vercel) | Homepage, search of live Ohio parcels by address or parcel ID, and a parcel page with the boundary Ohio publishes, a 3D land view, and a source-backed report. A deal page at `/deals/:dealId` reads the deal and its timeline from the API, checks the timeline every 2 seconds, links each confirmed row to Solana Explorer, and shows a QR code on desktop for opening it on a phone. The golden parcel's closing strip reads the same API. |
 | API | <https://api-production-db8a8106.up.railway.app> (Railway, with its own Postgres) | `GET /api/health`, `/api/coverage`, `/api/parcels/search`, `/api/parcels/:parcelKey`, `/api/parcels/:parcelKey/report`, `/api/deals/:id`, `/api/deals/:id/timeline`, and signed webhooks for QuickNode and ElevenLabs. The web forwards `/api/*` here, so browser code calls relative paths. |
 | Escrow | Solana devnet, program [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet) | Anchor program with 6 instructions (`initialize_deal`, `fund`, `sign_approval`, `place_hold`, `release`, `refund`) and 6 events, covered by 78 Anchor integration tests. Both demo closings ran on Nov 18. |
 
@@ -90,7 +90,7 @@ docs/
   phases/                 build order, owners, acceptance checks
   agents/Prompt.md        task template for handing work to an agent
 packages/shared/          `@groundtruth/shared` v1 types, golden and second-county parcel fixtures, staged deal
-frontend/web/             Vite app: homepage, live Ohio parcel search, parcel view and report
+frontend/web/             Vite app: homepage, live Ohio parcel search, parcel view and report, deal page
 frontend/mobile/          reserved; native app is out of core scope
 backend/                  Express API: live OGRIP search, live and seeded parcel reports, staged deals
 escrow/                   Anchor program: 6 instructions, USDC vault, reviewer holds, release, and refund

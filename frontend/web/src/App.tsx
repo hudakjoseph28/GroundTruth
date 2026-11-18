@@ -1,6 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { SiteLayout } from "./layout/SiteLayout";
+import { DealPage } from "./pages/DealPage";
 import { HomePage } from "./pages/HomePage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { ParcelPage } from "./pages/ParcelPage";
 import { SearchPage } from "./pages/SearchPage";
 
@@ -12,6 +14,8 @@ export function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/parcels/:parcelKey" element={<ParcelPage />} />
+          <Route path="/deals/:dealId" element={<DealPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,0 +1,179 @@
+import type {
+  DealState,
+  Hold,
+  ReviewerRole,
+  TimelineEventType,
+} from "@groundtruth/shared";
+
+// Copy for the deal page and the 404 page. Claims follow
+// docs/context/Problem.md: the page reports what the API projected from
+// confirmed chain events and says nothing the deal does not show. Roles are
+// staged wallets and the money is test USDC, and the page says so.
+
+export const DEAL_PAGE = {
+  eyebrow: "Staged deal",
+  staged: "Staged roles · test USDC · Solana devnet",
+  unit: "test USDC",
+  amount: "In this deal",
+  status: "Status",
+  next: "Next",
+  parcel: {
+    label: "Parcel",
+    open: (parcelId: string) => `Parcel ${parcelId}`,
+    county: (name: string) => `${name} County`,
+  },
+  escrowAddress: "Escrow account",
+  dealId: "Deal",
+  loading: "Loading the deal…",
+  retry: "Try again",
+  missing: {
+    title: "Deal not found",
+    body: "No public staged deal has this ID.",
+    home: "Go to the homepage",
+    parcel: "Open the demo parcel",
+  },
+} as const;
+
+export const STATE_LABELS: Record<DealState, string> = {
+  draft: "Draft",
+  funded: "Funded",
+  held: "Held",
+  released: "Released",
+  refunded: "Refunded",
+};
+
+const ROLE: Record<ReviewerRole, string> = {
+  title: "title",
+  survey: "survey",
+  septic: "septic",
+};
+
+export const ROLE_LABELS: Record<ReviewerRole, string> = {
+  title: "Title",
+  survey: "Survey",
+  septic: "Septic",
+};
+
+export const HOLD_REASONS: Record<Hold["reasonCode"], string> = {
+  SELLER_IDENTITY_DISPUTED: "Seller identity disputed",
+  TITLE_EXCEPTION: "Title exception",
+  SITE_REVIEW_FAILED: "Site review failed",
+  OTHER: "Reviewer's hold",
+};
+
+function list(roles: readonly ReviewerRole[]): string {
+  const names = roles.map((role) => ROLE[role]);
+  if (names.length <= 1) return names.join("");
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+/** The one line beside the status, and the sentence and next step under it. */
+export const VERDICT = {
+  draft: {
+    headline: "Not funded yet",
+    message: "No funds are in escrow for this deal.",
+    next: "The buyer deposits the amount into escrow.",
+  },
+  waiting: {
+    headline: (count: number) =>
+      `Waiting on ${count} sign-off${count === 1 ? "" : "s"}`,
+    message: (count: number) =>
+      `The deposit is in escrow. It cannot move until ${count} more required reviewer${count === 1 ? " signs" : "s sign"}.`,
+    next: (roles: readonly ReviewerRole[]) =>
+      `The ${list(roles)} reviewer${roles.length === 1 ? " signs their approval" : "s each sign their approval"}.`,
+  },
+  ready: {
+    headline: "All required reviews signed · Ready to release",
+    message:
+      "Every required reviewer has signed and no hold is active. The escrow can now pay the bound seller.",
+    next: "Anyone can submit the release. The program pays only the bound seller.",
+  },
+  held: {
+    headline: (reason: string) => `Closing paused · ${reason}`,
+    headlineUnknown: "Closing paused · A reviewer's hold is active",
+    message: (role: ReviewerRole | undefined) =>
+      `${role ? `The ${ROLE[role]} reviewer's` : "A reviewer's"} hold is active, so the escrow cannot pay the seller.`,
+    next: (role: ReviewerRole | undefined) =>
+      `${role ? `The ${ROLE[role]} reviewer` : "The reviewer"} investigates. The buyer can take a refund while the hold is active.`,
+  },
+  released: {
+    headline: "Payment released",
+    message: (amount: string) =>
+      `Every required reviewer signed, and the escrow paid ${amount} test USDC to the bound seller.`,
+    next: "Nothing further. This deal is closed.",
+  },
+  refunded: {
+    headline: "Refunded to the buyer",
+    message: (amount: string, held: boolean) =>
+      `The escrow returned ${amount} test USDC to the buyer${held ? " while a reviewer's hold was active" : ""}. Nothing was paid to the seller.`,
+    next: "Nothing further. This deal is closed.",
+  },
+} as const;
+
+export const REVIEWERS = {
+  title: "Required reviewers",
+  count: (signed: number, required: number) =>
+    `${signed} of ${required} signed`,
+  role: (role: ReviewerRole) => `${ROLE_LABELS[role]} reviewer`,
+  status: {
+    signed: "Signed",
+    held: "Hold placed",
+    waiting: "Waiting",
+    notSigned: "Did not sign",
+  },
+  receipt: "Receipt",
+  wallet: "Staged wallet",
+} as const;
+
+export const HOLD = {
+  active: "Active hold",
+  ended: "Hold on this deal",
+  endedNote: "This hold was still active when the deal ended.",
+  placedBy: (role: ReviewerRole) => `Placed by the ${ROLE[role]} reviewer`,
+  receipt: "Hold transaction",
+} as const;
+
+export const TIMELINE = {
+  title: "Timeline",
+  order: "Newest first",
+  empty: "Nothing has happened on this deal yet.",
+  types: {
+    dealCreated: "Deal created",
+    funded: "Deposit",
+    evidenceReceived: "Evidence received",
+    approvalSigned: "Approval signed",
+    holdPlaced: "Hold placed",
+    releaseRejected: "Release rejected",
+    released: "Payment released",
+    refunded: "Refund",
+  } satisfies Record<TimelineEventType, string>,
+  blocked: "Blocked · no money moved",
+  confirmed: "Confirmed on Solana devnet",
+  offChain: "Off-chain record · not a chain event",
+  explorer: "View transaction",
+  newTab: "opens Solana Explorer in a new tab",
+  fresh: "New",
+  announce: (message: string) => `New on the timeline: ${message}`,
+} as const;
+
+export const LIVE = {
+  on: "Live",
+  detail: "Checking for updates every 2 seconds",
+  updated: (time: string) => `Updated ${time}`,
+  stale: "Reconnecting. Showing the last confirmed state.",
+} as const;
+
+export const HANDOFF = {
+  title: "Open on your phone",
+  body: "Scan to follow this deal live. No app or wallet needed.",
+  alt: (url: string) => `QR code for ${url}`,
+} as const;
+
+export const NOT_FOUND = {
+  title: "Page not found",
+  body: "Nothing lives at this address. It may have been mistyped, or the link may be out of date.",
+  home: "Go to the homepage",
+  search: "Search for a parcel",
+  parcel: "Open the demo parcel",
+} as const;

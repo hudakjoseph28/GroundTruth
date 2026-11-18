@@ -39,7 +39,7 @@ On your first task, skim **every Markdown file in this repository once**; the fu
 
 ## Where code goes
 
-`frontend/web` has the homepage, search over the two fixture parcels (golden `ohio:39049:230-000918` and Licking `ohio:39089:00500729609000`), and the parcel view. `backend` searches live Ohio OGRIP parcels, builds live parcel reports with a FEMA flood check, and serves the two seeded reports from Postgres; see [Coverage](docs/phases/02-parcel-research/Coverage.md). `frontend/mobile` is reserved; `escrow` implements the 6 Anchor escrow instructions on Solana devnet. Put new files in the folder that matches the surface.
+`frontend/web` has the homepage, live Ohio parcel search, the parcel view, and the deal page (`/deals/:dealId`), which reads deal state and the timeline from the API. `backend` searches live Ohio OGRIP parcels, builds live parcel reports with a FEMA flood check, and serves the two seeded reports from Postgres; see [Coverage](docs/phases/02-parcel-research/Coverage.md). `frontend/mobile` is reserved; `escrow` implements the 6 Anchor escrow instructions on Solana devnet. Put new files in the folder that matches the surface.
 
 | Folder | What belongs here |
 | --- | --- |
