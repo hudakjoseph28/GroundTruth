@@ -76,4 +76,45 @@ describe("readServerEnv", () => {
       readServerEnv({ DATABASE_URL, GIT_COMMIT: "<script>" }),
     ).toThrow("GIT_COMMIT contains unsupported characters");
   });
+
+  describe("Twilio", () => {
+    const twilio = {
+      TWILIO_ACCOUNT_SID: `AC${"0123456789abcdef".repeat(2)}`,
+      TWILIO_AUTH_TOKEN: "test-auth-token",
+      TWILIO_FROM_NUMBER: "+16145550100",
+    };
+
+    it("is off when none of the three are set", () => {
+      expect(readServerEnv({ DATABASE_URL }).twilio).toBeUndefined();
+    });
+
+    it("reads all three together", () => {
+      expect(readServerEnv({ DATABASE_URL, ...twilio }).twilio).toEqual({
+        accountSid: twilio.TWILIO_ACCOUNT_SID,
+        authToken: "test-auth-token",
+        fromNumber: "+16145550100",
+      });
+    });
+
+    it("refuses a partial set", () => {
+      expect(() =>
+        readServerEnv({ DATABASE_URL, ...twilio, TWILIO_AUTH_TOKEN: " " }),
+      ).toThrow(
+        "TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER must be set together",
+      );
+    });
+
+    it("refuses a malformed SID or sender", () => {
+      expect(() =>
+        readServerEnv({ DATABASE_URL, ...twilio, TWILIO_ACCOUNT_SID: "SK1" }),
+      ).toThrow("TWILIO_ACCOUNT_SID must be a Twilio Account SID (AC...)");
+      expect(() =>
+        readServerEnv({
+          DATABASE_URL,
+          ...twilio,
+          TWILIO_FROM_NUMBER: "614-555-0100",
+        }),
+      ).toThrow("TWILIO_FROM_NUMBER must be in +E.164 form");
+    });
+  });
 });

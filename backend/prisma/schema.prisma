@@ -61,7 +61,7 @@ model CheckRecord {
 /// `state`, reviewer approvals, `hold`, and confirmed timeline rows are
 /// projections of confirmed chain events; the browser never writes them.
 model DealRecord {
-  id                 String                @id
+  id                 String                  @id
   parcelKey          String
   buyerWallet        String
   sellerWallet       String
@@ -71,13 +71,46 @@ model DealRecord {
   cluster            String
   state              String
   /// Deal PDA. Confirmed program events are matched to a deal by this.
-  escrowAddress      String?               @unique
+  escrowAddress      String?                 @unique
   /// Only staged, non-sensitive demo deals are readable without auth.
-  publicDemo         Boolean               @default(false)
+  publicDemo         Boolean                 @default(false)
   reviewers          ReviewerRecord[]
   hold               HoldRecord?
   timelineEvents     TimelineEventRecord[]
   ownerCalls         OwnerCallRecord[]
+  smsSubscriptions   SmsSubscriptionRecord[]
+}
+
+/// A staged-demo opt-in to deal texts. Private: the number is never mapped
+/// into a Deal response, logged, or returned except masked. Scoped to one
+/// deal and deleted with it.
+model SmsSubscriptionRecord {
+  id          String           @id
+  dealId      String
+  deal        DealRecord       @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  /// E.164, e.g. +16145550123.
+  phoneNumber String
+  consentedAt DateTime         @db.Timestamptz(3)
+  alerts      SmsAlertRecord[]
+
+  @@unique([dealId, phoneNumber])
+}
+
+/// One text per (confirmed timeline event, subscriber). Written in the same
+/// transaction as the timeline row, so a replayed QuickNode delivery never
+/// creates a second one; a claimed or sent row is never sent again.
+model SmsAlertRecord {
+  eventId           String
+  event             TimelineEventRecord   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  subscriptionId    String
+  subscription      SmsSubscriptionRecord @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  /// pending | sending | sent | failed
+  status            String                @default("pending")
+  attempts          Int                   @default(0)
+  providerMessageId String?
+  sentAt            DateTime?             @db.Timestamptz(3)
+
+  @@id([eventId, subscriptionId])
 }
 
 /// One staged ElevenLabs owner callback, from a verified post-call webhook.
@@ -126,10 +159,10 @@ model HoldRecord {
 }
 
 model TimelineEventRecord {
-  id                   String     @id
+  id                   String           @id
   dealId               String
-  deal                 DealRecord @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  at                   DateTime   @db.Timestamptz(3)
+  deal                 DealRecord       @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  at                   DateTime         @db.Timestamptz(3)
   type                 String
   actorRole            String?
   buyerMessage         String
@@ -138,6 +171,7 @@ model TimelineEventRecord {
   eventIndex           Int?
   slot                 BigInt?
   confirmationStatus   String
+  smsAlerts            SmsAlertRecord[]
 
   /// QuickNode delivery dedupe: one row per program event.
   @@unique([transactionSignature, eventIndex])

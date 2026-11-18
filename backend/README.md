@@ -383,6 +383,16 @@ Filters live in [quicknode/](quicknode/) and are pasted into the Stream's filter
 
 The first start (22:56:59 UTC) was stopped after three `503`s because the token was not yet set. Resuming it after the token was set produced the run above.
 
+## Deal text alerts (staged demo, Twilio)
+
+Anyone viewing a public staged deal can choose **Text me updates** and enter a mobile number. That deal then sends them a short text for each new confirmed `DealFunded`, `HoldPlaced`, rejected release, or `DealReleased` event, e.g. `GroundTruth: your 10 test USDC escrow was released to the seller. Explorer: https://explorer.solana.com/tx/<signature>?cluster=devnet`. A text reports chain state. It never approves, holds, or moves anything.
+
+- **Opt-in:** `POST /api/deals/:id/sms-subscriptions` with `{ "phoneNumber": "614 555 0123", "consent": true }`. Returns `201` for a new number or `200` for one already on the deal, as `{ dealId, maskedPhoneNumber: "+1 ••• ••• 0123" }`. Answers `400` for a missing consent or an unreadable number, `404` for a non-public deal, `409` for a released or refunded deal or a deal that has reached 25 numbers, and `503` when Twilio is not configured.
+- **Privacy:** the number is stored in E.164 form on `SmsSubscriptionRecord` for that deal only and deleted with the deal. It is never mapped into `Deal`, never logged, and never returned unmasked.
+- **Send once:** `applyConfirmedEvent` queues one `SmsAlertRecord` per (timeline event, subscriber) in the same transaction as the timeline row. A replayed QuickNode delivery is a duplicate, so it queues nothing new. After the transaction commits, the webhook claims each pending alert (`pending` → `sending`) before sending it, so an alert is sent at most once. If Twilio refuses a text, the alert goes back to `pending` and the next delivery of the same event retries it. After 3 refusals it is marked `failed`. A text failure never fails the webhook or the projection. An opt-in only covers events that arrive after it.
+- **Setup:** set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER` (the team's existing Twilio number, `+E.164`) together in Railway variables. They are all-or-none: a partial set stops the API at startup. With none set, opt-ins get `503` and nothing is texted. Never commit them.
+- **Tests:** `test/smsAlerts.test.ts` and `test/smsSubscriptions.test.ts` (fake fetch, mocked Prisma), and `test/db/smsAlerts.db.test.ts` (signed deliveries through the real webhook and decoder with a fake sender, including replays and a Twilio refusal). No test sends a real text.
+
 ## ElevenLabs owner callback
 
 A staged check against seller impersonation. An ElevenLabs agent phones a **consenting teammate** who plays the owner on record of the golden parcel and asks whether they are selling it. The result becomes **evidence** on the deal timeline for the title reviewer. It never approves, holds, or releases anything; the reviewer's signature and the escrow program decide that. No real parcel owner is ever called.
@@ -443,7 +453,7 @@ git archive main | tar -x -C /tmp/gt-web && cp -r .vercel /tmp/gt-web/
 Why the export: Vercel's Hobby plan **blocks** a CLI deploy when the checkout's latest commit was authored by someone other than the project owner. A PR merge commit has the merger as its author. Exporting with `git archive` sends exactly the committed tree with no commit author. `vercel ls groundtruth` shows `Blocked` if this is skipped.
 
 - **API build:** Railpack runs `pnpm run build`. [railpack.json](../railpack.json) starts the API with `start:prod`, which runs `prisma migrate deploy`, then the compiled seed, then the server. Both are safe to repeat. Do not add `railway.json`: new Railway projects ignore its build, pre-deploy, and healthcheck settings.
-- **API variables:** `DATABASE_URL` references `${{Postgres.DATABASE_URL}}`; `GIT_COMMIT` is set by hand after each deploy; Railway sets `PORT`. Secrets for QuickNode and ElevenLabs go in Railway variables, never in Git.
+- **API variables:** `DATABASE_URL` references `${{Postgres.DATABASE_URL}}`; `GIT_COMMIT` is set by hand after each deploy; Railway sets `PORT`. Secrets for QuickNode, ElevenLabs, and Twilio go in Railway variables, never in Git.
 - **Web:** [vercel.json](../vercel.json) builds `shared` then `web` with the pinned pnpm, forwards `/api/*` to the Railway API, and sends every other path to `index.html`. Webhook providers call the Railway URL directly so signatures are checked against the unmodified body.
 - [.vercelignore](../.vercelignore) keeps `.env*` files out of CLI uploads; `railway up` already skips everything in `.gitignore`.
 

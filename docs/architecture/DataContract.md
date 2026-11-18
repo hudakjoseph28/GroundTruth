@@ -144,6 +144,10 @@ export interface Deal {
   hold?: Hold;
   timeline: TimelineEvent[];
 }
+
+// Staged demo text alerts. The number is never returned unmasked.
+export interface DealSmsSubscriptionRequest { phoneNumber: string; consent: true; }
+export interface DealSmsSubscription { dealId: string; maskedPhoneNumber: string; }
 ```
 
 `Deal.state` is a projection of the confirmed program account and transactions. The browser never sets it. The API may show `PENDING_CONFIRMATION` while waiting, but it does not optimistically label a deal held, released, or refunded.
@@ -164,7 +168,8 @@ All responses are JSON. Success returns the named object directly. Failure retur
 | `GET /api/deals/:id` | `200 Deal` | Public only for the two staged, non-sensitive demo deals. Unknown/non-demo deals return `404`. |
 | `GET /api/deals/:id/timeline` | `200 TimelineEvent[]` | Stable ascending order by chain slot/event index, then off-chain timestamp. |
 | `POST /api/deals/:id/evidence/owner-call` | `201 TimelineEvent` | Internal service use after a verified ElevenLabs webhook; never callable by the public browser. Implemented as the in-process `recordOwnerCall` step of the webhook, not an HTTP route, so nothing outside the API can reach it. |
-| `POST /api/webhooks/quicknode` | `204` | Verify HMAC/raw body, dedupe by signature + event index, write confirmed program events. |
+| `POST /api/deals/:id/sms-subscriptions` | `201`/`200 DealSmsSubscription` | Staged demo opt-in to texts about one public deal's future funded, hold, rejected-release, and released events. Body `{ phoneNumber, consent: true }`. Returns only `{ dealId, maskedPhoneNumber }`. `409` once the deal is released or refunded. `503` when Twilio is not configured. |
+| `POST /api/webhooks/quicknode` | `204` | Verify HMAC/raw body, dedupe by signature + event index, write confirmed program events. Each newly projected funded, hold, rejected-release, or released event queues at most one text per subscriber in the same transaction. |
 | `POST /api/webhooks/elevenlabs` | `200` | Verify signature/raw body, dedupe by conversation ID, store minimum staged call outcome. `200`, not `204`: ElevenLabs counts only `200` as delivered. |
 
 `Coverage` has this shape:
@@ -186,6 +191,7 @@ Wallets build and sign program transactions client-side from the checked-in IDL.
 - **OGRIP:** the backend adapter accepts current Ohio field names and emits `Parcel`. The globally unique key includes state, county FIPS, and published parcel ID; a county-local ID alone is never a database key.
 - **FEMA/local records:** every adapter returns `found`, `missing`, `timeout`, or `conflict`. Only `found` may produce `evidenceFound`; every other outcome becomes `unknown` with an explicit limitation and next action.
 - **ElevenLabs:** only `conversation_id`, completion time, staged deal ID, consenting demo participant label, call success, and the configured analysis outcome are retained. Raw audio/transcript is not copied into the GroundTruth database.
+- **Twilio:** a deal text subscriber's phone number is stored in E.164 form for that deal only. It is never part of `Deal`, never logged, and never returned unmasked. A text reports a confirmed event and authorizes nothing.
 - **QuickNode:** only confirmed events emitted by the deployed GroundTruth program are projected. A transfer involving the vault but not a valid program event is not enough to change `Deal.state`.
 
 ## Escrow v1
