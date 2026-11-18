@@ -1,13 +1,8 @@
-import { Link } from "react-router-dom";
 import { SearchForm } from "../components/SearchForm";
 import { ATTESTATION_COPY } from "../content/attestations";
 import { HERO } from "../content/home";
-import { sampleParcelPath } from "../data/parcelSource";
-import { readDevnetSlot } from "../parcel/BlockTransition/devnetSlot";
 import { Icon } from "./icons";
 import { LivingParcel } from "./LivingParcel";
-
-const warmSlot = () => void readDevnetSlot();
 
 /**
  * The first screen: the headline and a working search on the left, and on the
@@ -29,17 +24,6 @@ export function Hero() {
           </h1>
           <p className="hero-lede">{HERO.subhead}</p>
           <SearchForm autoFocus showSampleLink={false} ariaLabel={HERO.searchLabel} />
-          <p className="hero-demo">
-            {HERO.demo.before}{" "}
-            <Link
-              className="hero-demo-chip"
-              to={sampleParcelPath()}
-              onPointerDown={warmSlot}
-              onFocus={warmSlot}
-            >
-              {HERO.demo.parcelId}
-            </Link>
-          </p>
           <ul className="hero-trust">
             {HERO.trust.map((item) => (
               <li key={item.label}>

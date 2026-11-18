@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { stagedLiveDeal } from "@groundtruth/shared";
 import { ESCROW, LEDGER } from "../../content/parcel";
-import { dealPath } from "../../data/dealSource";
 import type { EscrowSummary, LedgerRecord, ParcelLedger } from "../../data/ledger";
+import { readDevnetSlot } from "../BlockTransition/devnetSlot";
 import { motionVars } from "../motion";
 import { usePageHidden } from "../usePageHidden";
 import { EscrowStrip } from "./EscrowStrip";
@@ -16,6 +16,28 @@ import { RecordCard } from "./RecordCard";
  * The chain arrives the way the transition's blocks did, then idles quietly.
  * All of that motion lives in the stylesheet; this only says when it may run.
  */
+function ClosingsHeader() {
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    let current = true;
+    void readDevnetSlot().then((slot) => {
+      if (current) setLive(slot !== null);
+    });
+    return () => {
+      current = false;
+    };
+  }, []);
+  return (
+    <header className="closings-head">
+      <h3 id="closings-title">{ESCROW.closings}</h3>
+      <p className="closings-live" data-live={live}>
+        <span className="closings-dot" aria-hidden="true" />
+        {live ? ESCROW.devnetLive : ESCROW.devnet}
+      </p>
+    </header>
+  );
+}
+
 export function Ledger({
   ledger,
   deals,
@@ -51,23 +73,28 @@ export function Ledger({
       aria-labelledby="ledger-title"
       data-revealed={revealed}
       // Ambient motion rests while the tab is hidden or the details are open.
-      data-paused={hidden || open !== null}
+      data-paused={hidden || open !== null || !animated}
       style={motionVars(count)}
     >
       <header className="ledger-head">
         <h2 id="ledger-title">{LEDGER.title}</h2>
-        {ledger.staged && <p className="tag">{LEDGER.stagedTag}</p>}
-        <p className="ledger-lede">
-          {ledger.hasDeal ? LEDGER.lede : LEDGER.ledeNoDeal}
-          {ledger.staged && <> {LEDGER.stagedNote}</>}
-        </p>
+        <p className="ledger-lede">{ledger.hasDeal ? LEDGER.lede : LEDGER.ledeNoDeal}</p>
         {count > 0 && (
           <p className="ledger-summary">{LEDGER.summary(ledger.answered, count)}</p>
         )}
       </header>
 
-      {ledger.escrow && (
-        <EscrowStrip escrow={ledger.escrow} counting={revealed} animated={animated} />
+      {deals.length > 0 && (
+        <section className="closings" aria-labelledby="closings-title">
+          <ClosingsHeader />
+          {deals.map((deal) => (
+            <EscrowStrip
+              key={deal.dealId}
+              escrow={deal}
+              startOpen={deal.dealId === stagedLiveDeal.id}
+            />
+          ))}
+        </section>
       )}
       {dealNotice && (
         <div className="notice notice-error" role="alert">
@@ -79,25 +106,6 @@ export function Ledger({
           </button>
         </div>
       )}
-      {deals.length > 1 && (
-        <nav className="deal-links" aria-labelledby="deal-links-title">
-          <h3 id="deal-links-title">{ESCROW.others}</h3>
-          <ul>
-            {deals.map((deal) => (
-              <li key={deal.dealId} data-tone={deal.verdict.tone}>
-                <Link to={dealPath(deal.dealId)}>
-                  <strong>{ESCROW.states[deal.state]}</strong>
-                  <span>
-                    <span className="mono">{deal.amount}</span> {ESCROW.unit} · {deal.verdict.text}
-                  </span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      )}
-
       {count > 0 ? (
         <ol className="chain">
           {ledger.records.map((record, index) => (

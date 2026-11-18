@@ -8,13 +8,19 @@ import {
   type ReviewerRole,
 } from "@groundtruth/shared";
 import { CHAIN_FINDINGS, ESCROW } from "../content/parcel";
-import { stagedLedger, type Reference } from "./stagedLedger";
+import { chainBlocks, pendingOutlines, type ChainBlock } from "../deal/chainBlocks";
 
 // The parcel ledger's view model. It reads the report and the deal, in that
 // order of trust: confirmed state on the deal wins, then the report. The deal
-// comes from the API (GET /api/deals/:id), never from a bundled fixture. The
-// staged demo layer shows only while the API reports nothing on-chain for the
-// deal. Signatures only ever come from the report or the deal.
+// comes from the API (GET /api/deals/:id). Signatures only ever come from the
+// report or the deal. A missing check stays unknown; it is never filled in.
+
+/** A public page that explains who confirms a check. Not evidence. */
+export interface Reference {
+  authority: string;
+  title: string;
+  url: string;
+}
 
 export type StepState = "done" | "current" | "todo";
 
@@ -37,17 +43,31 @@ export interface LedgerRecord {
 
 export type VerdictTone = "held" | "pending" | "released" | "quiet";
 
+export type ReviewerMarkState = "approved" | "held" | "waiting" | "missed";
+
+export interface ReviewerMark {
+  role: ReviewerRole;
+  state: ReviewerMarkState;
+}
+
 export interface EscrowSummary {
   dealId: string;
-  /** True while the state shown is the demo layer's, not the deal's. */
-  staged: boolean;
   /** Whole and fractional token units, for example "25" or "25.5". */
   amount: string;
   state: DealState;
   signed: number;
   required: number;
+  /** Status pill. One fact, not a sentence. */
+  chip: string;
+  /** The sentence beside the pill. It does not repeat the chip. */
+  line: string;
   verdict: { tone: VerdictTone; text: string };
+  reviewers: readonly ReviewerMark[];
   escrowAddress?: string;
+  /** Confirmed events, oldest first. */
+  blocks: readonly ChainBlock[];
+  /** What is still ahead, only while the deal is open. */
+  outlines: readonly ChainBlock[];
 }
 
 export interface ParcelLedger {
@@ -247,54 +267,85 @@ function unknownCheck(kind: CheckKind): Check {
   };
 }
 
-function verdictFor(
-  state: DealState,
-  holdRole: ReviewerRole | undefined,
-  waiting: number,
-): EscrowSummary["verdict"] {
-  if (state === "released") return { tone: "released", text: ESCROW.verdict.released };
-  if (state === "refunded") return { tone: "quiet", text: ESCROW.verdict.refunded };
-  if (state === "held") {
+const ROLE_ORDER: readonly ReviewerRole[] = ["title", "survey", "septic"];
+
+function nextWaiting(deal: Deal): ReviewerRole | undefined {
+  return ROLE_ORDER.find((role) =>
+    deal.reviewers.some((reviewer) => reviewer.required && reviewer.role === role && !reviewer.approvedAt),
+  );
+}
+
+function verdictFor(deal: Deal): EscrowSummary["verdict"] {
+  const holdRole = deal.hold?.role;
+  if (deal.state === "released") return { tone: "released", text: ESCROW.verdict.released };
+  if (deal.state === "refunded") {
+    return {
+      tone: holdRole ? "held" : "quiet",
+      text: holdRole ? ESCROW.verdict.refundedHeld(holdRole) : ESCROW.verdict.refunded,
+    };
+  }
+  if (deal.state === "held") {
     return {
       tone: "held",
       text: holdRole ? ESCROW.verdict.held(holdRole) : ESCROW.verdict.heldUnknown,
     };
   }
-  if (waiting > 0) return { tone: "pending", text: ESCROW.verdict.waiting(waiting) };
+  const waiting = nextWaiting(deal);
+  if (waiting) return { tone: "pending", text: ESCROW.verdict.waiting(waiting) };
+  if (deal.state === "draft") return { tone: "quiet", text: ESCROW.verdict.draft };
   return { tone: "pending", text: ESCROW.verdict.ready };
+}
+
+function chipFor(deal: Deal): string {
+  if (deal.state === "refunded" && deal.hold) return ESCROW.chip.refundedHeld;
+  return ESCROW.chip[deal.state];
+}
+
+function reviewerMarks(deal: Deal): ReviewerMark[] {
+  const closed = deal.state === "released" || deal.state === "refunded";
+  return [...deal.reviewers]
+    .filter((reviewer) => reviewer.required)
+    .sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role))
+    .map((reviewer): ReviewerMark => {
+      if (reviewer.approvedAt) return { role: reviewer.role, state: "approved" };
+      if (deal.hold?.role === reviewer.role) return { role: reviewer.role, state: "held" };
+      if (closed) return { role: reviewer.role, state: "missed" };
+      return { role: reviewer.role, state: "waiting" };
+    });
 }
 
 /** A deal's escrow as the API reports it: nothing staged, nothing assumed. */
 export function summarizeDeal(deal: Deal): EscrowSummary {
   const required = deal.reviewers.filter((reviewer) => reviewer.required);
   const signed = required.filter((reviewer) => reviewer.approvedAt).length;
+  const verdict = verdictFor(deal);
   return {
     dealId: deal.id,
-    staged: false,
     amount: formatUsdc(deal.amountBaseUnits),
     state: deal.state,
     signed,
     required: required.length,
-    verdict: verdictFor(deal.state, deal.hold?.role, required.length - signed),
+    chip: chipFor(deal),
+    line: verdict.text,
+    verdict,
+    reviewers: reviewerMarks(deal),
     escrowAddress: deal.escrowAddress,
+    blocks: chainBlocks(deal.timeline),
+    outlines: pendingOutlines(deal),
   };
 }
 
 export function buildLedger(
-  parcelKey: string,
   report: ParcelReport | null,
   deal: Deal | null,
 ): ParcelLedger {
-  const demo = stagedLedger.parcelKey === parcelKey ? stagedLedger : null;
-  // The staged story shows only while the API's deal has nothing on-chain.
-  const useDemoDeal = Boolean(demo && deal && !hasChainState(deal));
   const chainDeal = deal && hasChainState(deal) ? deal : null;
   const required = deal?.reviewers.filter((reviewer) => reviewer.required) ?? [];
   const approved = required.filter((reviewer) => reviewer.approvedAt).length;
 
-  const biggest = report?.biggestOpenQuestion ?? demo?.biggestOpenQuestion ?? null;
+  const biggest = report?.biggestOpenQuestion ?? null;
   // A closing exists only where there is a deal.
-  const kinds = (report || demo ? CHECK_KINDS : []).filter(
+  const kinds = (report ? CHECK_KINDS : []).filter(
     (kind) => deal || kind !== "closing",
   );
   const ordered = biggest
@@ -303,8 +354,6 @@ export function buildLedger(
 
   const records = ordered.map((kind): LedgerRecord => {
     const reported = report?.checks.find((entry) => entry.kind === kind);
-    const demoCheck =
-      reported || !useDemoDeal ? undefined : demo?.checks.find((entry) => entry.kind === kind);
     // With chain state and no report for this scope, the deal itself answers.
     const fromDeal =
       reported || !chainDeal
@@ -314,7 +363,7 @@ export function buildLedger(
           : ROLE_FOR[kind]
             ? undecidedCheck(kind, ROLE_FOR[kind], chainDeal)
             : undefined;
-    const base = reported ?? demoCheck ?? fromDeal ?? unknownCheck(kind);
+    const base = reported ?? fromDeal ?? unknownCheck(kind);
     const chain = chainCheck(base, deal);
     const check = chain?.check ?? base;
     // Reviewers sign only where there is a deal, and the program settles the
@@ -326,8 +375,8 @@ export function buildLedger(
     const signature = chain?.signature ?? check.transactionSignature;
     return {
       check,
-      staged: Boolean(demoCheck) && !chain,
-      references: demoCheck && !chain ? demoCheck.references : [],
+      staged: false,
+      references: [],
       role,
       signerWallet: check.reviewerWallet ?? reviewer?.wallet,
       signature,
@@ -343,26 +392,10 @@ export function buildLedger(
     };
   });
 
-  let escrow: EscrowSummary | null = null;
-  if (deal && useDemoDeal && demo) {
-    // The demo layer counts its own staged decisions and says it is staged.
-    const statusOf = (role: ReviewerRole) =>
-      records.find((record) => record.check.kind === SCOPE[role])?.check.status;
-    const signed = required.filter((reviewer) => statusOf(reviewer.role) === "signedOff").length;
-    const holdRole = required.find((reviewer) => statusOf(reviewer.role) === "held")?.role;
-    escrow = {
-      ...summarizeDeal(deal),
-      staged: true,
-      state: demo.dealState,
-      signed,
-      verdict: verdictFor(demo.dealState, holdRole, required.length - signed),
-    };
-  } else if (deal) {
-    escrow = summarizeDeal(deal);
-  }
+  const escrow = deal ? summarizeDeal(deal) : null;
 
   return {
-    staged: records.some((record) => record.staged) || Boolean(escrow?.staged),
+    staged: false,
     biggestOpenQuestion: biggest,
     records,
     escrow,
@@ -383,5 +416,5 @@ export function getParcelLedger(
   report: ParcelReport | null,
   deal: Deal | null,
 ): ParcelLedger {
-  return buildLedger(parcelKey, report, deal?.parcelKey === parcelKey ? deal : null);
+  return buildLedger(report, deal?.parcelKey === parcelKey ? deal : null);
 }

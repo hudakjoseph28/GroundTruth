@@ -9,7 +9,7 @@ import { readDevnetSlot } from "./devnetSlot";
 /** The chain is on screen at least this long before it hands off. */
 const MIN_MS = 750;
 /** The hand-off starts by now even if the land is still loading. */
-const MAX_MS = 1580;
+const MAX_MS = 1500;
 const LEAVE_MS = 150;
 /** Used only when the devnet slot cannot be read, and labeled as illustrative. */
 const ILLUSTRATIVE_SLOT = 412_883_107;
@@ -159,13 +159,6 @@ export function BlockTransition({
         <p className="transition-status" role="status" aria-live="polite">
           {TRANSITION.loading}
         </p>
-        {animated && (
-          <p className="transition-caption">
-            {slot.kind === "live"
-              ? TRANSITION.caption.live(slot.slot)
-              : TRANSITION.caption[slot.kind]}
-          </p>
-        )}
         {mode !== "pending" && <p className="transition-skip">{TRANSITION.skip}</p>}
       </div>
     </div>

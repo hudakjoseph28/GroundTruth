@@ -1,4 +1,4 @@
-import { goldenParcel, stagedDeal, type CheckKind, type CheckStatus, type ReviewerRole } from "@groundtruth/shared";
+import { stagedDeal, type CheckKind, type CheckStatus, type ReviewerRole } from "@groundtruth/shared";
 
 // Homepage copy. Claims follow docs/context/Problem.md: a public record, a
 // professional's sign-off, and an escrow receipt stay separate, and every
@@ -37,14 +37,13 @@ export const HERO = {
   subhead:
     "See what public records say about a lot, and what still needs a professional. Your deposit waits in escrow until the reviewers sign off.",
   searchLabel: "Search for a parcel",
-  demo: { before: "Try a demo parcel:", parcelId: goldenParcel.sourceParcelId },
   trust: [
     { icon: "record", label: "Public records cited" },
     { icon: "signature", label: "Reviewers sign" },
     { icon: "escrow", label: "USDC escrow on Solana" },
   ] satisfies readonly { icon: TrustIcon; label: string }[],
   land: {
-    open: "Open the demo parcel",
+    open: "Open the Franklin parcel",
     description:
       "A parcel of land as a block resting on a survey grid: real aerial imagery on real terrain, with its boundary outlined in gold.",
   },
@@ -123,9 +122,9 @@ export const HOW = {
       boundary: "Boundary: outlined in gold on the imagery",
     },
     profile: "Elevation, west to east",
-    note: "Shown: the demo parcel, with the boundary Ohio publishes.",
+    note: "Shown: Franklin County parcel 230-000918, with the boundary Ohio publishes.",
     description:
-      "The demo parcel from above: aerial imagery with the boundary outlined in gold, over a profile of the ground's elevation from west to east.",
+      "Franklin County parcel 230-000918 from above: aerial imagery with the boundary outlined in gold, over a profile of the ground's elevation from west to east.",
   },
   checks: {
     /** The three records shown, and the statuses each one steps through. */
@@ -181,7 +180,7 @@ export const REVIEWERS = {
   ],
   /** There is no reviewer signup. Saying so beats a button that goes nowhere. */
   demoNote:
-    "In this demo, three staged wallets stand in for the title, survey, and septic reviewers. Reviewer sign-up is not open.",
+    "Three reviewer wallets stand in for title, survey, and septic. Sign-up is not open. Solana devnet · test USDC.",
   roles: {
     title: "Title agent",
     survey: "Surveyor",
