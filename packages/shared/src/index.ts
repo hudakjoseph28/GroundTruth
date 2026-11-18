@@ -34,6 +34,7 @@ export {
   stagedDemoDeals,
   stagedLiveDeal,
   stagedRehearsalDeal,
+  stagedRehearsalV2Deal,
   stagedReleasedDeal,
 } from "./fixtures.js";
 

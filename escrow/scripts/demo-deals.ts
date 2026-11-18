@@ -7,7 +7,7 @@
  *   pnpm --filter @groundtruth/escrow demo:deals plan            # addresses, no tx
  *   pnpm --filter @groundtruth/escrow demo:deals stage-prep      # live deal, part 1
  *   pnpm --filter @groundtruth/escrow demo:deals stage-finish    # live deal, on stage
- *   ... demo:deals stage-prep --deal staged-devnet-deal-rehearsal # practise run
+ *   ... demo:deals stage-prep --deal staged-devnet-deal-rehearsal-v2 # practise run
  *   pnpm --filter @groundtruth/escrow demo:deals simulate        # local, no devnet tx
  *   pnpm --filter @groundtruth/escrow demo:deals run             # sends devnet txs
  *   ... demo:deals <mode> --amount 20                            # deal size in USDC
@@ -41,8 +41,8 @@
  *                 it fast. Refuses unless the deal is funded with title and
  *                 survey approved and no hold.
  *                 Records: demo-results/devnet-stage-live-v1.{json,md}, or
- *                 devnet-stage-rehearsal-v1 for the rehearsal deal.
- *   --deal staged-devnet-deal-rehearsal
+ *                 devnet-stage-rehearsal-v1 / -v2 for the rehearsal deals.
+ *   --deal staged-devnet-deal-rehearsal-v2 (v1 is used up)
  *                 Runs stage-prep / stage-finish on the rehearsal copy of the
  *                 live deal (same 10 USDC and flow, its own PDA), so the
  *                 stage moment can be practised without consuming the live deal.
@@ -92,6 +92,7 @@ import {
   stagedDemoChainAccounts,
   stagedLiveDeal,
   stagedRehearsalDeal,
+  stagedRehearsalV2Deal,
   stagedReleasedDeal,
   type Deal,
 } from "@groundtruth/shared";
@@ -164,10 +165,18 @@ const SOL_MARGIN = 10_000_000n; // 0.01 SOL
 /** Fixed run ID of the live stage deal's record (both halves share it). */
 const STAGE_RUN_ID = "stage-live-v1";
 /** Deals the stage modes drive (--deal); the first is the default. */
-const STAGE_DEAL_IDS = [stagedLiveDeal.id, stagedRehearsalDeal.id] as const;
+const STAGE_DEAL_IDS = [
+  stagedLiveDeal.id,
+  stagedRehearsalDeal.id,
+  stagedRehearsalV2Deal.id,
+] as const;
 /** Each stage deal's record: demo-results/devnet-<run id>.{json,md}. */
 const stageRunId = (outcome: Outcome) =>
-  outcome === "rehearsal" ? "stage-rehearsal-v1" : STAGE_RUN_ID;
+  outcome === "rehearsal"
+    ? "stage-rehearsal-v1"
+    : outcome === "rehearsalV2"
+    ? "stage-rehearsal-v2"
+    : STAGE_RUN_ID;
 /** Stand-in block time for simulated transactions (2026-11-18T00:00:00Z). */
 const SIMULATED_BLOCK_TIME = 1_795_478_400;
 
@@ -283,13 +292,20 @@ function loadOrCreateWallets(): { wallets: Wallets; created: Role[] } {
 
 // ---------------------------------------------------------------- plan
 
-const OUTCOMES = ["held", "released", "live", "rehearsal"] as const;
+const OUTCOMES = [
+  "held",
+  "released",
+  "live",
+  "rehearsal",
+  "rehearsalV2",
+] as const;
 type Outcome = (typeof OUTCOMES)[number];
 const FIXTURES: Record<Outcome, Deal> = {
   held: stagedDeal,
   released: stagedReleasedDeal,
   live: stagedLiveDeal,
   rehearsal: stagedRehearsalDeal,
+  rehearsalV2: stagedRehearsalV2Deal,
 };
 /** `run` drives the held and released closings; `stage-*` drives the live one. */
 const RUN_OUTCOMES: readonly Outcome[] = ["held", "released"];
@@ -332,7 +348,9 @@ function planDeals(wallets: Wallets, runAmount: bigint): DealPlan[] {
         wallets.seller.publicKey,
       ),
       amount:
-        outcome === "live" || outcome === "rehearsal"
+        outcome === "live" ||
+        outcome === "rehearsal" ||
+        outcome === "rehearsalV2"
           ? BigInt(FIXTURES[outcome].amountBaseUnits)
           : runAmount,
     };
@@ -1894,7 +1912,7 @@ async function main() {
     ].includes(mode)
   ) {
     throw new Error(
-      `usage: demo-deals.ts [plan|check|simulate|run|stage-prep|stage-finish] [--amount <usdc>] [--held-error <IDL error name>] [--resume <previous devnet-*.json>] [--deal staged-devnet-deal-live|staged-devnet-deal-rehearsal]`,
+      `usage: demo-deals.ts [plan|check|simulate|run|stage-prep|stage-finish] [--amount <usdc>] [--held-error <IDL error name>] [--resume <previous devnet-*.json>] [--deal staged-devnet-deal-live|staged-devnet-deal-rehearsal|staged-devnet-deal-rehearsal-v2]`,
     );
   }
   if (flags.resume && mode !== "run") {
@@ -1959,7 +1977,8 @@ async function main() {
   const plans = planDeals(wallets, amount);
   const runPlans = plans.filter((p) => RUN_OUTCOMES.includes(p.outcome));
   const livePlan = plans.find((p) => p.outcome === "live")!;
-  const rehearsalPlan = plans.find((p) => p.outcome === "rehearsal")!;
+  // The current rehearsal deal: v1 was used up testing the reviewer portal (#45).
+  const rehearsalPlan = plans.find((p) => p.outcome === "rehearsalV2")!;
   /** The deal stage-prep / stage-finish drive: --deal, default the live one. */
   const stagePlan = plans.find(
     (p) => p.fixtureId === (flags.deal ?? stagedLiveDeal.id),
@@ -2238,7 +2257,7 @@ async function main() {
         rehearsal.prep
       }\n  stage-finish (rehearsal)  ${
         rehearsal.finish
-      }\n  (rehearsal: add --deal ${stagedRehearsalDeal.id})`,
+      }\n  (rehearsal: add --deal ${stagedRehearsalV2Deal.id})`,
     );
     process.exitCode =
       ready ||
