@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { asyncRoute } from "../http/asyncRoute.js";
 import { HttpError, logSafeFailure } from "../http/errors.js";
 import { placeOnlyQuery } from "../parcels/addressQuery.js";
+import { parseBbox } from "../parcels/area.js";
 import { countyByFips } from "../parcels/ohioCounties.js";
 import { OgripError, type OgripClient } from "../parcels/ogrip.js";
 import { parseParcelKey } from "../parcels/parcelKey.js";
@@ -19,6 +20,7 @@ const PARCEL_ID_PART = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 export interface ParcelRoutes {
   search: RequestHandler;
   getParcel: RequestHandler;
+  area: RequestHandler;
   coverage: RequestHandler;
 }
 
@@ -76,11 +78,36 @@ export function parcelRoutes(ogrip: OgripClient): ParcelRoutes {
     res.json(parcel);
   });
 
+  const area = asyncRoute(async (req, res) => {
+    const parsed = parseBbox(req.query.bbox);
+    if ("problem" in parsed) {
+      if (parsed.problem === "outsideOhio") {
+        throw new HttpError(
+          404,
+          "NO_COVERAGE",
+          "This area is outside Ohio. GroundTruth maps parcels in Ohio's 88 counties.",
+          false,
+        );
+      }
+      throw new HttpError(
+        400,
+        "INVALID_REQUEST",
+        parsed.problem === "tooLarge"
+          ? "That area is too large to draw parcels for. Zoom in."
+          : "bbox must be west,south,east,north in degrees, like -83.01,39.95,-82.99,39.97.",
+        false,
+      );
+    }
+    res.json(
+      await fromOgrip(res.locals.requestId, () => ogrip.getArea(parsed.bbox)),
+    );
+  });
+
   const coverage = asyncRoute(async (_req, res) => {
     res.json(await fromOgrip(res.locals.requestId, () => ogrip.getCoverage()));
   });
 
-  return { search, getParcel, coverage };
+  return { search, getParcel, area, coverage };
 }
 
 function readQuery(value: unknown): string {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { ExploreLink } from "../components/ExploreLink";
 import { SearchForm } from "../components/SearchForm";
 import type { ParcelSearchResult } from "@groundtruth/shared";
 import { SEARCH, SEARCH_EXAMPLES } from "../content/search";
@@ -54,6 +55,7 @@ export function SearchPage() {
       <h1>{SEARCH.title}</h1>
       <SearchForm key={query} initialQuery={query} />
       <SearchExamples current={query} />
+      <ExploreLink />
       {blank ? (
         <div className="search-start">
           <p>{SEARCH.lede}</p>

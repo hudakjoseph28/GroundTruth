@@ -8,6 +8,7 @@ import type { CheckKind, DealState, ReviewerRole } from "@groundtruth/shared";
 export const PARCEL_PAGE = {
   back: "Back to search",
   backToResults: "Back to results",
+  backToMap: "Back to map",
   noHouseNumber: "no house number",
   title: (parcelId: string) => `Parcel ${parcelId}`,
   stagedLabel: "Staged sample",

@@ -73,6 +73,7 @@ function ogripWith(
     searchByParcelId: vi.fn(),
     searchByAddress: vi.fn(),
     getCoverage: vi.fn(),
+    getArea: vi.fn(),
     getParcel: vi.fn(
       async (fips: string, id: string) =>
         parcels.find((p) => p.countyFips === fips && p.sourceParcelId === id) ??

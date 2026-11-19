@@ -114,7 +114,7 @@ Run on `main` at `ce33d40` with `vitest run test/report.test.ts test/parcels.tes
   - Every other check is unchanged and coverage drops to `boundaryOnly`.
   - The timed-out report is **not cached**, so the next request asks FEMA again.
 - **OGRIP times out on the report route:** `504 PROVIDER_TIMEOUT`, `retryable: true`, with no guessed report.
-- **OGRIP times out on parcel-ID search, address search, the parcel route and `/api/coverage`:** each returns `504 PROVIDER_TIMEOUT`, `retryable: true`, with no partial result.
+- **OGRIP times out on parcel-ID search, address search, the parcel route, the explore map's area route and `/api/coverage`:** each returns `504 PROVIDER_TIMEOUT`, `retryable: true`, with no partial result.
 - **An address search whose individual requests fit the per-request limit, but together exceed the search budget:** `504 PROVIDER_TIMEOUT`.
 
 ## Known limits

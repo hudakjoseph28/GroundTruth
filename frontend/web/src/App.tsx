@@ -9,6 +9,8 @@ import { SearchPage } from "./pages/SearchPage";
 
 // Wallet code loads only on the reviewer portal.
 const ReviewPage = lazy(() => import("./review/ReviewPage"));
+// The map library loads only on the explore map.
+const ExplorePage = lazy(() => import("./explore/ExplorePage"));
 
 export function App() {
   return (
@@ -28,6 +30,17 @@ export function App() {
             }
           />
           <Route path="*" element={<NotFoundPage />} />
+        </Route>
+        {/* Full screen: the map takes the page, with no footer under it. */}
+        <Route element={<SiteLayout footer={false} />}>
+          <Route
+            path="/explore"
+            element={
+              <Suspense fallback={null}>
+                <ExplorePage />
+              </Suspense>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>

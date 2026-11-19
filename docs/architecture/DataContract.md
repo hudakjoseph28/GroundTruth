@@ -47,6 +47,20 @@ export interface ParcelSearchResult {
   matchedOn: "siteAddress" | "parcelId";
 }
 
+// One parcel on the explore map: its summary and published outline.
+export type ParcelOutline = Omit<Parcel, "geometry"> & {
+  outline: GeoJSON.Polygon | GeoJSON.MultiPolygon;
+};
+
+export interface ParcelArea {
+  bbox: [number, number, number, number]; // [west, south, east, north], as asked
+  parcels: ParcelOutline[];               // at most 500
+  truncated: boolean;                     // OGRIP holds more here; the map asks to zoom in
+  authority: "Ohio OGRIP";
+  sourceUrl: string;
+  retrievedAt: string;
+}
+
 export type CheckKind =
   | "zoning" | "flood" | "access" | "utilities"
   | "easements" | "sellerAuthority" | "survey"
@@ -160,6 +174,7 @@ All responses are JSON. Success returns the named object directly. Failure retur
 | --- | --- | --- |
 | `GET /api/health` | `200 { status: "ok", commit: string }` | No dependency details or secrets. |
 | `GET /api/parcels/search?q=` | `200 ParcelSearchResult[]` | Address or source parcel ID; trimmed query length 3–120. `[]` means valid query with no match. `NO_COVERAGE` means outside the supported source. |
+| `GET /api/parcels/area?bbox=` | `200 ParcelArea` | `bbox` is `west,south,east,north` in WGS84 degrees, each side at most 0.25°. Keyable parcels whose OGRIP boundary touches the box, at most 500; `truncated` says more exist. A multi-part parcel is merged into one outline and keeps `mappedAcreage` only when one part is in the answer. `400 INVALID_REQUEST` for a malformed or oversized box, `404 NO_COVERAGE` for a box outside Ohio, `504`/`502` (retryable) when OGRIP fails, never an empty map in its place. |
 | `GET /api/parcels/:parcelKey` | `200 Parcel` | Key is URL encoded. Returns the published boundary and retrieval metadata. |
 | `GET /api/parcels/:parcelKey/report` | `200 ParcelReport` | Each adapter resolves independently. A timeout yields an `unknown` check inside a successful partial report. |
 | `GET /api/parcels/:parcelKey/land` | `200 LandMeta` | Land block assets for parcels not baked into the web app, built on demand from the OGRIP boundary (USGS NAIP imagery, Terrarium elevation) and cached. `LandMeta` is in `@groundtruth/shared` (`land.ts`). Provider failure is a retryable `502`/`504`, never a substitute image. |

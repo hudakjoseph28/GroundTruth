@@ -1,9 +1,11 @@
 import {
   goldenParcel,
   type Parcel,
+  type ParcelArea,
   type ParcelReport,
   type ParcelSearchResult,
 } from "@groundtruth/shared";
+import { EXPLORE_MAP } from "../content/explore";
 import { SEARCH } from "../content/search";
 import { request, type FailedOutcome } from "./api";
 
@@ -20,6 +22,7 @@ const MAX_QUERY = 120;
  *   GET /api/parcels/search?q=
  *   GET /api/parcels/:parcelKey
  *   GET /api/parcels/:parcelKey/report
+ *   GET /api/parcels/area?bbox=west,south,east,north
  *
  * Every function resolves to an outcome and never throws, except when the
  * caller aborts it (an AbortError the caller ignores).
@@ -40,6 +43,58 @@ export type ReportOutcome =
   | { status: "found"; report: ParcelReport }
   | { status: "missing"; message: string }
   | FailedOutcome;
+
+export type AreaOutcome =
+  | { status: "found"; area: ParcelArea }
+  /** The box is outside Ohio (NO_COVERAGE) or too large to draw. */
+  | { status: "refused"; code: "outside" | "zoomIn"; message: string }
+  | FailedOutcome;
+
+/**
+ * How long the map waits for one area. The API gives OGRIP 8 s per request
+ * and answers 504 after that; this covers a slow network on top.
+ */
+export const AREA_TIMEOUT_MS = 15_000;
+
+/** The /api/parcels/area box: `[west, south, east, north]` in degrees. */
+export type Bbox = [number, number, number, number];
+
+/** The parcels whose published outlines touch the box. */
+export async function getParcelArea(
+  bbox: Bbox,
+  signal?: AbortSignal,
+): Promise<AreaOutcome> {
+  const timeout = AbortSignal.timeout(AREA_TIMEOUT_MS);
+  const both = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  const timedOut: FailedOutcome = {
+    status: "error",
+    message: EXPLORE_MAP.timeout,
+    retryable: true,
+  };
+  let response;
+  try {
+    response = await request(
+      `/api/parcels/area?bbox=${bbox.map((value) => value.toFixed(5)).join(",")}`,
+      both,
+    );
+  } catch (error) {
+    if (timeout.aborted && !signal?.aborted) return timedOut;
+    throw error;
+  }
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  if (response.status === "failed") {
+    return timeout.aborted ? timedOut : response.failure;
+  }
+  if (response.status === "rejected") {
+    const { code, message } = response.error.error;
+    return {
+      status: "refused",
+      code: code === "NO_COVERAGE" ? "outside" : "zoomIn",
+      message,
+    };
+  }
+  return { status: "found", area: response.body as ParcelArea };
+}
 
 /** The answer for a query the API would reject, or null if it is valid. */
 export function invalidQuery(

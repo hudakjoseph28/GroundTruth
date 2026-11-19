@@ -5,8 +5,8 @@ import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
 import "./layout.css";
 
-/** One header and one footer around every page. */
-export function SiteLayout() {
+/** One header and one footer around every page; a full-screen page drops the footer. */
+export function SiteLayout({ footer = true }: { footer?: boolean }) {
   useScrollOnNavigate();
   return (
     <>
@@ -17,7 +17,7 @@ export function SiteLayout() {
       <main id="content">
         <Outlet />
       </main>
-      <SiteFooter />
+      {footer ? <SiteFooter /> : null}
     </>
   );
 }
