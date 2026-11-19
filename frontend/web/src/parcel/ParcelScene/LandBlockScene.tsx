@@ -1,5 +1,6 @@
 import { useEffect, useRef, type RefObject } from "react";
 import {
+  Color,
   DirectionalLight,
   Group,
   HemisphereLight,
@@ -21,6 +22,7 @@ import {
   cameraPosition,
   fitDistance,
 } from "./blockFrame";
+import { BOUNDARY_TONES, RIPPLE_COLOR, type BoundaryTone } from "./boundaryTone";
 import { buildLandBlock } from "./buildBlock";
 import { heightAt, type LandAssets } from "./landAssets";
 
@@ -43,6 +45,8 @@ const TILT = 0.07;
 const CLICK_SLOP = 6;
 /** How long the boundary takes to go green and back when a release ripples through it. */
 const RIPPLE_MS = 1300;
+/** How long the boundary takes to change color when its tone changes without a ripple. */
+const TONE_MS = 360;
 /**
  * On a table the block does not spin or float. It takes this share of the
  * picture's width and height, sits this many pixels below the middle to leave
@@ -68,7 +72,10 @@ export type Probe = () => { x: number; y: number }[] | null;
 export interface LandHandle {
   /** Where a point on the terrain is on screen, in viewport pixels; u runs east and v south, 0 to 1. */
   surface(u: number, v: number): { x: number; y: number } | null;
-  /** A brief green ripple through the parcel boundary. */
+  /**
+   * A brief green ripple through the parcel boundary, ending in its resting
+   * tone. Waits for the block to be on screen, so it is never played unseen.
+   */
   ripple(): void;
   /** Scales the block's own turning: 1 is its usual pace. */
   setPace(pace: number): void;
@@ -91,6 +98,8 @@ export function LandBlockScene({
   staging = "float",
   overlay = null,
   boundary = true,
+  tone = "gold",
+  tableOffset = TABLE.drop,
   onReady,
   onActivate,
 }: {
@@ -115,15 +124,19 @@ export function LandBlockScene({
   overlay?: HTMLCanvasElement | null;
   /** False hides the gold boundary line. */
   boundary?: boolean;
+  /** How the boundary is drawn at rest (see boundaryTone.ts). */
+  tone?: BoundaryTone;
+  /** On a table: how many pixels below the middle the block sits. */
+  tableOffset?: number;
   onReady?: () => void;
   /** A click on the block that was not a drag. */
   onActivate?: () => void;
 }) {
   const frame = useRef<HTMLDivElement>(null);
-  const live = useRef({ revealed, paused, onReady, onActivate, overlay, boundary });
+  const live = useRef({ revealed, paused, onReady, onActivate, overlay, boundary, tone });
   useEffect(() => {
-    live.current = { revealed, paused, onReady, onActivate, overlay, boundary };
-  }, [revealed, paused, onReady, onActivate, overlay, boundary]);
+    live.current = { revealed, paused, onReady, onActivate, overlay, boundary, tone };
+  }, [revealed, paused, onReady, onActivate, overlay, boundary, tone]);
   /** The running block, so layers can change without rebuilding the scene. */
   const built = useRef<ReturnType<typeof buildLandBlock> | null>(null);
   useEffect(() => {
@@ -213,7 +226,7 @@ export function LandBlockScene({
       camera.aspect = aspect;
       camera.updateProjectionMatrix();
       // Lower in the picture, leaving the room above it clear.
-      if (table) camera.setViewOffset(width, height, 0, -TABLE.drop, width, height);
+      if (table) camera.setViewOffset(width, height, 0, -tableOffset, width, height);
       const distance = refit();
       if (!placed) {
         camera.position.set(...cameraPosition(VIEW.azimuth, VIEW.polar, distance, target));
@@ -277,6 +290,14 @@ export function LandBlockScene({
     let drawn = false;
     let paceTarget = 1;
     let rippleAt: number | null = null;
+    let ripplePending = false;
+    // The boundary as drawn on the last frame, and where a ripple set out from.
+    const restTone = () => BOUNDARY_TONES[live.current.tone];
+    const shown = { color: new Color(restTone().color), emphasis: restTone().emphasis };
+    const rippleFrom = { color: new Color(), emphasis: 0 };
+    const settle = { color: new Color(), emphasis: 0 };
+    const rippleColor = new Color(RIPPLE_COLOR);
+    block.setBoundaryColor(shown.color, shown.emphasis);
     if (handle) {
       handle.current = {
         surface(u, v) {
@@ -292,7 +313,7 @@ export function LandBlockScene({
           };
         },
         ripple() {
-          rippleAt = performance.now();
+          ripplePending = true;
         },
         setPace(pace) {
           paceTarget = pace;
@@ -407,25 +428,44 @@ export function LandBlockScene({
         );
       }
 
-      // Boundary pulse, on the same beat as the ledger's.
+      // Boundary pulse, on the same beat as the ledger's. A held boundary stays still.
+      const resting = restTone();
       if (introStart !== null) {
         const since = now - introStart - LEDGER_ENTRANCE_MAX - AMBIENT_EVERY / 2;
         const phase = since < 0 ? -1 : since % AMBIENT_EVERY;
-        const running = free > 0.5 && phase >= 0 && phase < BOUNDARY_LAP_MS;
+        const running = resting.ambient && free > 0.5 && phase >= 0 && phase < BOUNDARY_LAP_MS;
         block.setBoundaryPulse(running ? phase / BOUNDARY_LAP_MS : null);
       }
-      // A release: the boundary goes green and a pulse laps it, once.
+      settle.color.set(resting.color);
+      settle.emphasis = resting.emphasis;
+      // A release: a pulse laps the boundary once, which turns green on the
+      // way round and settles in its resting tone.
+      if (ripplePending) {
+        ripplePending = false;
+        rippleAt = now;
+        rippleFrom.color.copy(shown.color);
+        rippleFrom.emphasis = shown.emphasis;
+      }
       if (rippleAt !== null) {
         const lap = (now - rippleAt) / RIPPLE_MS;
         if (lap >= 1) {
           rippleAt = null;
-          block.setBoundaryTone(0);
+          shown.color.copy(settle.color);
+          shown.emphasis = settle.emphasis;
           block.setBoundaryPulse(null);
         } else {
-          block.setBoundaryTone(Math.sin(Math.PI * lap));
+          const swell = Math.sin(Math.PI * lap);
+          shown.color.copy(rippleFrom.color).lerp(settle.color, lap).lerp(rippleColor, swell);
+          shown.emphasis = Math.max(rippleFrom.emphasis + (settle.emphasis - rippleFrom.emphasis) * lap, swell);
           block.setBoundaryPulse(lap);
         }
+      } else {
+        // A tone change without a ripple (a hold placed, say) eases in.
+        const step = Math.min(1, delta / TONE_MS);
+        shown.color.lerp(settle.color, step);
+        shown.emphasis += (settle.emphasis - shown.emphasis) * step;
       }
+      block.setBoundaryColor(shown.color, shown.emphasis);
 
       renderer.render(scene, camera);
       drawn = true;
@@ -456,7 +496,7 @@ export function LandBlockScene({
       renderer.forceContextLoss();
       canvas.remove();
     };
-  }, [assets, ring, turn, probe, handle, interactive, cornerDots, staging]);
+  }, [assets, ring, turn, probe, handle, interactive, cornerDots, staging, tableOffset]);
 
   return <div ref={frame} className="land-scene" data-land="webgl" aria-hidden="true" />;
 }
