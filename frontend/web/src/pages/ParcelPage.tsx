@@ -168,9 +168,24 @@ function LoadFailure({
   );
 }
 
-/** Back to the results the visitor came from, or to a fresh search. */
+/** Back to the results or map view the visitor came from, or to a fresh search. */
 function BackLink() {
   const { state } = useLocation();
+  const fromExplore =
+    typeof state === "object" &&
+    state !== null &&
+    "fromExplore" in state &&
+    typeof state.fromExplore === "string" &&
+    state.fromExplore.startsWith("/explore")
+      ? state.fromExplore
+      : "";
+  if (fromExplore) {
+    return (
+      <Link className="parcel-back" to={fromExplore}>
+        <span aria-hidden="true">←</span> {PARCEL_PAGE.backToMap}
+      </Link>
+    );
+  }
   const query =
     typeof state === "object" &&
     state !== null &&

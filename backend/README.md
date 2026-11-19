@@ -32,6 +32,7 @@ These routes query Ohio's statewide parcel layer and address locator from the AP
 | Route | Returns |
 | --- | --- |
 | `GET /api/parcels/search?q=` | `ParcelSearchResult[]`, up to 10. `q` is trimmed and must be 3–120 characters (`400 INVALID_REQUEST` otherwise). `[]` means a valid query with no match. |
+| `GET /api/parcels/area?bbox=west,south,east,north` | `ParcelArea`: outlines, addresses, counties, and acreage of the parcels touching the box, for the web's `/explore` map. One OGRIP envelope query (about 0.6–0.9 s and 230 KB for 500 outlines, measured 2026-11-18), at most 500 parcels, `truncated: true` when OGRIP holds more. Each side of the box may be at most 0.25° (`400 INVALID_REQUEST` otherwise); a box outside Ohio is `404 NO_COVERAGE`. Code: [src/parcels/area.ts](src/parcels/area.ts), `getArea` in [src/parcels/ogrip.ts](src/parcels/ogrip.ts). |
 | `GET /api/parcels/:parcelKey` | `Parcel` with the published boundary. `404 NOT_FOUND` if OGRIP has no such parcel in that county; `404 NO_COVERAGE` for a county code outside Ohio's 88. |
 | `GET /api/coverage` | `Coverage[]`: one row per county in a live count of OGRIP parcels with published IDs (cached 1 hour). `boundarySearchable` means only that the count was above zero at `lastVerifiedAt`, the time of that count. `evidenceKinds` lists checks a live report can back with a source: `environmental` and `septic` in all 88 counties, `flood` in the 83 counties where FEMA has an NFHL study, and `zoning` in Franklin. It names checks that can run, not results: a given lot can still come back `unknown`. A row says nothing about report depth. |
 
@@ -143,11 +144,13 @@ Outside Franklin County, access still uses the unknown template, so it remains t
 
 Every live parcel report sends the full OGRIP polygon to USDA NRCS [Soil Data Access](https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest). One fixed query intersects `mupolygon` with the parcel, groups overlap area by `mukey`, and joins `mapunit` and `muaggatt.engstafdcd`. That field is SSURGO's published dominant-condition rating for septic-tank absorption fields.
 
-Only the three published screening classes used by the product are accepted: `Very limited`, `Somewhat limited`, and `Not limited`. Each returned map unit includes its share of the parcel, computed from the relative intersection areas. A rated response is always `needsReview`; wording says the interpretation does not establish that an on-site sewage system is feasible. The check cites USDA NRCS Soil Data Access with the response's `retrievedAt`.
+SDA gets 3000 ms of the check's 6000 ms. If it fails, returns an unusable answer, or uses its budget, the adapter queries Esri's public ArcGIS Living Atlas [USA Soils Map Units](https://www.arcgis.com/home/item.html?id=d4c54647dd4c4405a9f4f0bc9fd351e9) layer (Esri's annual build of USDA gSSURGO) with the parcel's bounding box. It reads the same `MUKEY`, `MUSYM`, `muname`, and `engstafdcd` fields and measures each map unit's exact overlap with the parcel locally (`polygon-clipping`, `@turf/area`). The finding then says the Living Atlas copy was used, and the source cites that layer.
+
+Only the three published screening classes used by the product are accepted: `Very limited`, `Somewhat limited`, and `Not limited`. Each returned map unit includes its share of the parcel, computed from the relative intersection areas. A rated response is always `needsReview`; wording says the interpretation does not establish that an on-site sewage system is feasible. The check cites whichever service answered (Soil Data Access or the Living Atlas copy) with the response's `retrievedAt`.
 
 No map unit, an unrated/other value, an unexpected response, an HTTP failure, or the check's own 6000 ms timeout becomes `unknown` with no positive or negative conclusion. The timeout runs alongside the flood, zoning, access, and template checks; it cannot hold up another check, and a transient failure is not cached. Every outcome ends with the same next action: use the [Ohio Department of Health homeowner page](https://odh.ohio.gov/know-our-programs/sewage-treatment-systems/information-for-homeowners/) to find the local health district and obtain its site and soil evaluation before planning a septic system.
 
-The seeded golden report is served before providers run and remains unchanged. Tests replay a saved SDA-shaped success response, the real HTTP 502 response recorded from Soil Data Access on 2026-11-18, and a forced timeout. The live endpoint was unavailable during this implementation, so the success fixture is labeled as test data and should be refreshed with `record:report` when USDA is available.
+The seeded golden report is served before providers run and remains unchanged. `pnpm --filter @groundtruth/backend record:ssurgo` records every HTTP exchange for 230-000918 and Licking 00500729609000 into `test/fixtures/ssurgo/`, and writes nothing unless both end in rated map units. The checked-in recordings (2026-11-19) are real: SDA's HTTP 502 followed by the Living Atlas answer. Tests replay them, the 2026-11-18 SDA 502, SDA hanging past its budget, a check-level timeout, and malformed, truncated, and unrated fallback answers. No real SDA success response has been recorded yet; the SDA parser is tested against its documented table shape.
 
 ### FEMA flood check
 
@@ -331,7 +334,7 @@ NAIP's response time varies the most. The web waits 10 s for a build (`LAND_BUIL
 | `staged-devnet-deal-released` | released to the seller | `3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu` | `groundtruth-demo-released-v1` |
 | `staged-devnet-deal-live` | released live on stage (10 USDC) | `2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg` | `groundtruth-demo-live-v1` |
 | `staged-devnet-deal-rehearsal` | rehearsal copy of the live deal (10 USDC); used up testing the reviewer portal (#45) | `6KQJYssz234KjxrMkREcxpcKbok34aaFyihDST6DmH5u` | `groundtruth-demo-rehearsal-v1` |
-| `staged-devnet-deal-rehearsal-v2` | second rehearsal copy (10 USDC) | `EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X` | `groundtruth-demo-rehearsal-v2` |
+| `staged-devnet-deal-rehearsal-v2` | second rehearsal copy (10 USDC); funded with all three approvals on 2026-11-19 (the septic one tested deal documents), so only the release is left | `EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X` | `groundtruth-demo-rehearsal-v2` |
 
 The first two are 25 test USDC and ran on 2026-11-18. The addresses are what `pnpm --filter @groundtruth/escrow demo:deals plan` prints for the staged demo wallets, and `test/stagedDemoDeals.test.ts` re-derives each one. Public keys only. Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 
@@ -355,7 +358,7 @@ Timeline rows are ordered by time, then chain slot, then event index. A confirme
    ] }
    ```
 
-   A failed entry must carry `releaseAccounts` and a successful one must not, or the delivery gets `400`. The filter, [src/routes/quicknodeWebhook.ts](src/routes/quicknodeWebhook.ts) and `quicknodeFilters.test.ts` change together.
+   A successful entry may also carry `memos`: the text of its top-level SPL Memo v1/v2 instructions (`"memos": ["groundtruth:doc:<sha256>"]`), which deal documents use. A failed entry must carry `releaseAccounts` and a successful one must not, or the delivery gets `400`. The filter, [src/routes/quicknodeWebhook.ts](src/routes/quicknodeWebhook.ts) and `quicknodeFilters.test.ts` change together.
 
 3. **Decode.** [src/chain/escrowDecoder.ts](src/chain/escrowDecoder.ts) reads events with the checked-in IDL's own Borsh coder (`@anchor-lang/core` 1.2.2, the client for the program's Anchor 1.2.2).
    - Anchor's `emit!` writes `Program data: <base64>`. Only lines written while the GroundTruth program is running count: the decoder tracks the `Program <id> invoke` / `success` / `failed` stack against `GROUNDTRUTH_PROGRAM_ID`, so another program's logs cannot pass as GroundTruth events.
@@ -404,7 +407,7 @@ Filters live in [quicknode/](quicknode/) and are pasted into the Stream's filter
 | File | Use |
 | --- | --- |
 | `heartbeat-filter.js` | `{ "transactions": [] }` for every block. Proves signing and delivery before the program exists. |
-| `groundtruth-filter.js` | The real filter. `PROGRAM_ID` is the escrow program deployed to devnet in #22, `ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG` (the same `GROUNDTRUTH_PROGRAM_ID` the decoder uses; `quicknodeFilters.test.ts` checks they match). Sends successful program transactions and failed `release` attempts; `RELEASE_IX_DATA` is the `release` discriminator in base58, checked against the IDL by `quicknodeFilters.test.ts`. |
+| `groundtruth-filter.js` | The real filter. `PROGRAM_ID` is the escrow program deployed to devnet in #22, `ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG` (the same `GROUNDTRUTH_PROGRAM_ID` the decoder uses; `quicknodeFilters.test.ts` checks they match). Sends successful program transactions (with `memos` when they carry top-level Memo instructions) and failed `release` attempts; `RELEASE_IX_DATA` is the `release` discriminator in base58, checked against the IDL by `quicknodeFilters.test.ts`. |
 | `inspect-filter.js` | Preview only. Reports the Block payload's field layout. |
 
 `quicknodeFilters.test.ts` runs the filter files and posts their output to the webhook, so a shape change on either side fails a test.
@@ -428,6 +431,23 @@ Filters live in [quicknode/](quicknode/) and are pasted into the Stream's filter
 | Filter check | `groundtruth-filter.js` with a stand-in program ID returned the expected `{ transactions: [...] }` for devnet block `522700233` in the final-payload preview |
 
 The first start (22:56:59 UTC) was stopped after three `503`s because the token was not yet set. Resuming it after the token was set produced the run above.
+
+## Deal documents (staged demo)
+
+A deal's buyer, seller, or assigned reviewers can upload supporting documents (title commitment, survey plat, septic/soil evaluation, zoning letter, other), and a reviewer can tie their on-chain approval to one of them. There are no accounts: every write and every file read is a fresh wallet signature. The API never signs anything.
+
+| Route | Who | Answers |
+| --- | --- | --- |
+| `GET /api/deals/:id/documents` | anyone | `200 DealDocument[]`: type, filename, detected content type, size, SHA-256, uploader role, time. Never the bytes or the uploader's wallet. |
+| `POST /api/deals/:id/documents` | a deal participant | Raw file body. Headers: `x-groundtruth-document-type`, `x-groundtruth-filename` (URI-encoded), and the four signature headers. `201 DealDocument`. |
+| `POST /api/deals/:id/documents/:documentId/file` | a deal participant | The file, `cache-control: private, no-store`. Needs its own fresh signature. |
+
+- **Signature.** The browser has Phantom sign `documentAuthMessage()` from `@groundtruth/shared`: the action, deal ID, the file's SHA-256 (upload) or document ID (view), wallet, time, and a random nonce. It sends `x-groundtruth-wallet`, `-issued-at`, `-nonce`, and `-signature` (base64 ed25519). The API rebuilds the message from the route and the bytes it received, so a signature covers exactly one file or one document. It refuses (`401`) a missing, malformed, or wrong signature, one older than 5 minutes or more than 1 minute in the future, and a reused nonce (`DocumentAuthNonceRecord`). A valid signature from a wallet that is not the deal's buyer, seller, or a reviewer gets `403`. See [src/documents/walletAuth.ts](src/documents/walletAuth.ts).
+- **Files.** PDF, PNG, or JPG, up to 10 MB (`413` above). The type is read from the first bytes and must match the extension (`415` otherwise). The API computes the SHA-256 and stores the bytes in `DealDocumentFileRecord`, apart from the metadata, so a list query never loads them. The same bytes twice on one deal get `409`.
+- **Approval with a document.** In `/review`, a reviewer can pick a document before approving. The transaction then carries a Memo instruction `groundtruth:doc:<sha256>` next to `sign_approval`. The Stream filter passes the memo text as `memos`; [src/chain/documentMemo.ts](src/chain/documentMemo.ts) takes the hash when exactly one document is named, and `applyConfirmedEvent` stores it on the approval's timeline row. When the deal is read, the hash is matched to the deal's documents: the row gets `citedDocument` and reads "The septic reviewer signed their approval, relying on “Septic evaluation.pdf” (hash on-chain)." A hash that matches no upload is kept and said plainly.
+- **Memo program.** Memo v2 (`MemoSq4…`) has no account on devnet as of 2026-11-19, so the web sends Memo v1 (`Memo1Uhk…`). v1 does not log its text, which is why the hash is read from the instruction and not from logs. The filter accepts both.
+- **Deploy note.** The live Stream runs the filter pasted into QuickNode. Re-paste `quicknode/groundtruth-filter.js` before relying on live document citations; until then a live approval still projects, without its citation. `replay:devnet` always uses the repo's filter.
+- **Tests:** `test/documents.test.ts` (mocked Prisma: non-participant, wrong type, oversize, bad/expired/replayed signatures, metadata-only list, downloads), `test/documentMemo.test.ts` (filter and parser, including memo text from another program being ignored), `test/documentCitation.test.ts` (matching and non-matching hashes), and `test/db/documents.db.test.ts` (upload, list, download, and a Stream delivery linking the approval, against PostgreSQL).
 
 ## Deal text alerts (staged demo, Twilio)
 

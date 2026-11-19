@@ -1,6 +1,10 @@
 import {
+  DEAL_DOCUMENT_TYPES,
   DEAL_STATES,
   type Deal,
+  type DealDocument,
+  type DealParticipantRole,
+  type DocumentCitation,
   type DealState,
   type Hold,
   type Reviewer,
@@ -42,6 +46,23 @@ const CONFIRMATION_STATUSES = Object.keys({
   true
 >) as TimelineEvent["confirmationStatus"][];
 
+const PARTICIPANT_ROLES = Object.keys({
+  buyer: true,
+  seller: true,
+  title: true,
+  survey: true,
+  septic: true,
+} satisfies Record<DealParticipantRole, true>) as DealParticipantRole[];
+
+const DOCUMENT_CONTENT_TYPES = Object.keys({
+  "application/pdf": true,
+  "image/png": true,
+  "image/jpeg": true,
+} satisfies Record<
+  DealDocument["contentType"],
+  true
+>) as DealDocument["contentType"][];
+
 const DEVNET_USDC_MINT: Deal["mint"] =
   "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
 
@@ -71,6 +92,24 @@ export interface StoredTimelineEvent {
   buyerMessage: string;
   transactionSignature: string | null;
   confirmationStatus: string;
+  /** Hash from an approval transaction's document memo, if any. */
+  citedDocumentSha256?: string | null;
+}
+
+/** A deal document's public fields, as cited by an approval. */
+export interface StoredDocumentRef {
+  id: string;
+  type: string;
+  filename: string;
+  sha256: string;
+  uploaderRole: string;
+}
+
+export interface StoredDealDocument extends StoredDocumentRef {
+  dealId: string;
+  contentType: string;
+  sizeBytes: number;
+  uploadedAt: Date;
 }
 
 export interface StoredDeal {
@@ -88,6 +127,8 @@ export interface StoredDeal {
   hold: StoredHold | null;
   /** Already in contract order; see routes/deals.ts. */
   timelineEvents: StoredTimelineEvent[];
+  /** The deal's documents, to resolve approval citations. */
+  documents?: StoredDocumentRef[];
 }
 
 export function toDeal(row: StoredDeal): Deal {
@@ -120,7 +161,9 @@ export function toDeal(row: StoredDeal): Deal {
     state: state satisfies DealState,
     escrowAddress: row.escrowAddress ?? undefined,
     hold: row.hold ? toHold(row.hold) : undefined,
-    timeline: row.timelineEvents.map(toTimelineEvent),
+    timeline: row.timelineEvents.map((event) =>
+      toTimelineEvent(event, row.documents ?? []),
+    ),
   };
 }
 
@@ -148,7 +191,10 @@ function toHold(row: StoredHold): Hold {
   };
 }
 
-function toTimelineEvent(row: StoredTimelineEvent): TimelineEvent {
+function toTimelineEvent(
+  row: StoredTimelineEvent,
+  documents: StoredDocumentRef[],
+): TimelineEvent {
   const confirmationStatus = parseOne(
     CONFIRMATION_STATUSES,
     row.confirmationStatus,
@@ -157,14 +203,78 @@ function toTimelineEvent(row: StoredTimelineEvent): TimelineEvent {
   if (confirmationStatus === "confirmed" && !row.transactionSignature) {
     throw new Error("Stored confirmed event is missing its transaction");
   }
+  const citedDocument = row.citedDocumentSha256
+    ? toCitation(row.citedDocumentSha256, documents)
+    : undefined;
   return {
     id: row.id,
     at: row.at.toISOString(),
     type: parseOne(TIMELINE_EVENT_TYPES, row.type, "timeline event type"),
     actorRole: row.actorRole ?? undefined,
-    buyerMessage: row.buyerMessage,
+    buyerMessage: citedDocument
+      ? citationMessage(row.buyerMessage, citedDocument)
+      : row.buyerMessage,
     transactionSignature: row.transactionSignature ?? undefined,
     confirmationStatus,
+    ...(citedDocument ? { citedDocument } : {}),
+  };
+}
+
+/** The deal's document with exactly the hash the memo named, if any. */
+function toCitation(
+  sha256: string,
+  documents: StoredDocumentRef[],
+): DocumentCitation {
+  const match = documents.find((document) => document.sha256 === sha256);
+  return match
+    ? {
+        sha256,
+        document: {
+          id: match.id,
+          type: parseOne(DEAL_DOCUMENT_TYPES, match.type, "document type"),
+          filename: match.filename,
+          uploaderRole: parseOne(
+            PARTICIPANT_ROLES,
+            match.uploaderRole,
+            "uploader role",
+          ),
+        },
+      }
+    : { sha256 };
+}
+
+/**
+ * "The septic reviewer signed their approval, relying on “Septic
+ * evaluation.pdf” (hash on-chain)." The stored message is the projection's
+ * own; the document part is added when the deal is read, so a document
+ * uploaded after the approval is still matched by its hash.
+ */
+function citationMessage(base: string, citation: DocumentCitation): string {
+  const sentence = base.replace(/\.$/, "");
+  return citation.document
+    ? `${sentence}, relying on “${citation.document.filename}” (hash on-chain).`
+    : `${sentence}, citing document hash ${citation.sha256.slice(0, 12)}… on-chain. No document on this deal has that hash.`;
+}
+
+export function toDealDocument(row: StoredDealDocument): DealDocument {
+  return {
+    id: row.id,
+    dealId: row.dealId,
+    type: parseOne(DEAL_DOCUMENT_TYPES, row.type, "document type"),
+    filename: row.filename,
+    contentType: parseOne(
+      DOCUMENT_CONTENT_TYPES,
+      row.contentType,
+      "document content type",
+    ),
+    sizeBytes: row.sizeBytes,
+    sha256: row.sha256,
+    uploaderRole: parseOne(
+      PARTICIPANT_ROLES,
+      row.uploaderRole,
+      "uploader role",
+    ),
+    uploadedAt: row.uploadedAt.toISOString(),
   };
 }
 

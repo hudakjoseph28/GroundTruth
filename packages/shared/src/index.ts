@@ -3,8 +3,13 @@ export type {
   Check,
   CheckKind,
   CheckStatus,
+  DocumentCitation,
   Coverage,
   Deal,
+  DealDocument,
+  DealDocumentContentType,
+  DealDocumentType,
+  DealParticipantRole,
   DealSmsSubscription,
   DealSmsSubscriptionRequest,
   DealState,
@@ -12,7 +17,9 @@ export type {
   GeoJsonPolygon,
   Hold,
   Parcel,
+  ParcelArea,
   ParcelKey,
+  ParcelOutline,
   ParcelReport,
   ParcelSearchResult,
   ResponsibleParty,
@@ -23,7 +30,29 @@ export type {
   TimelineEventType,
 } from "./contract.js";
 
-export { CHECK_KINDS, CHECK_STATUSES, DEAL_STATES } from "./contract.js";
+export {
+  CHECK_KINDS,
+  CHECK_STATUSES,
+  DEAL_DOCUMENT_CONTENT_TYPES,
+  DEAL_DOCUMENT_MAX_BYTES,
+  DEAL_DOCUMENT_TYPES,
+  DEAL_STATES,
+} from "./contract.js";
+
+export {
+  DOCUMENT_AUTH_HEADERS,
+  DOCUMENT_AUTH_MAX_AGE_MS,
+  DOCUMENT_AUTH_MAX_SKEW_MS,
+  DOCUMENT_MEMO_PREFIX,
+  DOCUMENT_UPLOAD_HEADERS,
+  MEMO_PROGRAM_ID,
+  MEMO_PROGRAM_IDS,
+  documentAuthMessage,
+  documentMemo,
+  documentMemoInstruction,
+  isSha256Hex,
+} from "./documents.js";
+export type { DocumentAuthRequest } from "./documents.js";
 
 export {
   goldenParcel,

@@ -22,6 +22,8 @@ Practise the 2:45–4:00 segment on the rehearsal deal, never on the live one. `
 
 The rehearsal deal can run once, by either path. **`staged-devnet-deal-rehearsal` (v1) is used up.** On Nov 18 it tested the reviewer portal (#45): `stage-prep`, then the septic approval and the release through `/review` ([approval](https://explorer.solana.com/tx/5im6Vt5iBhkRxmcJxRzPcgf2demRR4bBY2oTtZZX5Y4DkuyrDnxcB8Dst2qAPnn8krAJe4ocswMh9TY1rjKmskYY?cluster=devnet), [release](https://explorer.solana.com/tx/3z7BNJH6xrXmoMHY9cvpD37c775prm2PgS4c2xL1SFTEevoe3UnJc2cUgWLXUfYEuzLncLw7J1djRDqhZ4FGsr4z?cluster=devnet)). Do not pass `--deal staged-devnet-deal-rehearsal` again. Each rehearsal needs 10 test USDC free in the buyer's wallet, on top of the live deal's 10 already in escrow.
 
+**Rehearsal-v2 status (2026-11-19):** stage-prep ran, and its septic approval was then signed from `/review` while testing deal documents (approval tx `3WEAsdUE…9Q9w`, relying on a fake “Septic evaluation.pdf”). It is funded with all three approvals, so only the release is left; the septic tap can no longer be practised on it.
+
 **Prerequisite:** `staged-devnet-deal-rehearsal-v2` comes from #46. The `--deal` flag accepts it only once #46 is merged. The deal page and `/review` show it only after the API is redeployed and seeded with that build.
 
 ## Septic reviewer's staged key in Phantom (for the stage)

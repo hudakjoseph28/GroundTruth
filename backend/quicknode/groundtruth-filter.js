@@ -6,6 +6,7 @@
 //
 //   { "transactions": [
 //       { signature, slot, blockTime, logMessages },              // succeeded
+//       { signature, slot, blockTime, logMessages, memos },       // succeeded, with memos
 //       { signature, slot, blockTime, logMessages,                // release failed
 //         err, releaseAccounts } ] }
 //
@@ -26,6 +27,28 @@ const PROGRAM_ID = "ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG";
 // 8-byte Anchor discriminator, base58 encoded (from the IDL in
 // packages/shared; quicknodeFilters.test.ts checks this value).
 const RELEASE_IX_DATA = "jUrc3RxQy1A";
+
+// SPL Memo v1 and v2. A reviewer's approval may carry a Memo instruction
+// `groundtruth:doc:<sha256>` naming the document it relied on (deal
+// documents). Memo v1 does not log its text, so the text is read from the
+// instruction itself: the jsonParsed form gives it as a string in `parsed`.
+// Only top-level instructions of these two programs count; memo-like data in
+// any other program's instruction is never collected. (MEMO_PROGRAM_IDS in
+// packages/shared; quicknodeFilters.test.ts checks they match.)
+const MEMO_PROGRAM_IDS = [
+  "Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo",
+  "MemoSq4gqABAXKb96qnH8TyNmwnmJ6NerJ2SZcfSLgW",
+];
+
+function memosOf(tx) {
+  const message = (tx.transaction && tx.transaction.message) || {};
+  const memos = [];
+  (message.instructions || []).forEach((ix) => {
+    if (MEMO_PROGRAM_IDS.indexOf(ix.programId) < 0) return;
+    if (typeof ix.parsed === "string") memos.push(ix.parsed);
+  });
+  return memos;
+}
 
 function touchesProgram(tx) {
   const message = (tx.transaction && tx.transaction.message) || {};
@@ -65,7 +88,10 @@ function main(stream) {
         logMessages: tx.meta.logMessages || [],
       };
       if (tx.meta.err === null) {
-        if (touchesProgram(tx)) transactions.push(entry);
+        if (!touchesProgram(tx)) continue;
+        const memos = memosOf(tx);
+        if (memos.length) entry.memos = memos;
+        transactions.push(entry);
         continue;
       }
       const release = failedRelease(tx);

@@ -245,3 +245,30 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Approve, optionally relying on one of the deal's documents. */
+.review-approve {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.review-relyon {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.875rem;
+}
+
+.review-relyon select {
+  min-height: var(--tap);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  padding: 0 0.6rem;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.review-relyon small {
+  color: color-mix(in srgb, var(--text) 65%, transparent);
+}

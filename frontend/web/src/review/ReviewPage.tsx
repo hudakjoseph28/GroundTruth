@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   HOLD_REASON_CODES,
+  documentMemoInstruction,
   placeHoldInstruction,
   releaseInstruction,
   signApprovalInstruction,
@@ -10,10 +11,12 @@ import {
   type HoldReasonCode,
   type ReviewerRole,
 } from "@groundtruth/shared";
-import { WalletReadyState } from "@solana/wallet-adapter-base";
-import { PhantomWalletName } from "@solana/wallet-adapter-phantom";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { HOLD_REASONS, ROLE_LABELS, STATE_LABELS } from "../content/deal";
+import { APPROVE_WITH_DOCUMENT, DOCUMENT_TYPE_LABELS } from "../content/documents";
+import { DealDocuments } from "../documents/DealDocuments";
+import { OpenFileButton, ParticipantPanel } from "../documents/ParticipantTools";
+import { useDealDocuments } from "../documents/useDealDocuments";
 import { REVIEW } from "../content/review";
 import { dealPath } from "../data/dealSource";
 import { viewDeal } from "../data/dealView";
@@ -27,6 +30,7 @@ import {
   type SendPhase,
 } from "./escrowTx";
 import { useReviewerDeals } from "./useReviewerDeals";
+import { WalletBar } from "./WalletBar";
 import { WalletRoot } from "./WalletRoot";
 import "./review.css";
 
@@ -80,56 +84,6 @@ function Portal() {
             ))}
           </ul>
         ))}
-    </div>
-  );
-}
-
-function WalletBar() {
-  const { wallets, wallet, publicKey, connecting, select, connect, disconnect } = useWallet();
-  const phantom = wallets.find((w) => w.adapter.name === PhantomWalletName);
-  const detected =
-    phantom?.readyState === WalletReadyState.Installed ||
-    phantom?.readyState === WalletReadyState.Loadable;
-
-  if (publicKey) {
-    return (
-      <div className="review-wallet">
-        <span>{REVIEW.connectedAs(short(publicKey.toBase58()))}</span>
-        <button type="button" className="btn btn-small" onClick={() => void disconnect()}>
-          {REVIEW.disconnect}
-        </button>
-      </div>
-    );
-  }
-  if (!detected) {
-    const here = typeof window === "undefined" ? "" : window.location.href;
-    const origin = typeof window === "undefined" ? "" : window.location.origin;
-    return (
-      <div className="review-wallet review-wallet-missing">
-        <p>{REVIEW.noPhantom}</p>
-        <a
-          className="btn"
-          href={`https://phantom.app/ul/browse/${encodeURIComponent(here)}?ref=${encodeURIComponent(origin)}`}
-        >
-          {REVIEW.openInPhantom}
-        </a>
-      </div>
-    );
-  }
-  return (
-    <div className="review-wallet">
-      <button
-        type="button"
-        className="btn btn-primary"
-        disabled={connecting}
-        onClick={() => {
-          if (wallet?.adapter.name === PhantomWalletName) void connect().catch(() => {});
-          else select(PhantomWalletName);
-        }}
-      >
-        {connecting ? REVIEW.connecting : REVIEW.connect}
-      </button>
-      <p className="review-hint">{REVIEW.phantomNetwork}</p>
     </div>
   );
 }
@@ -204,6 +158,10 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
   const [confirmHold, setConfirmHold] = useState(false);
   const abort = useRef<AbortController | null>(null);
   useEffect(() => () => abort.current?.abort(), []);
+  const documents = useDealDocuments(deal.id);
+  const docs = documents.state.status === "ready" ? documents.state.documents : [];
+  /** Per role: the SHA-256 of the document an approval relies on, or "". */
+  const [relyOn, setRelyOn] = useState<Partial<Record<ReviewerRole, string>>>({});
 
   const busy =
     action.phase === "checking" || action.phase === "signing" || action.phase === "sent";
@@ -212,7 +170,12 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
   const dealPda = deal.escrowAddress;
 
   const run = useCallback(
-    async (kind: ActionKind, spec: EscrowInstructionSpec, onConfirmed: () => void) => {
+    async (
+      kind: ActionKind,
+      spec: EscrowInstructionSpec,
+      onConfirmed: () => void,
+      extra: EscrowInstructionSpec[] = [],
+    ) => {
       if (!publicKey || !signTransaction) return;
       abort.current?.abort();
       const controller = new AbortController();
@@ -223,6 +186,7 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
           connection,
           payer: publicKey,
           spec,
+          extra,
           signTransaction,
           onPhase: (phase) => setAction({ phase, kind }),
         });
@@ -280,24 +244,52 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
       <div className="review-actions">
         {myRoles.map((role) => {
           const blocker = approveBlocker(deal, role, me);
-          return blocker ? (
-            <p key={role} className="review-blocked">
-              {ROLE_LABELS[role]}: {blocker}
-            </p>
-          ) : (
-            <button
-              key={role}
-              type="button"
-              className="btn btn-primary review-btn"
-              disabled={busy}
-              onClick={() =>
-                void run("approve", signApprovalInstruction({ reviewer: me, dealPda, role }), () =>
-                  setMine((m) => ({ ...m, approved: [...m.approved, role] })),
-                )
-              }
-            >
-              {REVIEW.actions.approve(ROLE_LABELS[role].toLowerCase())}
-            </button>
+          if (blocker) {
+            return (
+              <p key={role} className="review-blocked">
+                {ROLE_LABELS[role]}: {blocker}
+              </p>
+            );
+          }
+          const chosen = docs.find((doc) => doc.sha256 === relyOn[role]);
+          return (
+            <div key={role} className="review-approve">
+              {docs.length > 0 && (
+                <label className="review-relyon">
+                  <span>{APPROVE_WITH_DOCUMENT.label}</span>
+                  <select
+                    value={chosen?.sha256 ?? ""}
+                    disabled={busy}
+                    onChange={(event) =>
+                      setRelyOn((current) => ({ ...current, [role]: event.target.value }))
+                    }
+                  >
+                    <option value="">{APPROVE_WITH_DOCUMENT.none}</option>
+                    {docs.map((doc) => (
+                      <option key={doc.id} value={doc.sha256}>
+                        {DOCUMENT_TYPE_LABELS[doc.type]} · {doc.filename}
+                      </option>
+                    ))}
+                  </select>
+                  {chosen && <small>{APPROVE_WITH_DOCUMENT.note}</small>}
+                </label>
+              )}
+              <button
+                type="button"
+                className="btn btn-primary review-btn"
+                disabled={busy}
+                onClick={() =>
+                  void run(
+                    "approve",
+                    signApprovalInstruction({ reviewer: me, dealPda, role }),
+                    () => setMine((m) => ({ ...m, approved: [...m.approved, role] })),
+                    chosen ? [documentMemoInstruction({ signer: me, sha256: chosen.sha256 })] : [],
+                  )
+                }
+              >
+                {REVIEW.actions.approve(ROLE_LABELS[role].toLowerCase())}
+              </button>
+            </div>
           );
         })}
 
@@ -384,6 +376,13 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
       </div>
 
       <ActionStatus action={action} />
+      <DealDocuments
+        compact
+        state={documents.state}
+        timeline={deal.timeline}
+        fileAction={(doc) => <OpenFileButton deal={deal} doc={doc} />}
+        participant={<ParticipantPanel deal={deal} onUploaded={documents.refresh} />}
+      />
       <Link className="review-open" to={dealPath(deal.id)}>
         {REVIEW.openDeal} →
       </Link>

@@ -3,6 +3,8 @@ import type {
   GeoJsonMultiPolygon,
   GeoJsonPolygon,
   Parcel,
+  ParcelArea,
+  ParcelOutline,
   ParcelSearchResult,
 } from "@groundtruth/shared";
 import { z } from "zod";
@@ -12,6 +14,7 @@ import {
   siteAddressMatches,
   siteAddressOnStreet,
   toParcelSummary,
+  type ParcelAttributes,
   type ParcelSummary,
 } from "./normalize.js";
 import { countyByFips, countyByName, OHIO_COUNTIES } from "./ohioCounties.js";
@@ -24,6 +27,7 @@ import {
   sitePlace,
   type AddressQuery,
 } from "./addressQuery.js";
+import { MAX_AREA_PARCELS, type Bbox } from "./area.js";
 import { parcelIdWhere, sqlString } from "./parcelIdSearch.js";
 import { isKeyableParcelId } from "./parcelKey.js";
 import { hasNfhlStudy } from "../reports/femaFlood.js";
@@ -96,6 +100,8 @@ export interface OgripClient {
   searchByAddress(query: string): Promise<ParcelSearchResult[]>;
   /** Null when OGRIP publishes no keyable parcel for this county and ID. */
   getParcel(countyFips: string, sourceParcelId: string): Promise<Parcel | null>;
+  /** Outlines of the parcels touching a box, at most MAX_AREA_PARCELS. */
+  getArea(bbox: Bbox): Promise<ParcelArea>;
   getCoverage(): Promise<Coverage[]>;
 }
 
@@ -156,6 +162,20 @@ const geojsonQuerySchema = z.object({
       properties: attributesSchema,
       geometry: geometrySchema.nullable(),
     }),
+  ),
+});
+
+/**
+ * The area query's answer. Geometry is checked feature by feature: one
+ * malformed outline is left off the map instead of failing the whole view.
+ */
+const areaQuerySchema = z.object({
+  type: z.literal("FeatureCollection"),
+  properties: z
+    .object({ exceededTransferLimit: z.boolean().optional() })
+    .nullish(),
+  features: z.array(
+    z.object({ properties: attributesSchema, geometry: z.unknown() }),
   ),
 });
 
@@ -738,6 +758,82 @@ export function createOgripClient(
   }
 
   /**
+   * Every keyable parcel whose published boundary touches the box, for the
+   * explore map. One OGRIP request asks for one row more than the limit, so
+   * a full answer is told apart from a cut-off one (`truncated`).
+   *
+   * A parcel published as several polygons comes back once per part that
+   * touches the box; the parts are merged into one outline. Its
+   * `mappedAcreage` is kept only when one part came back: parts outside the
+   * box are not in the answer, so a sum could undercount the lot. The parcel
+   * route (`getParcel`) measures every part.
+   */
+  async function getArea(bbox: Bbox): Promise<ParcelArea> {
+    const url = layerQueryUrl({
+      where: "LocalParcelID IS NOT NULL",
+      geometry: bbox.map((value) => value.toFixed(6)).join(","),
+      geometryType: "esriGeometryEnvelope",
+      inSR: "4326",
+      spatialRel: "esriSpatialRelIntersects",
+      outFields: PARCEL_FIELDS.join(","),
+      returnGeometry: "true",
+      outSR: "4326",
+      // About 10 cm: plenty for an outline, and a third smaller than 7.
+      geometryPrecision: "6",
+      resultRecordCount: String(MAX_AREA_PARCELS + 1),
+      f: "geojson",
+    });
+    const result = await getJson(url, areaQuerySchema);
+    const retrievedAt = now().toISOString();
+    const truncated =
+      result.features.length > MAX_AREA_PARCELS ||
+      result.properties?.exceededTransferLimit === true;
+
+    const parts = new Map<
+      string,
+      {
+        properties: ParcelAttributes;
+        geometries: (GeoJsonPolygon | GeoJsonMultiPolygon)[];
+      }
+    >();
+    for (const feature of result.features.slice(0, MAX_AREA_PARCELS)) {
+      const geometry = geometrySchema.safeParse(feature.geometry);
+      const { County, LocalParcelID } = feature.properties;
+      if (!geometry.success || !County || !LocalParcelID) continue;
+      const id = `${County}|${LocalParcelID}`;
+      const kept = parts.get(id);
+      if (kept) kept.geometries.push(geometry.data);
+      else
+        parts.set(id, {
+          properties: feature.properties,
+          geometries: [geometry.data],
+        });
+    }
+
+    const parcels: ParcelOutline[] = [];
+    for (const { properties, geometries } of parts.values()) {
+      const outline = mergeGeometry(geometries);
+      const centroid = outline ? polygonCentroid(outline) : null;
+      if (!outline || !centroid) continue;
+      const summary = toParcelSummary(
+        geometries.length === 1
+          ? properties
+          : { ...properties, Shape__Area: null },
+        centroid,
+      );
+      if (summary) parcels.push({ ...summary, outline });
+    }
+    return {
+      bbox,
+      parcels,
+      truncated,
+      authority: "Ohio OGRIP",
+      sourceUrl: url,
+      retrievedAt,
+    };
+  }
+
+  /**
    * One row per county in a live count of OGRIP parcels with published IDs.
    * `boundarySearchable` means only that the count was above zero when it
    * was taken (`lastVerifiedAt`, kept while cached); it says nothing about
@@ -797,7 +893,13 @@ export function createOgripClient(
     return rows;
   }
 
-  return { searchByParcelId, searchByAddress, getParcel, getCoverage };
+  return {
+    searchByParcelId,
+    searchByAddress,
+    getParcel,
+    getArea,
+    getCoverage,
+  };
 }
 
 type QueryFeature = z.infer<typeof featureQuerySchema>["features"][number];

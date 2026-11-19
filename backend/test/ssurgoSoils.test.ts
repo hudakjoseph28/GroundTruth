@@ -214,7 +214,10 @@ describe("SDA first, Living Atlas fallback", () => {
     const outcome = await run(goldenParcel, fetchImpl);
 
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(outcome).toMatchObject({ outcome: "found", source: "soilDataAccess" });
+    expect(outcome).toMatchObject({
+      outcome: "found",
+      source: "soilDataAccess",
+    });
     expect(shares(outcome)).toEqual(shares(franklin.outcome));
     expect(septicCheck(goldenParcel, outcome, 6_000).sources[0]?.url).toBe(
       SDA_POST_REST,
@@ -285,9 +288,9 @@ describe("SDA first, Living Atlas fallback", () => {
   });
 
   it("keeps missing, unrated, malformed, truncated, and failed fallback answers unknown", async () => {
-    const recorded = (
-      await livingAtlasAnswer(franklin).json()
-    ) as { features: Array<{ properties: Record<string, unknown> }> };
+    const recorded = (await livingAtlasAnswer(franklin).json()) as {
+      features: Array<{ properties: Record<string, unknown> }>;
+    };
     const unrated = structuredClone(recorded);
     for (const feature of unrated.features) {
       feature.properties.engstafdcd = "Not rated";

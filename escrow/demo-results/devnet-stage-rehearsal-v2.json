@@ -1,0 +1,84 @@
+{
+  "status": "complete",
+  "cluster": "devnet",
+  "rpc": "https://api.devnet.solana.com",
+  "programId": "ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG",
+  "mint": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+  "parcelKey": "ohio:39049:230-000918",
+  "amountBaseUnits": "10000000",
+  "expectedHeldReleaseError": "DealHeld (6019)",
+  "runId": "stage-rehearsal-v2",
+  "startedAt": "2026-11-19T02:48:35.053Z",
+  "wallets": {
+    "buyer": "HEDe3DMbVbFRku2Kzxq6usSjUdDJ1vphohTBxAXqEtXJ",
+    "seller": "6XPGX3Vmqh4gtj6UZNcgJTDN1haWivctw8KQ7D6UpMMj",
+    "title": "ExxnTPx24fjXRiAPcnrWqKCfEQDhDmxCDZ57VQ7RkBRW",
+    "survey": "CT6Nstaijac7yAVuDNVWQ12JFMYGfggE4VPBK4sYohDa",
+    "septic": "Ab7KLjree8ZgUrgXvtpb84oHKvzakC6VpRcPqnXoYz3F",
+    "buyer USDC": "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+    "seller USDC": "CZQyg2JGyjj9vRyvaBYS2tz54kproMxoiNF9hHxTG5Zu"
+  },
+  "setup": [],
+  "deals": [
+    {
+      "label": "rehearsalV2",
+      "fixtureId": "staged-devnet-deal-rehearsal-v2",
+      "dealIdLabel": "groundtruth-demo-rehearsal-v2",
+      "dealIdHex": "6554bc65047df74393d5596eb8bb9d493bb646c30f7f798de1566b150b0db7cc",
+      "dealPda": "EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X",
+      "vault": "4awpxEmXL8fHDFDE9Lu6qHGq6NdBVpLjUUgT3nCHtCpt",
+      "steps": [
+        {
+          "step": "initialize_deal",
+          "signer": "buyer",
+          "signature": "5pDg1LzFXVWFCTbtqdDSaBc6Kr2EVNJW27WWrDnGquw2vEs8dDq8XAXfU3m53bV4cCbqhH3aNMnm8PpVZgwaMY9t",
+          "slot": 523845731,
+          "ok": true,
+          "stateAfter": "draft"
+        },
+        {
+          "step": "fund",
+          "signer": "buyer",
+          "signature": "2vha8dsDDk5HRG72UXBy6KosU5C2NWAtzmdMKczDbYx91na4NTBasBz2EANE7QQGrQRaaZvvwxHh4v6YHmMocD3D",
+          "slot": 523845736,
+          "ok": true,
+          "stateAfter": "funded"
+        },
+        {
+          "step": "sign_approval (title)",
+          "signer": "title reviewer",
+          "signature": "XqiiMvzexcsrSCCFxEmEcufBVzX29jsUK28nC6ARrKUV5GHQNwbBRjZCsacWppiHhmSvXnT4eSuGNuRnRy6axnW",
+          "slot": 523845741,
+          "ok": true,
+          "stateAfter": "funded"
+        },
+        {
+          "step": "sign_approval (survey)",
+          "signer": "survey reviewer",
+          "signature": "2ZuVbvFTBXztdK8Qw2m1DoVd1x4TZZKnaaQ46PAsLRvig2V4zf7NdF4JA5cuTBugwz8iT9CGvquvU5GvuspXmmQ7",
+          "slot": 523845755,
+          "ok": true,
+          "stateAfter": "funded"
+        }
+      ],
+      "balances": [
+        {
+          "moment": "after fund",
+          "buyerUsdc": "5000000",
+          "vaultUsdc": "10000000",
+          "sellerUsdc": "35000000"
+        },
+        {
+          "moment": "after stage-prep (title and survey approved)",
+          "buyerUsdc": "5000000",
+          "vaultUsdc": "10000000",
+          "sellerUsdc": "35000000"
+        }
+      ],
+      "finalState": "funded"
+    }
+  ],
+  "mode": "devnet",
+  "note": "Staged GroundTruth rehearsalV2 demo deal (staged-devnet-deal-rehearsal-v2) on Solana devnet with Circle test USDC: stage-prep (init, fund, title and survey approvals) and stage-finish (septic approval, release). Public keys and signatures only.",
+  "finishedAt": "2026-11-19T02:48:45.498Z"
+}

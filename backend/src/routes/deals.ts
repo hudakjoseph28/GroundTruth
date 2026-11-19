@@ -36,6 +36,16 @@ async function loadPublicDeal(req: Request): Promise<Deal> {
       // Contract order: chain slot / event index, then off-chain time.
       // Confirmed rows carry block time in `at`, so ordering by time first
       // interleaves off-chain evidence; slot and index break ties.
+      // Public fields only: approval citations are matched by hash.
+      documents: {
+        select: {
+          id: true,
+          type: true,
+          filename: true,
+          sha256: true,
+          uploaderRole: true,
+        },
+      },
       timelineEvents: {
         orderBy: [
           { at: "asc" },

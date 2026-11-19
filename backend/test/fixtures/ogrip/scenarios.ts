@@ -36,6 +36,11 @@ export const OGRIP_SCENARIOS = {
   "street-dodridge-st": `/api/parcels/search?q=${encodeURIComponent("Dodridge St")}`,
   "street-seaman-rd-galloway": `/api/parcels/search?q=${encodeURIComponent("Seaman Rd, Galloway")}`,
   "street-seaman-rd-locator-down": `/api/parcels/search?q=${encodeURIComponent("Seaman Rd")}`,
+  /** Explore map boxes of about 300 m around the golden (Franklin) and second-county (Licking) parcels. */
+  "area-franklin-golden":
+    "/api/parcels/area?bbox=-83.2506,39.8826,-83.2466,39.8852",
+  "area-licking-second":
+    "/api/parcels/area?bbox=-82.3569,39.9524,-82.3529,39.9550",
 } as const;
 
 /**

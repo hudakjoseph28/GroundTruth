@@ -100,7 +100,10 @@ const livingAtlasSchema = z.object({
         engstafdcd: ratingValue,
       }),
       geometry: z.union([
-        z.object({ type: z.literal("Polygon"), coordinates: polygonCoordinates }),
+        z.object({
+          type: z.literal("Polygon"),
+          coordinates: polygonCoordinates,
+        }),
         z.object({
           type: z.literal("MultiPolygon"),
           coordinates: z.array(polygonCoordinates),

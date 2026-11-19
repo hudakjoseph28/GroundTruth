@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import type { Parcel } from "@groundtruth/shared";
 import {
@@ -10,7 +10,12 @@ import {
   STATE_LABELS,
   TIMELINE,
 } from "../content/deal";
+import { DOCUMENTS, TIMELINE_DOCUMENT } from "../content/documents";
 import { QrCode } from "../deal/QrCode";
+import { MoneyFlow } from "../deal/MoneyFlow";
+import { DealDocuments } from "../documents/DealDocuments";
+import { shortHash } from "../documents/fileCheck";
+import { useDealDocuments } from "../documents/useDealDocuments";
 import { TextAlerts } from "../deal/TextAlerts";
 import { useDealFeed, type LiveDeal } from "../deal/useDealFeed";
 import { dealPath } from "../data/dealSource";
@@ -33,6 +38,11 @@ import { usePageTitle } from "../layout/usePageTitle";
 import { parcelName } from "../data/address";
 import { getParcel, parcelPath, sampleParcelPath } from "../data/parcelSource";
 import "../deal/deal.css";
+
+// Wallet code loads only when a participant asks to upload or open a file.
+const DocumentsWithWallet = lazy(
+  () => import("../documents/DocumentsWithWallet"),
+);
 
 /** One staged deal: where the money is, why it can or cannot move, and what happened. */
 export function DealPage() {
@@ -107,6 +117,8 @@ function DealScreen({ live }: { live: LiveDeal }) {
   const deal = useMemo(() => viewDeal(live.deal), [live.deal]);
   const rows = useMemo(() => viewTimeline(live.timeline), [live.timeline]);
   const parcel = useParcel(deal.parcelKey);
+  const documents = useDealDocuments(deal.id);
+  const [participant, setParticipant] = useState(false);
   // The newest row that arrived live, read out once for screen readers.
   const announced = rows.find((row) => live.freshIds.has(row.id));
 
@@ -118,6 +130,12 @@ function DealScreen({ live }: { live: LiveDeal }) {
         </p>
         <LiveLine updatedAt={live.updatedAt} stale={live.stale} />
       </header>
+
+      <MoneyFlow
+        amount={deal.amount}
+        state={deal.state}
+        live={live.liveState === deal.state}
+      />
 
       <div className="deal-summary">
         <Hero
@@ -157,6 +175,37 @@ function DealScreen({ live }: { live: LiveDeal }) {
           {announced ? TIMELINE.announce(announced.message) : ""}
         </p>
       </section>
+
+      <div className="deal-documents" id="documents">
+        {participant ? (
+          <Suspense
+            fallback={
+              <DealDocuments state={documents.state} timeline={live.timeline} />
+            }
+          >
+            <DocumentsWithWallet
+              deal={live.deal}
+              state={documents.state}
+              timeline={live.timeline}
+              onUploaded={documents.refresh}
+            />
+          </Suspense>
+        ) : (
+          <DealDocuments
+            state={documents.state}
+            timeline={live.timeline}
+            participant={
+              <button
+                type="button"
+                className="btn docs-participant-open"
+                onClick={() => setParticipant(true)}
+              >
+                {DOCUMENTS.participant.open}
+              </button>
+            }
+          />
+        )}
+      </div>
 
       <aside className="deal-aside">
         <Handoff dealId={deal.id} />
@@ -333,6 +382,24 @@ function Row({ row, fresh }: { row: TimelineRow; fresh: boolean }) {
           {row.actor && <span>{row.actor}</span>}
           <span>{row.confirmed ? TIMELINE.confirmed : TIMELINE.offChain}</span>
         </p>
+        {row.citation && (
+          <p className="deal-row-doc">
+            {row.citation.filename && row.citation.documentId ? (
+              <>
+                {TIMELINE_DOCUMENT.relying}{" "}
+                <a href={`#document-${row.citation.documentId}`}>
+                  {row.citation.filename}
+                </a>
+              </>
+            ) : (
+              TIMELINE_DOCUMENT.unmatched
+            )}
+            <span className="mono" title={row.citation.sha256}>
+              {" · "}
+              {TIMELINE_DOCUMENT.hash} {shortHash(row.citation.sha256)}
+            </span>
+          </p>
+        )}
         {row.signature && (
           <a
             className="deal-row-link"

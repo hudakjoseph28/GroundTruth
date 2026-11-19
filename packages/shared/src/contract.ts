@@ -56,6 +56,26 @@ export interface ParcelSearchResult {
   matchedOn: "siteAddress" | "parcelId";
 }
 
+/** One parcel drawn on the explore map: its summary and published outline. */
+export type ParcelOutline = Omit<Parcel, "geometry"> & {
+  outline: GeoJsonPolygon | GeoJsonMultiPolygon;
+};
+
+/**
+ * The parcels whose published boundaries touch one map box, from
+ * `GET /api/parcels/area?bbox=`. `truncated` means OGRIP holds more parcels
+ * there than one answer carries: the map shows these and asks to zoom in.
+ */
+export interface ParcelArea {
+  /** `[west, south, east, north]` in WGS84 degrees, as asked. */
+  bbox: [number, number, number, number];
+  parcels: ParcelOutline[];
+  truncated: boolean;
+  authority: "Ohio OGRIP";
+  sourceUrl: string;
+  retrievedAt: string;
+}
+
 export const CHECK_KINDS = [
   "zoning",
   "flood",
@@ -168,6 +188,66 @@ export interface TimelineEvent {
   buyerMessage: string;
   transactionSignature?: string;
   confirmationStatus: "offChainEvidence" | "confirmed";
+  /**
+   * Additive (2026-11-19). On a confirmed `approvalSigned` row whose
+   * transaction carried a `groundtruth:doc:<sha256>` Memo instruction: the
+   * document the reviewer relied on.
+   */
+  citedDocument?: DocumentCitation;
+}
+
+// ---------- Deal documents (additive, 2026-11-19) ----------
+
+export const DEAL_DOCUMENT_TYPES = [
+  "titleCommitment",
+  "surveyPlat",
+  "septicSoilEvaluation",
+  "zoningLetter",
+  "other",
+] as const;
+
+export type DealDocumentType = (typeof DEAL_DOCUMENT_TYPES)[number];
+
+export const DEAL_DOCUMENT_CONTENT_TYPES = [
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+] as const;
+
+export type DealDocumentContentType =
+  (typeof DEAL_DOCUMENT_CONTENT_TYPES)[number];
+
+/** Largest file the API stores: 10 MB. */
+export const DEAL_DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
+
+/** Who uploaded a document: a wallet bound to the deal in one of these roles. */
+export type DealParticipantRole = "buyer" | "seller" | ReviewerRole;
+
+/**
+ * Public metadata for one document a deal participant uploaded. The file
+ * itself is never part of this object; reading it needs a fresh wallet
+ * signature from a participant on the deal.
+ */
+export interface DealDocument {
+  id: string;
+  dealId: string;
+  type: DealDocumentType;
+  filename: string;
+  /** Detected from the file's own bytes, not its extension. */
+  contentType: DealDocumentContentType;
+  sizeBytes: number;
+  /** SHA-256 of the stored bytes, lowercase hex, computed by the API. */
+  sha256: string;
+  uploaderRole: DealParticipantRole;
+  uploadedAt: string;
+}
+
+/** A document hash an approval transaction committed to on-chain. */
+export interface DocumentCitation {
+  /** Read from the confirmed transaction's Memo instruction. */
+  sha256: string;
+  /** The deal's document with exactly this hash; absent when none matches. */
+  document?: Pick<DealDocument, "id" | "type" | "filename" | "uploaderRole">;
 }
 
 export interface Deal {
