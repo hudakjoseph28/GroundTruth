@@ -83,6 +83,19 @@ describe("ledger kinds", () => {
     ]);
   });
 
+  it("shows the golden parcel's seeded SSURGO septic screening, not a placeholder", () => {
+    const septic = buildLedger(goldenReport, null).records.find(
+      (record) => record.check.kind === "septic",
+    );
+    expect(septic?.check.status).toBe("needsReview");
+    expect(septic?.check.finding).toContain(
+      "46.05% of the parcel as map unit Ko",
+    );
+    expect(septic?.check.sources[0]?.retrievedAt).toBe(
+      "2026-11-19T03:48:19.000Z",
+    );
+  });
+
   it("lists the golden parcel with its deal exactly as before: closing, no environmental", () => {
     const kinds = kindsOf(goldenReport, true);
     expect(kinds).toEqual([
