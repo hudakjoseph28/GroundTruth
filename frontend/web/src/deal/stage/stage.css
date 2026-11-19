@@ -1,0 +1,579 @@
+/* Stage mode (/deals/:id?stage=1): the deal page for a projector. It covers
+   the site header and ticker, sizes type to the viewport, and keeps the
+   money strip across the top. Tone tokens come from deal.css. */
+
+html[data-stage],
+html[data-stage] body {
+  overflow: hidden;
+}
+
+.stage {
+  --tone: #a9a9a9;
+  --tone-text: #e4e1dc;
+  --tone-wash: rgba(255, 255, 255, 0.04);
+  /* One unit for the whole screen, set by whichever of width or height is
+     tighter, so a 16:9 projector at 720p or 1080p fits without scrolling. */
+  --u: clamp(0.8rem, min(1.5vw, 2.55vh), 2.4rem);
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "top top"
+    "flow flow"
+    "verdict verdict"
+    "reviewers phone";
+  gap: calc(var(--u) * 1.1) calc(var(--u) * 1.6);
+  overflow: auto;
+  padding: calc(var(--u) * 1.1) calc(var(--u) * 1.8) calc(var(--u) * 1.4);
+  background:
+    radial-gradient(120% 70% at 50% 0%, var(--tone-wash), transparent 70%),
+    var(--bg);
+  font-size: var(--u);
+}
+
+.stage a {
+  text-underline-offset: 0.18em;
+}
+
+/* ---------- Top line ---------- */
+
+.stage-top {
+  grid-area: top;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 1.4em;
+}
+
+.stage-top p {
+  margin: 0;
+}
+
+.stage-eyebrow {
+  color: var(--text-2);
+  font-size: 0.7em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stage-eyebrow .mono {
+  margin-left: 0.4em;
+  color: var(--text);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.stage-staged {
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0.2em 0.75em;
+  color: var(--text-2);
+  font-size: 0.62em;
+}
+
+.stage-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--green-text);
+  font-size: 0.62em;
+}
+
+.stage-live[data-stale="true"] {
+  color: var(--gold-text);
+}
+
+.stage-live[data-stale="true"] .deal-live-dot {
+  background: var(--gold);
+  animation: none;
+}
+
+.stage-top .stage-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+  opacity: 0.55;
+  transition: opacity 160ms ease;
+}
+
+/* Sized with the screen, so they stay on the top line at 720p. */
+.stage-controls .btn {
+  min-height: 1.9em;
+  padding: 0 0.7em;
+  font-size: 0.55em;
+}
+
+.stage-controls:hover,
+.stage-controls:focus-within {
+  opacity: 1;
+}
+
+/* ---------- Money flow, scaled up ---------- */
+
+.stage-flow {
+  grid-area: flow;
+}
+
+.stage .money-flow {
+  padding: 0.8em 1.1em 1em;
+}
+
+.stage .money-flow-head h2 {
+  font-size: 1.25em;
+}
+
+.stage .money-flow-head .eyebrow {
+  font-size: 0.7em;
+}
+
+.stage .money-flow-statement {
+  font-size: 1.15em;
+}
+
+.stage .money-flow-track {
+  min-height: 7.6em;
+  margin-top: 0.2em;
+  padding-top: 3.2em;
+  grid-template-columns:
+    minmax(0, 1fr) minmax(2em, 0.45fr) minmax(0, 1fr)
+    minmax(2em, 0.45fr) minmax(0, 1fr);
+}
+
+.stage .money-flow-stop {
+  padding: 0.7em 0.4em 0.6em;
+}
+
+.stage .money-flow-stop-icon {
+  width: 1.6em;
+  height: 1.6em;
+  margin-bottom: 0.3em;
+}
+
+.stage .money-flow-stop strong {
+  font-size: 1.35em;
+}
+
+.stage .money-flow-stop > span:last-child {
+  font-size: 0.8em;
+}
+
+.stage .money-flow-arrow svg {
+  width: 0.9em;
+  height: 0.9em;
+}
+
+.stage .money-flow-token {
+  min-width: 8em;
+  white-space: nowrap;
+  padding: 0.45em 0.9em;
+  box-shadow: 0 0 0 0.3em var(--tone-wash);
+}
+
+.stage .money-flow-token strong {
+  font-size: 1.6em;
+}
+
+.stage .money-flow-token > span {
+  font-size: 0.75em;
+}
+
+.stage .money-flow-lock {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+/* ---------- Verdict: state and why, or the payout ---------- */
+
+.stage-verdict {
+  grid-area: verdict;
+  display: grid;
+  align-content: safe center;
+  justify-items: start;
+  gap: 0.35em;
+  min-height: 0;
+}
+
+.stage-verdict p,
+.stage-verdict h1 {
+  margin: 0;
+}
+
+.stage-state {
+  border: 1px solid var(--tone);
+  border-radius: var(--radius-m);
+  padding: 0.15em 0.6em;
+  background: var(--tone-wash);
+  color: var(--tone-text);
+  font-size: 1em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stage-state[data-live="true"] {
+  animation: deal-state-flip 1400ms var(--ease-out);
+}
+
+.stage-headline {
+  max-width: 40ch;
+  color: var(--text);
+  font-size: 2.3em;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.stage-message {
+  max-width: 52ch;
+  color: var(--text-2);
+  font-size: 1.05em;
+  line-height: 1.35;
+}
+
+.stage-paid {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 0.45em;
+}
+
+.stage-paid-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.35em;
+  color: var(--text);
+  font-size: 2.9em;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  animation: stage-paid-in 700ms var(--ease-out) both;
+}
+
+.stage-paid-amount {
+  color: var(--green-text);
+}
+
+.stage-explorer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  border: 1px solid var(--green);
+  border-radius: var(--radius-m);
+  padding: 0.35em 0.8em;
+  background: rgba(63, 168, 106, 0.1);
+  color: var(--green-text);
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.stage-explorer .mono {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+@keyframes stage-paid-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25em) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* A short burst from the payout line. Gone after about two seconds. */
+.stage-confetti {
+  position: absolute;
+  top: 0.9em;
+  left: 18%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.stage-confetti > span {
+  position: absolute;
+  width: 0.42em;
+  height: 0.7em;
+  border-radius: 1px;
+  background: var(--hue);
+  opacity: 0;
+  animation: stage-confetti 1700ms cubic-bezier(0.16, 0.84, 0.3, 1) var(--delay)
+    forwards;
+}
+
+@keyframes stage-confetti {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0) scale(0.6);
+  }
+  12% {
+    opacity: 0.95;
+  }
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), calc(var(--dy) + 3.5em)) rotate(var(--spin))
+      scale(1);
+  }
+}
+
+/* ---------- Reviewer badges ---------- */
+
+.stage-reviewers {
+  grid-area: reviewers;
+  align-self: end;
+  display: grid;
+  gap: 0.6em;
+}
+
+.stage-reviewers header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1em;
+}
+
+.stage-reviewers h2,
+.stage-reviewers header p {
+  margin: 0;
+}
+
+.stage-reviewers h2 {
+  color: var(--text-2);
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stage-reviewers header p {
+  color: var(--text);
+  font-size: 1em;
+}
+
+.stage-reviewers ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stage-badge {
+  --badge: var(--line);
+  --badge-text: var(--text-2);
+  --badge-wash: rgba(255, 255, 255, 0.02);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "mark role"
+    "mark status"
+    "wallet wallet";
+  align-items: center;
+  gap: 0.1em 0.7em;
+  border: 2px solid var(--badge);
+  border-radius: var(--radius-l);
+  padding: 0.75em 0.9em;
+  background: var(--badge-wash);
+  transition:
+    border-color 300ms ease,
+    background 300ms ease;
+}
+
+.stage-badge[data-status="signed"] {
+  --badge: var(--green);
+  --badge-text: var(--green-text);
+  --badge-wash: rgba(63, 168, 106, 0.12);
+}
+
+.stage-badge[data-status="held"] {
+  --badge: var(--red);
+  --badge-text: var(--red-text);
+  --badge-wash: rgba(214, 69, 69, 0.12);
+}
+
+.stage-badge[data-status="waiting"] {
+  --badge: rgba(196, 161, 90, 0.45);
+  --badge-text: var(--gold-text);
+  border-style: dashed;
+}
+
+.stage-badge-mark {
+  grid-area: mark;
+  display: grid;
+  place-items: center;
+  width: 2.4em;
+  height: 2.4em;
+  border: 2px solid var(--badge);
+  border-radius: 50%;
+  color: var(--badge-text);
+  font-size: 1.1em;
+  font-weight: 800;
+}
+
+.stage-badge[data-status="signed"] .stage-badge-mark,
+.stage-badge[data-status="held"] .stage-badge-mark {
+  background: var(--badge);
+  color: #050505;
+}
+
+.stage-badge-role {
+  grid-area: role;
+  color: var(--text);
+  font-size: 1.5em;
+  line-height: 1.1;
+}
+
+.stage-badge-status {
+  grid-area: status;
+  color: var(--badge-text);
+  font-size: 1.05em;
+  font-weight: 650;
+}
+
+.stage-badge-wallet {
+  grid-area: wallet;
+  margin-top: 0.45em;
+  color: var(--text-2);
+  font-size: 0.62em;
+}
+
+/* The approval (or hold) just arrived: light up once. */
+.stage-badge[data-arrived="true"] {
+  animation: stage-badge-arrive 1100ms var(--ease-out);
+}
+
+.stage-badge[data-arrived="true"] .stage-badge-mark {
+  animation: stage-mark-pop 700ms var(--ease-out);
+}
+
+@keyframes stage-badge-arrive {
+  0% {
+    background: color-mix(in srgb, var(--badge) 32%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--badge) 70%, transparent);
+    transform: scale(0.97);
+  }
+  35% {
+    transform: scale(1.03);
+  }
+  100% {
+    background: var(--badge-wash);
+    box-shadow: 0 0 0 1.2em color-mix(in srgb, var(--badge) 0%, transparent);
+    transform: scale(1);
+  }
+}
+
+@keyframes stage-mark-pop {
+  0% {
+    transform: scale(0.4);
+  }
+  60% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- Phone handoff, bottom right ---------- */
+
+.stage-phone {
+  grid-area: phone;
+  align-self: end;
+  display: grid;
+  justify-items: center;
+  gap: 0.4em;
+  width: 8.5em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  padding: 0.6em;
+  background: var(--surface-1);
+  text-align: center;
+}
+
+.stage-phone .qr {
+  width: 100%;
+  height: auto;
+}
+
+.stage-phone h2,
+.stage-phone p {
+  margin: 0;
+}
+
+.stage-phone h2 {
+  font-size: 0.78em;
+}
+
+.stage-phone p {
+  color: var(--text-2);
+  font-size: 0.58em;
+  line-height: 1.3;
+}
+
+/* Narrow screens: stack. Stage mode is for a projector, but it still reads. */
+@media (max-width: 48rem) {
+  .stage {
+    --u: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas:
+      "top"
+      "flow"
+      "verdict"
+      "reviewers"
+      "phone";
+  }
+
+  .stage-reviewers ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stage-headline {
+    font-size: 1.9em;
+  }
+
+  .stage-paid-line {
+    font-size: 2.2em;
+  }
+
+  .stage-phone {
+    justify-self: start;
+  }
+}
+
+/* Reduced motion: nothing moves. Changes still show, as color and a ring. */
+@media (prefers-reduced-motion: reduce) {
+  .stage-state[data-live="true"],
+  .stage-paid-line,
+  .stage-badge[data-arrived="true"],
+  .stage-badge[data-arrived="true"] .stage-badge-mark {
+    animation: none;
+  }
+
+  .stage-badge {
+    transition: none;
+  }
+
+  .stage-badge[data-arrived="true"] {
+    box-shadow:
+      0 0 0 0.25em var(--badge-wash),
+      0 0 0 0.35em var(--badge);
+  }
+
+  .stage-confetti {
+    display: none;
+  }
+
+  .stage-controls {
+    transition: none;
+  }
+}

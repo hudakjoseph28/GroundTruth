@@ -15,7 +15,20 @@ describe("readServerEnv", () => {
       accessTimeoutMs: 6000,
       wetlandsTimeoutMs: 10000,
       streamBuffersTimeoutMs: 6000,
+      solanaRpcUrl: "https://api.devnet.solana.com",
     });
+  });
+
+  it("reads SOLANA_RPC_URL for the reviewer Blink and rejects a non-URL", () => {
+    expect(
+      readServerEnv({
+        DATABASE_URL,
+        SOLANA_RPC_URL: " https://rpc.example/devnet ",
+      }).solanaRpcUrl,
+    ).toBe("https://rpc.example/devnet");
+    expect(() =>
+      readServerEnv({ DATABASE_URL, SOLANA_RPC_URL: "devnet" }),
+    ).toThrow("SOLANA_RPC_URL must be an http(s) URL");
   });
 
   it("reads the two environmental limits separately", () => {

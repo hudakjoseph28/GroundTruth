@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import type { Deal, Parcel } from "@groundtruth/shared";
 import {
   DEAL_PAGE,
@@ -15,12 +15,15 @@ import {
   HOLD,
   LIVE,
   REVIEWERS,
+  STAGE,
   STATE_LABELS,
   TIMELINE,
 } from "../content/deal";
 import { DOCUMENTS, TIMELINE_DOCUMENT } from "../content/documents";
 import { QrCode } from "../deal/QrCode";
 import { MoneyFlow } from "../deal/MoneyFlow";
+import { StageScreen } from "../deal/stage/StageScreen";
+import { wantsStage } from "../deal/stage/stageView";
 import { DealDocuments } from "../documents/DealDocuments";
 import { shortHash } from "../documents/fileCheck";
 import { useDealDocuments } from "../documents/useDealDocuments";
@@ -60,6 +63,7 @@ const DealLand = lazy(() => import("../deal/DealLand"));
 export function DealPage() {
   const params = useParams();
   const dealId = params.dealId ?? "";
+  const [search] = useSearchParams();
   const feed = useDealFeed(dealId);
   usePageTitle(
     feed.status === "ready"
@@ -122,7 +126,12 @@ export function DealPage() {
       </section>
     );
   }
-  return <DealScreen live={feed} />;
+  // Stage mode reads the same feed; only the drawing changes.
+  return wantsStage(search) ? (
+    <StageScreen live={feed} />
+  ) : (
+    <DealScreen live={feed} />
+  );
 }
 
 function DealScreen({ live }: { live: LiveDeal }) {
@@ -228,6 +237,12 @@ function DealScreen({ live }: { live: LiveDeal }) {
 
       <aside className="deal-aside">
         <Handoff dealId={deal.id} />
+        <p className="deal-stage-link">
+          <Link to={`${dealPath(deal.id)}?stage=1`}>
+            {STAGE.open}
+            <span aria-hidden="true"> →</span>
+          </Link>
+        </p>
         {deal.escrowAddress && (
           <p className="deal-account">
             {DEAL_PAGE.escrowAddress}{" "}
