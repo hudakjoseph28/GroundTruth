@@ -2088,6 +2088,12 @@
   width: 100%;
 }
 
+.cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
 @container page (min-width: 56rem) {
   .final-cta > section {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
