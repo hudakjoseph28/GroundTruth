@@ -1,6 +1,6 @@
 # GroundTruth · Data contract (v1)
 
-**Accepted Nov 12, 2026.** Additive change Nov 18, 2026: check kind `environmental` (see [Contract change gate](#contract-change-gate)). UI, API, report adapters, Stream consumer, and escrow client build against these names and rules. The scaffold implements the schemas in `packages/shared`; once that code exists, this document explains the contract and the checked-in schemas validate it.
+**Accepted Nov 12, 2026.** Additive changes: Nov 18, 2026, check kind `environmental`; Nov 19, 2026, deal documents (see [Contract change gate](#contract-change-gate)). UI, API, report adapters, Stream consumer, and escrow client build against these names and rules. The scaffold implements the schemas in `packages/shared`; once that code exists, this document explains the contract and the checked-in schemas validate it.
 
 IDs are strings. Times are UTC ISO 8601 strings. Token amounts are integer base units encoded as decimal strings: `"25000000"` means 25 USDC at six decimals. Public parcel objects never contain owner mailing addresses, phone numbers, identity documents, or raw provider payloads.
 
@@ -141,6 +141,7 @@ export interface TimelineEvent {
   buyerMessage: string;
   transactionSignature?: string;
   confirmationStatus: "offChainEvidence" | "confirmed";
+  citedDocument?: DocumentCitation; // approvalSigned rows whose tx carried a document memo
 }
 
 export interface Deal {
@@ -157,6 +158,31 @@ export interface Deal {
   escrowAddress?: string;
   hold?: Hold;
   timeline: TimelineEvent[];
+}
+
+// ---------- Deal documents (additive, Nov 19) ----------
+export type DealDocumentType =
+  | "titleCommitment" | "surveyPlat" | "septicSoilEvaluation"
+  | "zoningLetter" | "other";
+export type DealParticipantRole = "buyer" | "seller" | ReviewerRole;
+
+// Public metadata only; the bytes need a participant's fresh wallet signature.
+export interface DealDocument {
+  id: string;
+  dealId: string;
+  type: DealDocumentType;
+  filename: string;
+  contentType: "application/pdf" | "image/png" | "image/jpeg"; // from the bytes
+  sizeBytes: number;        // at most 10 MB
+  sha256: string;           // lowercase hex, computed by the API
+  uploaderRole: DealParticipantRole;
+  uploadedAt: string;
+}
+
+// The hash an approval's Memo instruction `groundtruth:doc:<sha256>` named.
+export interface DocumentCitation {
+  sha256: string;
+  document?: Pick<DealDocument, "id" | "type" | "filename" | "uploaderRole">; // absent: no upload has this hash
 }
 
 // Staged demo text alerts. The number is never returned unmasked.
@@ -184,6 +210,9 @@ All responses are JSON. Success returns the named object directly. Failure retur
 | `GET /api/deals/:id/timeline` | `200 TimelineEvent[]` | Stable ascending order by chain slot/event index, then off-chain timestamp. |
 | `POST /api/deals/:id/evidence/owner-call` | `201 TimelineEvent` | Internal service use after a verified ElevenLabs webhook; never callable by the public browser. Implemented as the in-process `recordOwnerCall` step of the webhook, not an HTTP route, so nothing outside the API can reach it. |
 | `POST /api/deals/:id/sms-subscriptions` | `201`/`200 DealSmsSubscription` | Staged demo opt-in to texts about one public deal's future funded, hold, rejected-release, and released events. Body `{ phoneNumber, consent: true }`. Returns only `{ dealId, maskedPhoneNumber }`. `409` once the deal is released or refunded. `503` when Twilio is not configured. |
+| `GET /api/deals/:id/documents` | `200 DealDocument[]` | Public staged deals only. Metadata only: never the file bytes or the uploader's wallet. |
+| `POST /api/deals/:id/documents` | `201 DealDocument` | Raw body (PDF, PNG, or JPG by its bytes, matching the extension; max 10 MB). Signed by the deal's buyer, seller, or an assigned reviewer: `documentAuthMessage()` in `packages/shared` over action, deal, file SHA-256, wallet, time, and a single-use nonce, valid 5 minutes. `401` bad/expired/replayed signature, `403` not a participant, `413` too large, `415` wrong type, `409` same bytes already on the deal. |
+| `POST /api/deals/:id/documents/:documentId/file` | `200` file bytes | Same signature rules, naming the document; `cache-control: private, no-store`. |
 | `POST /api/webhooks/quicknode` | `204` | Verify HMAC/raw body, dedupe by signature + event index, write confirmed program events. Each newly projected funded, hold, rejected-release, or released event queues at most one text per subscriber in the same transaction. |
 | `POST /api/webhooks/elevenlabs` | `200` | Verify signature/raw body, dedupe by conversation ID, store minimum staged call outcome. `200`, not `204`: ElevenLabs counts only `200` as delivered. |
 
@@ -213,6 +242,7 @@ Wallets build and sign program transactions client-side from the checked-in IDL.
   - Otherwise it is `unknown`: a timeout, error, or an NWI `missing` (no mapping project covers the lot) never becomes "none".
 - **ElevenLabs:** only `conversation_id`, completion time, staged deal ID, consenting demo participant label, call success, and the configured analysis outcome are retained. Raw audio/transcript is not copied into the GroundTruth database.
 - **Twilio:** a deal text subscriber's phone number is stored in E.164 form for that deal only. It is never part of `Deal`, never logged, and never returned unmasked. A text reports a confirmed event and authorizes nothing.
+- **Deal documents:** a reviewer's approval may carry an SPL Memo instruction `groundtruth:doc:<sha256>` in the same transaction as `sign_approval`. The Stream filter passes the text of top-level Memo v1/v2 instructions as `memos`; memo-like text from any other program is ignored. Exactly one named document is recorded on that approval's timeline row and matched to the deal's uploads by hash when the deal is read. The memo is evidence of what the reviewer relied on; it does not change deal state.
 - **QuickNode:** only confirmed events emitted by the deployed GroundTruth program are projected. A transfer involving the vault but not a valid program event is not enough to change `Deal.state`.
 
 ## Escrow v1
@@ -250,3 +280,4 @@ A change to a field, status, route, instruction, PDA seed, required reviewer, or
 | Date | Change | Kind | Where |
 | --- | --- | --- | --- |
 | 2026-11-18 | Check kind `environmental` (wetlands and stream setbacks) | Additive: a new `CheckKind` value; no field, status, route, or state-machine change | `CHECK_KINDS` in `packages/shared/src/contract.ts`; backend `src/reports/environmentalCheck.ts`; web `CHECK_TITLES`/`CHECK_LABELS`. The golden and second-county fixtures are unchanged and have no `environmental` check. The web ledger lists `environmental` only when a report carries it, and lists any kind it doesn't know last instead of failing. |
+| 2026-11-19 | Deal documents: `DealDocument`, `DocumentCitation`, `TimelineEvent.citedDocument`, three `/api/deals/:id/documents` routes, and the optional `memos` field in the Stream payload | Additive: new types, an optional field, and new routes; no status, instruction, PDA, or state-machine change; the escrow program is unchanged | `packages/shared/src/contract.ts` and `documents.ts`; backend `src/routes/documents.ts`, `src/documents/`, `src/chain/documentMemo.ts`, migration `20261120000000_deal_documents`; `quicknode/groundtruth-filter.js`; web `src/documents/`, `/deals/:dealId`, `/review`. Fixtures unchanged: no staged deal seeds a document. |

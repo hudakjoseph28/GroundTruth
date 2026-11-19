@@ -89,23 +89,28 @@ export async function signAndSend(input: {
   connection: Connection;
   payer: PublicKey;
   spec: EscrowInstructionSpec;
+  /** More instructions for the same transaction, e.g. a document Memo after `sign_approval`. */
+  extra?: EscrowInstructionSpec[];
   signTransaction: (tx: VersionedTransaction) => Promise<VersionedTransaction>;
   onPhase: (phase: SendPhase) => void;
 }): Promise<string> {
   const { connection, payer, spec } = input;
   input.onPhase("checking");
   await assertDevnet(connection);
-  const instruction = new TransactionInstruction({
-    programId: new PublicKey(spec.programId),
-    keys: spec.keys.map((key) => ({ ...key, pubkey: new PublicKey(key.pubkey) })),
-    data: Buffer.from(spec.data),
-  });
+  const instructions = [spec, ...(input.extra ?? [])].map(
+    (item) =>
+      new TransactionInstruction({
+        programId: new PublicKey(item.programId),
+        keys: item.keys.map((key) => ({ ...key, pubkey: new PublicKey(key.pubkey) })),
+        data: Buffer.from(item.data),
+      }),
+  );
   const latest = await connection.getLatestBlockhash("confirmed");
   const tx = new VersionedTransaction(
     new TransactionMessage({
       payerKey: payer,
       recentBlockhash: latest.blockhash,
-      instructions: [instruction],
+      instructions,
     }).compileToV0Message(),
   );
 

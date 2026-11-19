@@ -724,6 +724,22 @@
   margin: var(--space-s) 0 0;
 }
 
+/* An approval that relied on a document: which one, and its on-chain hash. */
+.deal-row-doc {
+  margin: 0.35rem 0 0;
+  color: var(--text-2);
+  font-size: 0.85rem;
+}
+
+.deal-row-doc a {
+  color: var(--text);
+  font-weight: 560;
+}
+
+.deal-row-doc .mono {
+  font-size: 0.78rem;
+}
+
 /* ---------- Wide: summary beside the timeline ---------- */
 
 @container page (min-width: 60rem) {
@@ -732,8 +748,9 @@
     grid-template-areas:
       "top top"
       "summary timeline"
+      "documents timeline"
       "aside timeline";
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto auto 1fr;
     column-gap: var(--space-m);
     padding-top: var(--space-s);
   }
@@ -754,6 +771,10 @@
     grid-area: aside;
   }
 
+  .deal-documents {
+    grid-area: documents;
+  }
+
   .deal-timeline > .deal-section-head {
     padding-top: 0;
   }
@@ -769,8 +790,9 @@
     grid-template-columns: minmax(0, 26rem) minmax(0, 1fr) minmax(0, 13rem);
     grid-template-areas:
       "top top top"
-      "summary timeline aside";
-    grid-template-rows: auto 1fr;
+      "summary timeline aside"
+      "documents timeline aside";
+    grid-template-rows: auto auto 1fr;
   }
 
   .deal-handoff {

@@ -79,6 +79,51 @@ model DealRecord {
   timelineEvents     TimelineEventRecord[]
   ownerCalls         OwnerCallRecord[]
   smsSubscriptions   SmsSubscriptionRecord[]
+  documents          DealDocumentRecord[]
+}
+
+/// A document a deal participant uploaded (src/documents). Public metadata
+/// only; the bytes live in DealDocumentFileRecord and are read only after a
+/// fresh wallet signature from a participant on the deal.
+model DealDocumentRecord {
+  id             String              @id
+  dealId         String
+  deal           DealRecord          @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  /// titleCommitment | surveyPlat | septicSoilEvaluation | zoningLetter | other
+  type           String
+  filename       String
+  /// Detected from the bytes: application/pdf | image/png | image/jpeg
+  contentType    String
+  sizeBytes      Int
+  /// SHA-256 of the stored bytes, lowercase hex, computed by the API.
+  sha256         String
+  /// buyer | seller | title | survey | septic
+  uploaderRole   String
+  uploaderWallet String
+  uploadedAt     DateTime            @db.Timestamptz(3)
+  file           DealDocumentFileRecord?
+
+  /// One copy of the same bytes per deal; an approval memo names the hash.
+  @@unique([dealId, sha256])
+  @@index([dealId, uploadedAt])
+}
+
+/// The private bytes of one deal document, kept apart so a metadata query
+/// never loads them.
+model DealDocumentFileRecord {
+  documentId String             @id
+  document   DealDocumentRecord @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    Bytes
+}
+
+/// A used document-request nonce. A signed request is accepted once.
+model DocumentAuthNonceRecord {
+  wallet String
+  nonce  String
+  usedAt DateTime @db.Timestamptz(3)
+
+  @@id([wallet, nonce])
+  @@index([usedAt])
 }
 
 /// A staged-demo opt-in to deal texts. Private: the number is never mapped
@@ -171,6 +216,9 @@ model TimelineEventRecord {
   eventIndex           Int?
   slot                 BigInt?
   confirmationStatus   String
+  /// From a `groundtruth:doc:<sha256>` Memo in an approval's transaction.
+  /// Matched to the deal's documents when the deal is read.
+  citedDocumentSha256  String?
   smsAlerts            SmsAlertRecord[]
 
   /// QuickNode delivery dedupe: one row per program event.

@@ -1,0 +1,236 @@
+/* Deal documents: the deal page section and the reviewer portal card. */
+
+.docs {
+  display: grid;
+  gap: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  padding: var(--s-4);
+  background: var(--surface-1);
+  min-width: 0;
+}
+
+.docs[data-compact="true"] {
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  padding: var(--s-3) 0 0;
+  background: transparent;
+}
+
+.docs p {
+  margin: 0;
+}
+
+.docs-subtitle {
+  margin: 0;
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #d7d7d7;
+}
+
+.docs-banner {
+  border: 1px solid rgba(196, 161, 90, 0.45);
+  border-radius: var(--radius-m);
+  padding: 0.55rem 0.75rem;
+  background: rgba(196, 161, 90, 0.1);
+  color: var(--gold-text);
+  font-size: 0.85rem;
+  font-weight: 560;
+}
+
+.docs-intro,
+.docs-quiet,
+.docs-check > p {
+  color: var(--text-2);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.docs-list {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.docs-row {
+  display: grid;
+  gap: 0.3rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid #6b6b6b;
+  border-radius: var(--radius-m);
+  padding: 0.65rem 0.8rem;
+  background: var(--bg);
+  scroll-margin-top: calc(var(--header-h) + var(--s-4));
+}
+
+.docs-row[data-cited="true"] {
+  border-left-color: var(--green);
+}
+
+.docs-row:target {
+  box-shadow: 0 0 0 2px var(--gold-text);
+}
+
+.docs-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25em 0.7em;
+}
+
+.docs-row-head strong {
+  font-weight: 600;
+}
+
+.docs-row-head time {
+  margin-left: auto;
+  color: var(--text-2);
+  font-family: var(--mono);
+  font-size: var(--step--1);
+}
+
+.docs-filename {
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
+.docs-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25em 1em;
+  color: var(--text-2);
+  font-size: 0.85rem;
+}
+
+.docs-hash {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.docs-hash code {
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.docs-cited {
+  color: var(--green-text);
+  font-size: 0.85rem;
+}
+
+.docs-open {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: start;
+  margin-top: 0.2rem;
+}
+
+.docs-connect,
+.docs-participant,
+.docs-upload,
+.docs-check {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.docs-check {
+  border-top: 1px solid var(--line);
+  padding-top: var(--s-3);
+}
+
+.docs-connect .review-wallet {
+  margin: 0;
+}
+
+.docs-you {
+  color: var(--text);
+  font-weight: 560;
+}
+
+.docs-upload label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.docs-upload select,
+.docs-file input,
+.docs-upload input[type="file"] {
+  min-height: var(--tap);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  padding: 0.45rem 0.6rem;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  max-width: 100%;
+}
+
+.docs-upload .btn {
+  justify-self: start;
+  min-height: var(--tap);
+}
+
+.docs-participant-open {
+  justify-self: start;
+  min-height: var(--tap);
+}
+
+.docs-status {
+  font-size: 0.875rem;
+  color: var(--text-2);
+}
+
+.docs-status[data-phase="done"] {
+  color: var(--green-text);
+}
+
+.docs-status[data-phase="failed"] {
+  color: var(--red-text);
+}
+
+.docs-result {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid #6b6b6b;
+  border-radius: var(--radius-m);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.docs-result[data-tone="match"] {
+  border-left-color: var(--green);
+}
+
+.docs-result[data-tone="match"] strong {
+  color: var(--green-text);
+}
+
+.docs-result[data-tone="cited"] {
+  border-left-color: var(--gold);
+}
+
+.docs-result[data-tone="none"] {
+  border-left-color: var(--red);
+}
+
+.docs-result[data-tone="none"] strong {
+  color: var(--red-text);
+}
+
+.docs-result-hash {
+  color: var(--text-2);
+  font-size: 0.8rem;
+}
+
+.docs-result-hash code {
+  overflow-wrap: anywhere;
+}
