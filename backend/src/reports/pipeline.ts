@@ -93,6 +93,8 @@ interface CheckResult {
   transient: boolean;
   /** Set by the flood check when FEMA found a Special Flood Hazard Area. */
   floodInSfha?: boolean;
+  /** Set by the flood check when FEMA found a regulatory floodway. */
+  floodway?: boolean;
 }
 
 interface CheckRunner {
@@ -124,6 +126,7 @@ export async function buildReport(
         check: floodCheck(outcome, options.floodTimeoutMs),
         transient: outcome.outcome === "timeout",
         floodInSfha: inSfha(outcome),
+        floodway: inFloodway(outcome),
       };
     },
     failed: (cause) => ({
@@ -292,13 +295,14 @@ export async function buildReport(
   );
   const checks = results.map((result) => result.check);
   const floodInSfha = results.some((result) => result.floodInSfha === true);
+  const floodway = results.some((result) => result.floodway === true);
 
   return {
     report: {
       parcelKey: parcel.key,
       generatedAt: options.now().toISOString(),
       coverage: reportCoverage(checks),
-      biggestOpenQuestion: biggestOpenQuestion(checks, { floodInSfha }),
+      biggestOpenQuestion: biggestOpenQuestion(checks, { floodInSfha, floodway }),
       checks,
     },
     complete: results.every((result) => !result.transient),
@@ -359,6 +363,13 @@ function inSfha(outcome: FloodOutcome): boolean {
   );
 }
 
+function inFloodway(outcome: FloodOutcome): boolean {
+  return (
+    outcome.outcome === "found" &&
+    outcome.zones.some((zone) => zone.subtype === "FLOODWAY")
+  );
+}
+
 function couldNotRun(kind: CheckKind): Check {
   return {
     kind,
@@ -407,31 +418,41 @@ const OPEN: ReadonlySet<CheckStatus> = new Set(["unknown", "needsReview"]);
  * The biggest open question, in this order:
  *
  * 1. A `held` check: a reviewer has blocked the closing.
- * 2. Otherwise the first unresolved (`unknown` or `needsReview`) check in
- *    OPEN_QUESTION_PRIORITY. Any unresolved question outranks any resolved
- *    finding, so an unknown access or septic check beats a found flood zone.
- * 3. Otherwise, if the flood check found a Special Flood Hazard Area, flood:
- *    it is the one resolved finding that still carries a cost.
- * 4. Otherwise the first check in OPEN_QUESTION_PRIORITY.
+ * 2. An open flood check that found a regulatory floodway on any part of
+ *    the lot. Building in a floodway is usually the hardest blocker there
+ *    is, so it leads every other open question.
+ * 3. Otherwise the first unresolved (`unknown` or `needsReview`) check in
+ *    OPEN_QUESTION_PRIORITY, except that an open flood check in a Special
+ *    Flood Hazard Area (no floodway) ranks right after access, ahead of
+ *    septic. Any unresolved question outranks any resolved finding, so an
+ *    unknown access or septic check beats a Zone X flood finding.
+ * 4. Otherwise, if the flood check found a Special Flood Hazard Area, flood:
+ *    a resolved finding that still carries a cost (a report written before
+ *    such a flood check became `needsReview`).
+ * 5. Otherwise the first check in OPEN_QUESTION_PRIORITY.
  *
  * ParcelReport requires a kind, so an empty list returns `access`.
  */
 export function biggestOpenQuestion(
   checks: Check[],
-  context: { floodInSfha: boolean },
+  context: { floodInSfha: boolean; floodway?: boolean },
 ): CheckKind {
-  const byPriority = [...checks].sort(
-    (a, b) => priority(a.kind) - priority(b.kind),
-  );
+  const sfhaFlood = context.floodInSfha || context.floodway === true;
+  const rank = (kind: CheckKind) =>
+    kind === "flood" && sfhaFlood ? SFHA_FLOOD_RANK : priority(kind);
+  const byPriority = [...checks].sort((a, b) => rank(a.kind) - rank(b.kind));
   const held = byPriority.find((check) => check.status === "held");
   if (held) return held.kind;
+  const flood = checks.find((check) => check.kind === "flood");
+  if (context.floodway && flood && OPEN.has(flood.status)) return "flood";
   const open = byPriority.find((check) => OPEN.has(check.status));
   if (open) return open.kind;
-  if (context.floodInSfha && checks.some((check) => check.kind === "flood")) {
-    return "flood";
-  }
+  if (context.floodInSfha && flood) return "flood";
   return byPriority[0]?.kind ?? OPEN_QUESTION_PRIORITY[0];
 }
+
+/** Right after access, ahead of septic (0.5 sorts between ranks 0 and 1). */
+const SFHA_FLOOD_RANK = OPEN_QUESTION_PRIORITY.indexOf("access") + 0.5;
 
 function priority(kind: CheckKind): number {
   const index = OPEN_QUESTION_PRIORITY.indexOf(kind);

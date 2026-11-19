@@ -8398,7 +8398,7 @@
       "parcelKey": "ohio:39049:152-001927",
       "generatedAt": "2026-11-18T23:49:21.808Z",
       "coverage": "partial",
-      "biggestOpenQuestion": "septic",
+      "biggestOpenQuestion": "flood",
       "checks": [
         {
           "kind": "zoning",
@@ -8420,7 +8420,7 @@
         },
         {
           "kind": "flood",
-          "status": "evidenceFound",
+          "status": "needsReview",
           "finding": "The lot crosses 4 FEMA flood zones: Zone AE, Zone AE (regulatory floodway), Zone X (0.2% annual chance flood hazard), and Zone X (area of minimal flood hazard). Part of it is in a Special Flood Hazard Area (FEMA's 1%-annual-chance floodplain).",
           "limitation": "GroundTruth has not measured how much of the lot lies in each zone, and FEMA's zone lines and the parcel lines come from different maps. A flood zone is not a flood-insurance determination or a building permit.",
           "sources": [
@@ -8448,7 +8448,7 @@
           "responsibleParty": {
             "role": "Community floodplain administrator (city, village, or county)"
           },
-          "nextAction": "Ask your lender whether flood insurance will be required, and ask the community floodplain administrator what building in the floodway requires."
+          "nextAction": "Ask the local floodplain administrator whether a floodplain development permit is needed, and get a flood insurance quote before you commit."
         },
         {
           "kind": "environmental",

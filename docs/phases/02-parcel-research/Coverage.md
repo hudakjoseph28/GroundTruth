@@ -1,6 +1,6 @@
 # Phase 2 · Coverage note
 
-**Recorded Nov 17–19, 2026, against `main`**; the environmental check (NWI wetlands everywhere plus Franklin stream setbacks) and statewide USDA NRCS soils coverage were added Nov 18, and the Living Atlas SSURGO fallback Nov 19. This note covers what GroundTruth searched, what it checked, and where. Each claim comes from a recorded live response, a provider-contract fixture, or a hand-verified fixture in this repository. It measures **search coverage** and **report depth** separately, as [ParcelResearch.md](ParcelResearch.md#demo-scope) asks.
+**Recorded Nov 17–19, 2026, against `main`**; the environmental check (NWI wetlands everywhere plus Franklin stream setbacks) and statewide USDA NRCS soils coverage were added Nov 18, and the Living Atlas SSURGO fallback Nov 19. Also on Nov 19, a flood check that finds a Special Flood Hazard Area or a regulatory floodway became `needsReview`, and a floodway became the biggest open question (see [Flood status and the biggest open question](#flood-status-and-the-biggest-open-question)). This note covers what GroundTruth searched, what it checked, and where. Each claim comes from a recorded live response, a provider-contract fixture, or a hand-verified fixture in this repository. It measures **search coverage** and **report depth** separately, as [ParcelResearch.md](ParcelResearch.md#demo-scope) asks.
 
 ## Summary
 
@@ -33,11 +33,11 @@ These are recorded live responses, replayed by exact request in `backend/test`. 
 | `ohio:39049:010-042534` | Franklin | Address search (`84 W Dodridge St, Columbus, OH 43202`), parcel-ID search with and without punctuation (`010-042534`, `010042534`, `010 042534`), boundary, Zone X flood report with three LOMRs |
 | `ohio:39089:00100000601000` | Licking | Address search with and without ZIP (`10034 Appleton Rd Johnstown 43031`, `… Johnstown OH`, `…, Johnstown`), auditor-format ID (`001-000006-01.000`), boundary, Zone X flood report |
 | `ohio:39089:05317758800000` | Licking | Address without ZIP (`57 S Main St Johnstown OH`). Site-address fallback with the locator forced down (`57 S Main St, Johnstown`). |
-| `ohio:39049:185-002765` | Franklin | Flood: only the AE regulatory floodway (Special Flood Hazard Area) |
-| `ohio:39049:152-001927` | Franklin | Flood: one lot crossing four zones (AE, AE floodway, X 0.2%, X minimal) |
+| `ohio:39049:185-002765` | Franklin | Flood `needsReview`: only the AE regulatory floodway (Special Flood Hazard Area). Biggest open question: flood. |
+| `ohio:39049:152-001927` | Franklin | Flood `needsReview`: one lot crossing four zones (AE, AE floodway, X 0.2%, X minimal). Biggest open question: flood. |
 | `ohio:39049:230-000918` | Franklin | Live flood report on the golden parcel, recorded to compare with the seeded one (two FIRM panels) |
 | `ohio:39175:010025000000` | Wyandot | Flood `unknown`: Wyandot County has no NFHL study |
-| `ohio:39049:230-002100` | Franklin | Environmental `needsReview`: NWI riverine, emergent wetland, and pond on the lot, and the Big Darby setback on about 41% |
+| `ohio:39049:230-002100` | Franklin | Environmental `needsReview`: NWI riverine, emergent wetland, and pond on the lot, and the Big Darby setback on about 41%. Flood `needsReview` too (the same four zones, AE floodway included), so the biggest open question is flood. |
 | `ohio:39089:04011612400001` | Licking | Environmental `needsReview`: NWI forested wetland (PFO1A) on about 31% of 8391 Cooper Rd |
 | `ohio:39049:999-999999` | Franklin | Well-formed key that OGRIP does not publish: `404 NOT_FOUND` |
 
@@ -51,7 +51,7 @@ Address queries with no match return `[]` and are also recorded:
 | Check | Where it returns evidence | Elsewhere |
 | --- | --- | --- |
 | **Boundary** (`Parcel.geometry`) | All 88 counties, live from OGRIP, with `sourceUrl` and `retrievedAt` | `404` when OGRIP has no parcel for the key |
-| **Flood** | **Live in 83 counties.** Any OGRIP parcel in a county with a FEMA NFHL study gets zones, FIRM panels and effective LOMRs with effective dates | `unknown` in the 5 counties without an NFHL study, or when FEMA times out or fails |
+| **Flood** | **Live in 83 counties.** Any OGRIP parcel in a county with a FEMA NFHL study gets zones, FIRM panels and effective LOMRs with effective dates. Any part of the lot in a Special Flood Hazard Area (Zone A, AE, AO, AH, V, VE) or a regulatory floodway: `needsReview`, with the floodplain administrator responsible. Zone X only: `evidenceFound`. | `unknown` in the 5 counties without an NFHL study, or when FEMA times out or fails |
 | **Zoning** | **Live in Franklin County.** The parcel's full OGRIP polygon is intersected with Franklin County's zoning map (`FCEDP_Zoning_Districts_2025_View`). One district covering the lot gives `evidenceFound`, naming the district and citing the layer and the 2026 Zoning Resolution. Two or more districts, or a meaningful part outside the map, give `needsReview`. **Golden parcel:** seeded and verified by hand; the live check gives the same result, R on 100%. | Franklin lots the county map doesn't cover (in a city, village, or township with its own zoning, such as Columbus): `unknown`, naming the local zoning office. Timeout or error: `unknown`, report still `200`. Other counties: `unknown` from the per-kind template. The Licking parcel keeps one documented override sentence: "GroundTruth doesn't check zoning in Licking County yet." |
 | **Access** | **Golden parcel only:** seeded `needsReview` (county right-of-way and road layers, Zoning Resolution 2026 §302.042 and §302.0391). It never says "no access". | `unknown` from the template |
 | **Environmental** (wetlands and stream setbacks) | **Live in all 88 counties** for wetlands: the parcel is checked against the National Wetlands Inventory, and types and approximate shares are measured on NWI's own drawing of the lot. **Franklin lots** also get the share inside a riparian setback from the county's Stream Buffers layer, the layer the golden report cites. Either found: `needsReview`. Both answered with nothing on the lot: `evidenceFound`, stating that "NWI shows none" is not a delineation. **Golden parcel:** the seeded report is unchanged and has no environmental check. Live, it gives no NWI wetland and the Big Darby setback on about 4.7%, matching QA-Proof's 4.661%. | Either source timing out (each has its own limit) or failing: that part is `unknown`, and the check can't be `evidenceFound`. NWI with no mapping for a lot: `unknown`, never "none". Without an NWI client: `unknown` from the template, naming the county soil and water conservation district or a wetland consultant. |
@@ -60,6 +60,27 @@ Address queries with no match return `[]` and are also recorded:
 | Closing | Comes from the staged deal, not the report | Seeded reports have no closing check |
 
 `GET /api/coverage` matches this table: `evidenceKinds: ["zoning", "flood", "environmental", "septic"]` for Franklin, `["flood", "environmental", "septic"]` for the other 82 counties with an NFHL study, and `["environmental", "septic"]` for the five without one.
+
+### Flood status and the biggest open question
+
+Changed Nov 19, 2026. The sourced finding (zone names, FIRM panels and their effective dates, LOMRs) is unchanged; only the status, next action, responsible party, and ranking moved.
+
+| Flood finding | Status | Next action | Rank as an open question |
+| --- | --- | --- | --- |
+| Any part of the lot in a regulatory floodway | `needsReview` | "Ask the local floodplain administrator whether a floodplain development permit is needed, and get a flood insurance quote before you commit." | First, ahead of every other open question. Only a reviewer's hold outranks it. |
+| Any part in another Special Flood Hazard Area (A, AE, AO, AH, V, VE) | `needsReview` | The same | Right after access, ahead of septic |
+| Zone X only (minimal, or 0.2% annual chance) | `evidenceFound` | Check FEMA's Map Service Center before closing | Unchanged: after every open question |
+
+Recorded parcels, replayed in `backend/test/report.test.ts`:
+
+| Parcel | Flood | Biggest open question, before → after |
+| --- | --- | --- |
+| `ohio:39049:185-002765`, 0 Groveport Pike | Only Zone AE (regulatory floodway). Panels 39049C0431K (2008-06-17) and 39129C0075J (2010-07-22). | access → **flood** |
+| `ohio:39049:152-001927`, 0 Groveport Rd | Zone AE, AE floodway, X 0.2%, X minimal. Same two panels. | septic → **flood** |
+| `ohio:39049:230-002100`, 0 Harrisburg Georgesville Rd | The same four zones. Panels 39049C0290K and 39097C0190E. | septic → **flood** |
+| `ohio:39049:230-000918` (golden) | Zone X (minimal). Seeded and live reports unchanged. | access → access |
+
+GroundTruth does not measure how much of a lot lies in each flood zone, so a sliver of floodway along one edge ranks the same as a lot entirely in it. The finding says so in its limitation.
 
 ### Franklin zoning, live results (Nov 17, 2026)
 

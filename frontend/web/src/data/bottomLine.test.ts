@@ -120,6 +120,27 @@ describe("the bottom line", () => {
     }
   });
 
+  it("drops the role's own aside so parentheses never nest", () => {
+    const report: ParcelReport = {
+      ...goldenReport,
+      biggestOpenQuestion: "flood",
+      checks: goldenReport.checks.map((check) =>
+        check.kind === "flood"
+          ? {
+              ...check,
+              status: "needsReview",
+              responsibleParty: {
+                role: "Community floodplain administrator (city, village, or county)",
+              },
+            }
+          : check,
+      ),
+    };
+    expect(line(report)?.ask).toBe(
+      "Check first: flood risk (community floodplain administrator).",
+    );
+  });
+
   it("is absent when there is no report", () => {
     expect(line(null)).toBeNull();
   });

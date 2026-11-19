@@ -134,11 +134,12 @@ Scenarios live in [test/fixtures/ogrip/scenarios.ts](test/fixtures/ogrip/scenari
 **`biggestOpenQuestion`** ([`biggestOpenQuestion()`](src/reports/pipeline.ts)):
 
 1. A `held` check (a reviewer blocked the closing).
-2. Otherwise the first unresolved (`unknown` or `needsReview`) check in this order: `access`, `septic`, `zoning`, `environmental`, `flood`, `utilities`, `easements`, `sellerAuthority`, `survey`, `closing`. Any unresolved question outranks any resolved finding, so an unknown access or septic check beats a found flood zone. Access and wastewater lead because a lot without legal access, or without sewer and a workable septic site, usually cannot be built on at all. Wetlands and stream setbacks follow zoning: they limit where on the lot you can build, and a mapped wetland can need a permit.
-3. Otherwise `flood` if FEMA found a Special Flood Hazard Area.
-4. Otherwise the first check in that order.
+2. Otherwise `flood`, if the flood check is open and FEMA maps a regulatory floodway on any part of the lot. Building in a floodway is usually the hardest blocker there is, so it leads every other open question.
+3. Otherwise the first unresolved (`unknown` or `needsReview`) check in this order: `access`, `septic`, `zoning`, `environmental`, `flood`, `utilities`, `easements`, `sellerAuthority`, `survey`, `closing`. An open flood check in a Special Flood Hazard Area without a floodway moves up to just after `access`, ahead of `septic`. Any unresolved question outranks any resolved finding, so an unknown access or septic check beats a Zone X flood finding. Access and wastewater lead because a lot without legal access, or without sewer and a workable septic site, usually cannot be built on at all. Wetlands and stream setbacks follow zoning: they limit where on the lot you can build, and a mapped wetland can need a permit.
+4. Otherwise `flood` if FEMA found a Special Flood Hazard Area (only reachable for a report whose SFHA flood check is resolved, such as one written before that check became `needsReview`).
+5. Otherwise the first check in that order.
 
-Outside Franklin County, access still uses the unknown template, so it remains the biggest open question ahead of the new septic screening.
+Outside Franklin County, access still uses the unknown template, so it remains the biggest open question ahead of the new septic screening, unless FEMA maps a regulatory floodway on the lot (then `flood` leads, step 2). Septic is always open (`needsReview` when rated, `unknown` otherwise), so an SFHA flood check without a floodway leads only once access is answered.
 
 ### USDA NRCS SSURGO septic screening
 
@@ -167,7 +168,7 @@ The parcel's OGRIP geometry, with rings re-wound the way Esri reads them, is sen
 
 | Outcome | When | Check |
 | --- | --- | --- |
-| `found` | One or more mapped zones overlap the parcel | `evidenceFound`. Names each zone and whether any is a Special Flood Hazard Area. A parcel crossing several zones says so, with how many. Sources: the zones layer, each FIRM panel with its effective date, and each effective LOMR with its effective date. |
+| `found` | One or more mapped zones overlap the parcel | `needsReview` when any part of the lot is in a Special Flood Hazard Area (FEMA's `SFHA_TF`: Zone A, AE, AO, AH, V, VE and the other A/V zones) or a regulatory floodway; the next action is "Ask the local floodplain administrator whether a floodplain development permit is needed, and get a flood insurance quote before you commit.", and the community floodplain administrator is responsible. `evidenceFound` otherwise (Zone X, minimal or 0.2%), with FEMA's map as the responsible party. Either way it names each zone and whether any is a Special Flood Hazard Area. A parcel crossing several zones says so, with how many. Sources: the zones layer, each FIRM panel with its effective date, and each effective LOMR with its effective date. |
 | `missing` | No mapped zone overlaps, and no study covers it (or FEMA marks it "area not included") | `unknown`, with the two layers queried as dated sources |
 | `conflict` | FEMA lists a study but no zone covers the parcel, or a zone's SFHA flag contradicts its letter (A/V must be SFHA, X/D must not) | `unknown`, no zone stated |
 | `timeout` | Out of time, HTTP error, ArcGIS error body, or unexpected shape | `unknown`, no sources. Says whether FEMA timed out or could not be reached. |
