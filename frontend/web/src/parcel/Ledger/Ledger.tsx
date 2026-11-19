@@ -7,6 +7,7 @@ import { usePageHidden } from "../usePageHidden";
 import { EscrowStrip } from "./EscrowStrip";
 import { Inspector, type Origin } from "./Inspector";
 import { RecordCard } from "./RecordCard";
+import { ReportSummary } from "./ReportSummary";
 
 /**
  * Every check on the parcel as a linked chain of records, under the one
@@ -75,12 +76,11 @@ export function Ledger({
       data-paused={hidden || open !== null || !animated}
       style={motionVars(count)}
     >
+      <ReportSummary ledger={ledger} onOpen={show} />
+
       <header className="ledger-head">
         <h2 id="ledger-title">{LEDGER.title}</h2>
         <p className="ledger-lede">{ledger.hasDeal ? LEDGER.lede : LEDGER.ledeNoDeal}</p>
-        {count > 0 && (
-          <p className="ledger-summary">{LEDGER.summary(ledger.answered, count)}</p>
-        )}
       </header>
 
       {deals.length > 0 && (

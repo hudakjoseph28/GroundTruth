@@ -554,15 +554,220 @@
   max-width: 44rem;
 }
 
-/* How much of the ledger is answered, before the reader meets the cards. */
-.ledger-summary {
-  flex-basis: 100%;
-  margin: 0.15rem 0 0;
-  border-left: 2px solid var(--gold);
-  padding-left: 0.75rem;
-  color: #e4e1dc;
-  font-size: 0.95rem;
-  max-width: 44rem;
+/* ---------- Report summary: the bottom line, before the reader meets the cards ---------- */
+
+.summary {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  padding: clamp(0.95rem, 0.8rem + 0.6vw, 1.3rem);
+  background: linear-gradient(180deg, #0e0e10, #0a0a0b);
+}
+
+.summary-title {
+  margin: 0;
+  color: #8f8f8f;
+  font-size: 0.72rem;
+  font-weight: 560;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.summary-line {
+  margin: 0;
+  color: #c9c6c0;
+  font-size: clamp(1.02rem, 0.96rem + 0.3vw, 1.18rem);
+  line-height: 1.42;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+
+.summary-line strong {
+  color: #f5f5f7;
+  font-weight: 600;
+}
+
+.summary-foot {
+  display: grid;
+  gap: 0.75rem;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 0.8rem;
+}
+
+.summary-count {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  color: #d7d7d7;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-ring {
+  flex: none;
+  width: 2.1rem;
+  height: 2.1rem;
+}
+
+.summary-ring circle {
+  fill: none;
+  stroke-width: 3;
+}
+
+.summary-ring-track {
+  stroke: #2c2c2f;
+}
+
+.summary-ring-count {
+  fill: #f3f1ec;
+  font-size: 13px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.summary-ring-fill {
+  stroke: #f3f1ec;
+  stroke-linecap: round;
+}
+
+/* One icon per check, in ledger order. They shrink to share one row. */
+.summary-icons {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 9), minmax(0, 2.25rem));
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summary-icon {
+  --tone: #e4e1dc;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 1.6rem;
+  border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+  border-radius: var(--radius-s);
+  padding: 0;
+  background: color-mix(in srgb, var(--tone) 9%, transparent);
+  color: var(--tone);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms var(--ease-out);
+}
+
+.summary-icon:hover {
+  border-color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+}
+
+.summary-icon:active {
+  transform: scale(0.94);
+}
+
+.summary-icon:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.summary-icon[data-status="needsReview"] {
+  --tone: var(--gold-text);
+}
+
+.summary-icon[data-status="signedOff"] {
+  --tone: var(--green-text);
+}
+
+.summary-icon[data-status="held"] {
+  --tone: var(--red-text);
+}
+
+/* No answer: dashed and dim, like its pill. */
+.summary-icon[data-status="unknown"] {
+  --tone: #8a8a8e;
+  border-style: dashed;
+  background: transparent;
+}
+
+.check-icon {
+  width: 58%;
+  max-width: 1.05rem;
+  height: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The biggest open question: a gold bar beneath it, as the sentence names it. */
+.summary-icon[data-biggest]::before {
+  content: "";
+  position: absolute;
+  inset: auto 22% -0.42rem;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--gold);
+}
+
+/* Its name and status, on hover or keyboard focus. Taps open the details. */
+.summary-icon::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 0.45rem);
+  z-index: 2;
+  border: 1px solid #333;
+  border-radius: var(--radius-s);
+  padding: 0.3rem 0.55rem;
+  background: #161618;
+  color: #f3f1ec;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(2px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.summary-icon[data-side="start"]::after {
+  left: 0;
+}
+
+.summary-icon[data-side="end"]::after {
+  right: 0;
+}
+
+@media (hover: hover) {
+  .summary-icon:hover::after {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.summary-icon:focus-visible::after {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-icon,
+  .summary-icon::after {
+    transition: none;
+  }
+
+  .summary-icon:active {
+    transform: none;
+  }
 }
 
 /* The escrow: one per deal. Its tone is carried by the verdict's words first. */
