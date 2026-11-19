@@ -136,7 +136,8 @@
   transition: color 150ms ease;
 }
 
-.site-nav a:hover {
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
   color: var(--text);
 }
 
