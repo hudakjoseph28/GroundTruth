@@ -39,6 +39,8 @@ flowchart LR
 
 The browser owns presentation and user signatures. The API owns provider adapters, normalization, access checks, and private evidence. The Anchor program alone authorizes movement from the vault. QuickNode reports confirmed on-chain events; it never creates them. ElevenLabs reports call evidence; it never approves or holds a deal.
 
+**Verify on-chain (deal page).** A visitor can check the API's projection without trusting it: the browser reads the deal PDA and its vault from the public devnet RPC (`api.devnet.solana.com`, no key), decodes the `DealAccount` with the checked-in IDL (`packages/shared/src/idl`), re-derives the PDA from the account's own buyer and deal ID, and compares state, amount, mint, buyer, seller, payout account, each reviewer's `approved` flag, the hold, and the vault balance with the page. The API is not called for the check. Code: `frontend/web/src/verify`.
+
 ## Source of truth
 
 | Question | Authority | Cached copy | Rule |

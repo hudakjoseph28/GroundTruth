@@ -987,10 +987,11 @@
     grid-template-areas:
       "top top"
       "flow flow"
+      "verify verify"
       "summary timeline"
       "documents timeline"
       "aside timeline";
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto 1fr;
     column-gap: var(--space-m);
     padding-top: var(--space-s);
   }
@@ -1001,6 +1002,10 @@
 
   .money-flow {
     grid-area: flow;
+  }
+
+  .deal-verify {
+    grid-area: verify;
   }
 
   .deal-summary {
@@ -1035,9 +1040,10 @@
     grid-template-areas:
       "top top top"
       "flow flow flow"
+      "verify verify verify"
       "summary timeline aside"
       "documents timeline aside";
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto auto 1fr;
   }
 
   .deal-handoff {
