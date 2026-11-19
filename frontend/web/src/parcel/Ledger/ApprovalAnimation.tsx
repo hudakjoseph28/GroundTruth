@@ -54,7 +54,7 @@ export function ApprovalAnimation({
           <span className="mono">Solana devnet</span>
         </p>
       </div>
-      <figcaption>{confirmed ? INSPECTOR.confirmed : INSPECTOR.illustration}</figcaption>
+      {confirmed ? <figcaption>{INSPECTOR.confirmed}</figcaption> : null}
     </figure>
   );
 }

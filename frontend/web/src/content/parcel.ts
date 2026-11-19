@@ -222,7 +222,6 @@ export const INSPECTOR = {
     held: "Held",
     pending: "Waiting on a decision",
   },
-  illustration: "How this decision reaches the escrow. Illustration only: it is not on-chain yet.",
   confirmed: "Confirmed on Solana devnet.",
   stagedExample: "Staged example. Not a record retrieved for this parcel.",
   finding: "What we know",
