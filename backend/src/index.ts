@@ -19,6 +19,7 @@ const app = createApp(env.commit, {
     streamBuffersTimeoutMs: env.streamBuffersTimeoutMs,
   },
   sms: { sender: env.twilio ? createTwilioSender(env.twilio) : undefined },
+  solanaPay: { rpcUrl: env.solanaRpcUrl },
 });
 
 app.listen(env.port, () => {

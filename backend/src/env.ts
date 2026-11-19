@@ -1,3 +1,4 @@
+import { DEFAULT_SOLANA_RPC_URL } from "./chain/fundTransaction.js";
 import { DEFAULT_OGRIP_TIMEOUT_MS } from "./parcels/ogrip.js";
 import type { TwilioConfig } from "./sms/sender.js";
 import {
@@ -32,6 +33,8 @@ export interface ServerEnv {
   elevenLabsAgentId: string | undefined;
   /** Twilio for staged deal text alerts. Unset: opt-ins are refused and nothing is texted. */
   twilio: TwilioConfig | undefined;
+  /** Public Solana RPC for Solana Pay funding; must be devnet (checked by genesis hash). */
+  solanaRpcUrl: string;
 }
 
 export function readServerEnv(
@@ -76,6 +79,7 @@ export function readServerEnv(
       source.ELEVENLABS_WEBHOOK_SECRET?.trim() || undefined,
     elevenLabsAgentId: source.ELEVENLABS_AGENT_ID?.trim() || undefined,
     twilio: readTwilio(source),
+    solanaRpcUrl: readRpcUrl(source.SOLANA_RPC_URL),
   };
 }
 
@@ -97,6 +101,15 @@ function readTwilio(source: NodeJS.ProcessEnv): TwilioConfig | undefined {
     throw new Error("TWILIO_FROM_NUMBER must be in +E.164 form");
   }
   return { accountSid, authToken, fromNumber };
+}
+
+function readRpcUrl(value: string | undefined): string {
+  const url = value?.trim();
+  if (!url) return DEFAULT_SOLANA_RPC_URL;
+  if (!/^https?:\/\/\S+$/.test(url)) {
+    throw new Error("SOLANA_RPC_URL must be an http(s) URL");
+  }
+  return url;
 }
 
 function readOgripTimeout(value: string | undefined): number {

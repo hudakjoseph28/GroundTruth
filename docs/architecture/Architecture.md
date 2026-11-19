@@ -110,7 +110,7 @@ The demo uses two independent deals rather than mutating one deal between outcom
 
 ## Web and phone
 
-There is one responsive web application. Desktop is the research desk; the same routes become the phone closing companion at narrow widths. The desktop closing screen displays a QR code for an HTTPS deal URL. For the staged demo, the URL opens public, non-sensitive fixture data in read-only mode; wallet actions still require the correct staged wallet. No native Expo app, native push setup, or app-store build is part of the core scope.
+There is one responsive web application. Desktop is the research desk; the same routes become the phone closing companion at narrow widths. The desktop closing screen displays a QR code for an HTTPS deal URL. For the staged demo, the URL opens public, non-sensitive fixture data in read-only mode; wallet actions still require the correct staged wallet. While a deal is a draft, the page also shows a Solana Pay transaction request (a `solana:` QR code and link). The wallet POSTs its account; the API answers only the bound buyer, with the `fund` transaction built from the IDL and left unsigned; the wallet signs and sends. No native Expo app, native push setup, or app-store build is part of the core scope.
 
 ## Deployment topology
 

@@ -32,6 +32,10 @@ import {
 } from "./routes/quicknodeWebhook.js";
 import { reportRoute, type ReportRouteOptions } from "./routes/report.js";
 import { createSmsSubscription } from "./routes/smsSubscriptions.js";
+import {
+  solanaPayRoutes,
+  type SolanaPayRouteOptions,
+} from "./routes/solanaPay.js";
 import { createSmsAlertDispatcher } from "./sms/alerts.js";
 import type { SmsSender } from "./sms/sender.js";
 import { recordOwnerCall } from "./voice/ownerCall.js";
@@ -51,6 +55,8 @@ export interface AppOptions {
   sms?: { sender?: SmsSender; log?: (line: string) => void };
   /** Deal documents: the clock that wallet signatures are checked against. */
   documents?: DocumentRouteOptions;
+  /** Solana Pay funding: the devnet reads and the icon wallets show. */
+  solanaPay?: SolanaPayRouteOptions;
 }
 
 export function createApp(commit: string, options: AppOptions = {}) {
@@ -112,6 +118,14 @@ export function createApp(commit: string, options: AppOptions = {}) {
   app.get("/api/deals/:id/documents", documents.list);
   app.post("/api/deals/:id/documents", ...documents.upload);
   app.post("/api/deals/:id/documents/:documentId/file", ...documents.file);
+  const solanaPay = solanaPayRoutes(prisma, options.solanaPay);
+  app.options(
+    "/api/deals/:id/solana-pay/fund",
+    solanaPay.cors,
+    solanaPay.preflight,
+  );
+  app.get("/api/deals/:id/solana-pay/fund", ...solanaPay.label);
+  app.post("/api/deals/:id/solana-pay/fund", ...solanaPay.transaction);
   app.post(
     "/api/deals/:id/sms-subscriptions",
     ...createSmsSubscription(prisma, { enabled: Boolean(options.sms?.sender) }),

@@ -1,6 +1,7 @@
-// The three escrow instructions a browser wallet sends from the reviewer
-// portal (sign_approval, place_hold, release), built from the checked-in
-// IDL alone: instruction discriminators, account order and flags, fixed
+// The escrow instructions a wallet sends: the three from the reviewer portal
+// (sign_approval, place_hold, release) and the buyer's `fund`, which the API
+// returns unsigned for a Solana Pay transaction request. Built from the
+// checked-in IDL alone: instruction discriminators, account order and flags, fixed
 // program addresses, and enum variant order all come from
 // idl/groundtruth_escrow.json. No runtime dependencies: the caller turns the
 // result into its own transaction type (web3.js, kit, and so on).
@@ -132,6 +133,31 @@ export function releaseInstruction(input: {
       seller: input.seller,
       seller_token_account: input.sellerTokenAccount,
       buyer: input.buyer,
+      vault: input.vault,
+      mint: input.mint,
+    },
+    [],
+  );
+}
+
+/**
+ * `fund()`: the bound buyer signs (and pays the fee). The program moves
+ * exactly the deal's amount of the bound mint from the buyer's token account
+ * into the deal's vault, only while the deal is a draft.
+ */
+export function fundInstruction(input: {
+  buyer: string;
+  dealPda: string;
+  buyerTokenAccount: string;
+  vault: string;
+  mint: string;
+}): EscrowInstructionSpec {
+  return build(
+    "fund",
+    {
+      buyer: input.buyer,
+      deal: input.dealPda,
+      buyer_token_account: input.buyerTokenAccount,
       vault: input.vault,
       mint: input.mint,
     },
