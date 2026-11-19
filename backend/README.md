@@ -288,6 +288,18 @@ The parcel page draws the lot as a 3D block of land: aerial imagery on its terra
 - Responses carry `Cache-Control: public, max-age=86400`.
 - A database failure only costs a rebuild.
 
+**Map layers** (`GET /api/parcels/:parcelKey/layers`, [src/layers/parcelLayers.ts](src/layers/parcelLayers.ts)) draw what the report's sources map across the same region as the land block. Each layer asks its check's source about the region instead of the lot, on its own 10 s limit:
+
+| Layer | Source | Where |
+| --- | --- | --- |
+| `flood` | FEMA NFHL zones (layer 28): SFHA zones shaded strong, 0.2% light; minimal-hazard Zone X named, not shaded | Counties with an NFHL study |
+| `streamSetback` | Franklin Stream Buffers, sharing the report's outline cache; lot share by the report's own `measureSetbacks` | Franklin |
+| `wetlands` | NWI types in view, and NWI's export drawn over the region (it cannot return river polygons) | Everywhere NWI has mapping |
+| `zoning` | Franklin County zoning districts (named only); lot shares by the zoning check's `measure` | Franklin |
+| `roadRightOfWay` | Franklin public road right-of-way: every one within 1 m of the lot, else the nearest, with its distance | Franklin |
+
+Golden parcel, live Nov 19, 2026: setback 4.654% of the lot (the report says about 4.7%), Zone X only in view, all Rural (R), nearest right-of-way about 99 m. `0 Harrisburg Georgesville Rd`: NWI emergent wetland, pond, and riverine in view; setback about 41%; AE floodway about 13% of the lot; right-of-way touches. `pnpm check:layers <key>…` prints a live run; `pnpm record:layers` re-records the test fixtures.
+
 **Errors**, all retryable except the 404s and the 400:
 
 | Case | Status | Code |

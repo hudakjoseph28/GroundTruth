@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { Parcel, ParcelLayers } from "@groundtruth/shared";
 import express from "express";
 import { applyConfirmedEvent } from "./chain/applyEvent.js";
 import { createEscrowDecoder } from "./chain/escrowDecoder.js";
@@ -20,6 +21,9 @@ import {
   type LandAssetService,
 } from "./land/landAssets.js";
 import { landRoutes } from "./routes/land.js";
+import { createParcelLayers } from "./layers/parcelLayers.js";
+import { layersRoute } from "./routes/layers.js";
+import { createFranklinStreamBuffersClient } from "./reports/franklinStreamBuffers.js";
 import { createOgripClient, type OgripClient } from "./parcels/ogrip.js";
 import { parcelRoutes } from "./routes/parcels.js";
 import {
@@ -39,6 +43,8 @@ export interface AppOptions {
   ogrip?: OgripClient;
   /** FEMA client, report store, flood limit, and clock for live reports. */
   report?: Omit<ReportRouteOptions, "ogrip">;
+  /** Map layers on the land block. Defaults to the live sources the report checks use. */
+  layers?: { layers(parcel: Parcel): Promise<ParcelLayers>; now?: () => Date };
   /** Land block assets. Defaults to building from live OGRIP, NAIP, and Terrarium, cached in PostgreSQL. */
   land?: LandAssetService;
   /** Staged deal text alerts. No sender: opt-ins answer 503 and nothing is texted. */
@@ -59,6 +65,9 @@ export function createApp(commit: string, options: AppOptions = {}) {
   });
 
   const ogrip = options.ogrip ?? createOgripClient();
+  // One client, so the report and the map layer share the setback outlines
+  // (Big Darby's is 5.5 MB) instead of downloading them twice.
+  const streamSetbacks = createFranklinStreamBuffersClient();
   const parcels = parcelRoutes(ogrip);
   const land = landRoutes(
     options.land ??
@@ -81,10 +90,21 @@ export function createApp(commit: string, options: AppOptions = {}) {
   app.get("/api/parcels/area", parcels.area);
   app.get("/api/parcels/:parcelKey", parcels.getParcel);
   app.get("/api/parcels/:parcelKey/land", land.meta);
+  app.get(
+    "/api/parcels/:parcelKey/layers",
+    layersRoute({
+      ogrip,
+      layers: options.layers ?? createParcelLayers({ streamSetbacks }),
+    }),
+  );
   app.get("/api/parcels/:parcelKey/land/:file", land.file);
   app.get(
     "/api/parcels/:parcelKey/report",
-    reportRoute({ ...options.report, ogrip }),
+    reportRoute({
+      streamBuffers: streamSetbacks,
+      ...options.report,
+      ogrip,
+    }),
   );
   app.get("/api/deals/:id", getDeal);
   app.get("/api/deals/:id/timeline", getDealTimeline);

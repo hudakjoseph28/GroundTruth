@@ -308,6 +308,153 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* Map layers: a row of toggles under the land, and a legend line for each
+   one that is on. On a phone the row scrolls sideways instead of wrapping
+   into a tall block; every toggle is a full tap target. */
+.layer-panel {
+  margin-top: var(--space-s);
+}
+
+.layer-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+@media (max-width: 40rem) {
+  .layer-toggles {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: calc(-1 * var(--pad));
+    padding-inline: var(--pad);
+    padding-bottom: var(--s-1);
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .layer-toggles::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.layer-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--tap);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--step--1);
+  white-space: nowrap;
+  cursor: pointer;
+  scroll-snap-align: start;
+  touch-action: manipulation;
+  transition:
+    background 0.15s var(--ease-out),
+    border-color 0.15s var(--ease-out),
+    color 0.15s var(--ease-out);
+}
+
+.layer-toggle:hover {
+  color: var(--text);
+}
+
+.layer-toggle[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--layer) 70%, transparent);
+  background: color-mix(in srgb, var(--layer) 16%, transparent);
+  color: var(--text);
+}
+
+.layer-swatch {
+  flex: none;
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 2px solid var(--layer);
+  border-radius: 3px;
+  background: transparent;
+}
+
+.layer-toggle[aria-pressed="true"] .layer-swatch,
+.layer-legend .layer-swatch {
+  background: color-mix(in srgb, var(--layer) 55%, transparent);
+}
+
+/* Zoning is drawn as lines, the boundary as an outline. */
+.layer-legend .layer-swatch[data-kind="zoning"],
+.layer-legend .layer-swatch[data-kind="boundary"] {
+  background: transparent;
+}
+
+.layer-legend .layer-swatch[data-kind="zoning"] {
+  border-style: dashed;
+}
+
+.layer-legend {
+  display: grid;
+  gap: var(--s-2);
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--step--1);
+  color: var(--text-2);
+}
+
+.layer-legend li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.layer-legend li .layer-swatch {
+  margin-top: 0.2rem;
+}
+
+.layer-legend p {
+  margin: 0;
+}
+
+.layer-legend strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.layer-legend li[data-status="unavailable"] p:first-child,
+.layer-legend li[data-status="notCovered"] p:first-child {
+  color: #8f8f8f;
+}
+
+.layer-note {
+  color: #8f8f8f;
+}
+
+.layer-retry {
+  min-height: var(--tap);
+  margin-top: var(--s-1);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.layer-note a {
+  color: inherit;
+  text-underline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer-toggle {
+    transition: none;
+  }
+}
+
 /* Credits on the left, "Explore the area" on the right; they stack when tight. */
 .land-caption {
   display: flex;
