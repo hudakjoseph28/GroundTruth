@@ -30,10 +30,15 @@ import {
   buildReport,
   DEFAULT_ACCESS_TIMEOUT_MS,
   DEFAULT_FEMA_TIMEOUT_MS,
+  DEFAULT_SOILS_TIMEOUT_MS,
   DEFAULT_STREAM_BUFFERS_TIMEOUT_MS,
   DEFAULT_WETLANDS_TIMEOUT_MS,
   DEFAULT_ZONING_TIMEOUT_MS,
 } from "../reports/pipeline.js";
+import {
+  createSsurgoSoilsClient,
+  type SsurgoSoilsClient,
+} from "../reports/ssurgoSoils.js";
 import { prismaReportStore, type ReportStore } from "../reports/store.js";
 
 /** How long a live report is served from PostgreSQL before it is rebuilt. */
@@ -53,6 +58,10 @@ export interface ReportRouteOptions {
   access?: FranklinAccessClient;
   /** Limit for the Franklin access check. Defaults to 6000 ms. */
   accessTimeoutMs?: number;
+  /** USDA NRCS SSURGO with Living Atlas fallback. Null is test-only opt-out. */
+  soils?: SsurgoSoilsClient | null;
+  /** Limit for the SSURGO soils/septic check. Defaults to 6000 ms. */
+  soilsTimeoutMs?: number;
   /** National Wetlands Inventory, for every parcel's environmental check. */
   wetlands?: NwiWetlandsClient;
   /** Limit for the NWI part of the environmental check. Defaults to 10000 ms. */
@@ -84,6 +93,9 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
   const zoningTimeoutMs = options.zoningTimeoutMs ?? DEFAULT_ZONING_TIMEOUT_MS;
   const access = options.access ?? createFranklinAccessClient();
   const accessTimeoutMs = options.accessTimeoutMs ?? DEFAULT_ACCESS_TIMEOUT_MS;
+  const soils =
+    options.soils === undefined ? createSsurgoSoilsClient() : options.soils;
+  const soilsTimeoutMs = options.soilsTimeoutMs ?? DEFAULT_SOILS_TIMEOUT_MS;
   const wetlands = options.wetlands ?? createNwiWetlandsClient();
   const wetlandsTimeoutMs =
     options.wetlandsTimeoutMs ?? DEFAULT_WETLANDS_TIMEOUT_MS;
@@ -153,6 +165,8 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
       zoningTimeoutMs,
       access,
       accessTimeoutMs,
+      soils: soils ?? undefined,
+      soilsTimeoutMs,
       wetlands,
       wetlandsTimeoutMs,
       streamBuffers,
@@ -171,7 +185,7 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
 }
 
 /** An OGRIP failure is a retryable v1 error, never a guessed parcel. */
-async function loadParcel(
+export async function loadParcel(
   ogrip: OgripClient,
   countyFips: string,
   sourceParcelId: string,

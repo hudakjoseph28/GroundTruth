@@ -1,6 +1,6 @@
 # Phase 2 · Coverage note
 
-**Recorded Nov 17, 2026, against `main` at `ce33d40`** (PRs #7, #8, #9 via #10); Franklin zoning added the same day. The environmental check (NWI wetlands everywhere, plus Franklin stream setbacks) was added Nov 18, 2026. On Nov 19, 2026 a flood check that finds a Special Flood Hazard Area or a regulatory floodway became `needsReview`, and a floodway became the biggest open question (see [Flood status and the biggest open question](#flood-status-and-the-biggest-open-question)). This note covers what GroundTruth searched, what it checked, and where. Each claim comes from a recorded live response or a hand-verified fixture in this repository. It measures **search coverage** and **report depth** separately, as [ParcelResearch.md](ParcelResearch.md#demo-scope) asks.
+**Recorded Nov 17–19, 2026, against `main`**; the environmental check (NWI wetlands everywhere plus Franklin stream setbacks) and statewide USDA NRCS soils coverage were added Nov 18, and the Living Atlas SSURGO fallback Nov 19. Also on Nov 19, a flood check that finds a Special Flood Hazard Area or a regulatory floodway became `needsReview`, and a floodway became the biggest open question (see [Flood status and the biggest open question](#flood-status-and-the-biggest-open-question)). This note covers what GroundTruth searched, what it checked, and where. Each claim comes from a recorded live response, a provider-contract fixture, or a hand-verified fixture in this repository. It measures **search coverage** and **report depth** separately, as [ParcelResearch.md](ParcelResearch.md#demo-scope) asks.
 
 ## Summary
 
@@ -11,8 +11,9 @@
 | Counties where the flood check can return evidence | **83 of 88**, the counties with a FEMA NFHL study |
 | Counties where the zoning check can return evidence | **1 of 88:** Franklin, live from the county's zoning map, for lots in the townships under county zoning (added Nov 17, 2026) |
 | Counties where the environmental check can return evidence | **88 of 88:** NWI wetlands, live. NWI's mapping-status layer is `Digital` everywhere it touches Ohio (recorded Nov 18, 2026). Franklin lots also get the county's riparian stream setbacks. |
-| Checks with sourced evidence beyond flood and Franklin zoning | **Golden parcel only:** access, seeded and verified by hand |
-| Every other check, every other parcel | `unknown`, with a named responsible party and next action |
+| Counties where the septic check can return evidence | **88 of 88:** live USDA NRCS Soil Data Access (SSURGO) map units and the published septic-tank absorption field dominant-condition rating, with the Esri Living Atlas copy of SSURGO as the fallback when SDA fails |
+| Other checks with sourced evidence | Franklin access is live; the golden access result is also seeded and verified by hand |
+| Utilities, easements, seller authority, and survey | `unknown`, with a named responsible party and next action |
 
 ## Canonical parcels
 
@@ -54,10 +55,11 @@ Address queries with no match return `[]` and are also recorded:
 | **Zoning** | **Live in Franklin County.** The parcel's full OGRIP polygon is intersected with Franklin County's zoning map (`FCEDP_Zoning_Districts_2025_View`). One district covering the lot gives `evidenceFound`, naming the district and citing the layer and the 2026 Zoning Resolution. Two or more districts, or a meaningful part outside the map, give `needsReview`. **Golden parcel:** seeded and verified by hand; the live check gives the same result, R on 100%. | Franklin lots the county map doesn't cover (in a city, village, or township with its own zoning, such as Columbus): `unknown`, naming the local zoning office. Timeout or error: `unknown`, report still `200`. Other counties: `unknown` from the per-kind template. The Licking parcel keeps one documented override sentence: "GroundTruth doesn't check zoning in Licking County yet." |
 | **Access** | **Golden parcel only:** seeded `needsReview` (county right-of-way and road layers, Zoning Resolution 2026 §302.042 and §302.0391). It never says "no access". | `unknown` from the template |
 | **Environmental** (wetlands and stream setbacks) | **Live in all 88 counties** for wetlands: the parcel is checked against the National Wetlands Inventory, and types and approximate shares are measured on NWI's own drawing of the lot. **Franklin lots** also get the share inside a riparian setback from the county's Stream Buffers layer, the layer the golden report cites. Either found: `needsReview`. Both answered with nothing on the lot: `evidenceFound`, stating that "NWI shows none" is not a delineation. **Golden parcel:** the seeded report is unchanged and has no environmental check. Live, it gives no NWI wetland and the Big Darby setback on about 4.7%, matching QA-Proof's 4.661%. | Either source timing out (each has its own limit) or failing: that part is `unknown`, and the check can't be `evidenceFound`. NWI with no mapping for a lot: `unknown`, never "none". Without an NWI client: `unknown` from the template, naming the county soil and water conservation district or a wetland consultant. |
-| Utilities, easements, seller authority, survey, septic | Nowhere yet | `unknown` from the template, each with its own responsible party and next action |
+| **Septic** | **Live statewide.** The full parcel polygon is sent to USDA NRCS Soil Data Access (3 s budget). If SDA fails or uses its budget, the parcel's bounding box is sent to Esri's ArcGIS Living Atlas "USA Soils Map Units" layer (USDA gSSURGO copy) and the overlap is measured locally. Either way, SSURGO map units are intersected with the parcel and returned with area share and the published `muaggatt.engstafdcd` dominant-condition rating: `Very limited`, `Somewhat limited`, or `Not limited`. The source that answered is cited with `retrievedAt`. A rated response is always `needsReview`, never a site-feasibility conclusion. | No map unit, an unrated/other value, timeout, provider error, or malformed response is `unknown`. Every outcome ends by directing the buyer to the Ohio Department of Health homeowner page, their local health district, and a site and soil evaluation. |
+| Utilities, easements, seller authority, survey | Nowhere yet | `unknown` from the template, each with its own responsible party and next action |
 | Closing | Comes from the staged deal, not the report | Seeded reports have no closing check |
 
-`GET /api/coverage` matches this table: `evidenceKinds: ["zoning", "flood", "environmental"]` for Franklin, `["flood", "environmental"]` for the other 82 counties with an NFHL study, and `["environmental"]` for the five without one.
+`GET /api/coverage` matches this table: `evidenceKinds: ["zoning", "flood", "environmental", "septic"]` for Franklin, `["flood", "environmental", "septic"]` for the other 82 counties with an NFHL study, and `["environmental", "septic"]` for the five without one.
 
 ### Flood status and the biggest open question
 
@@ -105,6 +107,9 @@ The exact query URLs are stored in each fixture's `sourceUrl` / `sources[].url`.
 | FEMA National Flood Hazard Layer | <https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer> (zones 28, FIRM panels 3, LOMRs 1, study availability 0) | Ohio study availability 2026-11-17T01:19:09Z. Flood report recordings 2026-11-17T01:19:09Z–01:23:04Z, re-recorded with the environmental check 2026-11-18T23:49Z (flood answers unchanged). |
 | USFWS National Wetlands Inventory | <https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer> (wetlands 0, map export), <https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3> (image year), <https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands_Status/MapServer/0> (mapping status) | Ohio mapping status 2026-11-18T23:49:13Z. Report recordings 2026-11-18T23:49Z. |
 | Franklin County Stream Buffers | <https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/Franklin_County_Stream_Buffers/FeatureServer/0> | Report recordings 2026-11-18T23:49Z |
+| USDA NRCS Soil Data Access (SSURGO) | <https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest> (`mupolygon`, `mapunit`, `muaggatt.engstafdcd`) | Each successful live report records its own `retrievedAt`. Real HTTP 502 responses recorded at 2026-11-18T23:17:00Z and 2026-11-19T03:38Z (see known limits). |
+| Esri ArcGIS Living Atlas, USA Soils Map Units (USDA NRCS gSSURGO, published Dec 2025) | <https://services5.arcgis.com/7weheFjxuNkGGiZi/arcgis/rest/services/USA_Soils_Map_Units/FeatureServer/0> (`MUKEY`, `MUSYM`, `muname`, `engstafdcd`) | SDA fallback. Real responses recorded 2026-11-19T03:38:02Z (230-000918) and 03:38:03Z (Licking 00500729609000) in `backend/test/fixtures/ssurgo/`. |
+| Ohio Department of Health homeowner sewage guidance | <https://odh.ohio.gov/know-our-programs/sewage-treatment-systems/information-for-homeowners/> | Read 2026-11-18; used only for the required local-health-district and site-and-soil-evaluation next action, not as parcel evidence. |
 
 ### Golden parcel `ohio:39049:230-000918`
 
@@ -133,13 +138,18 @@ The zoning check cites no Licking County source, because GroundTruth runs no Lic
 
 ## Forced timeouts
 
-Run on `main` at `ce33d40` with `vitest run test/report.test.ts test/parcels.test.ts -t "timeout|time out|times out|budget"`. Result: **7 passed**.
+Current verification runs `vitest run test/ssurgoSoils.test.ts test/report.test.ts test/parcels.test.ts` for the provider replay, report isolation, and coverage paths; the complete backend suite is also run before merge.
 
 - **FEMA times out** (FEMA forced to hang, flood limit 200 ms) on `ohio:39049:010-042534`:
   - The report still returns **`200`** within 2 s.
   - Flood becomes `unknown`: "FEMA's flood map service did not answer within 0.2 seconds, so no flood zone was checked."
   - Every other check is unchanged and coverage drops to `boundaryOnly`.
   - The timed-out report is **not cached**, so the next request asks FEMA again.
+- **USDA SSURGO times out independently** (forced to hang, soils limit 200 ms) on the same parcel:
+  - The report still returns **`200`** within 2 s and every non-septic check is unchanged.
+  - Septic becomes `unknown`; it makes no suitability conclusion and still ends with the health-district site and soil evaluation next action.
+  - The timed-out report is not cached, so the next request can ask USDA again.
+  - If SDA alone hangs past its 3 s budget, the Living Atlas fallback still answers inside the 6 s check limit (`test/ssurgoSoils.test.ts`).
 - **OGRIP times out on the report route:** `504 PROVIDER_TIMEOUT`, `retryable: true`, with no guessed report.
 - **OGRIP times out on parcel-ID search, address search, the parcel route, the explore map's area route and `/api/coverage`:** each returns `504 PROVIDER_TIMEOUT`, `retryable: true`, with no partial result.
 - **An address search whose individual requests fit the per-request limit, but together exceed the search budget:** `504 PROVIDER_TIMEOUT`.
@@ -152,10 +162,15 @@ Run on `main` at `ce33d40` with `vitest run test/report.test.ts test/parcels.tes
 - **A city alone is not searched.** A street name without a house number returns up to ten lots on that street, and `0 <street>` finds lots with no assigned number. A city or township on its own answers `400` asking for a street or a parcel ID.
 - **OGRIP publishes 0 acreage for Franklin.** `LandArea` is 0 for Franklin parcels, so `Parcel.acreage` is omitted there. The golden parcel's 3.015 legal acres come from the Franklin County Auditor and are cited only inside its zoning check.
 - **5 counties have no NFHL data.** Fayette (39047), Henry (39069), Vinton (39163), Williams (39171) and Wyandot (39175) have no FEMA NFHL study, so flood is always `unknown` there.
+- **SSURGO is screening evidence, not approval.** `engstafdcd` is the map unit's dominant-condition interpretation for septic-tank absorption fields. A parcel can cross several map units, inclusions may differ from the dominant soil, and the check does not establish sewer availability, system design, drain-field location, permitting, or site feasibility. The local health district and an on-site soil evaluation decide the next step.
+- **The USDA endpoint was unavailable during implementation verification.** Soil Data Access returned HTTP 502 at 2026-11-18T23:17:00Z even for a one-row health query, and again at 2026-11-19T03:34Z and 03:38Z. The first response is saved in `backend/test/fixtures/ssurgo/sda-502-2026-11-18.json`; the two parcel recordings also replay SDA's real 502 before the fallback. The SDA success path is tested only for its documented table shape; no real SDA success response has been recorded yet.
+- **Real septic results for the two reviewed parcels, from the Living Atlas fallback (2026-11-19).** 230-000918 (Franklin): Ko Kokomo silty clay loam 46.05%, CrB Crosby silt loam 38.31%, CeB2 Celina silt loam 15.64%, all “Very limited.” 00500729609000 (Licking): CkC2 Cincinnati silt loam 99.59%, HoD2 Homewood silt loam 0.41%, both “Very limited.” Cross-checks: the same map units and shares (to 0.01%) come from USDA FPAC's `nrcs-geodata/rest/services/soils/cg_soils` polygons (FY2026, current as of 2026-05-08), and UC Davis SoilWeb `muaggatt` gives the same five `engstafdcd` values.
+- **The fallback can lag SDA by one annual SSURGO refresh.** The Living Atlas layer is Esri's annual gSSURGO build (published Dec 2025; survey versions OH049 v24, OH089 v23). The check names the Living Atlas copy in both the finding and the source whenever it is used.
 - **The web search isn't on the live API yet.** `frontend/web/src/data/parcelSource.ts` searches the two canonical parcels only; `GET /api/parcels/search` is live, but the web doesn't call it yet.
 - **Address fallback scope.**
   - When the OGRIP locator is down or doesn't know the street, the fallback matches `SitusAddressAll` only when the typed city lies in at most 3 counties (Census 2020 place names).
   - A postal city can point that fallback at the wrong county. Delaware County addresses use the postal city Prospect, but the Census village of Prospect is in Marion County, so the fallback would search Marion only. The locator steps still find those addresses.
   - A dense search box that hits OGRIP's 2,000-record limit without a match returns `[]` rather than widening.
 - **Zoning is live in Franklin County only,** and only for lots under county zoning. It names the district; it does not say what can be built there. District shares are measured by testing a 300 × 300 grid of points across the lot; on 7 lots they matched exact areas to within 0.02 percentage points.
+- **Map layers on the land view show the same sources' coverage.** Flood is drawn wherever FEMA has a study, wetlands wherever NWI has mapping, and stream setbacks, zoning lines, and road right-of-way in Franklin only; elsewhere those toggles say "Franklin County only". NWI's server answered `503 Server Unavailable` several times on Nov 18–19, 2026; the wetlands layer then says the source did not answer and offers a retry, and the API keeps no copy of that answer.
 - **Hand-verified access is one parcel.** Access evidence exists only for the golden parcel. A live access check against the county right-of-way layer is a later task.

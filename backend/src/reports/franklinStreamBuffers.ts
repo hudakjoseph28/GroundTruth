@@ -74,6 +74,21 @@ export interface FranklinStreamBuffersClient {
   ): Promise<StreamSetbackOutcome>;
 }
 
+/** The setbacks anywhere in a view, with their full outlines, for the map layer. */
+export interface StreamSetbacksInView {
+  /**
+   * Every setback touching the box (degrees), each with its full outline
+   * from the same cache the lot check uses. Throws on any failure.
+   */
+  setbacksInView(
+    box: { west: number; south: number; east: number; north: number },
+    signal: AbortSignal,
+  ): Promise<{
+    retrievedAt: string;
+    areas: { name: string; outline: Outline }[];
+  }>;
+}
+
 export interface FranklinStreamBuffersClientOptions {
   fetch?: typeof fetch;
   now?: () => Date;
@@ -117,7 +132,7 @@ export interface Outline {
 
 export function createFranklinStreamBuffersClient(
   options: FranklinStreamBuffersClientOptions = {},
-): FranklinStreamBuffersClient {
+): FranklinStreamBuffersClient & StreamSetbacksInView {
   const fetchImpl = options.fetch ?? globalThis.fetch;
   const now = options.now ?? (() => new Date());
   const outlines = new Map<
@@ -229,7 +244,40 @@ export function createFranklinStreamBuffersClient(
     }
   }
 
-  return { setbacks };
+  async function setbacksInView(
+    box: { west: number; south: number; east: number; north: number },
+    signal: AbortSignal,
+  ) {
+    const overlapping = await query(
+      {
+        geometry: JSON.stringify({
+          xmin: box.west,
+          ymin: box.south,
+          xmax: box.east,
+          ymax: box.north,
+          spatialReference: { wkid: 4326 },
+        }),
+        geometryType: "esriGeometryEnvelope",
+        inSR: "4326",
+        spatialRel: "esriSpatialRelIntersects",
+        outFields: "OBJECTID,Name",
+        returnGeometry: "false",
+      },
+      overlapSchema,
+      signal,
+    );
+    if (overlapping.exceededTransferLimit) throw new StreamBuffersUnavailable();
+    const retrievedAt = now().toISOString();
+    const areas = await Promise.all(
+      overlapping.features.map(async ({ attributes }) => ({
+        name: attributes.Name?.trim() || "Riparian setback",
+        outline: await outline(attributes.OBJECTID, signal),
+      })),
+    );
+    return { retrievedAt, areas };
+  }
+
+  return { setbacks, setbacksInView };
 }
 
 /** `promise`, or a rejection as soon as `signal` aborts. */

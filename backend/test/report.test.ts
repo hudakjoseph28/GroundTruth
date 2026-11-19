@@ -30,6 +30,7 @@ import {
   FCEO_ROAD_LAYER,
   FRANKLIN_ROW_LAYER,
 } from "../src/reports/franklinAccess.js";
+import { createSsurgoSoilsClient } from "../src/reports/ssurgoSoils.js";
 import { prismaReportStore, type ReportStore } from "../src/reports/store.js";
 import { LIVE_REPORT_TTL_MS } from "../src/routes/report.js";
 import {
@@ -120,6 +121,9 @@ interface AppSetup {
   /** Franklin County right-of-way and road layers; defaults to the recording. */
   accessFetch?: typeof fetch;
   accessTimeoutMs?: number;
+  /** USDA SSURGO (SDA, then Living Atlas); absent keeps legacy recordings soils-free. */
+  soilsFetch?: typeof fetch;
+  soilsTimeoutMs?: number;
   /** National Wetlands Inventory; defaults to the recording. */
   wetlandsFetch?: typeof fetch;
   wetlandsTimeoutMs?: number;
@@ -145,6 +149,9 @@ function appWith(setup: AppSetup) {
         fetch: setup.accessFetch ?? setup.fetch,
         now,
       }),
+      soils: setup.soilsFetch
+        ? createSsurgoSoilsClient({ fetch: setup.soilsFetch, now })
+        : null,
       wetlands: createNwiWetlandsClient({
         fetch: setup.wetlandsFetch ?? setup.fetch,
         now,
@@ -157,6 +164,7 @@ function appWith(setup: AppSetup) {
       floodTimeoutMs: setup.floodTimeoutMs ?? 1_000,
       zoningTimeoutMs: setup.zoningTimeoutMs ?? 1_000,
       accessTimeoutMs: setup.accessTimeoutMs ?? 1_000,
+      soilsTimeoutMs: setup.soilsTimeoutMs ?? 1_000,
       wetlandsTimeoutMs: setup.wetlandsTimeoutMs ?? 1_000,
       streamBuffersTimeoutMs: setup.streamBuffersTimeoutMs ?? 1_000,
       now,
@@ -616,6 +624,52 @@ describe("a slow or failed FEMA never breaks the report", () => {
 
     expect(resets).toBe(1);
     expect(res.body).toEqual(recording.apiResponse.body);
+  });
+});
+
+describe("a slow USDA soils check never breaks the report", () => {
+  it("has its own timeout, leaves every other check unchanged, and is not cached", async () => {
+    const baseline = load("franklin-outside").apiResponse.body as ParcelReport;
+    const hangingSoils = vi.fn<typeof fetch>(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+    const { app, store } = scenario("franklin-outside", {
+      soilsFetch: hangingSoils,
+      soilsTimeoutMs: 200,
+    });
+
+    const started = Date.now();
+    const res = await request(app).get(
+      reportPath(REPORT_SCENARIOS["franklin-outside"]),
+    );
+
+    expect(res.status).toBe(200);
+    expect(Date.now() - started).toBeLessThan(2_000);
+    const report = res.body as ParcelReport;
+    expect(checkOf(report, "septic")).toMatchObject({
+      kind: "septic",
+      status: "unknown",
+      finding:
+        "Neither USDA NRCS Soil Data Access nor the Esri Living Atlas SSURGO copy answered within 0.2 seconds, so soil map units and septic ratings were not checked.",
+      sources: [],
+      responsibleParty: {
+        role: "Local health district (sewage treatment systems)",
+        organization: "Franklin County or city health district",
+      },
+    });
+    expect(checkOf(report, "septic").nextAction).toContain(
+      "site and soil evaluation",
+    );
+    expect(report.checks.filter((c) => c.kind !== "septic")).toEqual(
+      baseline.checks.filter((c) => c.kind !== "septic"),
+    );
+    expect(hangingSoils).toHaveBeenCalledTimes(1);
+    expect(store.write).not.toHaveBeenCalled();
   });
 });
 
@@ -1219,10 +1273,12 @@ describe("Franklin County road access, live from the county right-of-way and roa
 
   it("leaves the seeded golden report exactly as verified", async () => {
     const accessFetch = vi.fn<typeof fetch>();
+    const soilsFetch = vi.fn<typeof fetch>();
     const res = await request(
       appWith({
         fetch: vi.fn<typeof fetch>(),
         accessFetch,
+        soilsFetch,
         at: new Date(),
         store: memoryStore([goldenReport]),
       }),
@@ -1230,6 +1286,7 @@ describe("Franklin County road access, live from the county right-of-way and roa
 
     expect(res.body).toEqual(goldenReport);
     expect(accessFetch).not.toHaveBeenCalled();
+    expect(soilsFetch).not.toHaveBeenCalled();
     expect(checkOf(res.body as ParcelReport, "access").finding).toBe(
       "No road right-of-way touches this parcel in Franklin County's right-of-way layer. The nearest mapped road, Seaman Rd, is about 107 m away in the county engineer's road layer. The Franklin County Auditor lists the parcel as \"SEAMAN RD REAR\".",
     );

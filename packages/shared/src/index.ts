@@ -125,3 +125,13 @@ export type {
   EscrowInstructionSpec,
   HoldReasonCode,
 } from "./reviewerInstructions.js";
+
+export { MAP_LAYER_IDS, isParcelLayers } from "./layers.js";
+export type {
+  MapLayer,
+  MapLayerId,
+  MapLayerShare,
+  MapLayerStatus,
+  MapShape,
+  ParcelLayers,
+} from "./layers.js";

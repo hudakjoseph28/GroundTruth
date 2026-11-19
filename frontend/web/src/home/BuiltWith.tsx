@@ -7,7 +7,6 @@ export function BuiltWith() {
   return (
     <Reveal className="section built">
       <section id="built-with" aria-labelledby="built-title">
-        <p className="eyebrow">{BUILT.eyebrow}</p>
         <h2 id="built-title">{BUILT.title}</h2>
         <p className="built-lede">{BUILT.lede}</p>
         <ul className="built-grid">

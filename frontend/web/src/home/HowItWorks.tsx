@@ -246,11 +246,11 @@ export function HowItWorks() {
                       {step.id === "escrow" && HOW.diagram.description.lock}
                       {step.id === "release" && HOW.diagram.description[outcome]}
                     </p>
-                    <p className="how-note">
-                      {step.id === "parcel" && HOW.parcel.note}
-                      {step.id === "checks" && HOW.checks.note}
-                      {(step.id === "escrow" || step.id === "release") && HOW.diagram.note}
-                    </p>
+                    {(step.id === "parcel" || step.id === "checks") && (
+                      <p className="how-note">
+                        {step.id === "parcel" ? HOW.parcel.note : HOW.checks.note}
+                      </p>
+                    )}
                     {step.id === "release" && (
                       <p className="visually-hidden" role="status">
                         {on ? HOW.diagram.result[outcome] : ""}

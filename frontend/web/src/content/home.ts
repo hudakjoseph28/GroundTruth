@@ -165,7 +165,6 @@ export const HOW = {
       held: "Payout blocked: balance unchanged",
       cleared: "Paid to the bound seller",
     } satisfies Record<Outcome, string>,
-    note: "Illustration.",
     description: {
       lock: "Diagram: test USDC flows from the buyer's wallet into the escrow and locks there, with three reviewer sign-offs still waiting.",
       held: "Diagram: the title reviewer has placed a hold, so the release is rejected and the escrow's balance is unchanged.",
@@ -199,7 +198,6 @@ export const REVIEWERS = {
   held: "Held",
   ready: "Ready to release",
   verbs: { approve: "approve", hold: "hold" },
-  note: "Illustration.",
   description:
     "Diagram: a chain of blocks moves left as new ones form. A surveyor, a septic inspector, and a title agent each sign from their wallet; each signature lands in the next block as a receipt, and the escrow's sign-off count rises from one of three to three of three. In one loop out of three the title agent places a hold instead, and the escrow locks.",
 } as const;
