@@ -54,41 +54,41 @@ All six are from the live site. The parcel and deals are real: a Franklin County
 ## How it works
 
 ```mermaid
-flowchart LR
+flowchart TB
   subgraph Client["Browser and wallet"]
-    W["Web app<br/>Vite + React<br/>(Vercel)"]
-    P["Phantom / any<br/>Solana wallet"]
+    W["Web app · Vite + React (Vercel)"]
+    P["Phantom or any Solana wallet"]
   end
 
   subgraph Server["Express API (Railway)"]
-    A["REST API<br/>search · reports · deals"]
-    WH["Signed webhooks<br/>/api/webhooks/*"]
+    A["REST API: search · reports · deals"]
+    WH["Signed webhooks: /api/webhooks/*"]
+    DB[("PostgreSQL (Prisma)")]
   end
-  DB[("PostgreSQL<br/>Prisma")]
 
   subgraph Records["Public records"]
-    O["Ohio OGRIP parcels<br/>+ LBRS locator"]
+    O["Ohio OGRIP parcels"]
     F["FEMA NFHL"]
     N["USFWS NWI"]
     S["USDA SSURGO"]
-    C["Franklin County<br/>zoning · roads · streams"]
+    C["Franklin County layers"]
   end
 
   subgraph Solana["Solana devnet"]
-    E["Anchor escrow program<br/>ASQoBt…EBZG"]
-    V["USDC vault<br/>(ATA owned by deal PDA)"]
+    E["Anchor escrow program ASQoBt…EBZG"]
+    V["USDC vault (owned by the deal PDA)"]
   end
 
-  QN["QuickNode Stream<br/>filtered to the program"]
-  EL["ElevenLabs Agent<br/>owner callback"]
+  QN["QuickNode Stream, filtered to the program"]
+  EL["ElevenLabs Agent: owner callback"]
 
   W -- "/api/*" --> A
   A --> DB
   WH --> DB
   A --> O & F & N & S & C
-  P -- "signs fund · approve · hold · release · refund" --> E
+  P -- "fund · approve · hold · release · refund" --> E
   E -- "SPL token transfers" --> V
-  W -. "Verify on-chain: public RPC read" .-> E
+  W -. "Verify on-chain (public RPC read)" .-> E
   E -- "confirmed blocks" --> QN
   QN -- "HMAC-signed POST" --> WH
   EL -- "HMAC-signed post-call webhook" --> WH
