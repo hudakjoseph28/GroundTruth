@@ -1,3 +1,4 @@
+import { createDevnetChain } from "./actions/devnetChain.js";
 import { createApp } from "./app.js";
 import { readServerEnv } from "./env.js";
 import { createOgripClient } from "./parcels/ogrip.js";
@@ -19,6 +20,7 @@ const app = createApp(env.commit, {
     streamBuffersTimeoutMs: env.streamBuffersTimeoutMs,
   },
   sms: { sender: env.twilio ? createTwilioSender(env.twilio) : undefined },
+  actions: { chain: createDevnetChain(env.solanaRpcUrl) },
 });
 
 app.listen(env.port, () => {
