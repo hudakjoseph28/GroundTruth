@@ -11,6 +11,8 @@
 > Updated Nov 18, 2:01 p.m. ET: QuickNode Streams delivered the stage deal's four transactions to the live timeline (below). The two closings above were backfilled with `replay:devnet` and are not Stream deliveries. At that time the API showed the held deal as `refunded` and the released deal still as `draft`; by 2:05 p.m. ET its replay had landed and the API showed it as `released`. ElevenLabs stays `[PENDING]`: no staged call is recorded.
 >
 > Updated Nov 18, 5:15 p.m. ET: **ElevenLabs is proven.** The staged owner callback was recorded at 5:10 p.m. ET and appears on the held deal's timeline as evidence (below). The call came after that deal's hold and refund, so it is evidence only. We enter the ElevenLabs bounty.
+>
+> Updated Nov 18, 10:50 p.m. ET ([Readiness.md](Readiness.md)): **closing in the product is proven.** On the live site, signed out, <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal> reads `Refunded` with the hold, the `Release rejected · DealHeld (6019)` row, and the refund, and <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released> reads `Released` with all three approvals. Every row's Explorer link matches the deal account's signatures on the public devnet RPC. That `[PENDING]` label is removed. QuickNode's second-device check is still `[PENDING]`.
 
 ## What it does
 
@@ -31,7 +33,7 @@ ALTA's 2026 survey of 245 title insurance professionals found that 59% of respon
 - **A hold blocks the payout.** The buyer funded 25 test USDC. The staged title reviewer signed a hold. A [release was then attempted](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet) and the program rejected it with `DealHeld`: the vault still held 25 and the seller still held 0. The buyer then took a [refund](https://explorer.solana.com/tx/SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo?cluster=devnet).
 - **Cleared sign-offs release it.** On a second deal, the title, survey, and septic reviewers each signed an approval, and the [release](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet) paid exactly 25 test USDC to the bound seller and closed the vault.
 
-**[PENDING] Closing in the product:** The website and API do not show these two outcomes yet. Until they do, the proof is the Explorer links in this document, not a screen in the app.
+**Closing in the product:** Both outcomes are on the live site. The [held deal page](https://groundtruth-lac.vercel.app/deals/staged-devnet-deal) shows the title hold, the rejected release with `DealHeld (6019)`, and the refund. The [released deal page](https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released) shows all three approvals and the payout. Each timeline row links to its transaction on Solana Explorer, and a QR code opens the same page on a phone with no app or wallet.
 
 **ElevenLabs:** The owner callback supplies evidence to a staged title reviewer. The call never approves, holds, releases, or refunds a deal by itself. A real **ElevenLabs Agents** call to a consenting teammate playing the owner of record (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`) ended at 22:10:40 UTC on Nov 18. The API verified its signed post-call webhook and logged `elevenlabs recorded ownerDeniesSale conv_9801m7rbaxvye0yrq4jmyzfyq6xz deal=staged-devnet-deal` at 22:10:54 UTC ([Railway log](../../proof/elevenlabs-owner-callback.png)). The held deal `staged-devnet-deal` shows it as an `Evidence received` row: the person reached as the owner on record said they are not selling.
 
@@ -44,6 +46,13 @@ ALTA's 2026 survey of 245 title insurance professionals found that 59% of respon
 Railway's HTTP log shows each webhook arriving 1–2 s after its block (18:57:20–18:57:24 UTC). The 1.8–3.3 s first measured on the deal timeline came from polling the timeline API every 1.5 s against whole-second block times, so it includes up to 1.5 s of polling delay. The screenshot's app-log lines are all stamped 13:57:29 EST; the arrival times come from the HTTP log, which is not in the repo.
 
 The two closings above are not Stream deliveries: their timeline rows were backfilled with `replay:devnet`, because QuickNode backfill needs a paid plan. **[PENDING]** Measure the update on a second device before entering the Streams bounty.
+
+## What makes it different
+
+- **It names the gaps instead of hiding them.** Land tools usually show a listing or a score. GroundTruth shows each check's source and retrieval date, what that source does not establish, and the professional who can answer it. A missing or timed-out source stays `unknown`; it never becomes a guess.
+- **Evidence, decisions, and money stay separate.** Public records supply evidence. A named reviewer signs the decision from their own wallet. The Solana program decides whether money moves: on devnet, a reviewer's hold made it reject a release while the vault kept all 25 test USDC.
+- **A voice call is evidence, never authorization.** The ElevenLabs owner callback lands on the timeline for the title reviewer. It cannot approve, hold, or release anything.
+- **The buyer never needs a wallet to follow along.** The deal page reads confirmed chain state and works on a phone from a QR code. Only the people who sign need a wallet.
 
 ## How we built it
 
@@ -128,7 +137,6 @@ Our immediate product step is to add verified local zoning and access adapters b
 
 We will test the report with first-time land buyers and title or closing professionals. The pilot questions are practical: Can a buyer explain the biggest open issue? Do they know who acts next? Does the report help them pause, negotiate, or walk away before sending money?
 
-- **[PENDING] Closing in the product:** the held, refunded, and released outcomes are on devnet with their links above. Still show them in the website's deal view and the API timeline.
 - **[PENDING] QuickNode Streams:** measure the timeline update on a second device, and deliver the stage deal's septic approval and release through the Stream.
 - **ElevenLabs:** place the owner callback before the title reviewer decides, as it would sit in a real closing. In the staged run it was recorded after the hold.
 - Add authenticated, private evidence handling before any real buyer, seller, identity, title, or call data enters the product.

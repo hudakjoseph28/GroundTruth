@@ -20,11 +20,11 @@ Practise the 2:45–4:00 segment on the rehearsal deal, never on the live one. `
 5. To practise the fallback instead, skip the taps and run `pnpm --filter @groundtruth/escrow demo:deals stage-finish --deal staged-devnet-deal-rehearsal-v2` from the laptop. If a tap fails partway, the same command finishes whatever step is left.
 6. Check that the projected deal page updates, and time it. The run is recorded under `escrow/demo-results/devnet-stage-rehearsal-v2.{json,md}`.
 
-The rehearsal deal can run once, by either path. **`staged-devnet-deal-rehearsal` (v1) is used up.** On Nov 18 it tested the reviewer portal (#45): `stage-prep`, then the septic approval and the release through `/review` ([approval](https://explorer.solana.com/tx/5im6Vt5iBhkRxmcJxRzPcgf2demRR4bBY2oTtZZX5Y4DkuyrDnxcB8Dst2qAPnn8krAJe4ocswMh9TY1rjKmskYY?cluster=devnet), [release](https://explorer.solana.com/tx/3z7BNJH6xrXmoMHY9cvpD37c775prm2PgS4c2xL1SFTEevoe3UnJc2cUgWLXUfYEuzLncLw7J1djRDqhZ4FGsr4z?cluster=devnet)). Do not pass `--deal staged-devnet-deal-rehearsal` again. Each rehearsal needs 10 test USDC free in the buyer's wallet, on top of the live deal's 10 already in escrow.
+The rehearsal deal can run once, by either path. **Buyer balance:** on Nov 19 at 03:35 UTC the staged buyer (`HEDe3DMbVbFRku2Kzxq6usSjUdDJ1vphohTBxAXqEtXJ`) held **5 test USDC**, so a new rehearsal deal cannot be funded until it gets at least 5 more. **`staged-devnet-deal-rehearsal` (v1) is used up.** On Nov 18 it tested the reviewer portal (#45): `stage-prep`, then the septic approval and the release through `/review` ([approval](https://explorer.solana.com/tx/5im6Vt5iBhkRxmcJxRzPcgf2demRR4bBY2oTtZZX5Y4DkuyrDnxcB8Dst2qAPnn8krAJe4ocswMh9TY1rjKmskYY?cluster=devnet), [release](https://explorer.solana.com/tx/3z7BNJH6xrXmoMHY9cvpD37c775prm2PgS4c2xL1SFTEevoe3UnJc2cUgWLXUfYEuzLncLw7J1djRDqhZ4FGsr4z?cluster=devnet)). Do not pass `--deal staged-devnet-deal-rehearsal` again. Each rehearsal needs 10 test USDC free in the buyer's wallet, on top of the live deal's 10 already in escrow.
 
 **Rehearsal-v2 status (2026-11-19):** stage-prep ran, and its septic approval was then signed from `/review` while testing deal documents (approval tx `3WEAsdUE…9Q9w`, relying on a fake “Septic evaluation.pdf”). It is funded with all three approvals, so only the release is left; the septic tap can no longer be practised on it.
 
-**Prerequisite:** `staged-devnet-deal-rehearsal-v2` comes from #46. The `--deal` flag accepts it only once #46 is merged. The deal page and `/review` show it only after the API is redeployed and seeded with that build.
+**Prerequisite:** `staged-devnet-deal-rehearsal-v2` comes from #46, which is merged. The deal page and `/review` show it only after the API is redeployed and seeded with that build, and its chain rows appear only after `replay:devnet --deal staged-devnet-deal-rehearsal-v2`. **Not done as of Nov 19, 03:40 UTC:** the live API returns `404` for both rehearsal deals.
 
 ## Septic reviewer's staged key in Phantom (for the stage)
 
@@ -51,7 +51,7 @@ The reviewer portal (<https://groundtruth-lac.vercel.app/review>) lets the septi
    Each step shows its signature and an Explorer link, and the deal page updates through the Stream as usual.
 9. **After the show,** remove the imported account from Phantom (Settings → Manage Accounts → the account → Remove).
 
-**Prerequisite:** the portal reads deals from the production API, so it needs this web build deployed (Vercel). The live deal is already seeded there.
+**Prerequisite:** the portal reads deals from the production API, so it needs this web build deployed (Vercel). The live deal is already seeded there. **Not deployed as of Nov 19, 03:40 UTC:** <https://groundtruth-lac.vercel.app/review> shows "Page not found"; the live web build dates from Nov 18, 21:38 UTC, before #45 merged.
 
 **If Phantom or the portal fails on stage:** the demo driver runs `pnpm --filter @groundtruth/escrow demo:deals stage-finish` from the laptop, as written in the segment's fallbacks below. It skips any step the phone already confirmed.
 
@@ -71,7 +71,7 @@ The reviewer portal (<https://groundtruth-lac.vercel.app/review>) lets the septi
   - 93 Woody Knoll Dr, Licking County, the second fixture parcel (baked; render check): <https://groundtruth-lac.vercel.app/parcels/ohio%3A39089%3A00500729609000>
   - Any other parcel you plan to search on stage.
 
-  If a parcel shows its boundary flat with "The 3D land isn't ready for this parcel yet," wait a minute and reload until the 3D block appears. Its build kept running and is cached. 3D for parcels other than the two baked ones needs the on-demand land endpoint (#37) deployed to Railway. Until then they stay flat however many times they are opened.
+  If a parcel shows its boundary flat with "The 3D land isn't ready for this parcel yet," wait a minute and reload until the 3D block appears. Its build kept running and is cached. The on-demand land endpoint (#37) is deployed: on Nov 19 at 03:45 UTC, `GET /api/parcels/ohio%3A39049%3A010-042534/land` answered `200` in 0.2 s.
 - [ ] Open these projected laptop tabs in this order:
   1. <https://groundtruth-lac.vercel.app>
   2. <https://groundtruth-lac.vercel.app/parcels/ohio%3A39049%3A230-000918>

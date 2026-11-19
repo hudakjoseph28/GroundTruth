@@ -1,60 +1,104 @@
 # Submission readiness
 
-**Audited:** Wed Nov 18, 2026, finishing 12:25 p.m. ET, as a signed-out judge.
-**Internal deadline:** Fri Nov 20, 11:00 a.m. ET. Devpost closes 1:00 p.m. ET.
+**Audited:** Wed Nov 18, 2026, 10:20–10:50 p.m. ET (Nov 19, 03:20–03:50 UTC), as a signed-out judge.
+**Internal deadline:** Fri Nov 20, 11:00 a.m. ET. Devpost closes 1:00 p.m. ET (noon CT). Finals at UT Austin, Sat Nov 21.
 
-**What was audited:** <https://groundtruth-lac.vercel.app> and its `/api` routes, in Chrome at 1440 × 900 and at a 390 px phone viewport (emulated, with touch). The API reported commit `0bc6a93`; `main` was at `6b61ce9`, and the two commits in between touch only `escrow/` and docs. PRs #27, #28, and #29 then merged and deployed (the API now reports `f0568ac`), and both demo closings ran on devnet. The escrow, QuickNode, and ElevenLabs rows were rechecked after that; the parcel audit was not repeated. Everything marked "watched" below was seen on screen or read from a live response during this audit. Nothing here is taken from a PR description.
+**What was audited:**
+
+- **The live site** <https://groundtruth-lac.vercel.app> in headless Chrome at 1440 × 1000 and 390 × 844, on every page: home, search, the golden and Licking parcels, `/explore`, all five deal pages, `/review`, `/documents`, and an unknown URL. We checked page text, links, console errors, failed requests, and horizontal overflow.
+- **The live API**, by route probes and live reports.
+- **`main` at `74a8d94`** (after #54, #55, and #56), built locally and run against the production API with the same checks. This is what goes live at the next deploy. #59 and #50 merged at the end of the audit (`main` is now `132d3e9`). The overflow check was repeated on that build.
+- **Devnet**, read directly from the public RPC: deal accounts, their signatures, and wallet balances.
+- **GitHub**, signed out.
+
+What was not checked: real phones, Safari and Firefox, the Devpost dashboard (it needs a team login), Railway and Vercel dashboards, the QuickNode Stream's state, and Twilio.
 
 ## Where we stand
 
-Updated 12:55 p.m. ET, after #27, #28, and #29 merged and both demo closings ran on devnet.
+- **The live site is a day behind `main`.** The web build is from Nov 18, 21:38 UTC, and the API reports `70943b9` (#39). The stage moment's main path, a reviewer tapping **Approve** in `/review` on a phone, shows "Page not found" on the live site today. So do `/explore`, the deal documents, and text alerts. Satya's two deploys (B1, B2) unblock most of this list.
+- **What a judge sees today works.** The held and released deal pages are live and match the chain: `Refunded` with `DealHeld (6019)`, and `Released` with three approvals. Every Explorer link matches a signature on the deal account. Search, both seeded parcels, the 404 page, and every source link load at both widths with no page errors and no sideways scroll.
+- **The stage deal is ready.** `staged-devnet-deal-live` (`2UrftJ…F6Cg`) is funded with 10 test USDC, and the title and survey reviewers have signed. Only the septic approval and the release are left. The septic wallet has 0.049985 devnet SOL for fees.
+- **Rehearsal is not ready.** No deal is left on which to practise the septic tap, and the buyer has only 5 test USDC (H4).
+- **The repo is public.** <https://github.com/hudakjoseph28/GroundTruth> opens signed out, and so do the site's GitHub, Data contract, and Team links.
 
-- **The parcel half is ready to demo.** Search, the golden parcel, the Licking parcel, a live Columbus address, and every source link worked at both widths with no page errors.
-- **Both escrow outcomes are now on devnet.** The held deal's release was rejected with `DealHeld (6019)` and the vault stayed at 25 test USDC; the cleared deal paid the seller exactly 25. All eleven transactions were read back from the public RPC, and the links are in [Devpost.md](Devpost.md).
-- **The product does not show any of it.** The API still reports both deals as `draft`, the website has no deal page, and the golden parcel page now says "no funds have moved" about a deal that was funded, held, and refunded.
-- **A judge cannot open the repo.** It is private, so the four GitHub links on the site return GitHub's 404.
+## Ranked list
 
-## Punch list
+Owners: **Joey** web UI · **Kadhir** escrow · **Satya** API, QuickNode, ElevenLabs, deploys · **Gagan** parcel data and submission. **Agent** marks items fixed in the PR that updates this file.
 
-Ranked. Owners: **Joey** web UI · **Kadhir** escrow · **Satya** API, QuickNode, ElevenLabs, deploy · **Gagan** parcel data and submission.
+### Blockers: the submission or the stage demo fails without these
 
-### Blockers: the submission fails without these
-
-| # | Problem | Evidence | Owner | Exact fix |
+| # | What's wrong | Where | Owner | Exact fix |
 | --- | --- | --- | --- | --- |
-| B1 | **The GitHub repo is private.** | Signed out, `github.com/hudakjoseph28/UBC-Hackathon` returns 404. The site's Docs, GitHub, Data contract, and Team links all go there. | Joey (repo owner) | Repo → Settings → General → Danger Zone → Change visibility → Public. A pattern scan of every branch's history found no tokens, key files, env files, or Solana keypairs (the only credential-shaped strings are `localhost` test database URLs). Then reload the four links in a private window. |
-| B2 | **The devnet run is not recorded in the repo or the API.** | Both closings are on-chain (deal accounts `54Va6q…E4tW` and `3uBECm…2yu`). `escrow/demo-results/devnet-*` is not on `main`, and `GET /api/deals/staged-devnet-deal` and `…-released` still return `draft` with no chain rows. | Kadhir, with Gagan (the run's output files are on Gagan's machine); Satya for the API | 1. Commit `escrow/demo-results/devnet-*.json` and `.md`. 2. Against the Railway database, run `pnpm --filter @groundtruth/backend replay:devnet --deal staged-devnet-deal`, then the same for `staged-devnet-deal-released`. 3. Confirm the two deal routes report `refunded` and `released` with a `releaseRejected` row. 4. Back up `escrow/.demo-wallets/` privately. |
-| B3 | **The website cannot show an escrow outcome.** | `/deals/staged-devnet-deal` renders a blank black page: the app has no deal route. The golden parcel's escrow strip is built from a bundled fixture, not from `GET /api/deals/:id`, so it did not change after the devnet run. | Joey | Build the `/deals/:dealId` page from [ConnectSurfaces](../03-connect-surfaces/ConnectSurfaces.md): read `/api/deals/:id` and its timeline every 2 seconds; show state, each timeline row, the rejected-release reason, and an Explorer link per signature. Link to it from the golden parcel's escrow strip. Make the strip read the same API. **Done on `gagan/deal-page`:** the deal page reads the deal and timeline from the API every 2 seconds, with Explorer links and a desktop QR code, and the golden parcel's strip reads the same API and links to it. |
-| B4 | **There is no video.** | Nothing recorded. | Gagan | Record from [VideoScript.md](VideoScript.md). The Explorer fallbacks for shots 9 to 12 can be filmed now; the in-product shots wait for B2 and B3. Upload to YouTube as Public or Unlisted and play it in a private window with sound. |
-| B5 | **The Devpost entry is not confirmed.** | The site footer still reads `Devpost TODO: add link`. This audit could not see a Devpost draft. | Gagan | Create the Devpost project from [Devpost.md](Devpost.md). Add all four members. Select Consumer Applications and Best Use of Solana, and only the bounties whose proof exists. Paste the repo, app, and video links. Save the confirmation. |
+| B1 | **The live web is missing every web change merged after Nov 18, 21:38 UTC** (#40, #42, #43, #45, #47, #49, #51–#56, and #59). `/review` and `/explore` show "Page not found", so the phone-tap stage path cannot run. There is no reviewer portal, documents section, text-alert opt-in, report summary, money-flow strip, or `/explore` map. | <https://groundtruth-lac.vercel.app/review>; `index.html` has `last-modified: Wed, 18 Nov 2026 21:38:18 GMT`, and its bundle has no "Connect Phantom" string. | Satya | **Do B2 first:** a new web build against the old API shows "The documents could not be loaded. That route is not available." on every deal page. Then, from the repo root on `main`, follow [backend/README.md § Deployment](../../../backend/README.md#deployment): `rm -rf /tmp/gt-web && mkdir /tmp/gt-web && git archive main \| tar -x -C /tmp/gt-web && cp -r .vercel /tmp/gt-web/ && (cd /tmp/gt-web && vercel deploy --prod --yes)`. Check: `/review` reads "Reviewer portal", and `/explore` draws parcel outlines at zoom 15 or closer. |
+| B2 | **The live API is at #39 (`70943b9`).** It is missing #40, #41, #43, #46, #47, #49, #50, #51, and #53. | `GET /api/parcels/area`, `/api/deals/:id/documents`, and `POST /api/deals/:id/sms-subscriptions` answer "That route is not available". `/api/deals/staged-devnet-deal-rehearsal` and `…-rehearsal-v2` answer `404`. A fresh live report for `ohio:39049:230-000919` has no road-access or wetlands check. | Satya | `railway up --service api --ci` from `main`. `start:prod` runs `prisma migrate deploy`, which adds the `deal_sms_alerts` and `deal_documents` tables, and seeds both rehearsal deals. Then run `railway variables --service api --set "GIT_COMMIT=$(git rev-parse --short HEAD)"`. With `DATABASE_URL` pointed at Railway, run `pnpm --filter @groundtruth/backend replay:devnet --deal staged-devnet-deal-rehearsal`, then the same for `staged-devnet-deal-rehearsal-v2`; their chain rows are on devnet but not in the database. Check: the three routes above answer `200`, and the `230-000919` report has `access` and a wetlands check. |
+| B3 | **There is no video.** | Not in the repo, README, or Devpost.md. | Gagan, with Satya for the call audio | Record from [VideoScript.md](VideoScript.md). Shots 1–6 and 8–13 can be filmed on the live site today. Shot 7 needs the audio clip of call `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`. Upload to YouTube as Unlisted, play it signed out in a private window with sound, and paste the link into Devpost and the README. |
+| B4 | **The Devpost entry is not confirmed.** | This audit could not see a draft. `devpost.com/software/groundtruth` is another team's project ("true."), so pick a different URL slug. | Gagan | Create the project from [Devpost.md](Devpost.md). Add Joey, Kadhir, and Satya and have each accept. Select **Consumer Applications** and **Best Use of Solana**, and **ElevenLabs** (its proof is recorded). Add **QuickNode** only after H1. Paste the app, repo, and video links, then **submit** (a draft does not count) before 11:00 a.m. ET Friday. Screenshot the submitted page into `docs/proof/`. |
+| B5 | **Eligibility and attendance in Austin are not confirmed.** | No record in the repo. The [UBC brief](../../ubc/UBC-Hackathon.md#demo-and-submission) requires both. | Gagan, for all four | Confirm with the organizers who is presenting in person on Nov 21 and the stage call time, and write it here. |
 
-### High: a judge will notice, or a prize claim depends on it
+### High: a judge will notice, a prize depends on it, or the stage is at risk
 
-| # | Problem | Evidence | Owner | Exact fix |
+| # | What's wrong | Where | Owner | Exact fix |
 | --- | --- | --- | --- | --- |
-| H1 | **The live golden parcel page now contradicts the chain.** | Watched on the live site after #29 deployed: the escrow strip has no `STAGED` tag and reads "Waiting on 3 sign-offs · Draft · 0/3", and the ledger says "Nothing here is on-chain yet, and no funds have moved." On devnet that deal was funded, held, and refunded. The cards below still say "Seller authority: Held" and "Survey: Signed off", which did not happen on-chain either. | Joey | Today: in `frontend/web/src/data/ledger.ts`, stop `hasChainState` from counting `escrowAddress` alone, which restores the labelled staged strip. Then B3: read the deal from the API so the strip shows the real state. Background is in the [#29 review comment](https://github.com/hudakjoseph28/UBC-Hackathon/pull/29#issuecomment-6986045575). **Done on `gagan/deal-page`:** the strip and the reviewer cards now come from the API's deal, and the "no funds have moved" line is gone. |
-| H2 | **QuickNode: the Stream did not project the closings.** | Eleven escrow transactions finalized between 12:41 and 12:48 p.m. ET. At 12:50 the API still showed both deals as `draft` with no chain rows. The only recorded Stream proof is the Nov 15 heartbeat run. The webhook is live: an unsigned POST gets 401. | Satya | Find out why: Stream paused, wrong filter, or deliveries skipped (Railway logs for `/api/webhooks/quicknode` from 17:41 UTC). Backfill with `replay:devnet` (B2). A replay is not Stream proof, so the bounty still needs one live delivery: resume the Stream and run a fresh `-v2` deal, then record the signature and the time it appeared on a second device. |
-| H3 | **ElevenLabs: no staged call is recorded.** | #27 is merged and deployed: at 12:45 p.m. ET an unsigned `POST /api/webhooks/elevenlabs` got 401, so the secret is set. Neither deal has an `evidenceReceived` row. | Satya | Place the staged call to a consenting teammate with `call:owner --confirm`. Save the conversation ID and record the call audio for the video. Enter the bounty only after that. |
-| H4 | **Unknown URLs show a blank black page.** | `/deals/staged-devnet-deal`, `/deals/…/timeline`, and `/nope` render nothing: no header, no message. | Joey | Add a catch-all route in `App.tsx` inside `SiteLayout`: "Page not found" plus links to home and the demo parcel. **Done on `gagan/deal-page`:** unknown URLs show a "Page not found" page inside the site layout. |
-| H5 | **Two TODO labels are visible on the public site.** | Footer on every page: `Devpost TODO: add link`. Homepage: `Become a reviewer` beside `TODO: reviewer signup`. | Joey | Put the Devpost URL in `FOOTER.devpost` once B5 exists, or remove the row. Remove the reviewer button, or label it "Not open yet". **Done on `gagan/judge-polish`:** both TODO labels are gone. The footer links the hackathon page, and the reviewer button is replaced by a line saying sign-up is not open. |
-| H6 | **Searching the golden parcel's own address finds nothing.** | The result card shows `0 SEAMAN RD`. Searching `0 Seaman Rd` returns "No Ohio parcel matched". | Gagan | Let a house number of `0` match the published site address, or do not show a `0` address on the card. |
-| H7 | **The root README is out of date and lacks the sponsor details the bounties ask for.** | It says the web "still searches those two fixture parcels" (the live site searches OGRIP) and that `pnpm dev` and `pnpm test` are "not set up yet". It does not state QuickNode's network, dataset, filter, and destination, or ElevenLabs' product and role. | Gagan, with Satya | Update the status paragraphs. Add a short "Sponsor integrations" section with those facts and links to `backend/README.md`. Add the two deal addresses and Explorer links after B2. |
-| H8 | **Three homepage lines claim more, or less, than is true.** | "Licensed reviewers sign": the demo reviewers are staged wallets. "Shown: the demo parcel, with a stand-in boundary": the demo script says this is the boundary Ohio publishes. Diagrams say "25,000 USDC" while the staged deal is 25 test USDC. | Joey | Change to "Reviewers sign". Correct or delete the stand-in note after checking which boundary the tile draws. Write "test USDC" in the diagrams. |
-| H9 | **The presenter, proof sheet, and reset sheet do not exist.** | [Pitch.md](Pitch.md) asks for a named presenter and demo driver by Nov 18, a proof sheet, and a reset sheet. | Gagan | Name both people in Pitch.md. Build the proof sheet from `escrow/demo-results/` and the tables in Devpost.md. Both fixed deal IDs are now used, so a reset means new `-v2` labels; write that down as the reset procedure. |
+| H1 | **QuickNode's second-device check has not been done**, so the QuickNode bounty cannot be entered. | [Devpost.md](Devpost.md) `[PENDING]` (QuickNode section and "What's next"); README Sponsor integrations, "Not yet measured". | Satya and Gagan | After B1, B2, and H2, open <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-rehearsal-v2> on a second phone. From the laptop, release it, its only step left: `pnpm --filter @groundtruth/escrow demo:deals stage-finish --deal staged-devnet-deal-rehearsal-v2`. Record the signature, the block time, when the phone showed `Released`, and the Railway `quicknode applied` log line. Then remove the two `[PENDING]` labels and "not yet measured". This uses up rehearsal-v2, which can no longer practise the septic tap anyway. |
+| H2 | **The Stream still runs the filter from before #53**, so approvals carry no document citation. | [backend/README.md § Deal documents](../../../backend/README.md#deal-documents-staged-demo), "Deploy note". | Satya | Paste `backend/quicknode/groundtruth-filter.js` from `main` into the Stream's filter and save. Test it on the block that holds rehearsal-v2's septic approval (`3WEAsdUE…`, Nov 19, 02:56:24 UTC). Its output must include `memos: ["groundtruth:doc:0d48ad98…"]`. |
+| H3 | **There is no written plan for resuming the Stream on Saturday.** No one is named and no time is set. The pre-show checklist only says "resumed". | [DemoRunbook.md](DemoRunbook.md) pre-show checklist, first item. | Satya | Write it into the checklist: who resumes the Stream, and when (at least 60 minutes before the slot). Then prove delivery without touching the stage deal: run `stage-prep` on a fresh rehearsal deal (H4) and watch its four rows arrive on the deal page. If delivery fails, the stage line drops QuickNode, as the runbook's fallback already says. |
+| H4 | **No deal is left to rehearse the septic phone tap, and the buyer has 5 test USDC.** Each rehearsal deal needs 10. | Buyer `HEDe3DMbVbFRku2Kzxq6usSjUdDJ1vphohTBxAXqEtXJ`: 5 test USDC and 1.83 SOL (devnet RPC, Nov 19, 03:35 UTC). Rehearsal v1 is released. Rehearsal-v2 has all three approvals (`3WEAsdUE…`), so only its release is left. | Kadhir | Get at least 15 test USDC for the buyer from <https://faucet.circle.com> (Solana Devnet), enough for v3 and a spare. Add `staged-devnet-deal-rehearsal-v3` the way #46 added v2: a fixture in `packages/shared`, the `--deal` option in `escrow/scripts`, and the PDA test. After it merges and deploys (B2), run `demo:deals stage-prep --deal staged-devnet-deal-rehearsal-v3`. Rehearse the tap on the phone. |
+| H5 | **Phantom on the presenter's phone is not set up.** It cannot be until B1 ships `/review`. | [DemoRunbook.md § Septic reviewer's staged key](DemoRunbook.md#septic-reviewers-staged-key-in-phantom-for-the-stage) | The presenter (H6) | Follow steps 1–7. The imported account must be `Ab7KLjree8ZgUrgXvtpb84oHKvzakC6VpRcPqnXoYz3F`. Fees are covered: it has 0.049985 devnet SOL. Practise on rehearsal-v3 (H4), never on `staged-devnet-deal-live`. |
+| H6 | **No presenter or demo driver is named.** [Pitch.md](Pitch.md) asked for both by Nov 18. | [Pitch.md](Pitch.md), line 3; [DemoRunbook.md](DemoRunbook.md), line 3. | Gagan, with the team | Write both names into Pitch.md and the runbook's first paragraph. |
+| H7 | **The staged wallets have no off-laptop backup.** All five keypairs (`buyer`, `seller`, `title`, `survey`, `septic`) exist only on Gagan's laptop, inside Conductor workspace folders (`delhi`, `agent-one`, `coverage-note`) that are deleted when a workspace is archived. Losing `septic.json` means neither the phone tap nor `stage-finish` can finish the stage deal. | `~/conductor/workspaces/UBC-Hackathon-main/*/escrow/.demo-wallets/` | Gagan | Copy them to an encrypted store you control off the laptop, such as a password-manager secure note or an encrypted USB drive. Also copy them to a folder outside Conductor (`chmod 700`). Check each with `solana-keygen pubkey`: buyer `HEDe…EtXJ`, seller `6XPG…pMMj`, title `Exxn…kBRW`, survey `CT6N…ohDa`, septic `Ab7K…Yz3F`. Never commit, paste, or project them. |
+| H8 | **Twilio variables are unconfirmed.** Once B1 and B2 ship, every deal page shows **Text me updates**. Without `TWILIO_*`, every opt-in fails with the API's `503`. | Deal pages after B1; [backend/README.md § Deal text alerts](../../../backend/README.md#deal-text-alerts-staged-demo-twilio) | Satya | Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER` together in Railway; a partial set stops the API. Opt your own number in on rehearsal-v2 before H1, and confirm the release text arrives. If it is not set by Thursday night, ask Joey to hide the panel. |
+| H9 | **Large document uploads through the site are untested.** The API accepts up to 10 MB, but uploads go through Vercel's `/api` rewrite to Railway. Vercel documents a 4.5 MB request-body limit for its functions. Whether that limit applies to an external rewrite was not tested. | `vercel.json` rewrite; `DEAL_DOCUMENT_MAX_BYTES` in `packages/shared` | Satya | After B1 and B2, upload a 9 MB PDF as a deal participant on a rehearsal deal through `groundtruth-lac.vercel.app`. If Vercel refuses it (`413` or `FUNCTION_PAYLOAD_TOO_LARGE`), lower `DEAL_DOCUMENT_MAX_BYTES` and the web's size copy to 4 MB. |
+| H10 | **Devpost.md claims live checks that are not deployed yet.** It says the live pipeline adds wetlands everywhere and road and stream-buffer checks in Franklin. On the live API today, neither exists (B2). | [Devpost.md](Devpost.md), "How we built it", paragraph 3 | Gagan | After B2, confirm the `230-000919` report shows both checks before pasting that paragraph into Devpost. If B2 slips past Thursday night, cut those words. |
+| H11 | **The homepage diagrams lost their visible "Illustration" labels.** #59 removed "Illustrative activity." under the hero tags and "Illustration." under the How-it-works and reviewer diagrams. The hero still shows `Exxn…kBRW approved · Seller authority` (the real staged title reviewer's wallet) and `Escrow funded · 25 test USDC` as if they happened. Only screen readers still hear "Illustration". AGENTS.md says to keep staged roles and test funds visibly labeled. | `frontend/web/src/content/attestations.ts` (`ATTESTATION_COPY`), `home.ts` (`HOW…note`, `REVIEWERS`); commit `a7c54dc`. On `main`, not live. | Joey | Put back one short visible label per diagram, such as "Illustration", even if smaller or quieter. Or replace the wallet in the hero tag with an obviously made-up short form. |
+| H12 | **Fixed by Agent.** With reduced motion on (iOS and macOS "Reduce Motion"), every page on `main` scrolled sideways: 2,315 px wide at a 390 px viewport, and 2,353 px at 1440. The ticker's hidden "View transaction" labels escaped its clip. | `frontend/web/src/layout/layout.css` (`.ticker-still`). Not on the live site yet, because the ticker (#52) is not deployed. | Agent | `.ticker-still` gets `position: relative`. All 28 page checks (14 pages at two widths) now show no overflow. |
+| H13 | **Fixed by Agent.** The golden parcel showed "Not on-chain yet" on Road access, Can you build here?, Flood, Water & sewer, and Easements. No reviewer or escrow ever signs those on-chain, so "yet" promised a step that does not exist. | `frontend/web/src/parcel/Ledger/RecordCard.tsx` | Agent | Checks a deal's reviewer or escrow does not settle now show only Evidence and Review, like a parcel with no deal. Seller authority, Survey, Septic, and Closing keep the on-chain step. |
+| H14 | **Fixed by Agent.** Devpost.md kept `[PENDING] Closing in the product` after the deal pages went live. | [Devpost.md](Devpost.md) | Agent | Removed, after checking both deal pages on the live site and every Explorer link against the deal accounts' signatures on devnet. The QuickNode `[PENDING]` labels stay (H1). |
+| H15 | **Fixed by Agent.** Devpost.md had no "what's different" answer, which the [UBC brief](../../ubc/UBC-Hackathon.md#demo-and-submission) requires. | [Devpost.md](Devpost.md) | Agent | Added "What makes it different", built only from facts already proven in the doc. |
 
 ### Polish: fix if time allows
 
-| # | Problem | Owner | Exact fix |
+| # | What's wrong | Where | Owner | Exact fix |
+| --- | --- | --- | --- | --- |
+| P1 | The golden report says Seaman Rd is "about 107 m" away and the setback covers "about 5%". QA-Proof measured 105.75 m and 4.661%, and Devpost says "about 106 metres". | `packages/shared/src/fixtures/golden-parcel.json`, lines 41, 52, 72, and 94; [QA-Proof.md](QA-Proof.md), line 15 | Gagan | Change them to "about 106 m" and "about 4.7%", re-run `db:seed` on Railway, and update [DemoRunbook.md](DemoRunbook.md) line 130. Otherwise say "just over 100 metres" on stage, as the scripts already do. |
+| P2 | The held deal's first row reads "Deal set up · Nov 11, 7:00 PM EST", the day before kickoff. | <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal> | Satya (B2) | #43 records real setup times. Check the row after B2. |
+| P3 | The live API returns the Licking address twice: `93 WOODY KNOLL DR THORNVILLE, OH 43076 THORNVILLE 43076`. | `GET /api/parcels/search?q=93 Woody Knoll Dr` | Satya (B2) | #43 cleans it. Check after B2. |
+| P4 | The golden parcel's ledger cards describe the held deal only ("Survey · Not signed", "Closing · Refunded"). The closings strip just above shows a released deal with Survey signed. | `/parcels/ohio%3A39049%3A230-000918` | Joey | Label the reviewer cards with the deal they read, for example "From the held closing (staged-devnet-deal)", or read them from the newest deal. |
+| P5 | The homepage "Built with" lists **Grok** ("Our AI teammate for prompts and planning") and **Cursor**. [Pitch.md](Pitch.md) rules out the Grok Bot bounty, and a judge may read the Grok card as an integration. | `frontend/web/src/content/built.ts` (on `main`, not live) | Joey and Gagan | Keep it as an honest tool credit, or drop the two cards. Do not select Grok on Devpost. |
+| P6 | `/api/health` reports a commit set by hand. | Railway `GIT_COMMIT` | Satya | Set it at every deploy (B2). |
+
+## Deploy status
+
+| Surface | Deployed | `main` | Merged but not live |
 | --- | --- | --- | --- |
-| P1 | The report says Seaman Rd is "about 107 m" away and the setback covers "about 5%". [QA-Proof.md](QA-Proof.md) computed 105.75 m and 4.661%. | Gagan | Change the golden fixture to "about 106 m" and "about 4.7%", or keep saying "just over 100 metres" on stage. |
-| P2 | Every details drawer shows a "Reviewer wallet → Escrow program" diagram and "This approval hasn't been signed on-chain yet", including Flood and Water & sewer, which no reviewer signs. | Joey | Show that block only for seller authority, survey, septic, and closing. **Done on `gagan/judge-polish`:** the wallet diagram and the "not signed on-chain" line now show only on checks a deal's reviewer signs. |
-| P3 | The Licking result repeats the city and ZIP: `93 WOODY KNOLL DR THORNVILLE, OH 43076 THORNVILLE 43076`. | Gagan | Drop the duplicated tail when normalizing the site address. **Done on `gagan/judge-polish`:** the web shows the address as "93 Woody Knoll Dr, Thornville, OH 43076". The API still returns the duplicated text. |
-| P4 | On parcels with no deal, the Closing card reads "Signs Unassigned" and "No next action is recorded." | Joey | Hide the Closing card when the parcel has no deal. **Done on `gagan/judge-polish`:** the Closing card shows only on a parcel with a deal. |
-| P5 | The parcel page does not show the site address, and the golden parcel shows no acreage. | Joey | Add both under the parcel ID. **Done on `gagan/judge-polish`:** the address now sits under the parcel ID. Acreage shows when the API returns it. |
-| P6 | A direct link to the golden parcel takes 4.7 to 5.8 seconds before the heading appears on a cold load. Through search it takes about 1.8 seconds. | Joey | Cap the opening transition at about 1.5 seconds on direct loads. The demo script's "press any key" skip already covers the stage. |
-| P7 | No favicon, description, or share-preview tags. `/favicon.ico` returns the HTML shell. Every tab is titled "GroundTruth". | Joey | Add a favicon and `description` / `og:` tags in `index.html`. **Done on `gagan/judge-polish`:** added a favicon, a description, share tags, and a tab title per page. There is still no share image. |
-| P8 | "Back to search" forgets the query. | Joey | Link back to `/search?q=<last query>`. **Done on `gagan/judge-polish`:** a parcel opened from results links back to those results. |
-| P9 | `/api/health` reports a commit that is set by hand. | Satya | Update `GIT_COMMIT` on Railway at each deploy. |
+| Web (Vercel) | Built Nov 18, 21:38 UTC | `132d3e9` | #40, #42, #43, #45, #47, #49, #51, #52, #53, #54, #55, #56, #59 |
+| API (Railway) | `70943b9` (#39); route probes agree | | #40, #41, #43, #46, #47, #49, #50, #51, #53 |
+| QuickNode filter | Not verified. The README's deploy note says to re-paste it after #53 (H2). | `groundtruth-filter.js` with memos | #53 |
+| Database | Migrations up to `land_assets` (inferred from the routes) | Adds `deal_sms_alerts` and `deal_documents` | Applied by `start:prod` on deploy |
+
+Both surfaces are deployed by hand from a CLI (Satya). Merging does not deploy.
+
+## Open PRs
+
+| PR | Status | Blocking |
+| --- | --- | --- |
+| [#57](https://github.com/hudakjoseph28/GroundTruth/pull/57) Parcel land view: toggleable map layers | Open, mergeable, CI running at audit time, no review | A review and green CI. It touches `packages/shared`, so it needs B1 and B2 again after merging. |
+| [#58](https://github.com/hudakjoseph28/GroundTruth/pull/58) Flood: SFHA and floodway lots need review | Open, CI green on its branch, **conflicts with `main`**, no review | A rebase onto `main` (#50 touched the report pipeline), then a review. |
+| [#60](https://github.com/hudakjoseph28/GroundTruth/pull/60) Golden parcel: seeded SSURGO septic screening | Open, mergeable, CI running at audit time, no review | A review and green CI. It changes the seeded golden report, so film the video after it lands or not at all, and re-seed (B2). |
+
+All three are Gagan's. #50, #54, #55, #56, and #59 merged during this audit and are part of B1 and B2. **Set a merge freeze before filming (B3) and before Satya's final deploy.** Each later merge means another deploy and another check of the stage path.
+
+## Demo readiness (on-chain, Nov 19, 03:35 UTC)
+
+| Item | State | Evidence |
+| --- | --- | --- |
+| Stage deal `staged-devnet-deal-live` | **Ready for `stage-finish`.** Funded with 10 test USDC; title and survey signed. | Account `2UrftJ…F6Cg` has exactly 4 signatures: `jmK7fg`, `5waYrx`, `2VSXvY`, and `Gj327z` (Nov 18, 18:57:19–18:57:22 UTC). The live API says `funded`. |
+| Rehearsal v1 | Released, used up | Last signature `3z7BNJH6…` (release), Nov 18, 23:17 UTC |
+| Rehearsal v2 | Release left. Not on the live API (B2). | Septic approval `3WEAsdUE…` with memo `groundtruth:doc:0d48ad98…`, Nov 19, 02:56 UTC |
+| Buyer test USDC | **5**, which is not enough for another 10-USDC rehearsal (H4) | `HEDe…EtXJ` |
+| Septic fee SOL | 0.049985, enough | `Ab7K…Yz3F` |
+| Phantom on the phone | Not set up (H5) | Needs B1 |
+| `.demo-wallets` backup | Only on Gagan's laptop (H7) | |
+| Stream resume plan | Not written (H3) | |
 
 ## Definition of a winning build
 
@@ -62,13 +106,13 @@ From the [README](../../../README.md#definition-of-a-winning-build).
 
 | Item | Status | Evidence |
 | --- | --- | --- |
-| Public URL loads signed out; search is obvious in five seconds | **Pass** | Watched. First paint in under 1 second at both widths. The search box and the gold "Find parcel" button are in the first screen. |
-| Search returns real OGRIP boundaries from two counties; golden report shows a dated source, a gap, and the next person | **Pass** | Watched. `230-000918` and `84 W Dodridge St` (Franklin) and `00500729609000` and `93 Woody Knoll Dr` (Licking) return results in 0.3 to 1.4 seconds. The Road access drawer shows three sources retrieved Nov 17, 2026, "What it does not establish", and "Title reviewer, then county zoning office". |
-| Held deal rejects release on-chain with balances unchanged | **Pass on-chain** | [Rejected release](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet): `DealHeld (6019)`, vault 25 → 25, seller 0 → 0, buyer 15 before and after. Not shown in the product (B2, B3). |
-| Cleared deal pays the exact amount once; every claim has an Explorer link | **Pass on-chain** | [Release](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet): seller 0 → 25, vault closed, after three approvals. All eleven links are in Devpost.md. No second release was attempted on devnet. The website shows none of these links (B3). |
-| ElevenLabs call creates reviewer evidence, never an approval | **Not yet** | The webhook is live, but no call is recorded (H3). |
-| QuickNode Stream drives the timeline on a second device | **Not yet** | The Stream did not project the Nov 18 closings, and the web has no timeline page (H2, B3). |
-| Video, repo, and app all open signed out | **Fail** | App: pass. Repo: 404 (B1). Video: does not exist (B4). |
+| Public URL loads signed out; search is obvious in five seconds | **Pass** | Every page returns `200` with no page errors. The search box and the gold "Find parcel" button are in the first screen at both widths. |
+| Search returns real OGRIP boundaries from two counties; golden report shows a dated source, a gap, and the next person | **Pass** | `230-000918` (Franklin) and `93 Woody Knoll Dr` (Licking) return results from the live API in 0.3–0.4 s. `750 High St, Columbus` returns N and S High St in 1.1 s. |
+| Held deal rejects release on-chain with balances unchanged | **Pass, and shown in the product** | The live deal page shows `Release rejected · DealHeld (6019)`, linked to `Rro8WA…vwGz`, which the devnet RPC shows as failed. |
+| Cleared deal pays the exact amount once; every claim has an Explorer link | **Pass, and shown in the product** | The live deal page shows `Released` and `3 of 3 signed`, linked to `5kWpcH…vHdC`. |
+| ElevenLabs call creates reviewer evidence, never an approval | **Pass** | The live held-deal page shows `Evidence received` from the owner callback, marked `Off-chain record · not a chain event`. |
+| QuickNode Stream drives the timeline on a second device | **Not yet** | H1 |
+| Video, repo, and app all open signed out | **Partly** | App and repo: pass. Video: does not exist (B3). |
 
 ## Submission checklist
 
@@ -76,43 +120,8 @@ From the [UBC brief](../../ubc/UBC-Hackathon.md#demo-and-submission).
 
 | Item | Status | Evidence |
 | --- | --- | --- |
-| Name, description, members, technologies, track, Solana, bounties | **Not yet** | Text is drafted in [Devpost.md](Devpost.md). No Devpost entry was seen (B5). |
-| Written answers: build, problem, how it works, what's different, what's next | **Partly** | Devpost.md covers all but a "what's different" answer. Its escrow outcomes are now filled in with Explorer links; QuickNode and ElevenLabs are still `[PENDING]`. |
-| Public repo with setup; README with architecture, program IDs, network, sponsor configuration | **Fail** | Private (B1). The README has setup, the program ID, and devnet, but stale status lines and no sponsor section (H7). |
-| Working demo plus a 2–3 minute video with audible ElevenLabs output | **Not yet** | The parcel demo works. No video, and no ElevenLabs call to hear (B4, H3). |
-| Eligibility and attendance verified; demo, repo, video open signed out | **Not yet** | Demo opens. Repo and video do not. Attendance is not recorded anywhere in the repo. |
-
-## Audit detail
-
-### What worked (watched at both widths)
-
-| Step | Desktop 1440 px | Phone 390 px |
-| --- | --- | --- |
-| Homepage: page load / first paint | 0.4 s / 0.9 s | 0.3 s / 0.4 s |
-| Search `230-000918` → result | 0.8 s | 0.3 s |
-| Search `84 W Dodridge St` → result (live OGRIP) | 1.4 s | 0.8 s |
-| Result click → ledger readable | 1.8 s | 1.8 s |
-| Junk query `asdfqwerzzz` | "No Ohio parcel matched…" with a hint, 0.4 s | same |
-| One-letter query | "Enter at least 3 characters…" | same |
-| Unknown parcel, malformed key | "Parcel not found" with a reason and a way back | same |
-| All nine ledger drawers on three parcels | open, readable, close | full-width sheet, no sideways scroll |
-| Header links, phone menu, How-it-works tabs, Held / Cleared toggle, 3D / 2D switch, Explore menu | work | work |
-
-- **Console:** no page errors on any page. The only errors are the expected 404 and 400 for the deliberately bad parcel keys.
-- **Layout:** no horizontal overflow at 390 px on any page tested.
-- **Links:** 35 distinct external links collected from the homepage and all drawers. Every source link (Franklin County, FEMA, ALTA, FBI IC3, OGRIP, Bowling Green Township, Google Maps and Earth) loaded in a browser. The four GitHub links fail (B1). FEMA's `hazards.fema.gov` reset several scripted requests but loaded in the browser each time.
-- **API:** `/api/health`, `/api/coverage`, parcel search, parcel detail, both seeded reports, and the staged deal and timeline all returned 200 in under 1 second.
-- **Staged labels:** the golden parcel's ledger is tagged "Staged demo data" and says "Nothing here is on-chain yet, and no funds have moved." The homepage diagrams are captioned "Illustration" or "Illustrative activity".
-
-### Other searches tried
-
-| Query | Result |
-| --- | --- |
-| `230000918` (no hyphen) | Golden parcel |
-| `84 west dodridge street`; the same with city, state, ZIP | Correct parcel |
-| `0 Seaman Rd`, `Seaman Rd` | Nothing (H6) |
-| `1 Capitol Square Columbus`, `2079 E 9th St Cleveland`, `Columbus` | Nothing. Not confirmed whether OGRIP publishes those addresses. |
-
-### Not checked
-
-Real phones, Safari and Firefox, screen readers, a slow network, the Devpost page, and attendance. The history scan was pattern-based; one run of a dedicated secret scanner before B1 would be a cheap second check.
+| Name, description, members, technologies, track, Solana, bounties | **Not confirmed** | B4 |
+| Written answers: build, problem, how it works, what's different, what's next | **Drafted** | [Devpost.md](Devpost.md) now has all five. |
+| Public repo with setup; README with architecture, program IDs, network, sponsor configuration | **Pass** | Public signed out. The README has setup, the program ID, devnet, and a Sponsor integrations table. Its parcel paragraph now separates what is live from what is only on `main`. |
+| Working demo plus a 2–3 minute video with audible ElevenLabs output | **Partly** | The demo works on the live site. There is no video yet (B3). |
+| Eligibility and attendance verified; demo, repo, video open signed out | **Not yet** | B5; video B3 |

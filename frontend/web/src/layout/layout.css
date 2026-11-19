@@ -598,7 +598,11 @@
   flex: 0 1 36%;
 }
 
+/* `position: relative` makes this the containing block of each item's
+   visually-hidden Explorer label (position: absolute). Without it those labels
+   escape the clip and widen every page under reduced motion. */
 .ticker-still {
+  position: relative;
   flex: 1;
   min-width: 0;
   overflow: hidden;
