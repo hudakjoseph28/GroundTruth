@@ -1,0 +1,54 @@
+{
+  "status": "complete",
+  "cluster": "devnet",
+  "rpc": "https://api.devnet.solana.com",
+  "programId": "ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG",
+  "mint": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+  "parcelKey": "ohio:39049:230-000918",
+  "amountBaseUnits": "1000000",
+  "expectedHeldReleaseError": "DealHeld (6019)",
+  "runId": "stage-pay-rehearsal-v1",
+  "startedAt": "2026-11-19T04:33:06.638Z",
+  "wallets": {
+    "buyer": "HEDe3DMbVbFRku2Kzxq6usSjUdDJ1vphohTBxAXqEtXJ",
+    "seller": "6XPGX3Vmqh4gtj6UZNcgJTDN1haWivctw8KQ7D6UpMMj",
+    "title": "ExxnTPx24fjXRiAPcnrWqKCfEQDhDmxCDZ57VQ7RkBRW",
+    "survey": "CT6Nstaijac7yAVuDNVWQ12JFMYGfggE4VPBK4sYohDa",
+    "septic": "Ab7KLjree8ZgUrgXvtpb84oHKvzakC6VpRcPqnXoYz3F",
+    "buyer USDC": "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+    "seller USDC": "CZQyg2JGyjj9vRyvaBYS2tz54kproMxoiNF9hHxTG5Zu"
+  },
+  "setup": [],
+  "deals": [
+    {
+      "label": "payRehearsal",
+      "fixtureId": "staged-devnet-deal-pay-rehearsal",
+      "dealIdLabel": "groundtruth-demo-pay-rehearsal-v1",
+      "dealIdHex": "17e0f6568f539dba9581cef87392ac8b62226fdc71036ca5a2f94d1edcce6b9e",
+      "dealPda": "9zy4EJot1UdRFjHzhBJrQPiQBQpp7oXhBhmBKrbtqszL",
+      "vault": "a5mZ4QjeqxruNU29vrWgGa1q6DLbsvHKZ4T64Mfvft3",
+      "steps": [
+        {
+          "step": "initialize_deal",
+          "signer": "buyer",
+          "signature": "3CePKjdYxbtfFVE6jHcLykzyPX4vtDNBbS5NAdrVhRuk5ojt3z9XD1FrXm91FdUq8DmEhmRMFerxLn7rPZzMPeeT",
+          "slot": 523871945,
+          "ok": true,
+          "stateAfter": "draft"
+        }
+      ],
+      "balances": [
+        {
+          "moment": "after stage-init (draft, nothing funded)",
+          "buyerUsdc": "5000000",
+          "vaultUsdc": "0",
+          "sellerUsdc": "35000000"
+        }
+      ],
+      "finalState": "draft"
+    }
+  ],
+  "mode": "devnet",
+  "note": "Staged GroundTruth payRehearsal demo deal (staged-devnet-deal-pay-rehearsal) on Solana devnet with Circle test USDC: stage-init (initialize only). The buyer funds it from the deal page's Solana Pay QR. Public keys and signatures only.",
+  "finishedAt": "2026-11-19T04:33:08.179Z"
+}

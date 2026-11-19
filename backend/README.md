@@ -349,10 +349,35 @@ NAIP's response time varies the most. The web waits 10 s for a build (`LAND_BUIL
 | `staged-devnet-deal-rehearsal` | rehearsal copy of the live deal (10 USDC); used up testing the reviewer portal (#45) | `6KQJYssz234KjxrMkREcxpcKbok34aaFyihDST6DmH5u` | `groundtruth-demo-rehearsal-v1` |
 | `staged-devnet-deal-rehearsal-v2` | second rehearsal copy (10 USDC); used up on 2026-11-19: its septic approval tested deal documents, and its release, from `/review`, tested the blockhash resend ([release](https://explorer.solana.com/tx/5vJWxXNeQneizF4B2MwKvWP6Q9uFab3GoR6VJkbzJ2wkUQC9mcVoji8TsH1128Wjoc9y9DF3bc4TpUL5v5qDqmqs?cluster=devnet)) | `EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X` | `groundtruth-demo-rehearsal-v2` |
 | `staged-devnet-deal-rehearsal-v3` | third rehearsal copy (**5** USDC: the buyer had 5 left); stage-prep ran on 2026-11-19, so it is funded with title and survey signed and septic waiting | `ESMKH5PB2jSd5U4L8hvC1XMVerhYsuRN6U3B6GHrLzf7` | `groundtruth-demo-rehearsal-v3` |
+| `staged-devnet-deal-pay-rehearsal` | Solana Pay rehearsal (1 USDC): initialized by `demo:deals stage-init`, then funded on 2026-11-19 from the Solana Pay transaction request ([record](../escrow/demo-results/devnet-solana-pay-fund-v1.md)) | `9zy4EJot1UdRFjHzhBJrQPiQBQpp7oXhBhmBKrbtqszL` | `groundtruth-demo-pay-rehearsal-v1` |
 
 The first two are 25 test USDC and ran on 2026-11-18. The addresses are what `pnpm --filter @groundtruth/escrow demo:deals plan` prints for the staged demo wallets, and `test/stagedDemoDeals.test.ts` re-derives each one. Public keys only. Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 
 Timeline rows are ordered by time, then chain slot, then event index. A confirmed row is unique by transaction signature + event index, which is the QuickNode replay guard.
+
+### Solana Pay funding (transaction request)
+
+`/api/deals/:id/solana-pay/fund` is a [Solana Pay transaction request](https://github.com/solana-foundation/solana-pay/blob/master/typescript/packages/solana-pay/spec/SPEC.md#specification-transaction-request). The deal page shows it as a QR code and a `solana:` link while the deal is a draft.
+
+- `GET` answers `{ label, icon }`.
+- `POST { "account": "<base58>" }` answers `{ transaction, message }`. `transaction` is the buyer's `fund`, base64, unsigned:
+  - the fee payer is the buyer and the blockhash is recent;
+  - it has one instruction to the escrow program, built from the checked-in IDL (`fundInstruction` in `@groundtruth/shared`);
+  - its accounts are buyer, deal PDA, buyer USDC account, vault, mint, and token program.
+- **The API never signs.** It holds no key. The wallet signs and sends, and the program checks every rule again.
+- **Refusals** carry the spec's `message` (a wallet shows its first 80 characters) beside the usual `error` envelope:
+
+  | Status | When |
+  | --- | --- |
+  | `400` | The body has no valid base58 `account`. |
+  | `404` | The deal is unknown or not public. |
+  | `403` | The account is not the deal's bound buyer. |
+  | `409` | The API's state is not `draft`; or devnet shows the deal already funded (the chain wins); or the deal PDA isn't initialized; or the on-chain buyer, mint, amount, seller token account, or vault differ from the deal row. |
+  | `502` | Devnet did not answer. Retryable. |
+  | `503` | `SOLANA_RPC_URL` is not devnet (its genesis hash is checked). |
+
+- **CORS** is open (`*`) on this route only, because the spec expects wallets to call from anywhere. Nothing it returns is private.
+- **Rehearse on a new deal only.** `staged-devnet-deal-pay-rehearsal` was the first. A second rehearsal needs a new fixture and label, then `pnpm --filter @groundtruth/escrow demo:deals stage-init --deal <id>`. Never initialize the live deal this way.
 
 ## QuickNode Stream webhook
 
@@ -500,6 +525,22 @@ A staged check against seller impersonation. An ElevenLabs agent phones a **cons
 **Setup.** Railway needs `ELEVENLABS_WEBHOOK_SECRET` (from the HMAC webhook created in ElevenLabs settings) and `ELEVENLABS_AGENT_ID`. Local `.env` needs `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `ELEVENLABS_PHONE_NUMBER_ID`, `OWNER_CALLBACK_TO_NUMBER`, and `OWNER_CALLBACK_PARTICIPANT_LABEL` (see `.env.example`).
 
 **Test data.** `test/support/elevenlabsPayloads.ts` follows the documented payload and the SDK types. It is not recorded from a live call; replace it once the first real call lands.
+
+## Reviewer approval Blink (Solana Action)
+
+A [Solana Action](https://solana.com/docs/advanced/actions) (spec 2.4) that lets an assigned reviewer sign their approval from any Blink client. **Rehearsal deal only** (`staged-devnet-deal-rehearsal-v2`), **devnet only**, and **the API never signs**: it builds an unsigned transaction and the reviewer's wallet signs, pays the fee, and sends it.
+
+| Route | What it does |
+| --- | --- |
+| `GET /actions.json` | Discovery rules: `/deals/staged-devnet-deal-rehearsal-v2` and `/api/actions/**` map to the Action API. `vercel.json` forwards it, so the web deal page URL unfurls as the Blink. |
+| `GET /api/actions/approve/staged-devnet-deal-rehearsal-v2` | Action metadata (title, staged/test-USDC description, icon, one `transaction` link). Reads the deal account on devnet and adds "N of M required approvals signed"; `disabled` with the reason once the deal is held, settled, not funded, or fully signed. |
+| `POST /api/actions/approve/staged-devnet-deal-rehearsal-v2` | Body `{ "account": "<wallet>" }`. If the wallet is an assigned reviewer who hasn't signed and the deal is funded, returns a base64 v0 `sign_approval` transaction with the wallet as fee payer and only signer and an empty signature slot. Otherwise an ActionError `{ message }`: `403` not a reviewer, `409` already signed / held / settled / not funded, `400` bad body, `503` devnet unreadable. |
+| `GET /api/actions/icon.svg` | The Blink icon (labelled staged, devnet, test USDC). |
+
+- **Chain state decides.** Every request reads the deal PDA at `confirmed` from `SOLANA_RPC_URL` (default public devnet), checks the genesis hash is devnet, the account is owned by the escrow program, and its deal ID and mint match the staged deal. The role comes from the wallet's on-chain assignment, as the program checks it. The database is not consulted.
+- **CORS:** `actions.json` and every `/api/actions/*` response (and `OPTIONS` preflight, `204`) carry `Access-Control-Allow-Origin: *`, the spec's allowed methods/headers, `X-Action-Version: 2.4`, and `X-Blockchain-Ids: solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` (devnet).
+- **Try it:** `https://dial.to/?action=solana-action:https://groundtruth-lac.vercel.app/api/actions/approve/staged-devnet-deal-rehearsal-v2&cluster=devnet`, with a reviewer wallet set to devnet. A confirmed approval reaches the deal timeline through the QuickNode Stream like any other.
+- **As of 2026-11-19 the rehearsal deal has all three approvals on devnet**, so the Action shows as disabled ("Every reviewer has signed…") and every reviewer gets `409`. A positive live demo needs a fresh funded rehearsal deal.
 
 ## Tests
 

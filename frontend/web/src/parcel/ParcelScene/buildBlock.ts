@@ -51,8 +51,11 @@ export interface LandBlockObject {
   setIntro(progress: number): void;
   /** Puts the travelling pulse this far round the parcel boundary (0..1), or hides it with null. */
   setBoundaryPulse(progress: number | null): void;
-  /** Tints the boundary from gold (0) toward green (1), for a release. */
-  setBoundaryTone(amount: number): void;
+  /**
+   * Colors the boundary line. `emphasis` (0..1) thickens it, for a release
+   * rippling through it or a hold locking it.
+   */
+  setBoundaryColor(color: Color, emphasis: number): void;
   /** Shows or hides the gold boundary line (and its pulse). */
   setBoundaryVisible(visible: boolean): void;
   /**
@@ -634,16 +637,12 @@ export function buildLandBlock(
   glow.position.y = dims.base - 0.26;
   const floor = table ? tableGround(dims, keep) : glow;
 
-  const gold = new Color(PALETTE.gold);
-  const green = new Color(PALETTE.green);
-
   return {
     group,
     floor,
-    setBoundaryTone(amount) {
-      const tone = Math.min(1, Math.max(0, amount));
-      boundaryMaterial.color.copy(gold).lerp(green, tone);
-      boundaryMaterial.linewidth = 2.2 + 1.4 * tone;
+    setBoundaryColor(color, emphasis) {
+      boundaryMaterial.color.copy(color);
+      boundaryMaterial.linewidth = 2.2 + 1.4 * Math.min(1, Math.max(0, emphasis));
     },
     setBoundaryVisible(visible) {
       boundaryVisible = visible;

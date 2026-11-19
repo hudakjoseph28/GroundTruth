@@ -1,4 +1,5 @@
 export type {
+  ActivityEvent,
   ApiError,
   Check,
   CheckKind,
@@ -64,6 +65,7 @@ export {
   stagedDemoChainAccounts,
   stagedDemoDeals,
   stagedLiveDeal,
+  stagedPayRehearsalDeal,
   stagedRehearsalDeal,
   stagedRehearsalV2Deal,
   stagedRehearsalV3Deal,
@@ -118,6 +120,7 @@ export type { LandMeta, MercatorRegion } from "./land.js";
 export {
   HOLD_REASON_CODES,
   escrowErrorByCode,
+  fundInstruction,
   placeHoldInstruction,
   releaseInstruction,
   signApprovalInstruction,
@@ -126,6 +129,14 @@ export type {
   EscrowInstructionSpec,
   HoldReasonCode,
 } from "./reviewerInstructions.js";
+
+export { solanaPayFundPath, solanaPayUrl } from "./solanaPay.js";
+export type {
+  SolanaPayError,
+  SolanaPayLabel,
+  SolanaPayTransactionRequest,
+  SolanaPayTransactionResponse,
+} from "./solanaPay.js";
 
 export { MAP_LAYER_IDS, isParcelLayers } from "./layers.js";
 export type {

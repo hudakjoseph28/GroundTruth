@@ -8,6 +8,7 @@
  *   pnpm --filter @groundtruth/escrow demo:deals stage-prep      # live deal, part 1
  *   pnpm --filter @groundtruth/escrow demo:deals stage-finish    # live deal, on stage
  *   ... demo:deals stage-prep --deal staged-devnet-deal-rehearsal-v3 # practise run
+ *   pnpm --filter @groundtruth/escrow demo:deals stage-init      # Solana Pay rehearsal
  *   pnpm --filter @groundtruth/escrow demo:deals simulate        # local, no devnet tx
  *   pnpm --filter @groundtruth/escrow demo:deals run             # sends devnet txs
  *   ... demo:deals <mode> --amount 20                            # deal size in USDC
@@ -42,6 +43,14 @@
  *                 survey approved and no hold.
  *                 Records: demo-results/devnet-stage-live-v1.{json,md}, or
  *                 devnet-stage-rehearsal-v1 / -v2 / -v3 for the rehearsal deals.
+ *   stage-init    Initializes a stage deal (--deal, default
+ *                 staged-devnet-deal-pay-rehearsal, 1 USDC) and nothing
+ *                 else, so it stays a draft for the buyer to fund from the
+ *                 deal page's Solana Pay QR (the API builds the unsigned
+ *                 fund; the buyer's wallet signs). No rehearsal: initialize
+ *                 moves no USDC. Skips a deal already on chain. Sends through
+ *                 the same priority-fee / resend loop as every other mode.
+ *                 Records: demo-results/devnet-stage-pay-rehearsal-v1.{json,md}.
  *   --deal staged-devnet-deal-rehearsal-v3 (v1 and v2 are used up)
  *                 Runs stage-prep / stage-finish on the rehearsal copy of the
  *                 live deal (same flow, its own PDA; v3 holds 5 USDC), so the
@@ -101,6 +110,7 @@ import {
   stagedDeal,
   stagedDemoChainAccounts,
   stagedLiveDeal,
+  stagedPayRehearsalDeal,
   stagedRehearsalDeal,
   stagedRehearsalV2Deal,
   stagedRehearsalV3Deal,
@@ -196,6 +206,7 @@ const STAGE_DEAL_IDS = [
   stagedRehearsalDeal.id,
   stagedRehearsalV2Deal.id,
   stagedRehearsalV3Deal.id,
+  stagedPayRehearsalDeal.id,
 ] as const;
 /** Each stage deal's record: demo-results/devnet-<run id>.{json,md}. */
 const stageRunId = (outcome: Outcome) =>
@@ -205,6 +216,8 @@ const stageRunId = (outcome: Outcome) =>
     ? "stage-rehearsal-v2"
     : outcome === "rehearsalV3"
     ? "stage-rehearsal-v3"
+    : outcome === "payRehearsal"
+    ? "stage-pay-rehearsal-v1"
     : STAGE_RUN_ID;
 /** Stand-in block time for simulated transactions (2026-11-18T00:00:00Z). */
 const SIMULATED_BLOCK_TIME = 1_795_478_400;
@@ -328,6 +341,7 @@ const OUTCOMES = [
   "rehearsal",
   "rehearsalV2",
   "rehearsalV3",
+  "payRehearsal",
 ] as const;
 type Outcome = (typeof OUTCOMES)[number];
 const FIXTURES: Record<Outcome, Deal> = {
@@ -337,6 +351,7 @@ const FIXTURES: Record<Outcome, Deal> = {
   rehearsal: stagedRehearsalDeal,
   rehearsalV2: stagedRehearsalV2Deal,
   rehearsalV3: stagedRehearsalV3Deal,
+  payRehearsal: stagedPayRehearsalDeal,
 };
 /** `run` drives the held and released closings; `stage-*` drives the live one. */
 const RUN_OUTCOMES: readonly Outcome[] = ["held", "released"];
@@ -382,7 +397,8 @@ function planDeals(wallets: Wallets, runAmount: bigint): DealPlan[] {
         outcome === "live" ||
         outcome === "rehearsal" ||
         outcome === "rehearsalV2" ||
-        outcome === "rehearsalV3"
+        outcome === "rehearsalV3" ||
+        outcome === "payRehearsal"
           ? BigInt(FIXTURES[outcome].amountBaseUnits)
           : runAmount,
     };
@@ -1321,6 +1337,8 @@ function proofMarkdown(r: Results): string {
       `## ${
         deal.label === "held"
           ? "Held deal: release rejected, buyer refunded"
+          : deal.label === "payRehearsal"
+          ? "Solana Pay rehearsal deal: initialized here, funded by the buyer's wallet"
           : "Released deal: seller paid after every approval"
       }`,
       "",
@@ -1818,7 +1836,7 @@ async function runStage(
   chain: Chain,
   wallets: Wallets,
   plan: DealPlan,
-  phase: "prep" | "finish",
+  phase: "init" | "prep" | "finish",
   results: Results,
 ) {
   const buyer = wallets.buyer;
@@ -1880,7 +1898,9 @@ async function runStage(
   const [title, survey, septic] = REVIEWERS;
   console.log(`\n${plan.outcome} deal ${dealPda.toBase58()} (${phase})`);
 
-  if (phase === "prep") {
+  // Every send below, stage-init's included, goes through chain.send: on
+  // devnet that is sendUntilLanded (priority fee, fresh blockhash, resend).
+  if (phase === "init" || phase === "prep") {
     if (!(await chain.account(sellerAta))) {
       await send(
         results.setup,
@@ -1939,6 +1959,18 @@ async function runStage(
         [],
         state,
       );
+    }
+    if (phase === "init") {
+      // Funding is the buyer wallet's, through the Solana Pay QR.
+      const after = await readDeal(chain, dealPda);
+      expect(
+        after.amount === amount,
+        "on-chain amount differs from the fixture",
+      );
+      await snapshot("after stage-init (draft, nothing funded)");
+      record.finalState = after.state;
+      save();
+      return;
     }
     if ((await readDeal(chain, dealPda)).state === "draft") {
       await send(
@@ -2057,19 +2089,22 @@ async function main() {
       "check",
       "simulate",
       "run",
+      "stage-init",
       "stage-prep",
       "stage-finish",
     ].includes(mode)
   ) {
     throw new Error(
-      `usage: demo-deals.ts [plan|check|simulate|run|stage-prep|stage-finish] [--amount <usdc>] [--held-error <IDL error name>] [--resume <previous devnet-*.json>] [--deal staged-devnet-deal-live|staged-devnet-deal-rehearsal|staged-devnet-deal-rehearsal-v2|staged-devnet-deal-rehearsal-v3]`,
+      `usage: demo-deals.ts [plan|check|simulate|run|stage-init|stage-prep|stage-finish] [--amount <usdc>] [--held-error <IDL error name>] [--resume <previous devnet-*.json>] [--deal staged-devnet-deal-live|staged-devnet-deal-rehearsal|staged-devnet-deal-rehearsal-v2|staged-devnet-deal-rehearsal-v3|staged-devnet-deal-pay-rehearsal]`,
     );
   }
   if (flags.resume && mode !== "run") {
     throw new Error("--resume only applies to run");
   }
   if (flags.deal && !mode.startsWith("stage-")) {
-    throw new Error("--deal only applies to stage-prep and stage-finish");
+    throw new Error(
+      "--deal only applies to stage-init, stage-prep, and stage-finish",
+    );
   }
   if (
     flags.deal &&
@@ -2130,9 +2165,14 @@ async function main() {
   // The current rehearsal deal: v1 was used up testing the reviewer portal
   // (#45), v2 testing the hardened transaction sending.
   const rehearsalPlan = plans.find((p) => p.outcome === "rehearsalV3")!;
-  /** The deal stage-prep / stage-finish drive: --deal, default the live one. */
+  /** The deal stage-* drives: --deal, default the live one (stage-init: the Solana Pay rehearsal). */
   const stagePlan = plans.find(
-    (p) => p.fixtureId === (flags.deal ?? stagedLiveDeal.id),
+    (p) =>
+      p.fixtureId ===
+      (flags.deal ??
+        (mode === "stage-init"
+          ? stagedPayRehearsalDeal.id
+          : stagedLiveDeal.id)),
   )!;
   const mismatches = fixtureMismatches(wallets, plans);
   const reportMismatches = () => {
@@ -2283,18 +2323,25 @@ async function main() {
       : `not ready (state ${deal.state}, approvals ${JSON.stringify(
           deal.approvals,
         )})`;
-    return { prep, finish };
+    const init = mismatches.length
+      ? "not ready (plan differs from fixtures)"
+      : deal
+      ? `done (already on chain, ${deal.state})`
+      : sol >= 50_000_000n
+      ? `ready (buyer has ${formatSol(sol)} SOL; initialize moves no USDC)`
+      : `not ready: buyer has ${formatSol(sol)} SOL, needs 0.05 SOL`;
+    return { init, prep, finish };
   };
 
   /** stage-prep / stage-finish on a stage deal, with one persistent record per deal. */
-  const stage = async (phase: "prep" | "finish", plan: DealPlan) => {
+  const stage = async (phase: "init" | "prep" | "finish", plan: DealPlan) => {
     console.log(
       `\nStage deal: ${plan.fixtureId} (${formatUsdc(plan.amount)} USDC)`,
     );
     reportMismatches();
     await reportExisting([plan]);
     const readiness = await stageReadiness(plan);
-    const status = phase === "prep" ? readiness.prep : readiness.finish;
+    const status = readiness[phase];
     console.log(`\n${mode}: ${status}`);
     if (mismatches.length) {
       process.exitCode = 1;
@@ -2322,7 +2369,10 @@ async function main() {
       setup: [],
       deals: [],
       mode: "devnet",
-      note: `Staged GroundTruth ${plan.outcome} demo deal (${plan.fixtureId}) on Solana devnet with Circle test USDC: stage-prep (init, fund, title and survey approvals) and stage-finish (septic approval, release). Public keys and signatures only.`,
+      note:
+        phase === "init"
+          ? `Staged GroundTruth ${plan.outcome} demo deal (${plan.fixtureId}) on Solana devnet with Circle test USDC: stage-init (initialize only). The buyer funds it from the deal page's Solana Pay QR. Public keys and signatures only.`
+          : `Staged GroundTruth ${plan.outcome} demo deal (${plan.fixtureId}) on Solana devnet with Circle test USDC: stage-prep (init, fund, title and survey approvals) and stage-finish (septic approval, release). Public keys and signatures only.`,
     };
     const previousFile = resultPaths(results).json;
     if (existsSync(previousFile)) {
@@ -2346,8 +2396,19 @@ async function main() {
     );
   };
 
-  if (mode === "stage-prep" || mode === "stage-finish") {
-    await stage(mode === "stage-prep" ? "prep" : "finish", stagePlan);
+  if (
+    mode === "stage-init" ||
+    mode === "stage-prep" ||
+    mode === "stage-finish"
+  ) {
+    await stage(
+      mode === "stage-init"
+        ? "init"
+        : mode === "stage-prep"
+        ? "prep"
+        : "finish",
+      stagePlan,
+    );
     return;
   }
 

@@ -195,6 +195,19 @@ export const HANDOFF = {
   alt: (url: string) => `QR code for ${url}`,
 } as const;
 
+export const SOLANA_PAY = {
+  title: "Fund with Solana Pay",
+  body: (amount: string) =>
+    `Scan with a Solana Pay wallet set to devnet to move ${amount} test USDC from the buyer into escrow.`,
+  buyerOnly: (wallet: string) =>
+    `Only the deal's buyer wallet (${wallet}) can fund it. Any other wallet is refused.`,
+  open: "Open in wallet",
+  link: "Request link",
+  signing:
+    "GroundTruth builds the transaction; your wallet signs and sends it. The API never signs, and the program checks every rule.",
+  alt: (url: string) => `Solana Pay QR code for ${url}`,
+} as const;
+
 export const TEXT_ALERTS = {
   title: "Text me updates",
   body: "Get a text when this deal is funded, a hold is placed, a release is rejected, or the payment is released.",
@@ -220,4 +233,50 @@ export const NOT_FOUND = {
   home: "Go to the homepage",
   search: "Search for a parcel",
   parcel: "Open the Franklin parcel",
+} as const;
+
+/** The deal's parcel, drawn as a small block of land beside the summary. */
+export const DEAL_LAND = {
+  /** Read by screen readers in place of the picture. */
+  description: (parcelId: string) =>
+    `Aerial imagery of parcel ${parcelId} on its terrain, with the county parcel boundary outlined.`,
+  loading: "Loading the parcel picture…",
+  seal: {
+    held: "Payout held",
+    released: "Payout released",
+  },
+  /** What the boundary's color means, in words, for the states that change it. */
+  boundary: {
+    held: "Boundary in red while a reviewer hold locks the payout.",
+    released: "Boundary in green: the payout reached the bound seller.",
+  },
+} as const;
+
+/** Stage mode (`/deals/:id?stage=1`): the same deal, sized for a projector. */
+export const STAGE = {
+  eyebrow: "GroundTruth deal",
+  staged: "Solana devnet · test USDC · staged reviewer wallets",
+  reviewers: "Required sign-offs",
+  count: (signed: number, required: number) =>
+    `${signed} of ${required} signed`,
+  status: {
+    signed: "Signed",
+    held: "Hold placed",
+    waiting: "Waiting",
+    notSigned: "Did not sign",
+  },
+  stagedWallet: "Staged wallet",
+  arrived: (role: string, status: string) => `${role} reviewer: ${status}.`,
+  paid: "Paid to seller",
+  paidLine: (amount: string) => `Paid to seller: ${amount} test USDC`,
+  paidNote:
+    "Confirmed on Solana devnet. The program paid only the bound seller.",
+  refunded: "Refunded to buyer",
+  explorer: "View the payment on Solana Explorer",
+  escrowExplorer: "View the escrow account on Solana Explorer",
+  phone: "Follow on your phone",
+  phoneBody: "Scan for this deal's live page. No app or wallet needed.",
+  fullScreen: "Full screen",
+  exit: "Exit stage mode",
+  open: "Stage mode for a projector",
 } as const;

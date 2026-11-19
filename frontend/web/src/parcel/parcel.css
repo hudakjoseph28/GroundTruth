@@ -309,6 +309,17 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* A payout locked by a hold, or paid out: the same colors as the 3D block. */
+.land-flat-outline[data-tone="held"] {
+  stroke: var(--red);
+  stroke-width: 2.25;
+}
+
+.land-flat-outline[data-tone="released"] {
+  stroke: var(--green);
+  stroke-width: 2;
+}
+
 /* Map layers: a row of toggles under the land, and a legend line for each
    one that is on. On a phone the row scrolls sideways instead of wrapping
    into a tall block; every toggle is a full tap target. */
