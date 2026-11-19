@@ -1,0 +1,181 @@
+/* "Save this report on Solana" under the parcel report. Phone first; it sits
+   in the ledger column, so it never needs a wide layout. Tokens come from
+   index.css. */
+
+.seal {
+  display: grid;
+  gap: var(--s-4);
+  min-width: 0;
+  margin-top: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  padding: var(--s-4);
+  background: var(--surface-1);
+}
+
+.seal-head h3 {
+  margin: var(--s-1) 0 0;
+  font-size: 1.05rem;
+  font-weight: 620;
+  letter-spacing: -0.02em;
+}
+
+.seal-intro,
+.seal-quiet {
+  margin: var(--s-2) 0 0;
+  max-width: 62ch;
+  color: var(--text-2);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.seal-label {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.seal code {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.seal-hash,
+.seal-signature,
+.seal-memo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin: var(--s-1) 0 0;
+  min-width: 0;
+}
+
+.seal-hash code {
+  color: var(--text);
+}
+
+.seal-actions,
+.seal-save {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: start;
+}
+
+.seal-save .btn {
+  white-space: normal;
+}
+
+.seal-status {
+  display: grid;
+  gap: var(--s-1);
+  border-left: 3px solid var(--gold);
+  padding-left: var(--s-3);
+}
+
+.seal-status[data-phase="confirmed"] {
+  border-left-color: var(--green);
+}
+
+.seal-status[data-phase="failed"] {
+  border-left-color: var(--red);
+}
+
+.seal-status p {
+  margin: 0;
+}
+
+.seal a {
+  color: var(--gold-text);
+  font-size: 0.88rem;
+}
+
+/* ---------- Check a report ---------- */
+
+.seal-check {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: start;
+  border-top: 1px solid var(--line);
+  padding-top: var(--s-4);
+}
+
+.seal-check h4 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 620;
+}
+
+.seal-check .seal-quiet {
+  margin: 0;
+}
+
+.seal-input {
+  display: grid;
+  gap: var(--s-1);
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
+.seal-input input {
+  width: 100%;
+  min-height: var(--tap);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  padding: 0 0.75rem;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+
+.seal-check > div {
+  width: 100%;
+}
+
+.seal-verdict {
+  --tone: var(--gold);
+  display: grid;
+  gap: var(--s-1);
+  border-left: 3px solid var(--tone);
+  padding-left: var(--s-3);
+}
+
+.seal-verdict[data-tone="match"] {
+  --tone: var(--green);
+}
+
+.seal-verdict[data-tone="mismatch"] {
+  --tone: var(--red);
+}
+
+.seal-verdict p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.seal-verdict-title {
+  font-weight: 600;
+}
+
+.seal-compare {
+  display: grid;
+  gap: 2px;
+  margin: var(--s-1) 0 0;
+}
+
+.seal-compare dt {
+  color: var(--text-2);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.seal-compare dd {
+  margin: 0 0 var(--s-1);
+}
