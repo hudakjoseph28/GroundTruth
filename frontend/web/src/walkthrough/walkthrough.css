@@ -1,0 +1,1450 @@
+/* /walkthrough: one step per screen, sized for a 16:9 recording. On a wide
+   screen the step fills the window under the header: the words on the left,
+   the scene on the right, the controls along the bottom. On a phone it
+   stacks, and the controls stay at the bottom of the screen. */
+
+.walk {
+  --tone: #a9a9a9;
+  --tone-text: #e4e1dc;
+  --tone-wash: rgba(255, 255, 255, 0.04);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--space-s);
+  min-height: calc(100svh - var(--header-h) - var(--ticker-h));
+  padding: var(--s-4) var(--pad) var(--s-3);
+}
+
+/* The tones the deal parts read, wherever a scene sets one. */
+.walk-tone[data-tone="pending"],
+.walk-flow[data-tone="pending"] {
+  --tone: var(--gold);
+  --tone-text: var(--gold-text);
+  --tone-wash: rgba(196, 161, 90, 0.1);
+}
+
+.walk-tone[data-tone="held"] {
+  --tone: var(--red);
+  --tone-text: var(--red-text);
+  --tone-wash: rgba(214, 69, 69, 0.1);
+}
+
+.walk-tone[data-tone="released"] {
+  --tone: var(--green);
+  --tone-text: var(--green-text);
+  --tone-wash: rgba(63, 168, 106, 0.1);
+}
+
+.walk .money-flow[data-state="funded"] {
+  --tone: var(--gold);
+  --tone-text: var(--gold-text);
+  --tone-wash: rgba(196, 161, 90, 0.1);
+}
+
+.walk .money-flow[data-state="held"] {
+  --tone: var(--red);
+  --tone-text: var(--red-text);
+  --tone-wash: rgba(214, 69, 69, 0.1);
+}
+
+.walk .money-flow[data-state="released"] {
+  --tone: var(--green);
+  --tone-text: var(--green-text);
+  --tone-wash: rgba(63, 168, 106, 0.1);
+}
+
+/* ---------- Top: tag, step count, progress ---------- */
+
+.walk-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+}
+
+.walk-count {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+.walk-progress {
+  display: flex;
+  flex: 1 1 18rem;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.walk-progress li {
+  flex: 1 1 0;
+}
+
+.walk-progress li[data-bonus] {
+  flex-grow: 0.8;
+  margin-left: 8px;
+}
+
+.walk-progress button {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 22px;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* The track, drawn thin inside a full-height tap target. */
+.walk-progress button::before {
+  content: "";
+  position: absolute;
+  inset: 9px 0;
+  border-radius: 2px;
+  background: #262628;
+}
+
+.walk-progress li[data-bonus] button::before {
+  background: repeating-linear-gradient(90deg, #262628 0 6px, transparent 6px 9px);
+}
+
+.walk-progress-fill {
+  position: absolute;
+  inset: 9px auto 9px 0;
+  width: 0;
+  border-radius: 2px;
+  background: var(--gold-text);
+}
+
+.walk-progress li[data-state="done"] .walk-progress-fill {
+  width: 100%;
+  background: #8a7445;
+}
+
+.walk-progress li[data-state="current"] .walk-progress-fill {
+  width: 100%;
+}
+
+.walk-progress-fill[data-run] {
+  width: 100%;
+  transform-origin: left center;
+  animation: walk-fill var(--step-ms) linear both;
+}
+
+.walk-progress-fill[data-run="pause"] {
+  animation-play-state: paused;
+}
+
+@keyframes walk-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.walk-progress li[data-bonus][data-state="current"] .walk-progress-fill {
+  background: var(--red-text);
+}
+
+/* ---------- Body: the words and the scene ---------- */
+
+.walk-body {
+  display: grid;
+  gap: var(--space-s);
+  min-height: 0;
+  animation: walk-in 420ms var(--ease-out) both;
+}
+
+@keyframes walk-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.walk-copy > * {
+  margin: 0;
+}
+
+.walk-kicker {
+  color: var(--gold-text);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.walk[data-bonus] .walk-kicker {
+  color: var(--red-text);
+}
+
+.walk-copy h1 {
+  margin-top: 0.4rem;
+  font-size: clamp(2rem, 1.1rem + 2.6vw, 3.9rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.walk-lede {
+  margin-top: var(--s-4);
+  max-width: 34rem;
+  color: #c9c9cd;
+  font-size: clamp(1.02rem, 0.9rem + 0.5vw, 1.45rem);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.walk-scene {
+  display: grid;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Grid items may shrink below their content (a sideways-scrolling row). */
+.walk-scene > *,
+.walk-split > *,
+.walk-body > * {
+  min-width: 0;
+}
+
+.walk-label {
+  margin: 0 0 var(--s-2);
+  color: var(--text-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.walk-note {
+  margin: var(--s-3) 0 0;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+/* Something that arrives on a later beat: its room is kept, so nothing jumps. */
+.walk-appear {
+  transition:
+    opacity 380ms var(--ease-out),
+    transform 380ms var(--ease-out),
+    visibility 0s;
+}
+
+.walk-appear[data-shown="false"] {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition-delay: 0s, 0s, 380ms;
+}
+
+.walk-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------- Controls ---------- */
+
+.walk-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  border-top: 1px solid var(--line-soft);
+  padding-top: var(--s-3);
+}
+
+.walk-controls .btn {
+  min-width: 7.5rem;
+  gap: 0.45rem;
+}
+
+.walk-controls .btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.walk-play svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.walk-play[aria-pressed="true"] svg {
+  fill: none;
+}
+
+.walk-keys {
+  margin: 0 0 0 auto;
+  color: #8f8f8f;
+  font-size: var(--step--1);
+}
+
+/* ---------- Wide: words left, scene right, filling the window ---------- */
+
+@container page (min-width: 64rem) {
+  .walk-body {
+    grid-template-columns: minmax(22rem, 0.36fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 3.5cqi, 4.5rem);
+    align-items: center;
+  }
+}
+
+@container page (max-width: 40rem) {
+  .walk {
+    padding-bottom: 0;
+  }
+
+  .walk-body {
+    align-content: start;
+  }
+
+  .walk-progress {
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .walk-controls {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin-inline: calc(-1 * var(--pad));
+    padding: var(--s-3) var(--pad) calc(var(--s-3) + env(safe-area-inset-bottom));
+    background: rgba(5, 5, 5, 0.92);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+
+  .walk-controls .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 0.5rem;
+  }
+
+  .walk-keys {
+    display: none;
+  }
+}
+
+/* ---------- 1. Find ---------- */
+
+.walk-find {
+  display: grid;
+  gap: var(--s-4);
+  width: min(100%, 44rem);
+  justify-self: center;
+}
+
+.walk-search .search-row {
+  max-width: none;
+  padding-block: 7px;
+  border-color: rgba(196, 161, 90, 0.75);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 0 0 3px rgba(196, 161, 90, 0.16);
+}
+
+.walk-search-field {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: clamp(1.05rem, 0.9rem + 0.5vw, 1.4rem);
+  white-space: nowrap;
+}
+
+.walk-search .btn[data-pressed] {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+}
+
+.walk-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: -0.15em;
+  background: var(--gold-text);
+  animation: walk-blink 1s steps(1) infinite;
+}
+
+@keyframes walk-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.walk-find-count {
+  margin: 0 0 var(--s-2);
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+.walk-results {
+  margin: 0;
+}
+
+.walk-results .result-address {
+  font-size: clamp(1.1rem, 0.95rem + 0.6vw, 1.5rem);
+}
+
+/* ---------- 2. The land ---------- */
+
+.walk-land .land-stage {
+  width: 100%;
+  margin-inline: 0;
+  aspect-ratio: auto;
+  height: clamp(18rem, 58svh, 46rem);
+  max-height: none;
+}
+
+@container page (min-width: 64rem) {
+  .walk-land .land {
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(16rem, 1fr);
+    grid-template-rows: auto 1fr;
+    gap: 0 var(--space-s);
+    align-items: start;
+  }
+
+  .walk-land .land-frame {
+    grid-row: 1 / 3;
+  }
+
+  .walk-land .layer-panel {
+    margin-top: 0;
+  }
+
+  .walk-land .layer-toggles {
+    flex-wrap: wrap;
+  }
+
+  .walk-land .land-caption {
+    grid-column: 2;
+    margin-top: var(--s-3);
+  }
+}
+
+/* ---------- 3. The report ---------- */
+
+.walk-report {
+  align-items: start;
+}
+
+.walk-cards {
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+}
+
+.walk-cards .record {
+  padding-left: 0;
+}
+
+.walk-cards .record-rail {
+  display: none;
+}
+
+.walk-cards .record-card {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+@container page (min-width: 64rem) {
+  .walk-report {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 2fr);
+    gap: var(--space-s);
+  }
+
+  .walk-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .walk-cards .record-card {
+    padding-block: 0.55rem 0.6rem;
+  }
+}
+
+/* ---------- Phone ---------- */
+
+.walk-phone {
+  justify-self: center;
+  width: clamp(15.5rem, 17vw, 19.5rem);
+  margin: 0;
+  border: 9px solid #1c1c1f;
+  border-radius: 2.6rem;
+  padding: 2px;
+  background: #2a2a2e;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    0 0 0 1px #3a3a3f;
+}
+
+.walk-phone-screen {
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 9 / 18.5;
+  overflow: hidden;
+  border-radius: 2.1rem;
+  background: #0b0b0d;
+}
+
+.walk-phone-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1.3rem 0.4rem;
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.walk-phone-island {
+  width: 4.6rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: #000;
+}
+
+.walk-phone-icons {
+  display: inline-flex;
+  gap: 3px;
+  align-items: end;
+}
+
+.walk-phone-icons i {
+  width: 3px;
+  height: 7px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.walk-phone-icons i:nth-child(2) {
+  height: 9px;
+}
+
+.walk-phone-icons i:nth-child(3) {
+  width: 14px;
+  height: 8px;
+  margin-left: 3px;
+  border-radius: 2px;
+}
+
+/* ---------- 4. Fund ---------- */
+
+.walk-fund {
+  display: grid;
+  gap: var(--space-s);
+  align-items: center;
+}
+
+.walk-pay {
+  margin: 0;
+}
+
+.walk-pay h3 {
+  margin: 0 0 var(--s-2);
+  font-size: var(--step-1);
+}
+
+.walk-pay p {
+  margin: 0 0 var(--s-2);
+  color: var(--text-2);
+}
+
+@container page (min-width: 64rem) {
+  .walk-fund {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "pay phone"
+      "flow phone";
+  }
+
+  .walk-pay {
+    grid-area: pay;
+  }
+
+  .walk-fund .walk-phone {
+    grid-area: phone;
+  }
+
+  .walk-fund .walk-flow {
+    grid-area: flow;
+  }
+}
+
+.walk-wallet {
+  display: grid;
+  flex: 1;
+  grid-template-rows: auto 1fr;
+  padding: 0.6rem 1rem 1.2rem;
+}
+
+.walk-wallet-scan {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--s-4);
+  color: var(--text-2);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.walk-wallet-viewfinder {
+  width: 9rem;
+  aspect-ratio: 1;
+  border-radius: 1rem;
+  background:
+    linear-gradient(var(--gold-text), var(--gold-text)) top left / 1.6rem 3px no-repeat,
+    linear-gradient(var(--gold-text), var(--gold-text)) top left / 3px 1.6rem no-repeat,
+    linear-gradient(var(--gold-text), var(--gold-text)) top right / 1.6rem 3px no-repeat,
+    linear-gradient(var(--gold-text), var(--gold-text)) top right / 3px 1.6rem no-repeat,
+    linear-gradient(var(--gold-text), var(--gold-text)) bottom left / 1.6rem 3px no-repeat,
+    linear-gradient(var(--gold-text), var(--gold-text)) bottom left / 3px 1.6rem no-repeat,
+    linear-gradient(var(--gold-text), var(--gold-text)) bottom right / 1.6rem 3px no-repeat,
+    linear-gradient(var(--gold-text), var(--gold-text)) bottom right / 3px 1.6rem no-repeat,
+    #141416;
+}
+
+.walk-wallet-sheet {
+  display: flex;
+  flex-direction: column;
+  align-self: end;
+  gap: 0.35rem;
+  border: 1px solid #2a2a2e;
+  border-radius: 1.3rem;
+  padding: 1rem;
+  background: #151518;
+  animation: walk-sheet 360ms var(--ease-out) both;
+}
+
+@keyframes walk-sheet {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+.walk-wallet-sheet p {
+  margin: 0;
+}
+
+.walk-wallet-from {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.walk-wallet-favicon {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 4px;
+  background: conic-gradient(from 45deg, var(--gold-text), #6c5a32, var(--gold-text));
+}
+
+.walk-wallet-wants {
+  color: var(--text-2);
+  font-size: 0.74rem;
+}
+
+.walk-wallet-action {
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.walk-wallet-amount {
+  margin: 0.25rem 0 0.4rem !important;
+  font-size: clamp(1.25rem, 0.9rem + 0.7vw, 1.7rem);
+  white-space: nowrap;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+/* The wallet's own header: whose wallet, and what is in it. */
+.walk-wallet-head {
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  align-self: start;
+  padding-top: 0.6rem;
+  text-align: center;
+}
+
+.walk-wallet-head span {
+  color: var(--text-2);
+  font-size: 0.7rem;
+}
+
+.walk-wallet-head strong {
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+  transition: color 300ms ease;
+}
+
+.walk-wallet[data-phase="3"] .walk-wallet-head strong {
+  color: var(--text-2);
+}
+
+.walk-wallet-sheet dl {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0 0 0.6rem;
+  border-top: 1px solid #26262a;
+  padding-top: 0.55rem;
+  font-size: 0.74rem;
+}
+
+.walk-wallet-sheet dl div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.walk-wallet-sheet dt {
+  color: var(--text-2);
+}
+
+.walk-wallet-sheet dd {
+  margin: 0;
+}
+
+.walk-wallet-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.walk-wallet-buttons span,
+.walk-review-button {
+  display: grid;
+  place-items: center;
+  min-height: 2.5rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.walk-wallet-cancel {
+  background: #26262a;
+}
+
+.walk-wallet-approve,
+.walk-review-button {
+  background: var(--gold-text);
+  color: #0a0a0a;
+  transition:
+    transform 120ms ease,
+    filter 120ms ease;
+}
+
+.walk-wallet-approve[data-pressed],
+.walk-review-button[data-pressed] {
+  transform: scale(0.95);
+  filter: brightness(0.82);
+}
+
+.walk-wallet-done,
+.walk-review-done {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  background: rgba(63, 168, 106, 0.12);
+  color: var(--green-text);
+  font-size: 0.85rem;
+  font-weight: 650;
+  animation: walk-sheet 300ms var(--ease-out) both;
+}
+
+/* ---------- Two columns: a phone or a paper, and what it causes ---------- */
+
+.walk-split {
+  display: grid;
+  gap: var(--space-s);
+  align-items: center;
+}
+
+.walk-side {
+  display: grid;
+  gap: var(--s-3);
+  align-content: center;
+  min-width: 0;
+}
+
+.walk-doc-side {
+  display: grid;
+  place-items: center;
+}
+
+@container page (min-width: 64rem) {
+  .walk-split {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: clamp(1.5rem, 3cqi, 3.5rem);
+  }
+}
+
+/* ---------- 5. The call ---------- */
+
+.walk-call {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-height: 0;
+  padding: 0.4rem 0.9rem 1rem;
+}
+
+.walk-call-by {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
+.walk-call-by img {
+  height: 0.7rem;
+  filter: invert(1);
+  opacity: 0.8;
+}
+
+.walk-call-who {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  text-align: center;
+}
+
+.walk-call-who strong {
+  margin-top: 0.4rem;
+  font-size: 1.05rem;
+}
+
+.walk-call-who > span {
+  color: var(--text-2);
+  font-size: 0.72rem;
+}
+
+.walk-call-state {
+  margin-top: 0.15rem;
+  color: var(--text) !important;
+  font-family: var(--mono);
+}
+
+.walk-call[data-connected="true"] .walk-call-state {
+  color: var(--green-text) !important;
+}
+
+.walk-call-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: #1d1d21;
+}
+
+.walk-call-avatar svg {
+  width: 2rem;
+  height: 2rem;
+  fill: none;
+  stroke: #cfcfd4;
+  stroke-width: 1.4;
+}
+
+.walk-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--gold-text);
+  border-radius: 50%;
+  animation: walk-ring 1.4s ease-out infinite;
+}
+
+.walk-ring + .walk-ring {
+  animation-delay: 0.7s;
+}
+
+@keyframes walk-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+.walk-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 1.4rem;
+  margin-top: 0.3rem;
+}
+
+.walk-wave i {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--green-text);
+  animation: walk-wave 900ms ease-in-out infinite alternate;
+}
+
+.walk-wave i:nth-child(3n) {
+  animation-delay: -300ms;
+}
+
+.walk-wave i:nth-child(3n + 1) {
+  animation-delay: -600ms;
+}
+
+.walk-wave i:nth-child(4n) {
+  animation-duration: 700ms;
+}
+
+@keyframes walk-wave {
+  from {
+    transform: scaleY(0.25);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.walk-call-lines {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: end;
+  gap: 0.4rem;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  list-style: none;
+}
+
+.walk-call-lines li {
+  max-width: 88%;
+  border-radius: 0.9rem;
+  padding: 0.45rem 0.65rem;
+  background: #1d1d21;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  animation: walk-sheet 280ms var(--ease-out) both;
+}
+
+.walk-call-lines li span {
+  display: block;
+  margin-bottom: 0.1rem;
+  color: var(--text-2);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.walk-call-lines li[data-who="owner"] {
+  align-self: end;
+  background: #2c2617;
+}
+
+.walk-call-outcome {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  border: 1px solid var(--green);
+  border-radius: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(63, 168, 106, 0.12);
+  text-align: center;
+  animation: walk-sheet 320ms var(--ease-out) both;
+}
+
+.walk-call-outcome strong {
+  color: var(--green-text);
+  font-size: 0.92rem;
+}
+
+.walk-call-outcome span {
+  color: var(--text-2);
+  font-size: 0.68rem;
+}
+
+.walk-call-outcome[data-tone="denied"] {
+  border-color: var(--red);
+  background: rgba(214, 69, 69, 0.12);
+}
+
+.walk-call-outcome[data-tone="denied"] strong {
+  color: var(--red-text);
+}
+
+.walk-facts {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  padding: var(--s-4);
+  background: var(--surface-1);
+  list-style: none;
+}
+
+.walk-facts li {
+  display: flex;
+  gap: var(--s-3);
+  align-items: baseline;
+  color: #d4d4d8;
+  font-size: clamp(0.95rem, 0.85rem + 0.3vw, 1.1rem);
+}
+
+.walk-facts li::before {
+  content: "";
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--gold-text);
+  transform: translateY(-0.1em);
+}
+
+.walk-facts li[data-tone="no"]::before {
+  background: var(--red-text);
+}
+
+/* ---------- 6–9. Documents ---------- */
+
+.walk-paper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: clamp(14rem, 19vw, 21rem);
+  aspect-ratio: 8.5 / 11;
+  box-sizing: border-box;
+  padding: 1.4rem 1.3rem 2.6rem;
+  border-radius: 4px;
+  background: #f3f0e8;
+  color: #222;
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.55),
+    0 2px 0 rgba(255, 255, 255, 0.4) inset;
+  transform: rotate(-1.6deg);
+}
+
+.walk-paper small {
+  color: #6b6658;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.walk-paper-head {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.walk-paper-from {
+  border-bottom: 2px solid #c4a15a;
+  padding-bottom: 0.4rem;
+}
+
+.walk-paper-item {
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.walk-paper-sign {
+  margin-top: auto;
+  border-top: 1px solid #8b8576;
+  padding-top: 0.25rem;
+  width: 55%;
+  color: #6b6658;
+  font-size: 0.62rem;
+}
+
+.walk-paper-map {
+  width: 100%;
+  height: 5.2rem;
+  border: 1px solid #d8d3c6;
+  border-radius: 3px;
+  background: #ebe7dc;
+}
+
+.walk-paper-lines {
+  display: grid;
+  gap: 0.42rem;
+  margin: 0.2rem 0;
+}
+
+.walk-paper-lines i {
+  height: 0.32rem;
+  border-radius: 2px;
+  background: #d8d3c6;
+}
+
+.walk-paper-lines i:nth-child(2n) {
+  width: 86%;
+}
+
+.walk-paper-lines[data-short] i:last-child {
+  width: 52%;
+}
+
+/* "Illustrative data", stamped in the corner like a draft mark. */
+.walk-paper-stamp {
+  position: absolute;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  border: 1.5px solid #b0402f;
+  border-radius: 4px;
+  padding: 0.12rem 0.4rem;
+  color: #b0402f;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+  opacity: 0.85;
+}
+
+.walk-plat {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.walk-plat-road {
+  fill: none;
+  stroke: #b8b2a2;
+  stroke-width: 7;
+}
+
+.walk-plat-lot {
+  fill: rgba(196, 161, 90, 0.12);
+  stroke: #2b2b2b;
+  stroke-width: 0.8;
+}
+
+.walk-plat-pin {
+  fill: #f3f0e8;
+  stroke: #b0402f;
+  stroke-width: 0.9;
+}
+
+.walk-plat-dim {
+  fill: #333;
+  font-family: var(--mono);
+  font-size: 3.6px;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: #f3f0e8;
+  stroke-width: 1.4px;
+}
+
+.walk-plat-north {
+  fill: #555;
+  font-size: 4.5px;
+  font-weight: 700;
+}
+
+.walk-soil {
+  display: grid;
+  flex: 1;
+  grid-template-rows: 1fr 1.4fr 1.2fr 1.6fr;
+  overflow: hidden;
+  border-radius: 3px;
+}
+
+.walk-soil i:nth-child(1) {
+  background: #5d4a33;
+}
+
+.walk-soil i:nth-child(2) {
+  background: #7a6040;
+}
+
+.walk-soil i:nth-child(3) {
+  background: repeating-linear-gradient(120deg, #9a7c55 0 6px, #8e7150 6px 10px);
+}
+
+.walk-soil i:nth-child(4) {
+  background: #a88f6a;
+}
+
+.walk-file {
+  display: grid;
+  gap: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface-1);
+}
+
+.walk-file p {
+  margin: 0;
+}
+
+.walk-file-name {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.walk-file-name > span:last-child {
+  display: grid;
+  min-width: 0;
+}
+
+.walk-file-name strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.walk-file-name small {
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+.walk-file-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.9rem;
+  border: 1px solid #3a3a3f;
+  border-radius: 5px;
+  background: #151518;
+  color: var(--gold-text);
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.walk-file-progress {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #222225;
+}
+
+.walk-file-progress i {
+  display: block;
+  height: 100%;
+  background: var(--gold-text);
+  animation: walk-upload 1.15s var(--ease-out) both;
+}
+
+@keyframes walk-upload {
+  from {
+    width: 4%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.walk-file-hash {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+.walk-file-hash code {
+  color: var(--text);
+}
+
+.walk-file-hash em,
+.walk-memo em {
+  color: var(--green-text);
+  font-style: normal;
+}
+
+.walk-memo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  border-top: 1px solid var(--line-soft);
+  padding-top: var(--s-2);
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+.walk-memo code {
+  color: var(--text);
+}
+
+.walk-side .deal-reviewers {
+  margin: 0;
+}
+
+/* The septic reviewer's phone. */
+.walk-review {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.6rem 1rem 1.2rem;
+}
+
+.walk-review p {
+  margin: 0;
+}
+
+.walk-review-role {
+  color: var(--gold-text);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.walk-review-deal {
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.walk-review .walk-paper {
+  flex: 1;
+  width: auto;
+  aspect-ratio: auto;
+  min-height: 0;
+  padding: 0.8rem 0.8rem 2.1rem;
+  transform: none;
+  box-shadow: none;
+}
+
+.walk-review .walk-paper-stamp {
+  right: 0.5rem;
+  bottom: 0.5rem;
+}
+
+.walk-review-attached {
+  color: var(--text-2);
+  font-size: 0.76rem;
+}
+
+/* ---------- 10. Release ---------- */
+
+.walk-release {
+  display: grid;
+  gap: var(--space-s);
+}
+
+.walk-release-row {
+  display: grid;
+  gap: var(--space-s);
+}
+
+@container page (min-width: 64rem) {
+  .walk-release-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .walk-release .deal-land {
+    height: 100%;
+    min-height: 18rem;
+  }
+}
+
+/* The release glides: slower than the deal page's own move, so it reads on video. */
+.walk-glide .money-flow-token[data-live="true"] {
+  animation-duration: 1.9s;
+}
+
+.walk .money-flow-token {
+  width: max-content;
+}
+
+.walk-glide .money-flow-track {
+  min-height: 10rem;
+}
+
+/* ---------- 11. Receipts ---------- */
+
+.walk-receipts {
+  display: grid;
+  gap: var(--space-s);
+}
+
+.walk-receipts-grid {
+  display: grid;
+  gap: var(--space-s);
+  align-items: start;
+}
+
+@container page (min-width: 64rem) {
+  .walk-receipts-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+}
+
+.walk-receipts .docs {
+  margin: 0;
+}
+
+.walk-links {
+  display: grid;
+  gap: var(--s-2);
+  margin: var(--s-4) 0 0;
+}
+
+.walk-links a {
+  color: var(--text);
+  text-underline-offset: 3px;
+}
+
+/* ---------- 12. Held ---------- */
+
+.walk-rejected {
+  margin: var(--s-2) 0 0;
+  color: var(--red-text);
+  font-size: var(--step--1);
+}
+
+/* ---------- Reduced motion: every scene opens on its last beat, still ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .walk-body,
+  .walk-appear,
+  .walk-wallet-sheet,
+  .walk-wallet-done,
+  .walk-review-done,
+  .walk-call-lines li,
+  .walk-call-outcome,
+  .walk-file-progress i,
+  .walk-ring,
+  .walk-wave i,
+  .walk-caret,
+  .walk-glide .money-flow-token[data-live="true"],
+  .walk-progress-fill[data-run] {
+    animation: none;
+    transition: none;
+  }
+}

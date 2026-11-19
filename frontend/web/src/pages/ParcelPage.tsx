@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import type { Parcel } from "@groundtruth/shared";
 import { PARCEL_PAGE } from "../content/parcel";
@@ -9,6 +9,7 @@ import {
   stagedDealIdsFor,
   type DealOutcome,
 } from "../data/dealSource";
+import { getParcelLayers, type LayersOutcome } from "../data/layerSource";
 import { getParcelLedger, summarizeDeal } from "../data/ledger";
 import {
   getParcel,
@@ -17,6 +18,7 @@ import {
   type ParcelOutcome,
   type ReportOutcome,
 } from "../data/parcelSource";
+import { ExampleTag, useIsExample } from "../example/ExampleContext";
 import { usePageTitle } from "../layout/usePageTitle";
 import { BlockTransition } from "../parcel/BlockTransition/BlockTransition";
 import { readBlockOrigin } from "../parcel/BlockTransition/origin";
@@ -26,6 +28,29 @@ import { useLandAssets } from "../parcel/ParcelScene/useLandAssets";
 import { useRenderMode } from "../parcel/useRenderMode";
 import { ReportSeal } from "../seal/ReportSeal";
 import "../parcel/parcel.css";
+
+/**
+ * Where a parcel view reads its report, deals, and map layers. Real parcels
+ * read the API; the example parcel reads its fixture through the same shape
+ * (src/example/exampleData.ts), so both draw with the same components.
+ */
+export interface ParcelData {
+  getReport: (parcelKey: string, signal: AbortSignal) => Promise<ReportOutcome>;
+  /** IDs of the deals that close on this parcel. */
+  dealIdsFor: (parcelKey: string) => string[];
+  getDeal: (dealId: string, signal: AbortSignal) => Promise<DealOutcome>;
+  getLayers: (parcelKey: string, signal: AbortSignal) => Promise<LayersOutcome>;
+  /** Replaces the bottom line worked out from the checks (the example's own). */
+  bottomLine?: { opening: string; ask: string };
+}
+
+/** The API, for every real parcel. */
+const LIVE_DATA: ParcelData = {
+  getReport: getParcelReport,
+  dealIdsFor: stagedDealIdsFor,
+  getDeal,
+  getLayers: getParcelLayers,
+};
 
 export function ParcelPage() {
   const params = useParams();
@@ -117,11 +142,15 @@ function useLoaded<T extends ParcelOutcome | ReportOutcome>(
  * The staged deals on a parcel, each read from the API. `outcomes` is null
  * while they load, and empty for a parcel with no deal.
  */
-function useParcelDeals(parcelKey: string): {
+function useParcelDeals(
+  parcelKey: string,
+  data: ParcelData,
+): {
   outcomes: DealOutcome[] | null;
   retry: () => void;
 } {
-  const ids = useMemo(() => stagedDealIdsFor(parcelKey), [parcelKey]);
+  const { dealIdsFor, getDeal: readDeal } = data;
+  const ids = useMemo(() => dealIdsFor(parcelKey), [dealIdsFor, parcelKey]);
   const [attempt, setAttempt] = useState(0);
   const [settled, setSettled] = useState<{
     key: string;
@@ -132,14 +161,14 @@ function useParcelDeals(parcelKey: string): {
   useEffect(() => {
     if (ids.length === 0) return;
     const controller = new AbortController();
-    Promise.all(ids.map((id) => getDeal(id, controller.signal))).then(
+    Promise.all(ids.map((id) => readDeal(id, controller.signal))).then(
       (outcomes) => setSettled({ key: parcelKey, attempt, outcomes }),
       () => {
         // Aborted: the key changed or the page closed.
       },
     );
     return () => controller.abort();
-  }, [ids, parcelKey, attempt]);
+  }, [ids, parcelKey, attempt, readDeal]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
   if (ids.length === 0) return { outcomes: NO_DEALS, retry };
@@ -205,6 +234,23 @@ function BackLink() {
   );
 }
 
+/**
+ * Keeps `--main-h` on the element at its height, so the stylesheet can let a
+ * sticky column taller than the screen scroll until its end (the layer
+ * legend) is in view, then hold.
+ */
+function useMeasuredHeight(ref: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const measure = () => node.style.setProperty("--main-h", `${node.offsetHeight}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [ref]);
+}
+
 function pageTitleFor(parcel: Parcel): string {
   const street = parcelName(parcel.siteAddress).street;
   return street
@@ -212,12 +258,19 @@ function pageTitleFor(parcel: Parcel): string {
     : PARCEL_PAGE.title(parcel.sourceParcelId);
 }
 
-function ParcelView({ parcel }: { parcel: Parcel }) {
+export function ParcelView({
+  parcel,
+  data = LIVE_DATA,
+}: {
+  parcel: Parcel;
+  data?: ParcelData;
+}) {
+  const example = useIsExample();
   const { assets, building } = useLandAssets(parcel);
   const mode = useRenderMode();
   const { outcome: reportOutcome, retry: retryReport } = useLoaded(
     parcel.key,
-    getParcelReport,
+    data.getReport,
   );
   const report =
     reportOutcome?.status === "found" ? reportOutcome.report : null;
@@ -225,6 +278,7 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
   // one the ledger's reviewer cards and escrow strip describe.
   const { outcomes: dealOutcomes, retry: retryDeals } = useParcelDeals(
     parcel.key,
+    data,
   );
   const primary = dealOutcomes?.[0];
   const primaryDeal = primary?.status === "found" ? primary.deal : null;
@@ -259,6 +313,8 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
   useEffect(() => {
     if (revealed) heading.current?.focus({ preventScroll: true });
   }, [revealed]);
+  const main = useRef<HTMLDivElement>(null);
+  useMeasuredHeight(main);
   // Every catalog parcel draws its published OGRIP boundary, so none is a
   // stand-in. Staged closing data is labeled in the ledger instead.
   const staged = false;
@@ -289,9 +345,10 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
       )}
       <div className="parcel-page" inert={!revealed}>
         <BackLink />
-        <div className="parcel-main">
+        <div className="parcel-main" ref={main}>
           <header className="parcel-title">
             {staged && <p className="parcel-staged">{PARCEL_PAGE.stagedLabel}</p>}
+            {example && <ExampleTag kind="parcel" className="parcel-example" />}
             <h1
               ref={heading}
               tabIndex={-1}
@@ -309,11 +366,22 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
               <p className="parcel-address">{PARCEL_PAGE.noAddress}</p>
             )}
             <p className="parcel-place">{place}</p>
-            <p className="parcel-key">
-              {PARCEL_PAGE.keyLabel} <span>{parcel.key}</span>
-            </p>
+            {!example && (
+              <p className="parcel-key">
+                {PARCEL_PAGE.keyLabel} <span>{parcel.key}</span>
+              </p>
+            )}
           </header>
-          <LandBlock parcel={parcel} assets={assets} building={building} mode={mode} staged={staged} revealed={revealed} onReady={markLandReady} />
+          <LandBlock
+            parcel={parcel}
+            assets={assets}
+            building={building}
+            mode={mode}
+            staged={staged}
+            revealed={revealed}
+            onReady={markLandReady}
+            getLayers={data.getLayers}
+          />
         </div>
         {reportOutcome?.status === "found" && dealOutcomes !== null ? (
           <Ledger
@@ -322,7 +390,9 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
             dealNotice={dealNotice}
             revealed={revealed}
             animated={mode !== "reduced"}
-            after={<ReportSeal report={reportOutcome.report} />}
+            bottomLine={data.bottomLine}
+            // Saving a made-up report on devnet would record nothing true.
+            after={example ? undefined : <ReportSeal report={reportOutcome.report} />}
           />
         ) : (
           <section className="ledger ledger-pending" aria-live="polite">

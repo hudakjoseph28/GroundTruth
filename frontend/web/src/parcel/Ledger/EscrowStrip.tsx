@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import type { ReviewerRole } from "@groundtruth/shared";
 import { ESCROW } from "../../content/parcel";
 import { dealPath } from "../../data/dealSource";
-import { explorerAddressUrl, shortAddress, type EscrowSummary, type ReviewerMarkState } from "../../data/ledger";
+import { ReceiptLink } from "../../components/ReceiptLink";
+import { shortAddress, type EscrowSummary, type ReviewerMarkState } from "../../data/ledger";
 import { ChainStrip } from "../../deal/ChainStrip";
 import { CopyButton } from "./CopyButton";
 
@@ -76,15 +77,9 @@ export function EscrowStrip({
             {escrow.escrowAddress ? (
               <p className="escrow-account">
                 {ESCROW.address}{" "}
-                <a
-                  className="mono"
-                  href={explorerAddressUrl(escrow.escrowAddress)}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={escrow.escrowAddress}
-                >
+                <ReceiptLink className="mono" address={escrow.escrowAddress} title={escrow.escrowAddress}>
                   {shortAddress(escrow.escrowAddress)}
-                </a>
+                </ReceiptLink>
                 <CopyButton
                   icon
                   value={escrow.escrowAddress}

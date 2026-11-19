@@ -1,7 +1,10 @@
 import { useLayoutEffect, useRef, type MouseEvent } from "react";
 import { StatusPill } from "../../components/StatusPill";
+import { ReceiptLink } from "../../components/ReceiptLink";
+import { EXAMPLE } from "../../content/example";
 import { checkTitle, INSPECTOR, LEDGER } from "../../content/parcel";
-import { explorerTxUrl, shortAddress, type LedgerRecord } from "../../data/ledger";
+import { shortAddress, type LedgerRecord } from "../../data/ledger";
+import { useIsExample } from "../../example/ExampleContext";
 import { ApprovalAnimation, type Outcome } from "./ApprovalAnimation";
 
 const date = (iso: string) => {
@@ -70,6 +73,7 @@ export function Inspector({
 }
 
 function InspectorBody({ record, onClose }: { record: LedgerRecord; onClose: () => void }) {
+  const example = useIsExample();
   const { check, signature, signerWallet } = record;
   const party = check.responsibleParty;
 
@@ -78,6 +82,7 @@ function InspectorBody({ record, onClose }: { record: LedgerRecord; onClose: () 
       <header className="inspector-head">
         <div>
           {record.staged && <p className="tag">{LEDGER.stagedTag}</p>}
+          {example && <p className="tag">{EXAMPLE.tag.data}</p>}
           <h2 id="inspector-title">{checkTitle(check.kind)}</h2>
           <StatusPill status={check.status} label={record.statusLabel} />
         </div>
@@ -122,6 +127,7 @@ function InspectorBody({ record, onClose }: { record: LedgerRecord; onClose: () 
                   </li>
                 ))}
               </ul>
+              {example && <p className="inspector-note">{EXAMPLE.inspectorNote}</p>}
             </dd>
           </div>
         )}
@@ -169,9 +175,17 @@ function InspectorBody({ record, onClose }: { record: LedgerRecord; onClose: () 
       {(record.onDeal || signature) && (
         <footer className="inspector-foot">
           {signature ? (
-            <a className="inspector-explorer" href={explorerTxUrl(signature)} target="_blank" rel="noreferrer">
-              {INSPECTOR.explorer} <span aria-hidden="true">↗</span>
-            </a>
+            <ReceiptLink className="inspector-explorer" signature={signature}>
+              {example ? (
+                <>
+                  {EXAMPLE.receipt} <span className="mono">{shortAddress(signature)}</span>
+                </>
+              ) : (
+                <>
+                  {INSPECTOR.explorer} <span aria-hidden="true">↗</span>
+                </>
+              )}
+            </ReceiptLink>
           ) : (
             <p>{INSPECTOR.unsigned}</p>
           )}

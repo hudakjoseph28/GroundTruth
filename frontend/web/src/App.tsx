@@ -13,6 +13,15 @@ import { SearchPage } from "./pages/SearchPage";
 const ReviewPage = lazy(() => import("./review/ReviewPage"));
 // The map library loads only on the explore map.
 const ExplorePage = lazy(() => import("./explore/ExplorePage"));
+// The example parcel and deal, and their fixture, load only when opened.
+const ExampleParcelPage = lazy(() =>
+  import("./pages/ExamplePages").then((module) => ({ default: module.ExampleParcelPage })),
+);
+const ExampleDealPage = lazy(() =>
+  import("./pages/ExamplePages").then((module) => ({ default: module.ExampleDealPage })),
+);
+// The walkthrough of the example closing, for screen recording.
+const WalkthroughPage = lazy(() => import("./walkthrough/WalkthroughPage"));
 
 export function App() {
   return (
@@ -21,7 +30,24 @@ export function App() {
         <Route element={<SiteLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
+          {/* The example parcel and deal: made-up data, labeled as examples. */}
+          <Route
+            path="/parcels/sample"
+            element={
+              <Suspense fallback={null}>
+                <ExampleParcelPage />
+              </Suspense>
+            }
+          />
           <Route path="/parcels/:parcelKey" element={<ParcelPage />} />
+          <Route
+            path="/deals/sample"
+            element={
+              <Suspense fallback={null}>
+                <ExampleDealPage />
+              </Suspense>
+            }
+          />
           <Route path="/deals/:dealId" element={<DealPage />} />
           <Route path="/proof" element={<ProofPage />} />
           <Route path="/roadmap" element={<RoadmapPage />} />
@@ -42,6 +68,14 @@ export function App() {
             element={
               <Suspense fallback={null}>
                 <ExplorePage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/walkthrough"
+            element={
+              <Suspense fallback={null}>
+                <WalkthroughPage />
               </Suspense>
             }
           />

@@ -240,12 +240,15 @@ function chainCheck(check: Check, deal: Deal | null): { check: Check; signature?
   }
   const reviewer = deal.reviewers.find((entry) => entry.role === role);
   if (reviewer?.approvedAt) {
+    // A report that already records this same reviewer's sign-off keeps its
+    // own words; any other report's words predate the decision.
+    const recorded = check.status === "signedOff" && check.reviewerWallet === reviewer.wallet;
     return {
       check: {
         ...check,
         status: "signedOff",
-        finding: CHAIN_FINDINGS.signedOff(role),
-        limitation: CHAIN_FINDINGS.signedLimit,
+        finding: recorded ? check.finding : CHAIN_FINDINGS.signedOff(role),
+        limitation: recorded ? check.limitation : CHAIN_FINDINGS.signedLimit,
         reviewerWallet: reviewer.wallet,
         transactionSignature: reviewer.approvalTransaction,
       },

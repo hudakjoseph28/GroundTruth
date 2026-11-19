@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "parcelKey": "sample",
+  "sourceParcelId": "EX-000250",
+  "retrievedAt": "2026-11-19T15:37:17.829Z",
+  "bbox": {
+    "west": -83.24378605870614,
+    "south": 39.87482511493332,
+    "east": -83.24038594129384,
+    "north": 39.877434474933295
+  },
+  "groundMeters": {
+    "width": 290.47262649956366,
+    "depth": 290.47262649956366
+  },
+  "imagery": {
+    "file": "imagery.jpg",
+    "width": 1536,
+    "height": 1536,
+    "source": "USGS NAIP Imagery (The National Map)",
+    "attribution": "Aerial imagery: USDA NAIP via USGS National Map",
+    "sourceUrl": "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer",
+    "metersPerPixel": 0.18910978287732008
+  },
+  "elevation": {
+    "file": "height.png",
+    "width": 257,
+    "height": 257,
+    "minMeters": 280.967529296875,
+    "maxMeters": 286.96429443359375,
+    "source": "AWS Terrain Tiles (Terrarium)",
+    "attribution": "Elevation: AWS Terrain Tiles",
+    "sourceUrl": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium"
+  }
+}

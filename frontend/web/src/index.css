@@ -818,6 +818,20 @@ section[tabindex="-1"]:focus {
   text-underline-offset: 3px;
 }
 
+/* "Explore the map" and "See an example parcel", side by side when they fit. */
+.hero-links,
+.search-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--s-6);
+}
+
+.hero-links .example-link,
+.search-links .example-link {
+  margin-top: 10px;
+}
+
 .explore-link-note {
   color: var(--text-2);
   font-weight: 400;

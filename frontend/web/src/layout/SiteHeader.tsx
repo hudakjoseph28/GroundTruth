@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { DOCS, MENU, NAV, ROADMAP_LINK, SITE } from "../content/site";
+import { DOCS, MENU, NAV, ROADMAP_LINK, SITE, WALKTHROUGH_LINK } from "../content/site";
 import { BrandMark } from "./BrandMark";
 import { NetworkChip } from "./NetworkChip";
 
@@ -58,6 +58,9 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           {item.label}
         </Link>
       ))}
+      <NavLink to={WALKTHROUGH_LINK.to} onClick={onNavigate}>
+        {WALKTHROUGH_LINK.label}
+      </NavLink>
       <NavLink to={ROADMAP_LINK.to} onClick={onNavigate}>
         {ROADMAP_LINK.label}
       </NavLink>

@@ -8,6 +8,8 @@ export type LayerToggleId = "boundary" | MapLayerId;
 export const LAYERS = {
   label: "Map layers",
   legend: "Legend",
+  showAll: "Show all layers",
+  hideAll: "Boundary only",
   loading: "Loading…",
   failed:
     "The map layers could not be loaded. The report's checks below still hold.",

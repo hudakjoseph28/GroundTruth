@@ -14,9 +14,11 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { goldenParcel, landAssetDir, secondCountyParcel, type Parcel } from "@groundtruth/shared";
 import { buildLandAssets } from "../../../backend/src/land/buildLandAssets.ts";
+import { EXAMPLE_PARCEL } from "../src/example/exampleFixture.ts";
 
-// Parcels the bake can find by key. Add to this as the catalog grows.
-const CATALOG: readonly Parcel[] = [goldenParcel, secondCountyParcel];
+// Parcels the bake can find by key. Add to this as the catalog grows. The
+// example lot (EX-000250) is made up, but the land under it is real.
+const CATALOG: readonly Parcel[] = [goldenParcel, secondCountyParcel, EXAMPLE_PARCEL];
 
 async function main() {
   const wanted = process.argv[2];

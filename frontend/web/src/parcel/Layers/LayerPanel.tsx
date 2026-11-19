@@ -4,7 +4,9 @@ import {
   type MapLayer,
   type ParcelLayers,
 } from "@groundtruth/shared";
+import { EXAMPLE } from "../../content/example";
 import { LAYERS, layerStatus, type LayerToggleId } from "../../content/layers";
+import { useIsExample } from "../../example/ExampleContext";
 import { LAYER_COLORS } from "./paintLayers";
 
 export const LAYER_TOGGLES: readonly LayerToggleId[] = [
@@ -27,15 +29,22 @@ const date = (iso: string) =>
 export function LayerPanel({
   layers,
   enabled,
+  allOn,
   onToggle,
+  onToggleAll,
   onRetry,
 }: {
   /** undefined while loading, null when they could not be loaded. */
   layers: ParcelLayers | null | undefined;
   enabled: ReadonlySet<LayerToggleId>;
+  /** Every toggle is on. */
+  allOn: boolean;
   onToggle: (id: LayerToggleId) => void;
+  /** Turns every layer on, or back to the boundary alone when all are on. */
+  onToggleAll: () => void;
   onRetry: () => void;
 }) {
+  const example = useIsExample();
   const shown = LAYER_TOGGLES.filter((id) => enabled.has(id));
   const layerOf = (id: LayerToggleId): MapLayer | undefined =>
     id === "boundary"
@@ -44,6 +53,16 @@ export function LayerPanel({
 
   return (
     <div className="layer-panel">
+      <div className="layer-panel-head">
+        <p className="layer-panel-title">{LAYERS.label}</p>
+        <button type="button" className="layer-all" onClick={onToggleAll}>
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 2 14.5 5.5 8 9 1.5 5.5z" />
+            <path d="m1.5 8.25 6.5 3.5 6.5-3.5M1.5 11 8 14.5l6.5-3.5" />
+          </svg>
+          {allOn ? LAYERS.hideAll : LAYERS.showAll}
+        </button>
+      </div>
       <div className="layer-toggles" role="group" aria-label={LAYERS.label}>
         {LAYER_TOGGLES.map((id) => (
           <button
@@ -70,7 +89,9 @@ export function LayerPanel({
             const layer = layerOf(id);
             const status =
               id === "boundary"
-                ? LAYERS.boundary
+                ? example
+                  ? EXAMPLE.boundary
+                  : LAYERS.boundary
                 : layers === undefined
                   ? LAYERS.loading
                   : layers === null

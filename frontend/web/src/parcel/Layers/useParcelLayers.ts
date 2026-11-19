@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ParcelLayers } from "@groundtruth/shared";
-import { getParcelLayers } from "../../data/layerSource";
+import { getParcelLayers, type LayersOutcome } from "../../data/layerSource";
 
 export interface ParcelLayersState {
   /** undefined while loading, null when the layers could not be had. */
@@ -26,6 +26,7 @@ async function decode(url: string): Promise<HTMLImageElement | null> {
 export function useParcelLayers(
   parcelKey: string,
   enabled: boolean,
+  getLayers: (parcelKey: string, signal: AbortSignal) => Promise<LayersOutcome> = getParcelLayers,
 ): ParcelLayersState {
   const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState<{
@@ -39,7 +40,7 @@ export function useParcelLayers(
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
-    getParcelLayers(parcelKey, controller.signal)
+    getLayers(parcelKey, controller.signal)
       .then(async (outcome) => {
         if (outcome.status !== "found") {
           setLoaded({
@@ -67,7 +68,7 @@ export function useParcelLayers(
         /* aborted: the parcel changed or the page left */
       });
     return () => controller.abort();
-  }, [parcelKey, enabled, attempt]);
+  }, [parcelKey, enabled, attempt, getLayers]);
 
   if (loaded?.key !== parcelKey || loaded.attempt !== attempt) {
     return { layers: undefined, wetlandsImage: null, retry };
