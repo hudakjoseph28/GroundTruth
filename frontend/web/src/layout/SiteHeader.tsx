@@ -1,17 +1,45 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { DEMO, DOCS, MENU, NAV, SITE } from "../content/site";
-import { sampleParcelPath } from "../data/parcelSource";
-import { readDevnetSlot } from "../parcel/BlockTransition/devnetSlot";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { DOCS, MENU, NAV, SITE } from "../content/site";
 import { BrandMark } from "./BrandMark";
 import { NetworkChip } from "./NetworkChip";
 
-// The parcel transition shows real devnet slots; asking as the visitor reaches
-// for the demo gives the answer a head start.
-const warmSlot = () => void readDevnetSlot();
-
 /** About where the bar has room for its links again (see layout.css). */
-const WIDE_QUERY = "(min-width: 60rem)";
+const WIDE_QUERY = "(min-width: 64rem)";
+
+/** A search field. With nothing typed, a click opens the search page. */
+function HeaderSearch({ onNavigate }: { onNavigate?: () => void }) {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+
+  function go(event?: FormEvent) {
+    event?.preventDefault();
+    const next = query.trim();
+    navigate(next ? `/search?q=${encodeURIComponent(next)}` : "/search");
+    onNavigate?.();
+  }
+
+  return (
+    <form className="header-search" role="search" aria-label="Search" onSubmit={go}>
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.6" />
+        <path d="m10.5 10.5 3.4 3.4" />
+      </svg>
+      <input
+        name="q"
+        value={query}
+        placeholder="Search Ohio"
+        aria-label="Parcel ID or address"
+        autoComplete="off"
+        spellCheck={false}
+        onChange={(event) => setQuery(event.target.value)}
+        onPointerDown={() => {
+          if (query.trim() === "") go();
+        }}
+      />
+    </form>
+  );
+}
 
 function ExternalIcon() {
   return (
@@ -91,15 +119,8 @@ export function SiteHeader() {
             <NavLinks />
           </nav>
           <div className="site-actions">
+            <HeaderSearch />
             <NetworkChip />
-            <Link
-              className="btn btn-primary btn-small site-demo"
-              to={sampleParcelPath()}
-              onPointerDown={warmSlot}
-              onFocus={warmSlot}
-            >
-              {DEMO.label}
-            </Link>
             <button
               type="button"
               className="menu-button"
@@ -139,15 +160,8 @@ export function SiteHeader() {
           <NavLinks onNavigate={closeMenu} />
         </nav>
         <div className="site-menu-foot">
+          <HeaderSearch onNavigate={closeMenu} />
           <NetworkChip />
-          <Link
-            className="btn btn-primary"
-            to={sampleParcelPath()}
-            onPointerDown={warmSlot}
-            onClick={closeMenu}
-          >
-            {DEMO.label}
-          </Link>
         </div>
       </dialog>
     </>

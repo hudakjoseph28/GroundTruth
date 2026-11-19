@@ -19,7 +19,7 @@ export function FinalCta() {
         </div>
         <div className="cta-copy">
           <h2 id="cta-title">{CTA.title}</h2>
-          <SearchForm ariaLabel={CTA.searchLabel} showSampleLink={false} />
+          <SearchForm ariaLabel={CTA.searchLabel} showSampleLink={false} launchEmpty />
           <Link
             className="btn btn-primary"
             to={sampleParcelPath()}

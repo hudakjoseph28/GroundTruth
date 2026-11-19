@@ -37,6 +37,13 @@ export const HERO = {
   subhead:
     "See what public records say about a lot, and what still needs a professional. Your deposit waits in escrow until the reviewers sign off.",
   searchLabel: "Search for a parcel",
+  hintLead: "Try a parcel ID like",
+  hintOr: "or an address like",
+  /** `750 High St` alone returns nothing; Columbus is what brings back both N and S High St. */
+  hints: [
+    { query: "230-000918" },
+    { query: "750 High St, Columbus" },
+  ],
   trust: [
     { icon: "record", label: "Public records cited" },
     { icon: "signature", label: "Reviewers sign" },

@@ -30,6 +30,7 @@ import {
   shortAddress,
 } from "../data/ledger";
 import { usePageTitle } from "../layout/usePageTitle";
+import { parcelName } from "../data/address";
 import { getParcel, parcelPath, sampleParcelPath } from "../data/parcelSource";
 import "../deal/deal.css";
 
@@ -180,6 +181,11 @@ function DealScreen({ live }: { live: LiveDeal }) {
 }
 
 /** Amount first and always in the same place, then the state and why. */
+function parcelLinkName(parcelId: string, parcel: Parcel | null): string {
+  const street = parcel ? parcelName(parcel.siteAddress).street : null;
+  return street ? `${street} · ${parcelId}` : DEAL_PAGE.parcel.open(parcelId);
+}
+
 function Hero({
   deal,
   live,
@@ -213,7 +219,7 @@ function Hero({
       <p className="deal-parcel">
         <span>{DEAL_PAGE.parcel.label}</span>{" "}
         <Link to={parcelPath(deal.parcelKey)}>
-          {DEAL_PAGE.parcel.open(deal.parcelId)}
+          {parcelLinkName(deal.parcelId, parcel)}
           {parcel ? ` · ${DEAL_PAGE.parcel.county(parcel.county)}` : ""}
           <span aria-hidden="true"> →</span>
         </Link>

@@ -54,3 +54,46 @@ export function formatSiteAddress(published: string | undefined): SiteAddress | 
 
   return { text, noHouseNumber, published: original };
 }
+
+/**
+ * The name a parcel page uses, whatever was typed to find it.
+ * A published street is the name. The county parcel ID is the name when
+ * Ohio published no street. Two lots can share a street, so the ID stays
+ * on the page either way.
+ */
+export interface ParcelName {
+  /** Street line, such as "84 W Dodridge St" or "Seaman Rd". Null when none is published. */
+  street: string | null;
+  /** "Thornville, OH 43076" when the record includes a place after the street. */
+  locality: string | null;
+  noHouseNumber: boolean;
+  /** The address as the API gave it. */
+  published: string | null;
+}
+
+const PARCEL_KEY = /^ohio:[0-9]{5}:(.+)$/;
+
+/** The local parcel ID inside an `ohio:{fips}:{id}` key, or null. */
+export function parcelIdFromKey(key: string): string | null {
+  const id = PARCEL_KEY.exec(key)?.[1];
+  return id ? id : null;
+}
+
+export function parcelName(siteAddress: string | undefined): ParcelName {
+  const formatted = formatSiteAddress(siteAddress);
+  if (!formatted) {
+    return { street: null, locality: null, noHouseNumber: false, published: null };
+  }
+  const comma = formatted.text.indexOf(",");
+  const street = (comma === -1 ? formatted.text : formatted.text.slice(0, comma)).trim();
+  const locality = comma === -1 ? null : formatted.text.slice(comma + 1).trim() || null;
+  if (!street) {
+    return { street: null, locality: null, noHouseNumber: false, published: formatted.published };
+  }
+  return {
+    street,
+    locality,
+    noHouseNumber: formatted.noHouseNumber,
+    published: formatted.published,
+  };
+}

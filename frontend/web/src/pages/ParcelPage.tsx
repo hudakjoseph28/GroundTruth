@@ -3,7 +3,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import type { Parcel } from "@groundtruth/shared";
 import { PARCEL_PAGE } from "../content/parcel";
 import { PARCEL_LOAD } from "../content/search";
-import { formatSiteAddress } from "../data/address";
+import { parcelIdFromKey, parcelName } from "../data/address";
 import {
   getDeal,
   stagedDealIdsFor,
@@ -30,12 +30,15 @@ export function ParcelPage() {
   const params = useParams();
   const parcelKey = params.parcelKey ? decodeURIComponent(params.parcelKey) : "";
   const { outcome, retry } = useLoaded(parcelKey, getParcel);
+  const pendingId = parcelIdFromKey(parcelKey);
   usePageTitle(
     outcome?.status === "found"
-      ? PARCEL_PAGE.title(outcome.parcel.sourceParcelId)
+      ? pageTitleFor(outcome.parcel)
       : outcome?.status === "missing" || !parcelKey
         ? PARCEL_PAGE.missing.title
-        : null,
+        : pendingId
+          ? PARCEL_PAGE.title(pendingId)
+          : null,
   );
 
   if (!parcelKey || outcome?.status === "missing") {
@@ -54,7 +57,7 @@ export function ParcelPage() {
   if (outcome === null) {
     return (
       <section className="sheet">
-        <h1>{parcelKey}</h1>
+        <h1>{pendingId ? PARCEL_PAGE.title(pendingId) : PARCEL_PAGE.loadingTitle}</h1>
         <p className="notice" role="status">
           {PARCEL_LOAD.loading}
         </p>
@@ -65,7 +68,7 @@ export function ParcelPage() {
   if (outcome.status === "error") {
     return (
       <section className="sheet">
-        <h1>{parcelKey}</h1>
+        <h1>{pendingId ? PARCEL_PAGE.title(pendingId) : PARCEL_PAGE.loadingTitle}</h1>
         <LoadFailure failure={outcome} onRetry={retry} />
         <BackLink />
       </section>
@@ -186,6 +189,13 @@ function BackLink() {
   );
 }
 
+function pageTitleFor(parcel: Parcel): string {
+  const street = parcelName(parcel.siteAddress).street;
+  return street
+    ? PARCEL_PAGE.titled(street, parcel.sourceParcelId)
+    : PARCEL_PAGE.title(parcel.sourceParcelId);
+}
+
 function ParcelView({ parcel }: { parcel: Parcel }) {
   const { assets, building } = useLandAssets(parcel);
   const mode = useRenderMode();
@@ -236,8 +246,9 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
   // Every catalog parcel draws its published OGRIP boundary, so none is a
   // stand-in. Staged closing data is labeled in the ledger instead.
   const staged = false;
-  const address = formatSiteAddress(parcel.siteAddress);
+  const named = parcelName(parcel.siteAddress);
   const place = [
+    named.locality,
     PARCEL_PAGE.county(parcel.county),
     parcel.township,
     parcel.acreage !== undefined
@@ -265,14 +276,21 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
         <div className="parcel-main">
           <header className="parcel-title">
             {staged && <p className="parcel-staged">{PARCEL_PAGE.stagedLabel}</p>}
-            <h1 ref={heading} tabIndex={-1}>{parcel.sourceParcelId}</h1>
-            {address && (
-              <p className="parcel-address" title={address.published}>
-                {address.text}
-                {address.noHouseNumber && (
-                  <span> ({PARCEL_PAGE.noHouseNumber})</span>
-                )}
-              </p>
+            <h1
+              ref={heading}
+              tabIndex={-1}
+              data-kind={named.street ? "street" : "id"}
+              title={named.published ?? undefined}
+            >
+              {named.street ?? PARCEL_PAGE.title(parcel.sourceParcelId)}
+              {named.noHouseNumber && (
+                <span className="parcel-note"> ({PARCEL_PAGE.noHouseNumber})</span>
+              )}
+            </h1>
+            {named.street ? (
+              <p className="parcel-id">{PARCEL_PAGE.title(parcel.sourceParcelId)}</p>
+            ) : (
+              <p className="parcel-address">{PARCEL_PAGE.noAddress}</p>
             )}
             <p className="parcel-place">{place}</p>
             <p className="parcel-key">
