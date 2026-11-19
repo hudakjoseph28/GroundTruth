@@ -30,6 +30,11 @@ export function RecordCard({
   chain?: boolean;
 }) {
   const { check, signerWallet, signature, role } = record;
+  // Only a check a deal's reviewer or escrow settles has an on-chain step.
+  // Public-record checks (zoning, flood, utilities, access, easements) are
+  // never signed on-chain, so "Not on-chain yet" would promise a step that
+  // does not exist. They read like a parcel with no deal.
+  const onChain = chain && (record.onDeal || Boolean(signature));
   const position: Record<`--${string}`, number> = { "--i": index };
 
   return (
@@ -80,8 +85,8 @@ export function RecordCard({
           )}
         </p>
         <div className="record-foot">
-          <ProgressTrack steps={record.steps} chain={chain} />
-          {!chain ? null : signature ? (
+          <ProgressTrack steps={record.steps} chain={onChain} />
+          {!onChain ? null : signature ? (
             <p className="record-address">
               <span className="mono" title={signature}>
                 {shortAddress(signature)}
