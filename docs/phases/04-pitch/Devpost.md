@@ -133,14 +133,45 @@ The most important design lesson was to keep evidence, professional judgment, an
 
 ## What's next for GroundTruth
 
-Our immediate product step is to add verified local zoning and access adapters behind the same report contract, county by county, without weakening the `unknown` state. Statewide search is live today, but only Franklin County has a zoning check.
+This section and the site's roadmap page (`/roadmap`) say the same thing; change them together ([`frontend/web/src/content/roadmap.ts`](../../../frontend/web/src/content/roadmap.ts)). Only **Now** is built. Every **Next** and **Later** item is a plan, and no pilot or partner exists yet.
 
-We will test the report with first-time land buyers and title or closing professionals. The pilot questions are practical: Can a buyer explain the biggest open issue? Do they know who acts next? Does the report help them pause, negotiate, or walk away before sending money?
+### Now (live today, on Solana devnet with test USDC and staged reviewer wallets)
+
+- **Ohio parcel search and the 3D land view.** Search any Ohio parcel by address or parcel ID, using the state's OGRIP boundaries for all 88 counties. Open a lot to see its boundary in gold on real aerial imagery and terrain, and turn it in 3D.
+- **Sourced reports, check by check.** Flood, wetlands and septic soils are read from FEMA, the National Wetlands Inventory and the USDA soil survey wherever those maps cover the lot. Zoning, road access and stream setbacks are read in Franklin County so far, and any check without a record says No answer yet instead of guessing.
+- **Solana escrow: holds block payouts, approvals release.** A reviewer's hold makes the payout fail on-chain, and the test USDC stays in the vault. Once every required reviewer approves, the program releases the exact USDC amount the deal was opened with.
+- **Reviewer portal, documents, and Verify on-chain.** Title, survey and septic reviewers approve or hold from their wallet, on a phone too through the Phantom app's browser. Each document's hash is written on-chain, and Verify on-chain reads the escrow account straight from Solana devnet to check the page against it.
+- **Live updates and an owner callback.** QuickNode Streams sends each confirmed escrow transaction to the backend, and the deal's timeline updates without a reload. An ElevenLabs voice agent's call to the owner on record is saved on the held deal's timeline as evidence, never as an approval.
+
+Still open in the live build:
 
 - **[PENDING] QuickNode Streams:** measure the timeline update on a second device, and deliver the stage deal's septic approval and release through the Stream.
 - **ElevenLabs:** place the owner callback before the title reviewer decides, as it would sit in a real closing. In the staged run it was recorded after the hold.
-- Add authenticated, private evidence handling before any real buyer, seller, identity, title, or call data enters the product.
-- Work with a title or closing partner to define production approval, hold, release, and refund terms. The hackathon workflow is a staged prototype, not a production closing service.
+
+### Next (pilot) · planned, not built yet
+
+- **A title or closing company pilot in Ohio.** Run real deals with an Ohio title or closing company, with its licensed staff as the reviewers and private, signed-in evidence handling in place first. The professionals, not us, would define when money is released and when it is refunded.
+- **Mainnet with real USDC and sponsored fees.** Move the escrow from devnet test funds to Solana mainnet and real USDC. Network fees would be sponsored, so a reviewer never needs to hold SOL to sign.
+- **Pay with Solana Pay.** The buyer funds the escrow by scanning a QR code with their wallet. The amount and the escrow address would come filled in, so nothing has to be typed or copied.
+- **Verified reviewer credentials.** Licensed title, survey and septic professionals would carry a credential that can be checked on-chain. The escrow would count an approval only from a wallet that holds the right one.
+- **More local checks.** Zoning for more Ohio counties, and whether a lot can connect to public sewer and water. Easements would be read from recorded documents, each one cited like every other check.
+
+### How we'll measure the pilot
+
+These are the measures from [Problem.md](../../context/Problem.md#proof-pilot-and-beyond). There is no pilot yet, so there are no results to show.
+
+1. **Time to the first actionable finding:** how long from opening a lot until the buyer has one concrete thing to do next.
+2. **Findings with traceable evidence:** the share of material findings that link to the public record or sign-off behind them.
+3. **Buyers who can explain a pause:** when a deal is paused, whether the buyer can say why and what has to happen next.
+
+### Later (scale) · planned, not built yet
+
+- **Nationwide parcels.** Parcel boundaries beyond Ohio would come from a nationwide provider such as Regrid. FEMA's flood maps are already a national service, so the flood check would carry over wherever FEMA has mapped.
+- **Deed recording handoff.** After the escrow releases, the deed would be handed to the county's e-recording system. The recording receipt would join the deal's timeline beside the payout.
+- **Seller identity verification.** A trusted identity partner would confirm the seller is the owner on record. It would be a step inside the closing flow, finished before any reviewer can approve.
+- **Milestone payments and deadlines.** A deal could be split into staged payments, each with its own deadline. If a review never arrives in time, the buyer's money would be refunded automatically.
+- **Ask this lot.** Ask a question in plain English and get an answer drawn only from the report's sources. Every answer would cite its record, and say plainly when the records don't answer the question.
+- **Saved lots with alerts.** Save a lot and get an alert when its public records change, such as a new flood map. Each alert would link to the source that changed.
 
 ## Technologies used
 
