@@ -1,7 +1,7 @@
 /**
- * Records live OGRIP, FEMA NFHL, National Wetlands Inventory, and Franklin
- * County zoning, right-of-way, road, and stream-buffer responses for the
- * report route tests.
+ * Records live OGRIP, FEMA NFHL, USDA NRCS Soil Data Access, National
+ * Wetlands Inventory, and Franklin County zoning, right-of-way, road, and
+ * stream-buffer responses for the report route tests.
  *
  *   pnpm --filter @groundtruth/backend record:report                   # every scenario
  *   pnpm --filter @groundtruth/backend record:report franklin-floodway # one scenario
@@ -39,6 +39,7 @@ import {
 import { createFranklinAccessClient } from "../src/reports/franklinAccess.js";
 import { createFranklinStreamBuffersClient } from "../src/reports/franklinStreamBuffers.js";
 import { createFranklinZoningClient } from "../src/reports/franklinZoning.js";
+import { createSsurgoSoilsClient } from "../src/reports/ssurgoSoils.js";
 import {
   createNwiWetlandsClient,
   NWI_OHIO_STATUS_QUERY,
@@ -123,6 +124,11 @@ async function record(name: ReportScenario): Promise<void> {
         now: () => recordedAt,
       }),
       accessTimeoutMs: 30_000,
+      soils: createSsurgoSoilsClient({
+        fetch: recordingFetch,
+        now: () => recordedAt,
+      }),
+      soilsTimeoutMs: 30_000,
       wetlands: createNwiWetlandsClient({
         fetch: recordingFetch,
         now: () => recordedAt,
@@ -163,7 +169,7 @@ async function record(name: ReportScenario): Promise<void> {
   console.log(
     `${name}: ${res.status} in ${Date.now() - started} ms, ${exchanges.length} upstream calls`,
   );
-  for (const kind of ["flood", "zoning", "environmental", "access"]) {
+  for (const kind of ["flood", "zoning", "environmental", "access", "septic"]) {
     if (finding(kind)) console.log(`  ${kind}: ${finding(kind)}`);
   }
 }

@@ -11,7 +11,7 @@ These are the current owners. Update this table and the phase file before transf
 | Owner | Owns | Folder |
 | --- | --- | --- |
 | Joey Hudak | Buyer UI / responsive web. Target: ship the core screens in under 3 days, then float to backend and escrow integration. | `frontend/web` |
-| Gagan | Parcel evidence and data: Ohio OGRIP parcels, FEMA flood, report pipeline. Originated the idea. | `backend` (report pipeline) |
+| Gagan | Parcel evidence and data: Ohio OGRIP parcels, FEMA flood, USDA SSURGO soils/septic screening, report pipeline. Originated the idea. | `backend` (report pipeline) |
 | Kadhir | Solana escrow: Anchor program, USDC vault, hold, release, refund | `escrow` |
 | Satya | Backend API, QuickNode Streams, ElevenLabs, deployment | `backend`, deployment |
 
@@ -39,7 +39,7 @@ On your first task, skim **every Markdown file in this repository once**; the fu
 
 ## Where code goes
 
-`frontend/web` has the homepage, live Ohio parcel search, the parcel view, the deal page (`/deals/:dealId`), which reads deal state and the timeline from the API, and the reviewer portal (`/review`), where a reviewer's own wallet signs approvals, holds, and releases built from the checked-in IDL. `backend` searches live Ohio OGRIP parcels, builds live parcel reports with a FEMA flood check, and serves the two seeded reports from Postgres; see [Coverage](docs/phases/02-parcel-research/Coverage.md). `frontend/mobile` is reserved; `escrow` implements the 6 Anchor escrow instructions on Solana devnet. Put new files in the folder that matches the surface.
+`frontend/web` has the homepage, live Ohio parcel search, the parcel view, the deal page (`/deals/:dealId`), which reads deal state and the timeline from the API, and the reviewer portal (`/review`), where a reviewer's own wallet signs approvals, holds, and releases built from the checked-in IDL. `backend` searches live Ohio OGRIP parcels, builds live parcel reports with FEMA flood and USDA SSURGO soils/septic checks, and serves the two seeded reports from Postgres; see [Coverage](docs/phases/02-parcel-research/Coverage.md). `frontend/mobile` is reserved; `escrow` implements the 6 Anchor escrow instructions on Solana devnet. Put new files in the folder that matches the surface.
 
 | Folder | What belongs here |
 | --- | --- |

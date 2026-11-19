@@ -15,6 +15,8 @@ import {
 import { zoningCheck } from "./zoningCheck.js";
 import { accessCheck } from "./accessCheck.js";
 import type { FranklinAccessClient } from "./franklinAccess.js";
+import { septicCheck } from "./septicCheck.js";
+import type { SsurgoSoilsClient } from "./ssurgoSoils.js";
 import { environmentalCheck } from "./environmentalCheck.js";
 import type {
   FranklinStreamBuffersClient,
@@ -26,6 +28,7 @@ import { TEMPLATE_KINDS, templateCheck } from "./templates.js";
 export const DEFAULT_FEMA_TIMEOUT_MS = 6_000;
 export const DEFAULT_ZONING_TIMEOUT_MS = 6_000;
 export const DEFAULT_ACCESS_TIMEOUT_MS = 6_000;
+export const DEFAULT_SOILS_TIMEOUT_MS = 6_000;
 /**
  * NWI answered in 2.0 to 5.3 s on five Ohio lots on 2026-11-18 (two queries,
  * then one drawing when wetlands are mapped), and took 8.5 s once.
@@ -54,6 +57,10 @@ export interface ReportPipelineOptions {
   access?: FranklinAccessClient;
   /** Limit for the access check (all its queries together). */
   accessTimeoutMs?: number;
+  /** USDA NRCS SSURGO (Soil Data Access, Living Atlas fallback), for every parcel. */
+  soils?: SsurgoSoilsClient;
+  /** Limit for the SSURGO soils/septic check. */
+  soilsTimeoutMs?: number;
   /**
    * The National Wetlands Inventory. When set, every parcel gets a live
    * environmental check; otherwise it keeps the template.
@@ -169,6 +176,32 @@ export async function buildReport(
         }),
       }
     : null;
+  const soilsClient = options.soils;
+  const soilsTimeoutMs = options.soilsTimeoutMs ?? DEFAULT_SOILS_TIMEOUT_MS;
+  const soils: CheckRunner | null = soilsClient
+    ? {
+        kind: "septic",
+        timeoutMs: soilsTimeoutMs,
+        async run(signal) {
+          const outcome = await soilsClient.septicSuitability(
+            parcel.geometry.geojson,
+            signal,
+          );
+          return {
+            check: septicCheck(parcel, outcome, soilsTimeoutMs),
+            transient: outcome.outcome === "timeout",
+          };
+        },
+        failed: (cause) => ({
+          check: septicCheck(
+            parcel,
+            { outcome: "timeout", cause },
+            soilsTimeoutMs,
+          ),
+          transient: true,
+        }),
+      }
+    : null;
   const wetlandsClient = options.wetlands;
   const wetlandsTimeoutMs =
     options.wetlandsTimeoutMs ?? DEFAULT_WETLANDS_TIMEOUT_MS;
@@ -212,8 +245,7 @@ export async function buildReport(
               environmentalInputs(wetlands, setbacks),
             ),
             transient:
-              wetlands.outcome === "timeout" ||
-              setbacks?.outcome === "timeout",
+              wetlands.outcome === "timeout" || setbacks?.outcome === "timeout",
           };
         },
         failed: (cause) => ({
@@ -228,7 +260,7 @@ export async function buildReport(
         }),
       }
     : null;
-  const live = [zoning, environmental, access].filter(
+  const live = [zoning, environmental, access, soils].filter(
     (runner): runner is CheckRunner => runner !== null,
   );
   const templates = TEMPLATE_KINDS.filter(
