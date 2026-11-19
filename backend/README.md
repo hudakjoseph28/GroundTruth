@@ -500,6 +500,22 @@ A staged check against seller impersonation. An ElevenLabs agent phones a **cons
 
 **Test data.** `test/support/elevenlabsPayloads.ts` follows the documented payload and the SDK types. It is not recorded from a live call; replace it once the first real call lands.
 
+## Reviewer approval Blink (Solana Action)
+
+A [Solana Action](https://solana.com/docs/advanced/actions) (spec 2.4) that lets an assigned reviewer sign their approval from any Blink client. **Rehearsal deal only** (`staged-devnet-deal-rehearsal-v2`), **devnet only**, and **the API never signs**: it builds an unsigned transaction and the reviewer's wallet signs, pays the fee, and sends it.
+
+| Route | What it does |
+| --- | --- |
+| `GET /actions.json` | Discovery rules: `/deals/staged-devnet-deal-rehearsal-v2` and `/api/actions/**` map to the Action API. `vercel.json` forwards it, so the web deal page URL unfurls as the Blink. |
+| `GET /api/actions/approve/staged-devnet-deal-rehearsal-v2` | Action metadata (title, staged/test-USDC description, icon, one `transaction` link). Reads the deal account on devnet and adds "N of M required approvals signed"; `disabled` with the reason once the deal is held, settled, not funded, or fully signed. |
+| `POST /api/actions/approve/staged-devnet-deal-rehearsal-v2` | Body `{ "account": "<wallet>" }`. If the wallet is an assigned reviewer who hasn't signed and the deal is funded, returns a base64 v0 `sign_approval` transaction with the wallet as fee payer and only signer and an empty signature slot. Otherwise an ActionError `{ message }`: `403` not a reviewer, `409` already signed / held / settled / not funded, `400` bad body, `503` devnet unreadable. |
+| `GET /api/actions/icon.svg` | The Blink icon (labelled staged, devnet, test USDC). |
+
+- **Chain state decides.** Every request reads the deal PDA at `confirmed` from `SOLANA_RPC_URL` (default public devnet), checks the genesis hash is devnet, the account is owned by the escrow program, and its deal ID and mint match the staged deal. The role comes from the wallet's on-chain assignment, as the program checks it. The database is not consulted.
+- **CORS:** `actions.json` and every `/api/actions/*` response (and `OPTIONS` preflight, `204`) carry `Access-Control-Allow-Origin: *`, the spec's allowed methods/headers, `X-Action-Version: 2.4`, and `X-Blockchain-Ids: solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` (devnet).
+- **Try it:** `https://dial.to/?action=solana-action:https://groundtruth-lac.vercel.app/api/actions/approve/staged-devnet-deal-rehearsal-v2&cluster=devnet`, with a reviewer wallet set to devnet. A confirmed approval reaches the deal timeline through the QuickNode Stream like any other.
+- **As of 2026-11-19 the rehearsal deal has all three approvals on devnet**, so the Action shows as disabled ("Every reviewer has signed…") and every reviewer gets `409`. A positive live demo needs a fresh funded rehearsal deal.
+
 ## Tests
 
 ```bash

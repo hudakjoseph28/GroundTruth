@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { Parcel, ParcelLayers } from "@groundtruth/shared";
 import express from "express";
+import { createDevnetChain, type ActionChain } from "./actions/devnetChain.js";
 import { applyConfirmedEvent } from "./chain/applyEvent.js";
 import { createEscrowDecoder } from "./chain/escrowDecoder.js";
 import { prisma } from "./db.js";
 import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
+import { actionRoutes } from "./routes/actions.js";
 import { getActivity } from "./routes/activity.js";
 import { getDeal, getDealTimeline } from "./routes/deals.js";
 import {
@@ -52,6 +54,8 @@ export interface AppOptions {
   sms?: { sender?: SmsSender; log?: (line: string) => void };
   /** Deal documents: the clock that wallet signatures are checked against. */
   documents?: DocumentRouteOptions;
+  /** Reviewer-approval Blink: the devnet reads it needs. Defaults to public devnet RPC. */
+  actions?: { chain?: ActionChain };
 }
 
 export function createApp(commit: string, options: AppOptions = {}) {
@@ -85,6 +89,14 @@ export function createApp(commit: string, options: AppOptions = {}) {
   );
 
   app.get("/api/health", getHealth(commit));
+
+  // Solana Actions (Blink): reviewer approval on the staged rehearsal deal.
+  // Builds unsigned transactions only; the reviewer's wallet signs.
+  const actions = actionRoutes(options.actions?.chain ?? createDevnetChain());
+  app.get("/actions.json", actions.actionsJson);
+  app.options("/actions.json", actions.preflight);
+  app.use("/api/actions", actions.router);
+
   app.get("/api/coverage", parcels.coverage);
   app.get("/api/parcels/search", parcels.search);
   // Before `:parcelKey`; `area` is never a parcel key (ohio:FIPS:ID).
