@@ -3,20 +3,17 @@ import { TRANSITION } from "../../content/parcel";
 import { blockDims, boxCorners, stageProjector, type Vec3 } from "../ParcelScene/blockFrame";
 import type { LandMeta } from "../ParcelScene/landMeta";
 import type { RenderMode } from "../useRenderMode";
-import { HANDOFF_MS, chainLayout, drawChain, type Point } from "./chain";
-import { readDevnetSlot } from "./devnetSlot";
+import { HANDOFF_MS, drawChain, type Point } from "./chain";
 
-/** The chain is on screen at least this long before it hands off. */
-const MIN_MS = 750;
-/** The hand-off starts by now even if the land is still loading. */
-const MAX_MS = 1500;
+/** The whole transition is over by now, however slowly frames arrive. */
+const CAP_MS = 1500;
+/** The chain is on screen at least this long before it hands off: long enough for every block to arrive. */
+const MIN_MS = 700;
+/** The hand-off starts by now even if the land is still loading, so it can finish inside the cap. */
+const MAX_MS = CAP_MS - HANDOFF_MS;
 const LEAVE_MS = 150;
-/** Used only when the devnet slot cannot be read, and labeled as illustrative. */
-const ILLUSTRATIVE_SLOT = 412_883_107;
 /** The land scene starts a little small and grows in; the gold frame lands on that. */
 const LANDING_SCALE = 0.94;
-
-type Slot = { kind: "pending" } | { kind: "live"; slot: number } | { kind: "illustrative" };
 
 /**
  * Covers the parcel page while it loads: a short chain of blocks whose last
@@ -42,14 +39,13 @@ export function BlockTransition({
   onDone: () => void;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
-  const [slot, setSlot] = useState<Slot>({ kind: "pending" });
   const [phase, setPhase] = useState<"chain" | "handoff" | "leaving">("chain");
   const animated = mode === "webgl" || mode === "fallback";
 
-  const live = useRef({ ready, meta, slot, origin, onDone });
+  const live = useRef({ ready, meta, origin, onDone });
   useEffect(() => {
-    live.current = { ready, meta, slot, origin, onDone };
-  }, [ready, meta, slot, origin, onDone]);
+    live.current = { ready, meta, origin, onDone };
+  }, [ready, meta, origin, onDone]);
 
   const finished = useRef(false);
   const leaveTimer = useRef(0);
@@ -62,16 +58,11 @@ export function BlockTransition({
   }, []);
   useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
 
+  // The hard cap: on a slow device the chain may not have finished, but the page still opens on time.
   useEffect(() => {
-    if (!animated) return;
-    let current = true;
-    void readDevnetSlot().then((value) => {
-      if (current) setSlot(value === null ? { kind: "illustrative" } : { kind: "live", slot: value });
-    });
-    return () => {
-      current = false;
-    };
-  }, [animated]);
+    const timer = window.setTimeout(leave, CAP_MS - LEAVE_MS);
+    return () => window.clearTimeout(timer);
+  }, [leave]);
 
   // Esc, or any other key, skips. Keys held with a modifier are left alone.
   useEffect(() => {
@@ -113,13 +104,13 @@ export function BlockTransition({
     window.addEventListener("resize", resize);
 
     let id = 0;
-    let start: number | null = null;
+    // Timed from when the cover went up, not from the first frame, which can be late.
+    const start = performance.now();
     let handoffAt: number | null = null;
     const loop = (time: number) => {
       id = requestAnimationFrame(loop);
       if (finished.current) return;
-      start ??= time;
-      const now = time - start;
+      const now = Math.max(0, time - start);
       const state = live.current;
 
       if (handoffAt === null && ((state.ready && now >= MIN_MS) || now >= MAX_MS)) {
@@ -132,7 +123,6 @@ export function BlockTransition({
         height,
         now,
         handoffAt,
-        labels: slotLabels(state.slot, chainLayout(width, height)),
         target: handoffAt === null ? null : landingCorners(state.meta),
         origin: state.origin,
       });
@@ -163,14 +153,6 @@ export function BlockTransition({
       </div>
     </div>
   );
-}
-
-function slotLabels(slot: Slot, layout: { count: number; spacing: number }): string[] | null {
-  if (slot.kind === "pending") return null;
-  const base = slot.kind === "live" ? slot.slot : ILLUSTRATIVE_SLOT;
-  // On a narrow screen there is only room for the number.
-  const format = layout.spacing < 130 ? TRANSITION.slotShort : TRANSITION.slot;
-  return Array.from({ length: layout.count }, (_, index) => format(base + index));
 }
 
 /** Where the land scene's opening frame sits on screen right now. */

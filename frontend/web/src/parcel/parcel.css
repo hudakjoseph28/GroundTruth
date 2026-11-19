@@ -12,7 +12,8 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-m);
-  padding: 0 var(--pad) var(--space-l);
+  /* The back link is a full-height tap target, so its text already sits lower. */
+  padding: var(--s-3) var(--pad) var(--space-l);
 }
 
 .parcel-back {
@@ -57,9 +58,9 @@
 }
 
 .parcel-title h1 {
-  font-size: clamp(1.6rem, 1.1rem + 2.2cqi, 2.9rem);
-  font-weight: 560;
-  letter-spacing: -0.03em;
+  font-size: var(--step-3);
+  font-weight: 600;
+  letter-spacing: -0.035em;
   line-height: 1.1;
   overflow-wrap: anywhere;
 }
@@ -347,24 +348,29 @@
   align-items: center;
   gap: 0.5em;
   min-height: var(--tap);
-  border: 1px solid #3a3a3a;
-  border-radius: 6px;
-  padding: 0 0.9rem;
-  background: #080808;
-  color: #f3f1ec;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-m);
+  padding: 0 1.1rem;
+  background: var(--surface-1);
+  color: var(--text);
   font: inherit;
-  font-size: var(--step--1);
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 560;
+  letter-spacing: -0.005em;
   cursor: pointer;
   transition:
     border-color 150ms ease,
     background-color 150ms ease;
 }
 
-.explore-toggle:hover,
+.explore-toggle:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--surface-2);
+}
+
 .explore-toggle[aria-expanded="true"] {
   border-color: var(--gold);
-  background: #0c0c0c;
+  background: var(--surface-2);
 }
 
 .explore-caret,
@@ -704,6 +710,7 @@
 .escrow-line {
   display: block;
   margin: 0.32rem 0 0;
+  text-wrap: balance;
   color: #e4e1dc;
   font-size: 0.92rem;
   font-weight: 500;

@@ -20,7 +20,7 @@ export const CHECK_LABELS: Record<CheckKind, string> = {
 export const STATUS_LABELS: Record<CheckStatus, string> = {
   evidenceFound: "Evidence found",
   needsReview: "Needs review",
-  unknown: "No answer yet.",
+  unknown: "No answer yet",
   signedOff: "Signed off",
   held: "Held",
 };

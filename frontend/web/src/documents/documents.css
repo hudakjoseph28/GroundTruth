@@ -173,6 +173,26 @@
   max-width: 100%;
 }
 
+.docs-file input::file-selector-button,
+.docs-upload input[type="file"]::file-selector-button {
+  min-height: 2rem;
+  margin-right: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  padding: 0 0.75rem;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 560;
+  cursor: pointer;
+}
+
+.docs-file input:hover::file-selector-button,
+.docs-upload input[type="file"]:hover::file-selector-button {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .docs-upload .btn {
   justify-self: start;
   min-height: var(--tap);

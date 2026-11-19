@@ -54,7 +54,7 @@ function Portal() {
   return (
     <div className="review">
       <header className="review-head">
-        <p className="review-devnet">{REVIEW.devnet}</p>
+        <p className="eyebrow">{REVIEW.devnet}</p>
         <h1>{REVIEW.title}</h1>
         <p className="review-intro">{REVIEW.intro}</p>
         <WalletBar />

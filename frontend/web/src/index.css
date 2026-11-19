@@ -70,8 +70,10 @@ html {
    actually available (no scrollbar guesswork). */
 #root {
   container: page / inline-size;
-  /* Content column: centered, at most --page-max wide, with fluid gutters. */
-  --page-max: 80rem;
+  /* Content column: centered, at most --page-max wide, with fluid gutters.
+     Every page shares it, so the header and the page's left edge never move
+     between routes; only the parcel page runs wider (parcel.css). */
+  --page-max: 90rem;
   --gutter: clamp(1.25rem, 4cqi, 4rem);
   --pad: max(var(--gutter), (100cqi - var(--page-max)) / 2);
   display: flex;

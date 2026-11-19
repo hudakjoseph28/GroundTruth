@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import type { Parcel } from "@groundtruth/shared";
 import {
@@ -429,7 +429,20 @@ function Handoff({ dealId }: { dealId: string }) {
         <h2 id="deal-handoff-title">{HANDOFF.title}</h2>
         <p>{HANDOFF.body}</p>
         <p className="mono deal-handoff-url">
-          {url.replace(/^https?:\/\//, "")}
+          {/* A narrow column breaks the address after a slash, not mid-word. */}
+          {url
+            .replace(/^https?:\/\//, "")
+            .split("/")
+            .map((part, index) => (
+              <Fragment key={index}>
+                {index > 0 && (
+                  <>
+                    /<wbr />
+                  </>
+                )}
+                {part}
+              </Fragment>
+            ))}
         </p>
       </div>
     </section>

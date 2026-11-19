@@ -34,7 +34,7 @@ Desktop prioritizes research. At phone width, `/deals/:dealId` moves the amount,
 3. **The globe is atmosphere you can play with, never a required control.** It delivers the *whoa*. You can grab it, spin it, and hover to see what's happening, but you never need it to search, select, or understand a parcel.
 4. **Every color means something.** No legend. People learn the palette by repetition. Wherever someone has to act, the color comes with words. [W3C guidance on use of color](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)
 5. **Crypto stays visible but quiet.** People should sense this runs on a live chain: wallet swarms, settlement pulses, a small "Live on Solana devnet" line. Nobody should need to understand crypto to buy land. Wallet connection appears only beside an action that needs a signature.
-6. **Loading, empty, unknown, and error are designed states.** Skeletons preserve the map layout; empty search explains how to refine; missing evidence says `Unknown`; chain latency says `Pending confirmation`. No blank cards or generic `Something went wrong` on the demo path.
+6. **Loading, empty, unknown, and error are designed states.** Skeletons preserve the map layout; empty search explains how to refine; missing evidence says `No answer yet`; chain latency says `Pending confirmation`. No blank cards or generic `Something went wrong` on the demo path.
 
 ## Palette
 
@@ -90,7 +90,7 @@ Each check answers three questions: **what we know, who can confirm it, and what
 | Example | What the buyer sees |
 | --- | --- |
 | **Road access · Needs review** (gold) | "The parcel touches a mapped road. Legal access still needs review." Link to the map source and the office that handles recorded access rights. |
-| **Public sewer · Unknown** (gray) | "We couldn't confirm service for this lot." Names the utility or public-health office that can advise. |
+| **Public sewer · No answer yet** (gray) | "We couldn't confirm service for this lot." Names the utility or public-health office that can advise. |
 | **Seller authority · Signed off** (green) | The title reviewer's role, name where appropriate, sign-off date, and a link to the on-chain record. |
 | **Payout · Held** (red) | Why the payout is held, who placed the hold, and what I can do next, including the refund path. |
 
