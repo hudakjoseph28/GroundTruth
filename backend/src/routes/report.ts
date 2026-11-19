@@ -19,10 +19,20 @@ import {
   type FranklinAccessClient,
 } from "../reports/franklinAccess.js";
 import {
+  createFranklinStreamBuffersClient,
+  type FranklinStreamBuffersClient,
+} from "../reports/franklinStreamBuffers.js";
+import {
+  createNwiWetlandsClient,
+  type NwiWetlandsClient,
+} from "../reports/nwiWetlands.js";
+import {
   buildReport,
   DEFAULT_ACCESS_TIMEOUT_MS,
   DEFAULT_FEMA_TIMEOUT_MS,
   DEFAULT_SOILS_TIMEOUT_MS,
+  DEFAULT_STREAM_BUFFERS_TIMEOUT_MS,
+  DEFAULT_WETLANDS_TIMEOUT_MS,
   DEFAULT_ZONING_TIMEOUT_MS,
 } from "../reports/pipeline.js";
 import {
@@ -52,6 +62,14 @@ export interface ReportRouteOptions {
   soils?: SsurgoSoilsClient | null;
   /** Limit for the SSURGO soils/septic check. Defaults to 6000 ms. */
   soilsTimeoutMs?: number;
+  /** National Wetlands Inventory, for every parcel's environmental check. */
+  wetlands?: NwiWetlandsClient;
+  /** Limit for the NWI part of the environmental check. Defaults to 10000 ms. */
+  wetlandsTimeoutMs?: number;
+  /** Franklin County's stream-buffer layer, for Franklin parcels only. */
+  streamBuffers?: FranklinStreamBuffersClient;
+  /** Limit for the Franklin stream-setback part. Defaults to 6000 ms. */
+  streamBuffersTimeoutMs?: number;
   now?: () => Date;
 }
 
@@ -78,6 +96,13 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
   const soils =
     options.soils === undefined ? createSsurgoSoilsClient() : options.soils;
   const soilsTimeoutMs = options.soilsTimeoutMs ?? DEFAULT_SOILS_TIMEOUT_MS;
+  const wetlands = options.wetlands ?? createNwiWetlandsClient();
+  const wetlandsTimeoutMs =
+    options.wetlandsTimeoutMs ?? DEFAULT_WETLANDS_TIMEOUT_MS;
+  const streamBuffers =
+    options.streamBuffers ?? createFranklinStreamBuffersClient();
+  const streamBuffersTimeoutMs =
+    options.streamBuffersTimeoutMs ?? DEFAULT_STREAM_BUFFERS_TIMEOUT_MS;
   const now = options.now ?? (() => new Date());
 
   return asyncRoute(async (req, res) => {
@@ -142,6 +167,10 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
       accessTimeoutMs,
       soils: soils ?? undefined,
       soilsTimeoutMs,
+      wetlands,
+      wetlandsTimeoutMs,
+      streamBuffers,
+      streamBuffersTimeoutMs,
       now,
     });
     res.json(built.report);

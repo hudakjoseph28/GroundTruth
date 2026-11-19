@@ -1,6 +1,6 @@
 # GroundTruth · Data contract (v1)
 
-**Accepted Nov 12, 2026.** UI, API, report adapters, Stream consumer, and escrow client build against these names and rules. The scaffold implements the schemas in `packages/shared`; once that code exists, this document explains the contract and the checked-in schemas validate it.
+**Accepted Nov 12, 2026.** Additive change Nov 18, 2026: check kind `environmental` (see [Contract change gate](#contract-change-gate)). UI, API, report adapters, Stream consumer, and escrow client build against these names and rules. The scaffold implements the schemas in `packages/shared`; once that code exists, this document explains the contract and the checked-in schemas validate it.
 
 IDs are strings. Times are UTC ISO 8601 strings. Token amounts are integer base units encoded as decimal strings: `"25000000"` means 25 USDC at six decimals. Public parcel objects never contain owner mailing addresses, phone numbers, identity documents, or raw provider payloads.
 
@@ -48,7 +48,7 @@ export interface ParcelSearchResult {
 }
 
 export type CheckKind =
-  | "zoning" | "flood" | "access" | "utilities"
+  | "zoning" | "flood" | "environmental" | "access" | "utilities"
   | "easements" | "sellerAuthority" | "survey"
   | "septic" | "closing";
 
@@ -190,6 +190,12 @@ Wallets build and sign program transactions client-side from the checked-in IDL.
 
 - **OGRIP:** the backend adapter accepts current Ohio field names and emits `Parcel`. The globally unique key includes state, county FIPS, and published parcel ID; a county-local ID alone is never a database key.
 - **FEMA/local records:** every adapter returns `found`, `missing`, `timeout`, or `conflict`. Only `found` may produce `evidenceFound`; every other outcome becomes `unknown` with an explicit limitation and next action.
+- **Environmental (`environmental`):** one check built from two independent sources, each with its own timeout:
+  - The National Wetlands Inventory, for every parcel. It reports wetland types and their approximate share of the lot.
+  - Franklin County's stream-buffer layer, for Franklin parcels only. It reports the share inside a riparian setback.
+  - The check is `needsReview` when either source maps something on the lot (a permit or setback rule may apply).
+  - It is `evidenceFound` only when every source that applies answered `found` with nothing on the lot. Its limitation must then say that "NWI shows none" is not a wetland delineation.
+  - Otherwise it is `unknown`: a timeout, error, or an NWI `missing` (no mapping project covers the lot) never becomes "none".
 - **ElevenLabs:** only `conversation_id`, completion time, staged deal ID, consenting demo participant label, call success, and the configured analysis outcome are retained. Raw audio/transcript is not copied into the GroundTruth database.
 - **Twilio:** a deal text subscriber's phone number is stored in E.164 form for that deal only. It is never part of `Deal`, never logged, and never returned unmasked. A text reports a confirmed event and authorizes nothing.
 - **QuickNode:** only confirmed events emitted by the deployed GroundTruth program are projected. A transfer involving the vault but not a valid program event is not enough to change `Deal.state`.
@@ -225,3 +231,7 @@ Fixture files contain staged wallets and public records only. Once the devnet ac
 ## Contract change gate
 
 A change to a field, status, route, instruction, PDA seed, required reviewer, or terminal-state rule updates `packages/shared`, this file, both fixture sets, affected tests, and the consuming phase docs in one pull request. Additive copy changes do not require a version bump. A breaking shape or state-machine change becomes v2.
+
+| Date | Change | Kind | Where |
+| --- | --- | --- | --- |
+| 2026-11-18 | Check kind `environmental` (wetlands and stream setbacks) | Additive: a new `CheckKind` value; no field, status, route, or state-machine change | `CHECK_KINDS` in `packages/shared/src/contract.ts`; backend `src/reports/environmentalCheck.ts`; web `CHECK_TITLES`/`CHECK_LABELS`. The golden and second-county fixtures are unchanged and have no `environmental` check. The web ledger lists `environmental` only when a report carries it, and lists any kind it doesn't know last instead of failing. |

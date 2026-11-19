@@ -1,0 +1,423 @@
+{
+  "scenario": "licking-wetland",
+  "parcelKey": "ohio:39089:04011612400001",
+  "recordedAt": "2026-11-18T23:49:37.069Z",
+  "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6210979%2C40.17428%5D%2C%5B-82.6211428%2C40.1736627%5D%2C%5B-82.6219591%2C40.1736997%5D%2C%5B-82.6231512%2C40.1737539%5D%2C%5B-82.6231071%2C40.1743711%5D%2C%5B-82.6210979%2C40.17428%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=IMAGE_YR&returnDistinctValues=true&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "PROJECT_NAME",
+        "fieldAliases": {
+          "IMAGE_YR": "IMAGE_YR"
+        },
+        "fields": [
+          {
+            "name": "IMAGE_YR",
+            "type": "esriFieldTypeSmallInteger",
+            "alias": "IMAGE_YR"
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "IMAGE_YR": 2007
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6210979%2C40.17428%5D%2C%5B-82.6211428%2C40.1736627%5D%2C%5B-82.6219591%2C40.1736997%5D%2C%5B-82.6231512%2C40.1737539%5D%2C%5B-82.6231071%2C40.1743711%5D%2C%5B-82.6210979%2C40.17428%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=ATTRIBUTE%2CWETLAND_TYPE&returnDistinctValues=true&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "Wetlands.ATTRIBUTE",
+        "fieldAliases": {
+          "ATTRIBUTE": "ATTRIBUTE",
+          "WETLAND_TYPE": "WETLAND_TYPE"
+        },
+        "fields": [
+          {
+            "name": "ATTRIBUTE",
+            "type": "esriFieldTypeString",
+            "alias": "ATTRIBUTE",
+            "length": 15
+          },
+          {
+            "name": "WETLAND_TYPE",
+            "type": "esriFieldTypeString",
+            "alias": "WETLAND_TYPE",
+            "length": 50
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "ATTRIBUTE": "PFO1A",
+              "WETLAND_TYPE": "Freshwater Forested/Shrub Wetland"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/export",
+      "requestBody": "bbox=-9197567.119319651%2C4891210.695086834%2C-9197338.547009204%2C4891313.820484712&bboxSR=3857&imageSR=3857&size=512%2C231&dpi=96&format=png32&transparent=true&dynamicLayers=%5B%7B%22id%22%3A100%2C%22source%22%3A%7B%22type%22%3A%22mapLayer%22%2C%22mapLayerId%22%3A0%7D%2C%22definitionExpression%22%3A%22Wetlands.WETLAND_TYPE+%3D+%27Freshwater+Forested%2FShrub+Wetland%27%22%2C%22drawingInfo%22%3A%7B%22renderer%22%3A%7B%22type%22%3A%22simple%22%2C%22symbol%22%3A%7B%22type%22%3A%22esriSFS%22%2C%22style%22%3A%22esriSFSSolid%22%2C%22color%22%3A%5B255%2C255%2C0%2C255%5D%2C%22outline%22%3A%7B%22type%22%3A%22esriSLS%22%2C%22style%22%3A%22esriSLSNull%22%7D%7D%7D%7D%7D%5D&f=image",
+      "status": 200,
+      "contentType": "image/png",
+      "bodyBase64": "iVBORw0KGgoAAAANSUhEUgAAAgAAAADnCAYAAABopu7pAAAAAXNSR0IB2cksfwAAAAlwSFlzAAAOxAAADsQBlSsOGwAABVRJREFUeJzt3VFu20gQQEETyP2v7EUjAZzdxLIk02vOvKoD+IMQMG/YbPjHCwCneX19efU4OdtxvBxn/80fZ/9BAOD6BADASdz+WYkAAIAgAQAAQQIAAGIfAA4BAHAC839WIwAAIEgAAECQAACAIAEA8Enm/6xIAABAkAAAgNgK4BAAAJ/g9T+rEgAAECQAACBIAABAkAAAeJL5PysTAAAQ2wAYAgAAggQAAAQJAIAnmP+zOgEAAEECAACCBADAg7z+ZwcCAABiK4BDAABAkAAAgCABAPAA8392IQAAIEgAAECQAACAIAEAcCfzf3ZZARwCAACCBAAABAkAgDt4/c9uBAAABAkAAAgSAAAQJAAAPmD+z24rgEMAAECQAACAIAEAcIPX/+xKAABAkAAAgCABAABBAgDgHeb/7LoCOAQAAAQJAAAIEgAAECQAAP7C/J/dCQAACBIAABAkAAD+w+t/dl8BHAIAAIIEAAAECQAACBIAAL8x/6dCAABAkAAAgCABAACxFcAhAAB+Mf+nRAAAQJAAAIAgAQAAQQIAAIIEAAAECQAAiK0ADgEAYAWQIAEAAEECAACCBAAABAkAAAgSAAAQJAAAILYCOAQAkOe/AFIkAAAgSAAAQJAAAIAgAQAAQQIAAIIEAADEVgCHAADSrABSJQAAIEgAAECQAACAIAEAAEECAACCBAAAxFYAhwAAsqwAUiYAACBIAABAkAAAgCABAABBAgAAggQAAMRWAIcAAJKsAFInAAAgSAAAQJAAAIAgAQAAQQIAAIIEAADEVgCHAAByrACCAACAJG8AACBIAABAkAAAgCABAABBAgAAYiuAQwAAKVYA4ScBAABBAgAAggQAAAQJAAAIEgAAECQAACC2AjgEAJBhBRDeCAAACBIAABAkAAAgSAAAQJAAAIAgAQAAsRXAIQCABCuA8G8CAACCBAAABAkAAAgSAAAQJAAAIEgAAEBsBXAIAGB7VgDhTwIAAIIEAAAECQAACBIAABAkAAAgSAAAW7MBwHc4Lr4COAQAAAQJAAAIEgAAECQAgG2Z/8P7BAAABAkAAAgSAAAQWwEcAgDYkvk/3CYAACBIAABAkAAAgCABAGzH/B8+JgAAIEgAAEBsBXAIAAAIEgDAVsz/4T4CAACCBAAABAkAAAgSAMA2zP/hfgIAAGIrgEMAAECQAACAIAEAbMH8Hx4jAAAgSAAAQJAAAIAgAQAsz/yf73YstgI4BAAABAkAAAgSAAAQJACApZn/w3MEAAAECQAACBIAABBbARwCAFiW+T88TwAAQJAAAIAgAQAAQQIAWJL5P3yOAACAIAEAALEVwCEAACBIAADLMf+HzxMAABB7/T8EAADEDv8hAAAgSAAASzH/57sdG9z+hwAAgCABAACx2/8QAAAQO/yHAACWYf4P5xEAABC7/Q8BAACxw38IAAAIEgDAEsz/+Q7Hprf/IQAAIEgAAEDs9j8EAADEDv8hAIDLM/+H8wkAAIjd/ocAAIDY4T8EAAAECQDg0sz/+b8codv/EAAAECQAAMg7Yrf/IQAASDuCh/8QAMBlmf/D1xEAAGQd0dv/EAAAJJUP/yEAACBIAACXZP7PVzrit/8hAAAgSAAAkOL2/5MAACDD4f9GAABAkAAALntT8yEgZ/+mPNE3AgCA7Tn8/yQAACBIAACwNbf/vxMAwGX5DgC+jgAAYFtu/+8TAABsyeF/mwAAgCABAFya7wB49nfjyd0mAADYisP/PgIAAIIEAADbcPu/nwAALs93AHA+AQDAFtz+HyMAAFiew/9xAgAAggQAsATfAXDrt+HpvDzsHx/Gn75qtPn5AAAAAElFTkSuQmCC"
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6210979%2C40.17428%5D%2C%5B-82.6211428%2C40.1736627%5D%2C%5B-82.6219591%2C40.1736997%5D%2C%5B-82.6231512%2C40.1737539%5D%2C%5B-82.6231071%2C40.1743711%5D%2C%5B-82.6210979%2C40.17428%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=STUDY_ID&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "STUDY_ID",
+        "fieldAliases": {
+          "STUDY_ID": "STUDY_ID"
+        },
+        "fields": [
+          {
+            "name": "STUDY_ID",
+            "type": "esriFieldTypeString",
+            "alias": "STUDY_ID",
+            "length": 6
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "STUDY_ID": "39089C"
+            }
+          },
+          {
+            "attributes": {
+              "STUDY_ID": "39089C"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/1/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6210979%2C40.17428%5D%2C%5B-82.6211428%2C40.1736627%5D%2C%5B-82.6219591%2C40.1736997%5D%2C%5B-82.6231512%2C40.1737539%5D%2C%5B-82.6231071%2C40.1743711%5D%2C%5B-82.6210979%2C40.17428%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=CASE_NO%2CEFF_DATE%2CSTATUS&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "CASE_NO",
+        "fieldAliases": {
+          "CASE_NO": "CASE_NO",
+          "EFF_DATE": "EFF_DATE",
+          "STATUS": "STATUS"
+        },
+        "fields": [
+          {
+            "name": "CASE_NO",
+            "type": "esriFieldTypeString",
+            "alias": "CASE_NO",
+            "length": 13
+          },
+          {
+            "name": "EFF_DATE",
+            "type": "esriFieldTypeDate",
+            "alias": "EFF_DATE",
+            "length": 8
+          },
+          {
+            "name": "STATUS",
+            "type": "esriFieldTypeString",
+            "alias": "STATUS",
+            "length": 12
+          }
+        ],
+        "features": []
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6210979%2C40.17428%5D%2C%5B-82.6211428%2C40.1736627%5D%2C%5B-82.6219591%2C40.1736997%5D%2C%5B-82.6231512%2C40.1737539%5D%2C%5B-82.6231071%2C40.1743711%5D%2C%5B-82.6210979%2C40.17428%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=FLD_ZONE%2CZONE_SUBTY%2CSFHA_TF&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "FLD_AR_ID",
+        "fieldAliases": {
+          "FLD_ZONE": "FLD_ZONE",
+          "ZONE_SUBTY": "ZONE_SUBTY",
+          "SFHA_TF": "SFHA_TF"
+        },
+        "fields": [
+          {
+            "name": "FLD_ZONE",
+            "type": "esriFieldTypeString",
+            "alias": "FLD_ZONE",
+            "length": 17
+          },
+          {
+            "name": "ZONE_SUBTY",
+            "type": "esriFieldTypeString",
+            "alias": "ZONE_SUBTY",
+            "length": 76
+          },
+          {
+            "name": "SFHA_TF",
+            "type": "esriFieldTypeString",
+            "alias": "SFHA_TF",
+            "length": 1
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "FLD_ZONE": "X",
+              "ZONE_SUBTY": "AREA OF MINIMAL FLOOD HAZARD",
+              "SFHA_TF": "F"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6210979%2C40.17428%5D%2C%5B-82.6211428%2C40.1736627%5D%2C%5B-82.6219591%2C40.1736997%5D%2C%5B-82.6231512%2C40.1737539%5D%2C%5B-82.6231071%2C40.1743711%5D%2C%5B-82.6210979%2C40.17428%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=FIRM_PAN%2CEFF_DATE&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "DFIRM_ID",
+        "fieldAliases": {
+          "FIRM_PAN": "FIRM_PAN",
+          "EFF_DATE": "EFF_DATE"
+        },
+        "fields": [
+          {
+            "name": "FIRM_PAN",
+            "type": "esriFieldTypeString",
+            "alias": "FIRM_PAN",
+            "length": 11
+          },
+          {
+            "name": "EFF_DATE",
+            "type": "esriFieldTypeDate",
+            "alias": "EFF_DATE",
+            "length": 8
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "FIRM_PAN": "39089C0165J",
+              "EFF_DATE": 1426464000000
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Licking%27+AND+LocalParcelID%3D%2704011612400001%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "status": 200,
+      "body": {
+        "type": "FeatureCollection",
+        "crs": {
+          "type": "name",
+          "properties": {
+            "name": "EPSG:4326"
+          }
+        },
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    -82.6210979,
+                    40.17428
+                  ],
+                  [
+                    -82.6211428,
+                    40.1736627
+                  ],
+                  [
+                    -82.6219591,
+                    40.1736997
+                  ],
+                  [
+                    -82.6231512,
+                    40.1737539
+                  ],
+                  [
+                    -82.6231071,
+                    40.1743711
+                  ],
+                  [
+                    -82.6210979,
+                    40.17428
+                  ]
+                ]
+              ]
+            },
+            "properties": {
+              "County": "Licking",
+              "LocalParcelID": "04011612400001",
+              "StateParcelID": "39089-04011612400001",
+              "SitusAddressAll": "8391 COOPER RD JOHNSTOWN, OH 43031 JOHNSTOWN 43031",
+              "LandArea": 2.9,
+              "Shape__Area": 126654.15966796875
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "apiResponse": {
+    "status": 200,
+    "body": {
+      "parcelKey": "ohio:39089:04011612400001",
+      "generatedAt": "2026-11-18T23:49:37.069Z",
+      "coverage": "partial",
+      "biggestOpenQuestion": "access",
+      "checks": [
+        {
+          "kind": "zoning",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No zoning record has been checked for this lot yet.",
+          "limitation": "GroundTruth has no zoning source for Licking County, so it cannot say which district applies or what may be built here.",
+          "responsibleParty": {
+            "role": "Zoning office for the township, city, or village that contains the lot"
+          },
+          "nextAction": "Ask the zoning office that covers this lot which district applies and whether it allows what you plan to build."
+        },
+        {
+          "kind": "flood",
+          "status": "evidenceFound",
+          "finding": "FEMA's flood map puts this lot in Zone X (area of minimal flood hazard). No part of it is mapped in a Special Flood Hazard Area.",
+          "limitation": "FEMA's zone lines and the parcel lines come from different maps, so the edges may not line up exactly. Being outside the mapped floodplain does not mean the lot never floods. A flood zone is not a flood-insurance determination or a building permit.",
+          "sources": [
+            {
+              "authority": "FEMA",
+              "title": "National Flood Hazard Layer: flood hazard zones",
+              "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
+              "retrievedAt": "2026-11-18T23:49:37.069Z"
+            },
+            {
+              "authority": "FEMA",
+              "title": "Flood Insurance Rate Map panel 39089C0165J",
+              "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
+              "retrievedAt": "2026-11-18T23:49:37.069Z",
+              "effectiveDate": "2015-03-16"
+            }
+          ],
+          "responsibleParty": {
+            "role": "FEMA flood map",
+            "organization": "FEMA Flood Map Service Center",
+            "publicContactUrl": "https://msc.fema.gov/portal/home"
+          },
+          "nextAction": "Check the current map for this lot on FEMA's Flood Map Service Center before closing; a lender may still order its own flood determination."
+        },
+        {
+          "kind": "environmental",
+          "status": "needsReview",
+          "finding": "The National Wetlands Inventory maps Freshwater Forested/Shrub Wetland (PFO1A) on about 31% of this lot.",
+          "limitation": "NWI outlines are drawn from aerial imagery (here from 2007) and are approximate: they are not a wetland delineation, and the shares are measured against the mapped OGRIP boundary, not a survey. Filling or building in a wetland or stream can need a Clean Water Act Section 404 permit from the U.S. Army Corps of Engineers or a permit from Ohio EPA.",
+          "sources": [
+            {
+              "authority": "U.S. Fish and Wildlife Service",
+              "title": "National Wetlands Inventory: freshwater forested/shrub wetland mapped on the parcel",
+              "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0",
+              "retrievedAt": "2026-11-18T23:49:37.069Z"
+            },
+            {
+              "authority": "U.S. Fish and Wildlife Service",
+              "title": "National Wetlands Inventory: mapped from 2007 imagery",
+              "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3",
+              "retrievedAt": "2026-11-18T23:49:37.069Z"
+            }
+          ],
+          "responsibleParty": {
+            "role": "County soil and water conservation district, or a wetland consultant",
+            "organization": "Licking Soil and Water Conservation District"
+          },
+          "nextAction": "Before you plan a building, driveway, septic system, or fill near the mapped wetland, have a wetland consultant delineate it and ask whether a permit applies."
+        },
+        {
+          "kind": "access",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No record of legal road access has been checked for this lot.",
+          "limitation": "A boundary that touches a road does not prove a legal right to use it, and a driveway needs its own approval.",
+          "responsibleParty": {
+            "role": "Title reviewer, then surveyor",
+            "organization": "Licking County Recorder"
+          },
+          "nextAction": "Ask a title company to search recorded access rights, and ask the road authority what a driveway permit needs."
+        },
+        {
+          "kind": "utilities",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No utility record has been checked for this lot.",
+          "limitation": "No conclusion either way: public water and sewer may reach the lot, or it may need a well and a septic system.",
+          "responsibleParty": {
+            "role": "Water and sewer utility for this area"
+          },
+          "nextAction": "Ask the utility that serves this area whether water and sewer reach the lot, and what connecting would cost."
+        },
+        {
+          "kind": "easements",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No search of recorded easements or restrictions is attached.",
+          "limitation": "Recorded easements, covenants, or restrictions can limit where and what you build. None are ruled in or out.",
+          "responsibleParty": {
+            "role": "Title reviewer",
+            "organization": "Licking County Recorder"
+          },
+          "nextAction": "Ask a title company to search the recorded documents for this parcel."
+        },
+        {
+          "kind": "sellerAuthority",
+          "status": "unknown",
+          "sources": [],
+          "finding": "The seller's right to sell this lot has not been verified.",
+          "limitation": "This report does not check ownership records or the seller's identity. Sellers who impersonate the real owner often target vacant land (see the linked ALTA guidance).",
+          "responsibleParty": {
+            "role": "Title reviewer",
+            "organization": "American Land Title Association (guidance)",
+            "publicContactUrl": "https://www.alta.org/file/ALTA-Seller-Impersonation-Handout"
+          },
+          "nextAction": "Have a title company confirm the owner of record and reach the owner through contact details it finds independently, not ones the seller supplied."
+        },
+        {
+          "kind": "survey",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No survey of this lot is attached.",
+          "limitation": "The boundary shown comes from Ohio's statewide parcel map (OGRIP), which is not a survey. The real corners and lines can differ.",
+          "responsibleParty": {
+            "role": "Licensed Ohio surveyor"
+          },
+          "nextAction": "Hire a licensed Ohio surveyor to locate the boundary before you close."
+        },
+        {
+          "kind": "septic",
+          "status": "unknown",
+          "sources": [],
+          "finding": "No septic site review is on file for this lot.",
+          "limitation": "If public sewer does not reach the lot, a septic system needs a site and soil evaluation before anyone can say one will work.",
+          "responsibleParty": {
+            "role": "Local health district (sewage treatment systems)"
+          },
+          "nextAction": "If the lot has no sewer, ask the health district for a site and soil evaluation before you close."
+        }
+      ]
+    }
+  }
+}

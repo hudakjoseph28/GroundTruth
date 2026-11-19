@@ -3,6 +3,7 @@ import type { PrismaClient } from "@prisma/client";
 import {
   goldenParcel,
   goldenReport,
+  secondCountyReport,
   type Check,
   type Parcel,
   type ParcelReport,
@@ -32,6 +33,17 @@ import { createSsurgoSoilsClient } from "../src/reports/ssurgoSoils.js";
 import { prismaReportStore, type ReportStore } from "../src/reports/store.js";
 import { LIVE_REPORT_TTL_MS } from "../src/routes/report.js";
 import {
+  createNwiWetlandsClient,
+  NWI_IMAGE_YEAR_LAYER,
+  NWI_SERVICE,
+  NWI_WETLANDS_LAYER,
+} from "../src/reports/nwiWetlands.js";
+import {
+  createFranklinStreamBuffersClient,
+  FRANKLIN_STREAM_BUFFERS_LAYER,
+} from "../src/reports/franklinStreamBuffers.js";
+import {
+  recordedResponse,
   REPORT_SCENARIOS,
   reportPath,
   type ReportRecording,
@@ -67,9 +79,7 @@ function replay(recording: ReportRecording) {
     );
     const recorded = byRequest.get(key);
     if (!recorded) throw new Error(`unrecorded request: ${key.slice(0, 200)}`);
-    return new Response(JSON.stringify(recorded.body), {
-      status: recorded.status,
-    });
+    return recordedResponse(recorded);
   });
 }
 
@@ -113,6 +123,12 @@ interface AppSetup {
   /** USDA Soil Data Access; absent keeps legacy recordings soils-free. */
   soilsFetch?: typeof fetch;
   soilsTimeoutMs?: number;
+  /** National Wetlands Inventory; defaults to the recording. */
+  wetlandsFetch?: typeof fetch;
+  wetlandsTimeoutMs?: number;
+  /** Franklin County stream-buffer layer; defaults to the recording. */
+  streamBuffersFetch?: typeof fetch;
+  streamBuffersTimeoutMs?: number;
 }
 
 function appWith(setup: AppSetup) {
@@ -135,11 +151,21 @@ function appWith(setup: AppSetup) {
       soils: setup.soilsFetch
         ? createSsurgoSoilsClient({ fetch: setup.soilsFetch, now })
         : null,
+      wetlands: createNwiWetlandsClient({
+        fetch: setup.wetlandsFetch ?? setup.fetch,
+        now,
+      }),
+      streamBuffers: createFranklinStreamBuffersClient({
+        fetch: setup.streamBuffersFetch ?? setup.fetch,
+        now,
+      }),
       store: setup.store ?? memoryStore(),
       floodTimeoutMs: setup.floodTimeoutMs ?? 1_000,
       zoningTimeoutMs: setup.zoningTimeoutMs ?? 1_000,
       accessTimeoutMs: setup.accessTimeoutMs ?? 1_000,
       soilsTimeoutMs: setup.soilsTimeoutMs ?? 1_000,
+      wetlandsTimeoutMs: setup.wetlandsTimeoutMs ?? 1_000,
+      streamBuffersTimeoutMs: setup.streamBuffersTimeoutMs ?? 1_000,
       now,
     },
   });
@@ -189,6 +215,7 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
     expect(report.checks.map((check) => check.kind)).toEqual([
       "zoning",
       "flood",
+      "environmental",
       "access",
       "utilities",
       "easements",
@@ -235,9 +262,11 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
     ]);
 
     expect(checkOf(report, "access").status).toBe("evidenceFound");
+    // NWI maps no wetland and the county maps no setback on this city lot.
+    expect(checkOf(report, "environmental").status).toBe("evidenceFound");
 
     for (const check of report.checks.filter(
-      (c) => !["flood", "zoning", "access"].includes(c.kind),
+      (c) => !["flood", "zoning", "access", "environmental"].includes(c.kind),
     )) {
       expect(check.status).toBe("unknown");
       expect(check.sources).toEqual([]);
@@ -317,7 +346,9 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
 
     expect(res.status).toBe(200);
     const report = res.body as ParcelReport;
-    expect(report.coverage).toBe("boundaryOnly");
+    // NWI has mapped Wyandot County, so the wetland check still has a source.
+    expect(report.coverage).toBe("partial");
+    expect(checkOf(report, "environmental").status).toBe("evidenceFound");
     const flood = checkOf(report, "flood");
     expect(flood.status).toBe("unknown");
     expect(flood.finding).toBe(
@@ -355,8 +386,9 @@ describe("a parcel on two FIRM panels (golden parcel 230-000918)", () => {
     });
 
     // FEMA lists Madison's panel first; the report does not depend on it.
-    const panelAnswer = recording.exchanges.find((e) =>
-      e.url.endsWith("/MapServer/3/query"),
+    const panelAnswer = recording.exchanges.find(
+      (e) =>
+        e.url.startsWith(NFHL_SERVICE) && e.url.endsWith("/MapServer/3/query"),
     )?.body as { features: { attributes: { FIRM_PAN: string } }[] };
     expect(panelAnswer.features.map((f) => f.attributes.FIRM_PAN)).toEqual([
       "39097C0190E",
@@ -1293,5 +1325,386 @@ describe("Franklin County road access, live from the county right-of-way and roa
         "RoadClass IS NULL OR RoadClass NOT IN ('Private','Ramp')",
       );
     }
+  });
+});
+
+describe("environmental: NWI wetlands and Franklin stream setbacks, live", () => {
+  const hanging = () =>
+    vi.fn<typeof fetch>(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+  const nwiSource = (title: string, retrievedAt: string) => ({
+    authority: "U.S. Fish and Wildlife Service",
+    title,
+    url: NWI_WETLANDS_LAYER,
+    retrievedAt,
+  });
+  const imagerySource = (retrievedAt: string) => ({
+    authority: "U.S. Fish and Wildlife Service",
+    title: "National Wetlands Inventory: mapped from 2007 imagery",
+    url: NWI_IMAGE_YEAR_LAYER,
+    retrievedAt,
+  });
+  const setbackSource = (title: string, retrievedAt: string) => ({
+    authority: "Franklin County Economic Development & Planning",
+    title,
+    url: FRANKLIN_STREAM_BUFFERS_LAYER,
+    retrievedAt,
+  });
+  const NONE_IS_NOT_A_DELINEATION =
+    '"NWI shows none" is not a wetland delineation. The NWI is drawn from aerial imagery (here from 2007) and misses many small, forested, or seasonally dry wetlands; only a delineation in the field, confirmed by the U.S. Army Corps of Engineers or Ohio EPA, says whether regulated wetlands are on the lot.';
+  const SETBACK_RULES =
+    "The stream-buffer map shows where the county's riparian setback applies. What may be built, graded, or placed inside it is set by the county's setback rules, which this check does not read.";
+  const FRANKLIN_SWCD = {
+    role: "County soil and water conservation district, or a wetland consultant",
+    organization: "Franklin Soil & Water Conservation District",
+    publicContactUrl: "https://www.franklinswcd.org/",
+  };
+
+  async function environmentalOf(
+    name: ReportScenario,
+    overrides: Partial<AppSetup> = {},
+  ) {
+    const setup = scenario(name, overrides);
+    const res = await request(setup.app).get(
+      reportPath(REPORT_SCENARIOS[name]),
+    );
+    expect(res.status).toBe(200);
+    const report = res.body as ParcelReport;
+    return {
+      ...setup,
+      report,
+      environmental: checkOf(report, "environmental"),
+    };
+  }
+
+  it("needs review on a Franklin lot with mapped wetlands inside the Big Darby setback (0 Harrisburg Georgesville Rd)", async () => {
+    const { report, environmental, recording } = await environmentalOf(
+      "franklin-wetland-setback",
+    );
+    const at = recording.recordedAt;
+
+    expect(environmental).toEqual({
+      kind: "environmental",
+      status: "needsReview",
+      finding:
+        "The National Wetlands Inventory maps wetland or open water on about 3.2% of this lot: Riverine (R2UBH, R4SBC) on about 2.1%, Freshwater Emergent Wetland (PEM1A) on about 0.9%, and Freshwater Pond (PUBG) on about 0.1%. Franklin County's stream-buffer map puts about 41% of it inside the Big Darby Creek Watershed Riparian Setbacks.",
+      limitation: `NWI outlines are drawn from aerial imagery (here from 2007) and are approximate: they are not a wetland delineation, and the shares are measured against the mapped OGRIP boundary, not a survey. Filling or building in a wetland or stream can need a Clean Water Act Section 404 permit from the U.S. Army Corps of Engineers or a permit from Ohio EPA. ${SETBACK_RULES}`,
+      sources: [
+        nwiSource(
+          "National Wetlands Inventory: riverine, freshwater emergent wetland, and freshwater pond mapped on the parcel",
+          at,
+        ),
+        imagerySource(at),
+        setbackSource(
+          "Stream buffers: Big Darby Creek Watershed Riparian Setbacks cover about 41% of the parcel",
+          at,
+        ),
+      ],
+      responsibleParty: {
+        role: "Wetland consultant, and the county planning office for the riparian setback",
+        organization: "Franklin County Economic Development & Planning",
+        publicContactUrl:
+          "https://www.franklincountyohio.gov/Business-Development/Development-Planning/Planning-Zoning",
+      },
+      nextAction:
+        "Before you plan a building, driveway, septic system, or fill near the mapped wetland, have a wetland consultant delineate it and ask whether a permit applies. Ask Franklin County Economic Development & Planning what the riparian setback allows on this lot.",
+    });
+    // Septic, still unknown, outranks a mapped wetland.
+    expect(report.biggestOpenQuestion).toBe("septic");
+    expect(report.checks.map((check) => check.kind)).toContain("environmental");
+  });
+
+  it("needs review on a Licking lot NWI maps as 31% forested wetland, without asking any Franklin layer", async () => {
+    const streamBuffersFetch = vi.fn<typeof fetch>();
+    const { environmental, recording } = await environmentalOf(
+      "licking-wetland",
+      { streamBuffersFetch },
+    );
+
+    expect(environmental).toMatchObject({
+      status: "needsReview",
+      finding:
+        "The National Wetlands Inventory maps Freshwater Forested/Shrub Wetland (PFO1A) on about 31% of this lot.",
+      responsibleParty: {
+        role: "County soil and water conservation district, or a wetland consultant",
+        organization: "Licking Soil and Water Conservation District",
+      },
+    });
+    expect(environmental.sources).toEqual([
+      nwiSource(
+        "National Wetlands Inventory: freshwater forested/shrub wetland mapped on the parcel",
+        recording.recordedAt,
+      ),
+      imagerySource(recording.recordedAt),
+    ]);
+    expect(environmental.limitation).toContain("Section 404 permit");
+    expect(environmental.limitation).not.toContain("stream-buffer");
+    expect(JSON.stringify(environmental)).not.toContain(
+      "franklincountyohio.gov",
+    );
+    expect(streamBuffersFetch).not.toHaveBeenCalled();
+  });
+
+  it("measures the golden parcel's Big Darby setback at about 4.7%, as verified by hand, with no wetland mapped", async () => {
+    const { environmental, recording } =
+      await environmentalOf("franklin-golden");
+
+    expect(environmental).toMatchObject({
+      status: "needsReview",
+      finding:
+        "The National Wetlands Inventory maps no wetland on this lot. Franklin County's stream-buffer map puts about 4.7% of it inside the Big Darby Creek Watershed Riparian Setbacks.",
+      limitation: `${NONE_IS_NOT_A_DELINEATION} ${SETBACK_RULES}`,
+      nextAction:
+        "Ask Franklin County Economic Development & Planning what the riparian setback allows on this lot.",
+    });
+    expect(environmental.sources).toContainEqual(
+      setbackSource(
+        "Stream buffers: Big Darby Creek Watershed Riparian Setbacks cover about 4.7% of the parcel",
+        recording.recordedAt,
+      ),
+    );
+    // The seeded golden report cites the same layer under zoning.
+    expect(
+      checkOf(goldenReport, "zoning").sources.map((source) => source.url),
+    ).toContain(FRANKLIN_STREAM_BUFFERS_LAYER);
+  });
+
+  it("says NWI shows none, and that none is not a delineation, on a Columbus lot with no setback", async () => {
+    const { environmental, recording } =
+      await environmentalOf("franklin-outside");
+    const at = recording.recordedAt;
+
+    expect(environmental).toEqual({
+      kind: "environmental",
+      status: "evidenceFound",
+      finding:
+        "The National Wetlands Inventory maps no wetland on this lot. Franklin County's stream-buffer map puts no part of it in a riparian setback.",
+      limitation: `${NONE_IS_NOT_A_DELINEATION} The county's stream-buffer map covers its mapped setback watersheds; a city, village, or township with its own zoning may set its own stream rules.`,
+      sources: [
+        nwiSource(
+          "National Wetlands Inventory: no wetland mapped on the parcel",
+          at,
+        ),
+        imagerySource(at),
+        setbackSource("Stream buffers: no riparian setback on the parcel", at),
+      ],
+      responsibleParty: FRANKLIN_SWCD,
+      nextAction:
+        "If the lot has low, wet, or wooded ground, ask the county soil and water conservation district or a wetland consultant whether a wetland delineation is worth doing before you build.",
+    });
+  });
+
+  it("is evidenceFound outside Franklin with no setback sentence (10034 Appleton Rd, Licking)", async () => {
+    const { environmental } = await environmentalOf("licking-outside");
+
+    expect(environmental.status).toBe("evidenceFound");
+    expect(environmental.finding).toBe(
+      "The National Wetlands Inventory maps no wetland on this lot.",
+    );
+    expect(environmental.limitation).toBe(NONE_IS_NOT_A_DELINEATION);
+    expect(environmental.responsibleParty.organization).toBe(
+      "Licking Soil and Water Conservation District",
+    );
+  });
+
+  it("leaves the seeded golden and Licking reports exactly as verified: no environmental check, no NWI call", async () => {
+    for (const seeded of [goldenReport, secondCountyReport]) {
+      const wetlandsFetch = vi.fn<typeof fetch>();
+      const streamBuffersFetch = vi.fn<typeof fetch>();
+      const res = await request(
+        appWith({
+          fetch: vi.fn<typeof fetch>(),
+          wetlandsFetch,
+          streamBuffersFetch,
+          at: new Date(),
+          store: memoryStore([seeded]),
+        }),
+      ).get(reportPath(seeded.parcelKey));
+
+      expect(res.body).toEqual(seeded);
+      expect(
+        (res.body as ParcelReport).checks.some(
+          (check) => check.kind === "environmental",
+        ),
+      ).toBe(false);
+      expect(wetlandsFetch).not.toHaveBeenCalled();
+      expect(streamBuffersFetch).not.toHaveBeenCalled();
+    }
+  });
+
+  it("gives NWI its own limit: on a timeout wetlands are unknown, the setback is still read, and the report is not cached", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const baseline = load("franklin-outside").apiResponse.body as ParcelReport;
+    const wetlandsFetch = hanging();
+
+    const started = Date.now();
+    const { report, environmental, store } = await environmentalOf(
+      "franklin-outside",
+      {
+        wetlandsFetch,
+        wetlandsTimeoutMs: 200,
+        // The setback's own limit is far longer and is never reached.
+        streamBuffersTimeoutMs: 5_000,
+      },
+    );
+
+    expect(Date.now() - started).toBeLessThan(2_000);
+    expect(environmental).toMatchObject({
+      status: "unknown",
+      finding:
+        "The National Wetlands Inventory did not answer within 0.2 seconds, so no wetland was checked. Franklin County's stream-buffer map puts no part of it in a riparian setback.",
+      limitation: "Wetlands were not checked, so none are ruled in or out.",
+      responsibleParty: FRANKLIN_SWCD,
+    });
+    expect(environmental.nextAction).toContain(
+      "https://www.fws.gov/program/national-wetlands-inventory/wetlands-mapper",
+    );
+    // Only the county layer answered, so only it is cited.
+    expect(environmental.sources.map((source) => source.url)).toEqual([
+      FRANKLIN_STREAM_BUFFERS_LAYER,
+    ]);
+    expect(report.checks.filter((c) => c.kind !== "environmental")).toEqual(
+      baseline.checks.filter((c) => c.kind !== "environmental"),
+    );
+    expect(wetlandsFetch).toHaveBeenCalled();
+    expect(store.write).not.toHaveBeenCalled();
+  });
+
+  it("still needs review for a found setback when NWI times out (golden parcel)", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { environmental } = await environmentalOf("franklin-golden", {
+      wetlandsFetch: hanging(),
+      wetlandsTimeoutMs: 200,
+    });
+
+    expect(environmental.status).toBe("needsReview");
+    expect(environmental.finding).toBe(
+      "The National Wetlands Inventory did not answer within 0.2 seconds, so no wetland was checked. Franklin County's stream-buffer map puts about 4.7% of it inside the Big Darby Creek Watershed Riparian Setbacks.",
+    );
+    expect(environmental.limitation).toBe(
+      `Wetlands were not checked, so none are ruled in or out. ${SETBACK_RULES}`,
+    );
+  });
+
+  it("gives the stream-buffer layer its own limit: on a timeout the mapped wetlands are still reported", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const streamBuffersFetch = hanging();
+
+    const started = Date.now();
+    const { environmental, store } = await environmentalOf(
+      "franklin-wetland-setback",
+      {
+        streamBuffersFetch,
+        streamBuffersTimeoutMs: 200,
+        wetlandsTimeoutMs: 5_000,
+      },
+    );
+
+    expect(Date.now() - started).toBeLessThan(2_000);
+    expect(environmental.status).toBe("needsReview");
+    expect(environmental.finding).toBe(
+      "The National Wetlands Inventory maps wetland or open water on about 3.2% of this lot: Riverine (R2UBH, R4SBC) on about 2.1%, Freshwater Emergent Wetland (PEM1A) on about 0.9%, and Freshwater Pond (PUBG) on about 0.1%. Franklin County's stream-buffer map did not answer within 0.2 seconds, so the riparian setback was not checked.",
+    );
+    expect(environmental.sources.map((source) => source.url)).toEqual([
+      NWI_WETLANDS_LAYER,
+      NWI_IMAGE_YEAR_LAYER,
+    ]);
+    expect(environmental.responsibleParty.organization).toBe(
+      "Franklin Soil & Water Conservation District",
+    );
+    expect(streamBuffersFetch).toHaveBeenCalled();
+    expect(store.write).not.toHaveBeenCalled();
+  });
+
+  it("does not call a lot clear when the setback could not be checked", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { environmental } = await environmentalOf("franklin-outside", {
+      streamBuffersFetch: hanging(),
+      streamBuffersTimeoutMs: 200,
+    });
+
+    expect(environmental.status).toBe("unknown");
+    expect(environmental.finding).toBe(
+      "The National Wetlands Inventory maps no wetland on this lot. Franklin County's stream-buffer map did not answer within 0.2 seconds, so the riparian setback was not checked.",
+    );
+    expect(environmental.limitation).toBe(
+      `${NONE_IS_NOT_A_DELINEATION} The riparian setback was not checked, so it is not ruled in or out.`,
+    );
+  });
+
+  it("reads an NWI error as unreachable, never as no wetland", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { environmental } = await environmentalOf("licking-outside", {
+      wetlandsFetch: async () =>
+        new Response(JSON.stringify({ error: { code: 500, message: "x" } })),
+    });
+
+    expect(environmental).toMatchObject({
+      status: "unknown",
+      finding:
+        "The National Wetlands Inventory could not be reached, so no wetland was checked.",
+      sources: [],
+    });
+  });
+
+  it("reads a drawing that is not an image as unreachable, not as 0% wetland", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const recording = load("licking-wetland");
+    const replayed = replay(recording);
+    const { environmental } = await environmentalOf("licking-wetland", {
+      wetlandsFetch: async (input, init) =>
+        String(input) === `${NWI_SERVICE}/export`
+          ? new Response(JSON.stringify({ error: { code: 500, message: "x" } }))
+          : replayed(input, init),
+    });
+
+    expect(environmental.status).toBe("unknown");
+    expect(environmental.finding).toBe(
+      "The National Wetlands Inventory could not be reached, so no wetland was checked.",
+    );
+  });
+
+  it("asks NWI for distinct types without geometry, draws only the types present, and asks the county for interior overlap", () => {
+    const recording = load("franklin-wetland-setback");
+    const form = (url: string) =>
+      recording.exchanges
+        .filter((e) => e.url === url)
+        .map((e) => new URLSearchParams(e.requestBody));
+
+    const [wetlandQuery] = form(`${NWI_WETLANDS_LAYER}/query`);
+    expect(wetlandQuery?.get("spatialRel")).toBe("esriSpatialRelIntersects");
+    expect(wetlandQuery?.get("returnDistinctValues")).toBe("true");
+    expect(wetlandQuery?.get("returnGeometry")).toBe("false");
+
+    const [drawing] = form(`${NWI_SERVICE}/export`);
+    const layers = JSON.parse(drawing?.get("dynamicLayers") ?? "[]") as {
+      definitionExpression: string;
+    }[];
+    expect(layers.map((layer) => layer.definitionExpression).sort()).toEqual([
+      "Wetlands.WETLAND_TYPE = 'Freshwater Emergent Wetland'",
+      "Wetlands.WETLAND_TYPE = 'Freshwater Pond'",
+      "Wetlands.WETLAND_TYPE = 'Riverine'",
+    ]);
+    expect(drawing?.get("imageSR")).toBe("3857");
+    const exported = recording.exchanges.find(
+      (e) => e.url === `${NWI_SERVICE}/export`,
+    );
+    expect(exported?.contentType).toBe("image/png");
+
+    const [overlap, outline] = form(
+      `${FRANKLIN_STREAM_BUFFERS_LAYER}/query`,
+    ).sort((a, b) => Number(a.has("objectIds")) - Number(b.has("objectIds")));
+    expect(overlap?.get("relationParam")).toBe("T********");
+    expect(overlap?.get("returnGeometry")).toBe("false");
+    // The outline comes at full precision: generalizing it moved the golden
+    // parcel's share across the 4.65% rounding line.
+    expect(outline?.get("objectIds")).toBe("2");
+    expect(outline?.has("maxAllowableOffset")).toBe(false);
   });
 });

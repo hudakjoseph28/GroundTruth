@@ -6,6 +6,7 @@ import {
   type ZoningDistrict,
   type ZoningOutcome,
 } from "./franklinZoning.js";
+import { percent } from "./sampling.js";
 
 const COUNTY_ZONING: ResponsibleParty = {
   role: "County zoning office",
@@ -125,13 +126,6 @@ function coverage(share: number): string {
   return share >= 0.9995
     ? "the whole parcel"
     : `about ${percent(share)} of the parcel (the rest is a sliver along its edge)`;
-}
-
-function percent(share: number): string {
-  const value = share * 100;
-  const rounded =
-    value >= 99 || value < 10 ? value.toFixed(1) : value.toFixed(0);
-  return `${rounded.replace(/\.0$/, "")}%`;
 }
 
 function list(items: string[]): string {

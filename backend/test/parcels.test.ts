@@ -426,7 +426,7 @@ describe("OGRIP failures", () => {
 });
 
 describe("GET /api/coverage", () => {
-  it("lists only counties measured in OGRIP, with statewide septic, flood where FEMA has a study, and zoning in Franklin", async () => {
+  it("lists measured counties with statewide environmental and septic, flood where FEMA has a study, and zoning in Franklin", async () => {
     const { app, fetchImpl, recording } = scenarioApp("coverage");
 
     const res = await request(app).get("/api/coverage");
@@ -439,7 +439,7 @@ describe("GET /api/coverage", () => {
       county: "Franklin",
       countyFips: "39049",
       boundarySearchable: true,
-      evidenceKinds: ["zoning", "flood", "septic"],
+      evidenceKinds: ["zoning", "flood", "environmental", "septic"],
       lastVerifiedAt: recording.recordedAt,
     });
     expect(rows.find((row) => row.county === "Licking")?.countyFips).toBe(
@@ -894,15 +894,17 @@ describe("a city or township alone", () => {
 });
 
 describe("coverage claims only what was measured", () => {
-  it("every row claims a searchable boundary and statewide septic, flood only where NFHL has a study, zoning only in Franklin, and the count's time", async () => {
+  it("every row claims a searchable boundary, statewide environmental and septic, flood only where NFHL has a study, zoning only in Franklin, and the count's time", async () => {
     const { app, recording } = scenarioApp("coverage");
 
     const rows = (await request(app).get("/api/coverage")).body as Coverage[];
 
     expect(rows).toHaveLength(88);
     expect(
-      rows.filter((row) => row.evidenceKinds.length === 0).map((r) => r.county),
-    ).toEqual([]);
+      rows
+        .filter((row) => !row.evidenceKinds.includes("flood"))
+        .map((r) => r.county),
+    ).toEqual(["Fayette", "Henry", "Vinton", "Williams", "Wyandot"]);
     for (const row of rows) {
       expect(Object.keys(row).sort()).toEqual([
         "boundarySearchable",
@@ -915,6 +917,8 @@ describe("coverage claims only what was measured", () => {
       expect(row.evidenceKinds).toEqual([
         ...(row.countyFips === "39049" ? ["zoning"] : []),
         ...(OHIO_COUNTIES_WITHOUT_NFHL.has(row.countyFips) ? [] : ["flood"]),
+        // NWI's status layer is digital across Ohio (nwi-ohio-status.json).
+        "environmental",
         "septic",
       ]);
       expect(row.lastVerifiedAt).toBe(recording.recordedAt);

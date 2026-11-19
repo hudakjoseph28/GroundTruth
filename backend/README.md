@@ -33,7 +33,7 @@ These routes query Ohio's statewide parcel layer and address locator from the AP
 | --- | --- |
 | `GET /api/parcels/search?q=` | `ParcelSearchResult[]`, up to 10. `q` is trimmed and must be 3–120 characters (`400 INVALID_REQUEST` otherwise). `[]` means a valid query with no match. |
 | `GET /api/parcels/:parcelKey` | `Parcel` with the published boundary. `404 NOT_FOUND` if OGRIP has no such parcel in that county; `404 NO_COVERAGE` for a county code outside Ohio's 88. |
-| `GET /api/coverage` | `Coverage[]`: one row per county in a live count of OGRIP parcels with published IDs (cached 1 hour). `boundarySearchable` means only that the count was above zero at `lastVerifiedAt`, the time of that count. `evidenceKinds` lists checks a live report can back with a source: `septic` in all 88 counties, `flood` in the 83 counties where FEMA has an NFHL study, and `zoning` in Franklin. It names checks that can run, not results: a given lot can still come back `unknown`. A row says nothing about report depth. |
+| `GET /api/coverage` | `Coverage[]`: one row per county in a live count of OGRIP parcels with published IDs (cached 1 hour). `boundarySearchable` means only that the count was above zero at `lastVerifiedAt`, the time of that count. `evidenceKinds` lists checks a live report can back with a source: `environmental` and `septic` in all 88 counties, `flood` in the 83 counties where FEMA has an NFHL study, and `zoning` in Franklin. It names checks that can run, not results: a given lot can still come back `unknown`. A row says nothing about report depth. |
 
 **Parcel key rule.** `ohio:<countyFips>:<LocalParcelID exactly as published>`. No punctuation is added or removed, so keys differ by county the way OGRIP does: Franklin publishes `010-042534` (`ohio:39049:010-042534`), Licking publishes `00100000601000` (`ohio:39089:00100000601000`). Published IDs that do not match `[A-Za-z0-9][A-Za-z0-9._-]*`, or are all zeros, get no key.
 
@@ -123,18 +123,17 @@ Scenarios live in [test/fixtures/ogrip/scenarios.ts](test/fixtures/ogrip/scenari
 2. **Otherwise, live.** Load the parcel through the OGRIP adapter (`404 NOT_FOUND` if OGRIP has no such parcel, `404 NO_COVERAGE` for a non-Ohio county code, `504`/`502` on an OGRIP failure). Then run every check at once, each with its own limit ([src/reports/pipeline.ts](src/reports/pipeline.ts)). Once the parcel exists the answer is always `200`. A slow, failed, or crashing check becomes an `unknown` check inside the report.
 3. **Cache.** A live report where no check failed for a passing reason is written to PostgreSQL after the response, for 24 hours (`LIVE_REPORT_TTL_MS`). Each source keeps its own `retrievedAt`. A report with a timed-out check is not stored, so the next request asks the provider again. A database failure never blocks a live report.
 
-**Checks.** The report has eight checks in contract order: `zoning`, `flood`, `access`, `utilities`, `easements`, `sellerAuthority`, `survey`, `septic`. It has no `closing` check, because closing state comes from the deal, not the parcel.
+**Checks.** The report has nine checks in contract order: `zoning`, `flood`, `environmental`, `access`, `utilities`, `easements`, `sellerAuthority`, `survey`, `septic`. It has no `closing` check, because closing state comes from the deal, not the parcel.
 
-- `flood` runs live against FEMA (below).
-- `septic` runs live against USDA NRCS Soil Data Access for every parcel (below).
-- Franklin `zoning` and `access` run against county layers. Checks without an adapter remain `unknown` from a plain-English template ([src/reports/templates.ts](src/reports/templates.ts)) that names what is missing, the limitation, who resolves it, and the next action.
+- `flood` runs live against FEMA; `environmental` runs against the National Wetlands Inventory and, in Franklin, the county's stream buffers; and `septic` runs against USDA NRCS Soil Data Access for every parcel (below).
+- Franklin parcels also get live `zoning` and `access`. Checks without an adapter remain `unknown` from a plain-English template ([src/reports/templates.ts](src/reports/templates.ts)) that names what is missing, the limitation, who resolves it, and the next action.
 
 **Coverage.** `boundaryOnly` when no check has a supporting source, `deep` when every check does, `partial` otherwise. A rated SSURGO response is sourced and therefore makes an otherwise template-only report `partial`; a timeout, unavailable response, missing map unit, or unrated map unit remains `unknown`.
 
 **`biggestOpenQuestion`** ([`biggestOpenQuestion()`](src/reports/pipeline.ts)):
 
 1. A `held` check (a reviewer blocked the closing).
-2. Otherwise the first unresolved (`unknown` or `needsReview`) check in this order: `access`, `septic`, `zoning`, `flood`, `utilities`, `easements`, `sellerAuthority`, `survey`, `closing`. Any unresolved question outranks any resolved finding, so an unknown access or septic check beats a found flood zone. Access and wastewater lead because a lot without legal access, or without sewer and a workable septic site, usually cannot be built on at all.
+2. Otherwise the first unresolved (`unknown` or `needsReview`) check in this order: `access`, `septic`, `zoning`, `environmental`, `flood`, `utilities`, `easements`, `sellerAuthority`, `survey`, `closing`. Any unresolved question outranks any resolved finding, so an unknown access or septic check beats a found flood zone. Access and wastewater lead because a lot without legal access, or without sewer and a workable septic site, usually cannot be built on at all. Wetlands and stream setbacks follow zoning: they limit where on the lot you can build, and a mapped wetland can need a permit.
 3. Otherwise `flood` if FEMA found a Special Flood Hazard Area.
 4. Otherwise the first check in that order.
 
@@ -217,6 +216,42 @@ Franklin parcels get a live access check instead of the access template, from th
 | `152-001927`, 0 Groveport Rd | `evidenceFound`: Old Rathmell Ct and Samson Frontage Rd |
 | `185-002765`, 0 Groveport Pike | `needsReview`: touches a "Highway" right-of-way with no centerline through it; I-270 about 43 m, flagged limited-access |
 
+### Environmental check: wetlands and Franklin stream setbacks
+
+Every parcel gets a live `environmental` check: wetlands from the U.S. Fish and Wildlife Service's National Wetlands Inventory (NWI), plus, for Franklin parcels, the county's riparian stream setbacks. Both answers go into one check. Code: [src/reports/nwiWetlands.ts](src/reports/nwiWetlands.ts), [src/reports/franklinStreamBuffers.ts](src/reports/franklinStreamBuffers.ts), and [src/reports/environmentalCheck.ts](src/reports/environmentalCheck.ts).
+
+- **Each source has its own limit and runs at the same time as the other:** `WETLANDS_TIMEOUT_MS` (default 10000; NWI answered in 2.0 to 5.3 s on five lots on 2026-11-18) and `STREAM_BUFFERS_TIMEOUT_MS` (default 6000). If one source times out, the other's answer is still reported. Either timeout keeps the report out of the cache.
+- **Wetlands (NWI):**
+  - **Sources:** NWI's [Wetlands layer](https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0) (`ATTRIBUTE`, `WETLAND_TYPE`) and its [Image Year layer](https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3) (`IMAGE_YR`).
+  - **Queries:** both are POSTed with the parcel polygon, with `esriSpatialRelIntersects`, distinct values, and no geometry. NWI's server does not answer the interior-overlap relation the county layers use (it timed out at 60 s).
+  - **Why the lot is drawn instead of queried for polygons:** NWI can't return the polygons. A river is one polygon for a whole network (Big Walnut Creek's is 225,680 acres), and asking for its geometry fails with HTTP 500 after 15 s. So the check asks NWI's map export to draw only the wetland types on the lot, each in its own colour with no outline, over the parcel's Web Mercator bounding box at 512 px on the long side. It then counts the pixels whose centres fall inside the parcel. Anti-aliased edge pixels and faint pixels aren't counted.
+  - **Accuracy:** on three lots with polygons small enough to fetch, the drawn shares matched point-sampled vector shares to within 0.01 percentage points (30.96% vs 30.95% on 8391 Cooper Rd).
+  - **Outcomes:**
+    - Wetlands mapped: `found`, with each type, its codes, and its approximate share.
+    - Mapped by NWI, with no wetland on the lot: `found` with none.
+    - No NWI mapping project covers the lot: `missing`, which is `unknown`, never "none".
+    - Error, a drawing that isn't an image, or an unexpected wetland type: `unknown`.
+- **Franklin stream setbacks:**
+  - **Source:** the county's [Stream Buffers layer](https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/Franklin_County_Stream_Buffers/FeatureServer/0), the same layer the golden report cites. It holds one feature per setback program: Big Darby Creek Watershed, and Alum Creek and Big Walnut Creek Watersheds.
+  - **Queries:** the lot is checked with `relationParam=T********`, so a setback that only touches the edge doesn't count. Each overlapping setback's outline is then downloaded once and kept for 24 hours, at full precision (Big Darby is 206,830 vertices, 5.5 MB). The service can't clip it, and generalizing to 0.1 m moved the golden share from 4.651% to 4.643%, across the rounding line. A download runs on its own 30 s limit, so a check that stops waiting doesn't cancel it for the next lot.
+  - **Measuring:** the share is measured by the same 300 × 300 point grid as zoning.
+- **Status:**
+  - `needsReview` when NWI maps a wetland (even one only along the edge) or a setback covers part of the lot.
+  - `evidenceFound` only when NWI has mapped the lot and shows none, and, in Franklin, no setback covers it. The limitation then says that "NWI shows none" is not a wetland delineation.
+  - `unknown` otherwise: a source failed or has no mapping, and the other found nothing.
+- **Who resolves it:** for wetlands, or when nothing could be checked, the county soil and water conservation district or a wetland consultant (Franklin: [Franklin Soil & Water Conservation District](https://www.franklinswcd.org/), checked live 2026-11-18). For a setback, Franklin County Economic Development & Planning. Without an NWI client, the check falls back to the `environmental` template, which names the same party.
+- **Seeded golden report:** unchanged, with no `environmental` check; a test holds it. Live on `230-000918`: no wetland mapped, and the Big Darby setback covers about 4.7% (sampled 4.651%; [QA-Proof](../docs/phases/04-pitch/QA-Proof.md) measured 4.661% exactly).
+- **Try it live:** `pnpm --filter @groundtruth/backend check:environmental ohio:39049:230-002100 ohio:39089:04011612400001`
+
+| Parcel | Environmental result (live, 2026-11-18) |
+| --- | --- |
+| `230-002100`, 0 Harrisburg Georgesville Rd | `needsReview`: NWI riverine about 2.1%, emergent wetland about 0.9%, pond about 0.1%; Big Darby setback about 41% |
+| `04011612400001`, 8391 Cooper Rd (Licking) | `needsReview`: NWI forested/shrub wetland (PFO1A) about 31% |
+| `230-000918`, 0 Seaman Rd (golden) | `needsReview`: no NWI wetland; Big Darby setback about 4.7% |
+| `185-002765`, 0 Groveport Pike | `needsReview`: NWI riverine (Big Walnut Creek) about 20%; no setback |
+| `010-042534`, 84 W Dodridge St | `evidenceFound`: no NWI wetland, no setback |
+| `00100000601000`, 10034 Appleton Rd (Licking) | `evidenceFound`: no NWI wetland |
+
 ### Tested parcels (live, 2026-11-17 UTC)
 
 | Parcel | County | Flood result |
@@ -229,7 +264,7 @@ Franklin parcels get a live access check instead of the access template, from th
 
 ### Recorded fixtures
 
-Report tests replay saved OGRIP, FEMA, Franklin County, and USDA responses from [test/fixtures/report/](test/fixtures/report/) and [test/fixtures/ssurgo/](test/fixtures/ssurgo/), so they never touch the network. After changing a query, re-record and review the diff:
+Report tests replay saved OGRIP, FEMA, NWI, Franklin County, and USDA responses from [test/fixtures/report/](test/fixtures/report/) and [test/fixtures/ssurgo/](test/fixtures/ssurgo/), matched by method, URL, and POST body, so they never touch the network. NWI's drawing of a lot is stored as base64 PNG. A JSON answer over 1 MB (the Big Darby setback outline) is stored once, compact, under `bodies/`, named by its request, and shared by every scenario that made it. After changing a query, re-record and review the diff:
 
 ```bash
 pnpm --filter @groundtruth/backend record:report                    # every scenario
