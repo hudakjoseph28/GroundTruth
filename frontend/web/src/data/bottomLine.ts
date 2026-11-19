@@ -40,9 +40,14 @@ function midSentence(phrase: string): string {
     : trimmed;
 }
 
-/** A party worth naming: the placeholder for an unassigned check is not one. */
+/**
+ * A party worth naming: the placeholder for an unassigned check is not one.
+ * The sentence already wraps the party in parentheses, so the role's own
+ * aside is dropped: "Community floodplain administrator (city, village, or
+ * county)" reads as "community floodplain administrator". The card keeps it.
+ */
 function partyFor(record: LedgerRecord): string | null {
-  const role = record.check.responsibleParty.role.trim();
+  const role = record.check.responsibleParty.role.replace(/\s*\([^)]*\)/g, "").trim();
   if (!role || role === "Unassigned") return null;
   return midSentence(role);
 }
