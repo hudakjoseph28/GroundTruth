@@ -5,6 +5,7 @@ import { applyConfirmedEvent } from "./chain/applyEvent.js";
 import { createEscrowDecoder } from "./chain/escrowDecoder.js";
 import { prisma } from "./db.js";
 import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
+import { getActivity } from "./routes/activity.js";
 import { getDeal, getDealTimeline } from "./routes/deals.js";
 import {
   documentRoutes,
@@ -106,6 +107,7 @@ export function createApp(commit: string, options: AppOptions = {}) {
       ogrip,
     }),
   );
+  app.get("/api/activity", getActivity);
   app.get("/api/deals/:id", getDeal);
   app.get("/api/deals/:id/timeline", getDealTimeline);
   const documents = documentRoutes(prisma, options.documents);
