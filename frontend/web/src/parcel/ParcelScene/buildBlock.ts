@@ -53,6 +53,13 @@ export interface LandBlockObject {
   setBoundaryPulse(progress: number | null): void;
   /** Tints the boundary from gold (0) toward green (1), for a release. */
   setBoundaryTone(amount: number): void;
+  /** Shows or hides the gold boundary line (and its pulse). */
+  setBoundaryVisible(visible: boolean): void;
+  /**
+   * Paints map layers over the imagery: a transparent canvas covering the
+   * same region (any size), or null for the plain imagery.
+   */
+  setOverlay(overlay: HTMLCanvasElement | null): void;
   dispose(): void;
 }
 
@@ -70,7 +77,11 @@ function canvas2d(width: number, height: number): [HTMLCanvasElement, CanvasRend
  * first. `calm` holds the whole picture back, for where the boundary and what
  * is pinned to it should lead.
  */
-function imageryTexture(assets: LandAssets, ring: number[][], calm: boolean): CanvasTexture {
+function imageryTexture(
+  assets: LandAssets,
+  ring: number[][],
+  calm: boolean,
+): { texture: CanvasTexture; setOverlay(overlay: HTMLCanvasElement | null): void } {
   const width = assets.imagery.naturalWidth;
   const height = assets.imagery.naturalHeight;
   const [canvas, context] = canvas2d(width, height);
@@ -90,9 +101,21 @@ function imageryTexture(assets: LandAssets, ring: number[][], calm: boolean): Ca
     context.fillStyle = calm ? "rgba(4, 4, 4, 0.5)" : "rgba(4, 4, 4, 0.36)";
     context.fill("evenodd");
   }
-  const texture = new CanvasTexture(canvas);
+  // The texture draws from its own canvas, so layers can be laid over the
+  // imagery and taken off again without re-reading the photo.
+  const [shown, shownContext] = canvas2d(width, height);
+  shownContext.drawImage(canvas, 0, 0);
+  const texture = new CanvasTexture(shown);
   texture.colorSpace = SRGBColorSpace;
-  return texture;
+  return {
+    texture,
+    setOverlay(overlay) {
+      shownContext.clearRect(0, 0, width, height);
+      shownContext.drawImage(canvas, 0, 0);
+      if (overlay) shownContext.drawImage(overlay, 0, 0, width, height);
+      texture.needsUpdate = true;
+    },
+  };
 }
 
 // Depth below the surface (0..1) where each soil band ends, and its color.
@@ -433,7 +456,8 @@ export function buildLandBlock(
     return item;
   };
 
-  const imagery = keep(imageryTexture(assets, ring, table));
+  const surface = imageryTexture(assets, ring, table);
+  const imagery = keep(surface.texture);
   imagery.anisotropy = anisotropy;
   const top = new Mesh(
     keep(surfaceGeometry(assets, dims)),
@@ -498,11 +522,14 @@ export function buildLandBlock(
 
   // The boundary as a path: points, and how far along the line each one is.
   let path: { points: number[]; along: number[]; length: number } | null = null;
+  let boundaryLine: Line2 | null = null;
+  let boundaryVisible = true;
   if (ring.length >= 4) {
     const points = boundaryPositions(assets, dims, ring);
     const boundaryGeometry = keep(new LineGeometry());
     boundaryGeometry.setPositions(points);
-    group.add(new Line2(boundaryGeometry, boundaryMaterial), pulse);
+    boundaryLine = new Line2(boundaryGeometry, boundaryMaterial);
+    group.add(boundaryLine, pulse);
     const along = [0];
     for (let i = 3; i < points.length; i += 3) {
       along.push(
@@ -618,6 +645,14 @@ export function buildLandBlock(
       boundaryMaterial.color.copy(gold).lerp(green, tone);
       boundaryMaterial.linewidth = 2.2 + 1.4 * tone;
     },
+    setBoundaryVisible(visible) {
+      boundaryVisible = visible;
+      if (boundaryLine) boundaryLine.visible = visible;
+      if (!visible) pulse.visible = false;
+    },
+    setOverlay(overlay) {
+      surface.setOverlay(overlay);
+    },
     setResolution(width, height) {
       boundaryMaterial.resolution.set(width, height);
     },
@@ -628,7 +663,7 @@ export function buildLandBlock(
       handoff.visible = eased < 1;
     },
     setBoundaryPulse(progress) {
-      if (!path || progress === null || path.length <= 0) {
+      if (!path || !boundaryVisible || progress === null || path.length <= 0) {
         pulse.visible = false;
         return;
       }

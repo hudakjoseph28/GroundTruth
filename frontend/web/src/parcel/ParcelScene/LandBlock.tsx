@@ -9,10 +9,14 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import type { Parcel } from "@groundtruth/shared";
+import type { MapLayerId, Parcel } from "@groundtruth/shared";
 import { Segmented } from "../../components/Segmented";
 import { ParcelBoundary } from "../../components/ParcelBoundary";
+import type { LayerToggleId } from "../../content/layers";
 import { LAND, PARCEL_PAGE } from "../../content/parcel";
+import { LayerPanel } from "../Layers/LayerPanel";
+import { paintLayers } from "../Layers/paintLayers";
+import { useParcelLayers } from "../Layers/useParcelLayers";
 import { ExploreMenu } from "../Explore/ExploreMenu";
 import { GOOGLE_MAPS_KEY } from "../Explore/links";
 import { SceneBoundary } from "../SceneBoundary";
@@ -62,6 +66,38 @@ export function LandBlock({
   const { view, setView, threeDisabled } = useLandView(mode);
   const show3d = !loading && drawable && view === "3d" && !threeDisabled;
   const show2d = !loading && drawable && !show3d;
+
+  // Map layers: off by default except the boundary. Asked for once the land
+  // can be drawn, so each toggle can say at once what its source found.
+  const [enabled, setEnabled] = useState<ReadonlySet<LayerToggleId>>(() => new Set(["boundary"]));
+  const toggleLayer = useCallback((id: LayerToggleId) => {
+    setEnabled((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const { layers, wetlandsImage, retry: retryLayers } = useParcelLayers(parcel.key, drawable);
+  const overlay = useMemo(() => {
+    if (!assets || !layers) return null;
+    const on = new Set([...enabled].filter((id): id is MapLayerId => id !== "boundary"));
+    return paintLayers({
+      meta: assets.meta,
+      width: assets.imagery.naturalWidth,
+      height: assets.imagery.naturalHeight,
+      layers,
+      enabled: on,
+      wetlandsImage,
+    });
+  }, [assets, layers, enabled, wetlandsImage]);
+  const boundary = enabled.has("boundary");
+  // The flat picture is SVG, so it takes the layers as an image URL. Encoded
+  // only when the flat picture is showing; the 3D block reads the canvas.
+  const flatOverlay = useMemo(
+    () => (overlay && view === "2d" ? overlay.toDataURL("image/png") : null),
+    [overlay, view],
+  );
 
   const immediate = !loading && (!drawable || show2d);
   useEffect(() => {
@@ -232,7 +268,7 @@ export function LandBlock({
                 <SceneBoundary
                   fallback={
                     <FlatLandReady onReady={onReady}>
-                      <FlatLand assets={assets} ring={ring} />
+                      <FlatLand assets={assets} ring={ring} overlay={flatOverlay} boundary={boundary} />
                     </FlatLandReady>
                   }
                 >
@@ -242,6 +278,8 @@ export function LandBlock({
                       ring={ring}
                       revealed={revealed}
                       turn={turn}
+                      overlay={overlay}
+                      boundary={boundary}
                       onReady={onReady}
                       onActivate={openFromLand}
                     />
@@ -250,11 +288,14 @@ export function LandBlock({
               )}
             </div>
             <div className="land-pane" data-pane="2d" hidden={!show2d}>
-              {show2d && <FlatLandView assets={assets} ring={ring} />}
+              {show2d && (
+                <FlatLandView assets={assets} ring={ring} overlay={flatOverlay} boundary={boundary} />
+              )}
             </div>
           </div>
         </div>
       </div>
+      <LayerPanel layers={layers} enabled={enabled} onToggle={toggleLayer} onRetry={retryLayers} />
       <figcaption className="land-caption">
         <div className="land-credit">
           <p className="visually-hidden">{show3d ? LAND.label3d : LAND.labelFlat}</p>

@@ -11,7 +11,19 @@ const STEP = 0.25;
  * The flat aerial with light pan and zoom: wheel or pinch-like buttons, drag
  * to pan when zoomed in. Keeps the same frame as the 3D stage.
  */
-export function FlatLandView({ assets, ring }: { assets: LandAssets; ring: number[][] }) {
+export function FlatLandView({
+  assets,
+  ring,
+  overlay = null,
+  boundary = true,
+}: {
+  assets: LandAssets;
+  ring: number[][];
+  /** Map layers over the imagery, as a picture URL covering the same region. */
+  overlay?: string | null;
+  /** False hides the gold boundary line. */
+  boundary?: boolean;
+}) {
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
@@ -70,7 +82,7 @@ export function FlatLandView({ assets, ring }: { assets: LandAssets; ring: numbe
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        <FlatLand assets={assets} ring={ring} />
+        <FlatLand assets={assets} ring={ring} overlay={overlay} boundary={boundary} />
       </div>
       <div className="flat-zoom" role="group" aria-label={LAND.view.label}>
         <button type="button" onClick={() => zoomBy(STEP)} aria-label={LAND.view.zoomIn}>

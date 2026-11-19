@@ -135,7 +135,7 @@ export type RoadFeature = z.infer<typeof roadSchema>["features"][number];
 const quoted = (values: readonly string[]) =>
   values.map((value) => `'${value}'`).join(",");
 
-const ROW_WHERE = `TYPE IN (${quoted(PUBLIC_ROAD_ROW_TYPES)})`;
+export const ROW_WHERE = `TYPE IN (${quoted(PUBLIC_ROAD_ROW_TYPES)})`;
 const ROAD_WHERE = `RoadClass IS NULL OR RoadClass NOT IN (${quoted(SKIPPED_ROAD_CLASSES)})`;
 
 class AccessUnavailable extends Error {

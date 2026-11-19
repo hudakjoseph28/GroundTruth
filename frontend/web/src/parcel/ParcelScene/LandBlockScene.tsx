@@ -89,6 +89,8 @@ export function LandBlockScene({
   interactive = true,
   cornerDots = true,
   staging = "float",
+  overlay = null,
+  boundary = true,
   onReady,
   onActivate,
 }: {
@@ -109,15 +111,27 @@ export function LandBlockScene({
   /** False leaves out the glowing points on the block's corners. */
   cornerDots?: boolean;
   staging?: Staging;
+  /** Map layers painted over the imagery (see Layers/paintLayers.ts). */
+  overlay?: HTMLCanvasElement | null;
+  /** False hides the gold boundary line. */
+  boundary?: boolean;
   onReady?: () => void;
   /** A click on the block that was not a drag. */
   onActivate?: () => void;
 }) {
   const frame = useRef<HTMLDivElement>(null);
-  const live = useRef({ revealed, paused, onReady, onActivate });
+  const live = useRef({ revealed, paused, onReady, onActivate, overlay, boundary });
   useEffect(() => {
-    live.current = { revealed, paused, onReady, onActivate };
-  }, [revealed, paused, onReady, onActivate]);
+    live.current = { revealed, paused, onReady, onActivate, overlay, boundary };
+  }, [revealed, paused, onReady, onActivate, overlay, boundary]);
+  /** The running block, so layers can change without rebuilding the scene. */
+  const built = useRef<ReturnType<typeof buildLandBlock> | null>(null);
+  useEffect(() => {
+    built.current?.setOverlay(overlay);
+  }, [overlay]);
+  useEffect(() => {
+    built.current?.setBoundaryVisible(boundary);
+  }, [boundary]);
 
   useEffect(() => {
     const node = frame.current;
@@ -156,6 +170,9 @@ export function LandBlockScene({
       table,
     });
     if (table) sun.position.set(...TABLE_SUN);
+    built.current = block;
+    if (live.current.overlay) block.setOverlay(live.current.overlay);
+    block.setBoundaryVisible(live.current.boundary);
     // The rig floats and leans; the block inside it handles the hand-off.
     const rig = new Group();
     rig.add(block.group);
@@ -433,6 +450,7 @@ export function LandBlockScene({
       controls.removeEventListener("start", onStart);
       controls.removeEventListener("end", onEnd);
       controls.dispose();
+      if (built.current === block) built.current = null;
       block.dispose();
       renderer.dispose();
       renderer.forceContextLoss();

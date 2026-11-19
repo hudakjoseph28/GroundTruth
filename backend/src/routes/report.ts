@@ -185,7 +185,7 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
 }
 
 /** An OGRIP failure is a retryable v1 error, never a guessed parcel. */
-async function loadParcel(
+export async function loadParcel(
   ogrip: OgripClient,
   countyFips: string,
   sourceParcelId: string,

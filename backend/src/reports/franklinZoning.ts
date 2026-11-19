@@ -133,7 +133,8 @@ const countSchema = z.object({ count: z.number() });
 
 /** The layer's areas the county does not zone, and everything else. */
 const EXCLUDED_WHERE = "ZONING LIKE 'NOT IN JURISDICTION%'";
-const NAMED_WHERE = "ZONING IS NULL OR ZONING NOT LIKE 'NOT IN JURISDICTION%'";
+export const NAMED_WHERE =
+  "ZONING IS NULL OR ZONING NOT LIKE 'NOT IN JURISDICTION%'";
 
 class ZoningUnavailable extends Error {
   constructor() {
@@ -338,7 +339,7 @@ export function measure(
 }
 
 /** `PR-10\nPR-10` → `PR-10`; blanks → empty. */
-function normalizeCode(value: string | null | undefined): string {
+export function normalizeCode(value: string | null | undefined): string {
   const words = (value ?? "").split(/\s+/).filter(Boolean);
   if (words.join(" ").toUpperCase() === NOT_IN_JURISDICTION) {
     return NOT_IN_JURISDICTION;

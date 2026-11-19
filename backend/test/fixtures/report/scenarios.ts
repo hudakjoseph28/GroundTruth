@@ -96,3 +96,21 @@ export interface ReportRecording {
 
 export const reportPath = (parcelKey: string) =>
   `/api/parcels/${encodeURIComponent(parcelKey)}/report`;
+
+/**
+ * Map layer recordings (scripts/record-layer-fixtures.ts), saved as
+ * layers-<name>.json next to the report recordings of the same parcels.
+ */
+export const LAYER_SCENARIOS = {
+  /** Golden parcel: Big Darby setback on ~4.7% of it, Zone X only in view. */
+  "franklin-golden": REPORT_SCENARIOS["franklin-golden"],
+  /** 0 Harrisburg Georgesville Rd: wetlands, setback, AE floodway in view. */
+  "franklin-wetland-setback": REPORT_SCENARIOS["franklin-wetland-setback"],
+  /** Licking County: no county zoning, setback, or right-of-way source. */
+  "licking-wetland": REPORT_SCENARIOS["licking-wetland"],
+} as const;
+
+export type LayerScenario = keyof typeof LAYER_SCENARIOS;
+
+export const layersPath = (parcelKey: string) =>
+  `/api/parcels/${encodeURIComponent(parcelKey)}/layers`;
