@@ -58,7 +58,7 @@ export interface ReportRouteOptions {
   access?: FranklinAccessClient;
   /** Limit for the Franklin access check. Defaults to 6000 ms. */
   accessTimeoutMs?: number;
-  /** USDA NRCS Soil Data Access. Null is test-only opt-out. */
+  /** USDA NRCS SSURGO with Living Atlas fallback. Null is test-only opt-out. */
   soils?: SsurgoSoilsClient | null;
   /** Limit for the SSURGO soils/septic check. Defaults to 6000 ms. */
   soilsTimeoutMs?: number;

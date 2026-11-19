@@ -1,12 +1,14 @@
 /**
- * Records the two reviewed parcels' live USDA SDA responses for replay tests.
+ * Records the two reviewed parcels' live SSURGO responses for replay tests.
  *
  *   pnpm --filter @groundtruth/backend record:ssurgo
  *
- * This recorder is intentionally all-or-nothing: it writes nothing unless
- * both parcel queries return HTTP 200 responses that the production adapter
- * parses as rated SSURGO map units. Only then does it replace the synthetic
- * response-shape fixture.
+ * Runs the production adapter: USDA Soil Data Access first, then the Esri
+ * Living Atlas SSURGO copy if SDA fails. Every HTTP exchange is saved in
+ * order, so tests replay the exact path taken (including an SDA outage).
+ *
+ * All-or-nothing: it writes nothing unless both parcels end in rated SSURGO
+ * map units from a real HTTP 200 response.
  */
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -18,7 +20,6 @@ import {
 } from "@groundtruth/shared";
 import {
   createSsurgoSoilsClient,
-  SDA_POST_REST,
   type SoilsOutcome,
 } from "../src/reports/ssurgoSoils.js";
 
@@ -35,11 +36,7 @@ interface SdaRecording {
   parcelKey: Parcel["key"];
   sourceParcelId: string;
   recordedAt: string;
-  request: Omit<Exchange, "status" | "responseBody">;
-  response: {
-    status: number;
-    body: unknown;
-  };
+  exchanges: Exchange[];
   outcome: Extract<SoilsOutcome, { outcome: "found" }>;
 }
 
@@ -55,9 +52,22 @@ const targets = [
 
 async function record(parcel: Parcel): Promise<SdaRecording> {
   const recordedAt = new Date();
-  let exchange: Exchange | undefined;
+  const exchanges: Exchange[] = [];
   const recordingFetch: typeof fetch = async (input, init) => {
-    const response = await fetch(input, init);
+    let response: Response;
+    try {
+      response = await fetch(input, init);
+    } catch (error) {
+      exchanges.push({
+        url: String(input),
+        method: init?.method ?? "GET",
+        headers: Object.fromEntries(new Headers(init?.headers).entries()),
+        body: String(init?.body ?? ""),
+        status: 0,
+        responseBody: `network error: ${String(error)}`,
+      });
+      throw error;
+    }
     const text = await response.text();
     let responseBody: unknown = text;
     try {
@@ -66,14 +76,14 @@ async function record(parcel: Parcel): Promise<SdaRecording> {
       // Keep non-JSON outage bodies verbatim for the error below.
     }
     const headers = Object.fromEntries(new Headers(init?.headers).entries());
-    exchange = {
+    exchanges.push({
       url: String(input),
       method: init?.method ?? "GET",
       headers,
       body: String(init?.body ?? ""),
       status: response.status,
       responseBody,
-    };
+    });
     return new Response(text, {
       status: response.status,
       headers: response.headers,
@@ -82,38 +92,23 @@ async function record(parcel: Parcel): Promise<SdaRecording> {
   const client = createSsurgoSoilsClient({
     fetch: recordingFetch,
     now: () => recordedAt,
+    sdaBudgetMs: 15_000,
   });
   const outcome = await client.septicSuitability(
     parcel.geometry.geojson,
     AbortSignal.timeout(30_000),
   );
-  const captured = exchange;
-  if (!captured) {
-    throw new Error(`${parcel.key}: SDA request did not produce a response`);
-  }
-  if (
-    captured.url !== SDA_POST_REST ||
-    captured.status !== 200 ||
-    outcome.outcome !== "found"
-  ) {
+  const last = exchanges.at(-1);
+  if (!last || last.status !== 200 || outcome.outcome !== "found") {
     throw new Error(
-      `${parcel.key}: refusing to record status ${captured.status}, outcome ${outcome.outcome}`,
+      `${parcel.key}: refusing to record status ${last?.status ?? "none"}, outcome ${outcome.outcome}`,
     );
   }
   return {
     parcelKey: parcel.key,
     sourceParcelId: parcel.sourceParcelId,
     recordedAt: recordedAt.toISOString(),
-    request: {
-      url: captured.url,
-      method: captured.method,
-      headers: captured.headers,
-      body: captured.body,
-    },
-    response: {
-      status: captured.status,
-      body: captured.responseBody,
-    },
+    exchanges,
     outcome,
   };
 }
@@ -140,10 +135,15 @@ for (const { file, recording } of recordings) {
 for (const { file } of recordings) {
   await rename(join(fixtureDir, `${file}.tmp`), join(fixtureDir, file));
 }
-await rm(join(fixtureDir, "septic-map-units.json"));
+await rm(join(fixtureDir, "septic-map-units.json"), { force: true });
 
 for (const { file, recording } of recordings) {
   console.log(
-    `${file}: ${recording.outcome.mapUnits.length} rated map unit(s), retrieved ${recording.recordedAt}`,
+    `${file}: ${recording.outcome.source}, retrieved ${recording.recordedAt}`,
   );
+  for (const unit of recording.outcome.mapUnits) {
+    console.log(
+      `  ${unit.mukey} ${unit.symbol} ${unit.name}: ${unit.rating}, ${(unit.share * 100).toFixed(2)}%`,
+    );
+  }
 }

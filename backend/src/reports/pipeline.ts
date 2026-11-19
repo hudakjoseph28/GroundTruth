@@ -57,7 +57,7 @@ export interface ReportPipelineOptions {
   access?: FranklinAccessClient;
   /** Limit for the access check (all its queries together). */
   accessTimeoutMs?: number;
-  /** USDA NRCS Soil Data Access (SSURGO), for every parcel. */
+  /** USDA NRCS SSURGO (Soil Data Access, Living Atlas fallback), for every parcel. */
   soils?: SsurgoSoilsClient;
   /** Limit for the SSURGO soils/septic check. */
   soilsTimeoutMs?: number;

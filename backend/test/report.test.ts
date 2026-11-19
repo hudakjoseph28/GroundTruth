@@ -120,7 +120,7 @@ interface AppSetup {
   /** Franklin County right-of-way and road layers; defaults to the recording. */
   accessFetch?: typeof fetch;
   accessTimeoutMs?: number;
-  /** USDA Soil Data Access; absent keeps legacy recordings soils-free. */
+  /** USDA SSURGO (SDA, then Living Atlas); absent keeps legacy recordings soils-free. */
   soilsFetch?: typeof fetch;
   soilsTimeoutMs?: number;
   /** National Wetlands Inventory; defaults to the recording. */
@@ -597,7 +597,7 @@ describe("a slow USDA soils check never breaks the report", () => {
       kind: "septic",
       status: "unknown",
       finding:
-        "USDA NRCS Soil Data Access did not answer within 0.2 seconds, so soil map units and septic ratings were not checked.",
+        "Neither USDA NRCS Soil Data Access nor the Esri Living Atlas SSURGO copy answered within 0.2 seconds, so soil map units and septic ratings were not checked.",
       sources: [],
       responsibleParty: {
         role: "Local health district (sewage treatment systems)",
