@@ -8,12 +8,15 @@ export function SearchForm({
   initialQuery = "",
   autoFocus = false,
   showSampleLink = true,
+  launchEmpty = false,
   ariaLabel,
 }: {
   initialQuery?: string;
   /** Put the cursor in the field when the page opens, where there is a keyboard. */
   autoFocus?: boolean;
   showSampleLink?: boolean;
+  /** An empty field opens /search instead of waiting for a query. */
+  launchEmpty?: boolean;
   /** Names this search landmark when a page has more than one. */
   ariaLabel?: string;
 }) {
@@ -54,6 +57,9 @@ export function SearchForm({
           spellCheck={false}
           placeholder={FIELD_LABEL}
           onChange={(event) => setQuery(event.target.value)}
+          onPointerDown={() => {
+            if (launchEmpty && query.trim() === "") navigate("/search");
+          }}
         />
         <button type="submit" className="btn btn-primary">
           Find parcel

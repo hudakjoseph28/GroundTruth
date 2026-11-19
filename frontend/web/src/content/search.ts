@@ -12,9 +12,27 @@ export const SEARCH_EXAMPLES = [
   { query: "230-000918", kind: "Parcel ID" },
 ] as const;
 
+/**
+ * The Franklin lot the demo walks through. Ohio publishes the street as
+ * "0 SEAMAN RD"; the page shows "Seaman Rd" and says there is no house number.
+ * Searching this ID returns that one parcel, which carries the report and
+ * the devnet closings.
+ */
+export const SAVED_DEMO = {
+  query: "230-000918",
+  name: "Seaman Rd",
+  parcelId: "230-000918",
+  county: "Franklin",
+  why: "Report and the devnet closings",
+} as const;
+
 export const SEARCH = {
   title: "Search",
   lede: "Find any Ohio lot by its street address or by the county's parcel ID.",
+  coverage: "88 Ohio counties · live FEMA flood · Franklin zoning.",
+  saved: "Saved",
+  recent: "Recent",
+  clearRecent: "Clear",
   loading: "Searching Ohio parcel records. This can take a few seconds.",
   examplesLabel: "Try",
   matchedAddress: "Matched address",
