@@ -14,6 +14,7 @@
     "record:ogrip": "tsx scripts/record-ogrip-fixtures.ts",
     "time:search": "tsx scripts/time-address-search.ts",
     "record:report": "tsx scripts/record-report-fixtures.ts",
+    "record:ssurgo": "tsx scripts/record-ssurgo-fixtures.ts",
     "record:devnet": "tsx scripts/record-devnet-transactions.ts",
     "replay:devnet": "node --env-file-if-exists=.env --import tsx scripts/replay-devnet.ts",
     "call:owner": "node --env-file-if-exists=.env --import tsx scripts/call-owner.ts",
