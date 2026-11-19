@@ -13,6 +13,7 @@
 }
 
 .deal-page[data-tone="pending"],
+.stage[data-tone="pending"],
 .deal-row[data-tone="pending"] {
   --tone: var(--gold);
   --tone-text: var(--gold-text);
@@ -20,6 +21,7 @@
 }
 
 .deal-page[data-tone="held"],
+.stage[data-tone="held"],
 .deal-row[data-tone="held"] {
   --tone: var(--red);
   --tone-text: var(--red-text);
@@ -27,6 +29,7 @@
 }
 
 .deal-page[data-tone="released"],
+.stage[data-tone="released"],
 .deal-row[data-tone="released"] {
   --tone: var(--green);
   --tone-text: var(--green-text);
@@ -818,6 +821,17 @@
   color: var(--text);
 }
 
+/* Stage mode is for a projector, so a phone does not offer it either. */
+.deal-stage-link {
+  display: none;
+  margin: 0;
+  font-size: var(--step--1);
+}
+
+.deal-stage-link a {
+  color: var(--text-2);
+}
+
 /* The QR is for handing the page to a phone, so a phone does not show it. */
 .deal-handoff {
   display: none;
@@ -1033,6 +1047,10 @@
 
   .deal-handoff {
     display: grid;
+  }
+
+  .deal-stage-link {
+    display: block;
   }
 }
 
