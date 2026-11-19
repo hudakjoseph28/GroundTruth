@@ -2,7 +2,7 @@
 
 **Goal:** Win UBC 2026 with a land-buying product a first-time buyer actually understands: real Ohio parcel discovery, source-backed reports, and a Solana devnet escrow where a reviewer hold blocks payout and cleared sign-offs release it.
 
-**Now:** scaffold the accepted stack, then build Ohio-wide parcel search with deeper reports where records support them and two staged closings on devnet (one held, one released). The main track is **Consumer Applications**; the escrow is the technical case for **Best Use of Solana**. [Decisions.md](docs/architecture/Decisions.md) is locked for the hackathon. Do not reopen a decision inside an implementation PR unless the accepted option is demonstrably blocked.
+**Now:** submission polish. The stack is built and deployed: Ohio-wide parcel search with live reports (deeper in Franklin County), the escrow program on devnet with both staged closings run (one held, one released), the reviewer portal, QuickNode Streams, and the ElevenLabs owner callback. See [README](README.md) for what is live and [Readiness](docs/phases/04-pitch/Readiness.md) for what is still open. The escrow is the technical case for **Best Use of Solana**; the main track is recorded in one place, the README's `Track:` line. [Decisions.md](docs/architecture/Decisions.md) is locked for the hackathon. Do not reopen a decision inside an implementation PR unless the accepted option is demonstrably blocked.
 
 ## Team and roles
 
@@ -11,7 +11,7 @@ These are the current owners. Update this table and the phase file before transf
 | Owner | Owns | Folder |
 | --- | --- | --- |
 | Joey Hudak | Buyer UI / responsive web. Target: ship the core screens in under 3 days, then float to backend and escrow integration. | `frontend/web` |
-| Gagan | Parcel evidence and data: Ohio OGRIP parcels, FEMA flood, USDA SSURGO soils/septic screening, report pipeline. Originated the idea. | `backend` (report pipeline) |
+| Gagan Karnati | Parcel evidence and data: Ohio OGRIP parcels, FEMA flood, USDA SSURGO soils/septic screening, report pipeline. Originated the idea. | `backend` (report pipeline) |
 | Kadhir | Solana escrow: Anchor program, USDC vault, hold, release, refund | `escrow` |
 | Satya | Backend API, QuickNode Streams, ElevenLabs, deployment | `backend`, deployment |
 
@@ -39,7 +39,7 @@ On your first task, skim **every Markdown file in this repository once**; the fu
 
 ## Where code goes
 
-`frontend/web` has the homepage, live Ohio parcel search, the parcel view, the deal page (`/deals/:dealId`), which reads deal state and the timeline from the API, and the reviewer portal (`/review`), where a reviewer's own wallet signs approvals, holds, and releases built from the checked-in IDL. `backend` searches live Ohio OGRIP parcels, builds live parcel reports with FEMA flood and USDA SSURGO soils/septic checks, and serves the two seeded reports from Postgres; see [Coverage](docs/phases/02-parcel-research/Coverage.md). `frontend/mobile` is reserved; `escrow` implements the 6 Anchor escrow instructions on Solana devnet. Put new files in the folder that matches the surface.
+`frontend/web` has the homepage, live Ohio parcel search, the parcel view, the deal page (`/deals/:dealId`), which reads deal state and the timeline from the API, and the reviewer portal (`/review`), where a reviewer's own wallet signs approvals, holds, and releases built from the checked-in IDL. `backend` searches live Ohio OGRIP parcels, builds live parcel reports with FEMA flood and USDA SSURGO soils/septic checks, and serves the two seeded reports from Postgres; see [Coverage](docs/phases/02-parcel-research/Coverage.md). `frontend/mobile` is reserved (no native app; the web is responsive); `escrow` implements the 6 Anchor escrow instructions on Solana devnet. Put new files in the folder that matches the surface.
 
 | Folder | What belongs here |
 | --- | --- |

@@ -1,6 +1,6 @@
 # GroundTruth Devpost draft
 
-**Tagline:** Know the land. Know what comes next.
+**Tagline:** Know the land before the money moves.
 
 **One-sentence pitch:** GroundTruth helps a first-time Ohio land buyer understand a parcel before paying by showing sourced facts, honest gaps, and the person responsible for the next decision.
 
@@ -45,7 +45,7 @@ ALTA's 2026 survey of 245 title insurance professionals found that 59% of respon
 
 Railway's HTTP log shows each webhook arriving 1–2 s after its block (18:57:20–18:57:24 UTC). The 1.8–3.3 s first measured on the deal timeline came from polling the timeline API every 1.5 s against whole-second block times, so it includes up to 1.5 s of polling delay. The screenshot's app-log lines are all stamped 13:57:29 EST; the arrival times come from the HTTP log, which is not in the repo.
 
-The two closings above are not Stream deliveries: their timeline rows were backfilled with `replay:devnet`, because QuickNode backfill needs a paid plan. **[PENDING]** Measure the update on a second device before entering the Streams bounty.
+The two closings above are not Stream deliveries: their timeline rows were backfilled with `replay:devnet`, because QuickNode backfill needs a paid plan. **[PENDING]** The timeline update on a second device has not been measured separately. The team has confirmed the QuickNode bounty entry on the strength of the four Stream deliveries above.
 
 ## What makes it different
 

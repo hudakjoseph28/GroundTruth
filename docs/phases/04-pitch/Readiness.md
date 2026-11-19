@@ -13,6 +13,15 @@
 
 What was not checked: real phones, Safari and Firefox, the Devpost dashboard (it needs a team login), Railway and Vercel dashboards, the QuickNode Stream's state, and Twilio.
 
+## Update: Thu Nov 19, 2026, ~16:45 UTC
+
+Re-probed signed out for the README rewrite. The audit below is kept as written; these items have changed since:
+
+- **B1 and B2 are deployed.** `/api/health` reports `dfa9373` (#72). The web build is from Nov 19, 16:39 UTC, and its bundle includes the reviewer portal, Verify on-chain, and the example pages. `GET /api/deals/:id/documents`, `GET /api/parcels/area?bbox=…`, `/api/deals/staged-devnet-deal-rehearsal-v2` and `…-v3`, and `/actions.json` all answer `200`.
+- **H10 is resolved.** A fresh live report for Franklin parcel `230-001377` includes the `environmental` (wetlands and stream setbacks) and `access` checks, along with zoning, flood, and septic.
+- **H4 is partly done.** Rehearsal v3 exists (5 test USDC; see [Escrow](../01-escrow/Escrow.md)).
+- **Still open:** B3 (the README's demo video link is the placeholder `VIDEO_LINK_HERE`), B4, B5, H1 (second-device measurement), and the items not re-checked here.
+
 ## Where we stand
 
 - **The live site is a day behind `main`.** The web build is from Nov 18, 21:38 UTC, and the API reports `70943b9` (#39). The stage moment's main path, a reviewer tapping **Approve** in `/review` on a phone, shows "Page not found" on the live site today. So do `/explore`, the deal documents, and text alerts. Satya's two deploys (B1, B2) unblock most of this list.
@@ -102,7 +111,7 @@ All three are Gagan's. #50, #54, #55, #56, and #59 merged during this audit and 
 
 ## Definition of a winning build
 
-From the [README](../../../README.md#definition-of-a-winning-build).
+From the "Definition of a winning build" checklist that the README carried until the submission rewrite; this table is now its only copy.
 
 | Item | Status | Evidence |
 | --- | --- | --- |
