@@ -1,0 +1,333 @@
+/* /proof: one column of claims, each with its evidence links. Phone first;
+   the balance tables become real tables from 44rem. Tokens come from
+   index.css; "Verify on-chain" brings its own styles (verify.css). */
+
+.proof-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-m);
+  padding: var(--space-m) var(--pad) var(--space-l);
+}
+
+.proof-page > * {
+  width: 100%;
+  max-width: 56rem;
+}
+
+.proof-page a {
+  color: var(--text);
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  overflow-wrap: anywhere;
+}
+
+.proof-page a:hover {
+  text-decoration-color: currentColor;
+}
+
+.proof-page .btn {
+  text-decoration: none;
+}
+
+.proof-intro h1 {
+  margin: var(--s-2) 0 0;
+  font-size: var(--step-3);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.proof-lede {
+  max-width: 62ch;
+  margin: var(--s-4) 0 0;
+  color: var(--text-2);
+  font-size: var(--step-0);
+  line-height: 1.55;
+}
+
+.proof-staged {
+  max-width: 62ch;
+  margin: var(--s-4) 0 0;
+  border-left: 3px solid var(--gold);
+  padding: var(--s-1) 0 var(--s-1) var(--s-4);
+  color: #d7d7d7;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.proof-docs {
+  margin: var(--s-4) 0 0;
+  color: var(--text-2);
+  font-size: 0.88rem;
+}
+
+.proof-toc ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-toc a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 var(--s-4);
+  background: var(--surface-1);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.proof-toc a:hover {
+  border-color: var(--border-strong);
+}
+
+.proof-section {
+  --proof-tone: var(--line);
+  display: grid;
+  gap: var(--s-4);
+  border-top: 3px solid var(--proof-tone);
+  padding-top: var(--s-6);
+}
+
+.proof-section:focus {
+  outline: none;
+}
+
+.proof-section[data-tone="held"] {
+  --proof-tone: var(--red);
+}
+
+.proof-section[data-tone="released"] {
+  --proof-tone: var(--green);
+}
+
+.proof-section-head h2 {
+  margin: 0;
+  font-size: var(--step-2);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.proof-section-head p {
+  max-width: 64ch;
+  margin: var(--s-3) 0 0;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+.proof-section-head .proof-account {
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+.proof-claims {
+  display: grid;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-claims li {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  padding: var(--s-4);
+  background: var(--surface-1);
+}
+
+.proof-claim {
+  margin: 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.proof-limit {
+  margin: var(--s-2) 0 0;
+  color: var(--text-2);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.proof-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s-4);
+  margin: var(--s-2) 0 0;
+  font-size: 0.9rem;
+}
+
+.proof-evidence a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--gold-text);
+}
+
+.proof-note {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.proof-pending {
+  color: var(--gold-text);
+}
+
+.proof-after {
+  border-left: 3px solid var(--gold);
+  padding-left: var(--s-4);
+  color: #d7d7d7;
+}
+
+.proof-log {
+  margin: 0;
+}
+
+.proof-log figcaption {
+  color: var(--text-2);
+  font-size: 0.88rem;
+}
+
+.proof-log blockquote {
+  margin: var(--s-2) 0 0;
+  border: 1px solid rgba(214, 69, 69, 0.45);
+  border-radius: var(--radius-m);
+  padding: var(--s-3) var(--s-4);
+  background: rgba(214, 69, 69, 0.08);
+  color: var(--red-text);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.proof-shot {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+}
+
+.proof-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+}
+
+.proof-shot figcaption {
+  color: var(--text-2);
+  font-size: 0.88rem;
+}
+
+.proof-balances {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.proof-balances table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.proof-balances thead {
+  display: none;
+}
+
+/* Phone: each step is a card; its cells stack with their column name. */
+.proof-balances tr {
+  display: grid;
+  gap: var(--s-1);
+  margin-bottom: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: var(--s-3);
+  background: var(--surface-1);
+}
+
+.proof-balances tr[data-rejected="true"] {
+  border-color: rgba(214, 69, 69, 0.55);
+  background: rgba(214, 69, 69, 0.08);
+}
+
+.proof-balances th[scope="row"] {
+  font-weight: 600;
+  text-align: left;
+}
+
+.proof-balances td {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s-2);
+}
+
+.proof-balances td::before {
+  content: attr(data-label);
+  min-width: 6.5rem;
+  color: var(--text-2);
+  font-family: var(--sans);
+}
+
+@container page (min-width: 44rem) {
+  .proof-balances thead {
+    display: table-header-group;
+  }
+
+  .proof-balances tr {
+    display: table-row;
+    border: 0;
+    background: none;
+  }
+
+  .proof-balances tr[data-rejected="true"] {
+    background: rgba(214, 69, 69, 0.08);
+  }
+
+  .proof-balances th,
+  .proof-balances td {
+    display: table-cell;
+    border-bottom: 1px solid var(--line);
+    padding: var(--s-3) var(--s-2);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .proof-balances thead th {
+    color: var(--text-2);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .proof-balances td::before {
+    content: none;
+  }
+
+  .proof-balances tr[data-rejected="true"] th {
+    color: var(--red-text);
+  }
+}
+
+.proof-check {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.proof-check .plain-actions {
+  margin: 0;
+}
+
+/* deal.css places .deal-verify in the deal page's named grid; here it is
+   just the next block in the column. */
+.proof-check .deal-verify {
+  grid-area: auto;
+}

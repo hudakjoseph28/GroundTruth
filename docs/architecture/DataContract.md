@@ -185,6 +185,19 @@ export interface DocumentCitation {
   document?: Pick<DealDocument, "id" | "type" | "filename" | "uploaderRole">; // absent: no upload has this hash
 }
 
+// Homepage feed (additive, Nov 19): one confirmed program event of a public staged deal.
+export interface ActivityEvent {
+  id: string;                    // the timeline row's ID, `<signature>:<eventIndex>`
+  dealId: string;
+  dealAmountBaseUnits: string;   // the deal's agreed amount
+  at: string;                    // block time
+  type: TimelineEventType;
+  actorRole?: string;
+  buyerMessage: string;
+  transactionSignature: string;
+  confirmationStatus: "confirmed";
+}
+
 // Staged demo text alerts. The number is never returned unmasked.
 export interface DealSmsSubscriptionRequest { phoneNumber: string; consent: true; }
 export interface DealSmsSubscription { dealId: string; maskedPhoneNumber: string; }
@@ -207,6 +220,7 @@ All responses are JSON. Success returns the named object directly. Failure retur
 | `GET /api/parcels/:parcelKey/land/:file` | `200` JPEG or PNG | `imagery.jpg` or `height.png`, the files the `LandMeta` names. |
 | `GET /api/parcels/:parcelKey/layers` | `200 ParcelLayers` | Map layers for the land block's region (`landRegion`): FEMA flood zones, Franklin stream setbacks, NWI wetlands, Franklin zoning district lines, and the nearest Franklin public road right-of-way. `ParcelLayers` is in `@groundtruth/shared` (`layers.ts`). Each layer queries the same source as its report check, on its own limit, and is `found`, `none`, `notCovered`, or `unavailable`; a failing source is `unavailable` inside a `200`, never `none`. Outlines are clipped just outside the region. NWI cannot return its polygons, so wetlands come as NWI's own drawing of the region (PNG data URL). Lot shares (`onLot`) are measured only where the report measures them the same way (setback and zoning) or by the same sampling (flood). A complete answer is cached in memory for an hour; one with an `unavailable` layer is not. |
 | `GET /api/coverage` | `200 Coverage[]` | Each row: county, boundary searchable, evidence kinds, last verified time. No marketing totals without measured data. |
+| `GET /api/activity` | `200 ActivityEvent[]` | Read-only. The newest 8 confirmed program events across the public staged deals, newest first (block time, then slot and event index). Built only from timeline rows the QuickNode projection wrote (`confirmed`, with a transaction); seeded and other off-chain rows never appear, and a stored row outside the contract fails the request instead of being shown. `cache-control: no-store`. The homepage polls it every 5 s. |
 | `GET /api/deals/:id` | `200 Deal` | Public only for the two staged, non-sensitive demo deals. Unknown/non-demo deals return `404`. |
 | `GET /api/deals/:id/timeline` | `200 TimelineEvent[]` | Stable ascending order by chain slot/event index, then off-chain timestamp. |
 | `POST /api/deals/:id/evidence/owner-call` | `201 TimelineEvent` | Internal service use after a verified ElevenLabs webhook; never callable by the public browser. Implemented as the in-process `recordOwnerCall` step of the webhook, not an HTTP route, so nothing outside the API can reach it. |
@@ -286,4 +300,5 @@ A change to a field, status, route, instruction, PDA seed, required reviewer, or
 | 2026-11-18 | Check kind `environmental` (wetlands and stream setbacks) | Additive: a new `CheckKind` value; no field, status, route, or state-machine change | `CHECK_KINDS` in `packages/shared/src/contract.ts`; backend `src/reports/environmentalCheck.ts`; web `CHECK_TITLES`/`CHECK_LABELS`. The golden and second-county fixtures are unchanged and have no `environmental` check. The web ledger lists `environmental` only when a report carries it, and lists any kind it doesn't know last instead of failing. |
 | 2026-11-19 | Deal documents: `DealDocument`, `DocumentCitation`, `TimelineEvent.citedDocument`, three `/api/deals/:id/documents` routes, and the optional `memos` field in the Stream payload | Additive: new types, an optional field, and new routes; no status, instruction, PDA, or state-machine change; the escrow program is unchanged | `packages/shared/src/contract.ts` and `documents.ts`; backend `src/routes/documents.ts`, `src/documents/`, `src/chain/documentMemo.ts`, migration `20261120000000_deal_documents`; `quicknode/groundtruth-filter.js`; web `src/documents/`, `/deals/:dealId`, `/review`. Fixtures unchanged: no staged deal seeds a document. |
 | 2026-11-19 | Parcel map layers: `ParcelLayers`, `MapLayer`, `MapShape`, `MAP_LAYER_IDS`, and `GET /api/parcels/:parcelKey/layers` | Additive: new types and a new read-only route; no `Check`, status, or report change | `packages/shared/src/layers.ts`; backend `src/layers/parcelLayers.ts`, `src/routes/layers.ts`, recordings `test/fixtures/report/layers-*.json`; web `src/parcel/Layers/`, `src/content/layers.ts`. Fixtures unchanged. |
+| 2026-11-19 | Homepage activity feed: `ActivityEvent` and `GET /api/activity` | Additive: a new type and a new read-only route over existing confirmed timeline rows; no field, status, instruction, or state-machine change | `packages/shared/src/contract.ts`; backend `src/routes/activity.ts`, `toActivityEvent` in `src/deals/mapDeal.ts`, tests `test/activity.test.ts` and `test/db/activity.db.test.ts`; web `src/activity/`, `src/content/activity.ts`, `src/data/activitySource.ts`. Fixtures unchanged. |
 | 2026-11-19 | Reviewer-approval Blink: `GET /actions.json`, `GET`/`POST /api/actions/approve/:dealId` (Solana Actions spec 2.4) for the rehearsal deal only | Additive: new routes; no type, status, instruction, PDA, or state-machine change; the escrow program is unchanged. The POST returns an unsigned transaction; the reviewer's wallet signs | backend `src/routes/actions.ts`, `src/actions/`, `test/actions.test.ts`; `vercel.json` forwards `/actions.json`. Fixtures unchanged. |

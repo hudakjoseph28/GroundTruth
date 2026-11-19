@@ -1,4 +1,5 @@
 import {
+  type ActivityEvent,
   DEAL_DOCUMENT_TYPES,
   DEAL_STATES,
   type Deal,
@@ -254,6 +255,35 @@ function citationMessage(base: string, citation: DocumentCitation): string {
   return citation.document
     ? `${sentence}, relying on “${citation.document.filename}” (hash on-chain).`
     : `${sentence}, citing document hash ${citation.sha256.slice(0, 12)}… on-chain. No document on this deal has that hash.`;
+}
+
+/** A confirmed timeline row with the public fields of its deal. */
+export interface StoredActivityRow extends StoredTimelineEvent {
+  deal: { id: string; amountBaseUnits: string };
+}
+
+/**
+ * One row of `GET /api/activity`. Only a confirmed chain row with its
+ * transaction becomes activity; anything else is a query or data error.
+ */
+export function toActivityEvent(row: StoredActivityRow): ActivityEvent {
+  if (row.confirmationStatus !== "confirmed" || !row.transactionSignature) {
+    throw new Error("Activity row is not a confirmed chain event");
+  }
+  if (!/^[0-9]+$/.test(row.deal.amountBaseUnits)) {
+    throw new Error("Stored amount is not a base-unit integer");
+  }
+  return {
+    id: row.id,
+    dealId: row.deal.id,
+    dealAmountBaseUnits: row.deal.amountBaseUnits,
+    at: row.at.toISOString(),
+    type: parseOne(TIMELINE_EVENT_TYPES, row.type, "timeline event type"),
+    actorRole: row.actorRole ?? undefined,
+    buyerMessage: row.buyerMessage,
+    transactionSignature: row.transactionSignature,
+    confirmationStatus: "confirmed",
+  };
 }
 
 export function toDealDocument(row: StoredDealDocument): DealDocument {

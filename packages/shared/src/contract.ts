@@ -268,6 +268,26 @@ export interface Deal {
 }
 
 /**
+ * Additive (2026-11-19). One confirmed program event from a public staged
+ * deal, newest first in `GET /api/activity`. Built from the same confirmed
+ * timeline rows a deal's timeline serves; off-chain rows are never included.
+ */
+export interface ActivityEvent {
+  /** The timeline row's ID: `<transactionSignature>:<eventIndex>`. */
+  id: string;
+  dealId: string;
+  /** The deal's agreed amount, integer test USDC base units. */
+  dealAmountBaseUnits: string;
+  /** Block time. */
+  at: string;
+  type: TimelineEventType;
+  actorRole?: string;
+  buyerMessage: string;
+  transactionSignature: string;
+  confirmationStatus: "confirmed";
+}
+
+/**
  * Staged-demo text alerts for one deal: `POST /api/deals/:id/sms-subscriptions`.
  * The number is stored for that deal only and is never returned unmasked.
  */
