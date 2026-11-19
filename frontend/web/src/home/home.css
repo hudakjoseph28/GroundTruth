@@ -297,6 +297,18 @@
     0 30px 70px rgba(0, 0, 0, 0.6);
 }
 
+/* Says the tags on the parcel are an illustration, not activity that happened. */
+.living-caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  margin: 0;
+  color: var(--quiet);
+  font-size: 0.7rem;
+  pointer-events: none;
+}
+
 /* The block is one link to the demo parcel. Sized to the block once it is drawn. */
 .living-open {
   position: absolute;

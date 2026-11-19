@@ -198,6 +198,8 @@ export const REVIEWERS = {
   held: "Held",
   ready: "Ready to release",
   verbs: { approve: "approve", hold: "hold" },
+  /** The chain shows the staged title wallet approving; it never happened like this. */
+  note: "Illustration",
   description:
     "Diagram: a chain of blocks moves left as new ones form. A surveyor, a septic inspector, and a title agent each sign from their wallet; each signature lands in the next block as a receipt, and the escrow's sign-off count rises from one of three to three of three. In one loop out of three the title agent places a hold instead, and the escrow locks.",
 } as const;

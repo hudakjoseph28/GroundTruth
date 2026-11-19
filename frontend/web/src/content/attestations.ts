@@ -2,7 +2,8 @@ import { stagedDeal } from "@groundtruth/shared";
 import { shortAddress } from "../data/ledger";
 
 // The tags pinned to the land on the homepage. They are an illustration
-// of what a parcel's on-chain record looks like, not activity that happened.
+// of what a parcel's on-chain record looks like, not activity that happened:
+// a small visible caption says so wherever the tags are drawn.
 // Reviewer wallets are the staged fixture's, shortened. The others are
 // made-up short forms; none is a whole address, none is a signature, and
 // none links anywhere.
@@ -71,6 +72,8 @@ export const STILL_ATTESTATIONS: readonly Attestation[] = [
 ].filter((entry): entry is Attestation => entry !== undefined);
 
 export const ATTESTATION_COPY = {
+  /** Shown on the picture whenever the tags are: they carry a staged wallet. */
+  caption: "Illustration",
   summary:
     "Illustration: events on a parcel's on-chain record, each pinned to a spot on the land. For example, a title reviewer approves seller authority, the escrow is funded in USDC, a reviewer places a hold, and the escrow releases to the seller.",
 } as const;

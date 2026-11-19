@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { TEXT_ALERTS } from "../content/deal";
-import { subscribeToDealTexts } from "../data/dealSource";
+import { dealTextsEnabled, subscribeToDealTexts } from "../data/dealSource";
 
 type Status =
   | { kind: "idle" }
@@ -9,10 +9,28 @@ type Status =
   | { kind: "error"; message: string };
 
 /**
- * Staged demo opt-in to texts about this deal. The API stores the number for
- * this deal only and answers with it masked; the page never shows it back.
+ * Staged demo opt-in to texts about this deal. Shown only once the API says
+ * it can send texts; without Twilio every opt-in would fail with a 503.
  */
 export function TextAlerts({ dealId }: { dealId: string }) {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    dealTextsEnabled(dealId, controller.signal).then(setEnabled, () => {
+      // Aborted: the page closed or the deal changed.
+    });
+    return () => controller.abort();
+  }, [dealId]);
+
+  return enabled ? <TextAlertsForm dealId={dealId} /> : null;
+}
+
+/**
+ * The API stores the number for this deal only and answers with it masked;
+ * the page never shows it back.
+ */
+function TextAlertsForm({ dealId }: { dealId: string }) {
   const titleId = useId();
   const fieldId = useId();
   const hintId = useId();
