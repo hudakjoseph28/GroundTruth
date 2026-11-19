@@ -196,6 +196,11 @@ export function LivingParcel({ variant }: { variant: "hero" | "compact" }) {
           onRelease={() => handle.current?.ripple()}
         />
       )}
+      {tagsOn && (
+        <p className="living-caption" aria-hidden={variant === "hero" || undefined}>
+          {ATTESTATION_COPY.caption}
+        </p>
+      )}
       {variant === "hero" && <p className="visually-hidden">{ATTESTATION_COPY.summary}</p>}
     </div>
   );

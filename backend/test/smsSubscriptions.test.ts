@@ -41,6 +41,21 @@ describe("POST /api/deals/:id/sms-subscriptions", () => {
     expect(db.dealRecord.findUnique).not.toHaveBeenCalled();
   });
 
+  // The deal page posts an empty body to learn whether texts are on
+  // (dealTextsEnabled in frontend/web/src/data/dealSource.ts): 503 means off,
+  // a 400 INVALID_REQUEST means on. Neither may touch the database.
+  it("answers an empty body with 503 when off and 400 when on, storing nothing", async () => {
+    const off = await request(createApp("test-commit")).post(path).send({});
+    expect(off.status).toBe(503);
+
+    const on = await request(app).post(path).send({});
+    expect(on.status).toBe(400);
+    expect(on.body.error.code).toBe("INVALID_REQUEST");
+
+    expect(db.dealRecord.findUnique).not.toHaveBeenCalled();
+    expect(db.smsSubscriptionRecord.upsert).not.toHaveBeenCalled();
+  });
+
   it("stores a new number for that deal and returns it masked", async () => {
     db.dealRecord.findUnique.mockResolvedValue(publicDeal());
     db.smsSubscriptionRecord.findUnique.mockResolvedValue(null);

@@ -66,6 +66,29 @@ export type TextAlertsOutcome =
   | { status: "rejected"; message: string }
   | FailedOutcome;
 
+/**
+ * Whether this API sends deal texts. It has no read-only route for that, so
+ * this posts an empty body, which can never be stored. The route answers 503
+ * before it reads the body when Twilio is not configured, and 400 when it is
+ * (no number, no consent). Anything else, including an API without the route
+ * or no connection, counts as off: the opt-in only shows when it can work.
+ * backend/test/smsSubscriptions.test.ts pins both answers.
+ */
+export async function dealTextsEnabled(
+  dealId: string,
+  signal?: AbortSignal,
+): Promise<boolean> {
+  const response = await postJson(
+    `/api/deals/${encodeURIComponent(dealId)}/sms-subscriptions`,
+    {},
+    signal,
+  );
+  return (
+    response.status === "rejected" &&
+    response.error.error.code === "INVALID_REQUEST"
+  );
+}
+
 /** Staged demo: texts this number about the deal's future confirmed events. */
 export async function subscribeToDealTexts(
   dealId: string,

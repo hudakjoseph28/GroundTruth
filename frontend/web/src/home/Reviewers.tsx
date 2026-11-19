@@ -13,6 +13,7 @@ export function Reviewers() {
         <div className="rv-visual">
           <ReviewerChain still={still} />
           <p className="visually-hidden">{REVIEWERS.description}</p>
+          <p className="how-note">{REVIEWERS.note}</p>
         </div>
         <div className="rv-copy">
           <p className="eyebrow">{REVIEWERS.eyebrow}</p>
