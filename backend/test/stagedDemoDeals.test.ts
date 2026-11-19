@@ -17,6 +17,7 @@ import {
   stagedLiveDeal,
   stagedRehearsalDeal,
   stagedRehearsalV2Deal,
+  stagedRehearsalV3Deal,
   stagedReleasedDeal,
   type Deal,
 } from "@groundtruth/shared";
@@ -33,13 +34,14 @@ function ata(owner: web3.PublicKey) {
 }
 
 describe("staged demo deals", () => {
-  it("keeps the staged-devnet-deal ID as the held deal and adds the released, live, and two rehearsal ones", () => {
+  it("keeps the staged-devnet-deal ID as the held deal and adds the released, live, and three rehearsal ones", () => {
     expect(stagedDemoDeals.map((d) => d.id)).toEqual([
       "staged-devnet-deal",
       "staged-devnet-deal-released",
       "staged-devnet-deal-live",
       "staged-devnet-deal-rehearsal",
       "staged-devnet-deal-rehearsal-v2",
+      "staged-devnet-deal-rehearsal-v3",
     ]);
     expect(stagedDemoChainAccounts[stagedDeal.id]?.outcome).toBe("held");
     expect(stagedDemoChainAccounts[stagedReleasedDeal.id]?.outcome).toBe(
@@ -52,6 +54,9 @@ describe("staged demo deals", () => {
     expect(stagedDemoChainAccounts[stagedRehearsalV2Deal.id]?.outcome).toBe(
       "rehearsalV2",
     );
+    expect(stagedDemoChainAccounts[stagedRehearsalV3Deal.id]?.outcome).toBe(
+      "rehearsalV3",
+    );
   });
 
   it.each([
@@ -62,6 +67,8 @@ describe("staged demo deals", () => {
     // The rehearsal copy mirrors the live deal, so a rehearsal looks the same.
     [stagedRehearsalDeal.id, stagedRehearsalDeal, "10000000"],
     [stagedRehearsalV2Deal.id, stagedRehearsalV2Deal, "10000000"],
+    // v3 holds 5: the staged buyer had 5 test USDC left.
+    [stagedRehearsalV3Deal.id, stagedRehearsalV3Deal, "5000000"],
   ] as const)(
     "%s: bound to the golden parcel, its amount, three required reviewers",
     (_id, deal, amount) => {
@@ -101,7 +108,7 @@ describe("staged demo deals", () => {
   );
 
   it("gives every deal a distinct PDA and the same participants", () => {
-    expect(new Set(stagedDemoDeals.map((d) => d.escrowAddress)).size).toBe(5);
+    expect(new Set(stagedDemoDeals.map((d) => d.escrowAddress)).size).toBe(6);
     const participants = (deal: Deal) => ({
       parcelKey: deal.parcelKey,
       buyerWallet: deal.buyerWallet,
@@ -116,6 +123,9 @@ describe("staged demo deals", () => {
     expect(participants(stagedLiveDeal)).toEqual(participants(stagedDeal));
     expect(participants(stagedRehearsalDeal)).toEqual(participants(stagedDeal));
     expect(participants(stagedRehearsalV2Deal)).toEqual(
+      participants(stagedDeal),
+    );
+    expect(participants(stagedRehearsalV3Deal)).toEqual(
       participants(stagedDeal),
     );
   });
@@ -173,6 +183,10 @@ describe('the off-chain "created" row of each staged deal', () => {
     // v2 had no devnet transaction on its PDA when it was registered.
     expect(Date.parse(stagedRehearsalV2Deal.timeline[0].at)).toBeGreaterThan(
       Date.parse(stagedRehearsalDeal.timeline[0].at),
+    );
+    // v3 had no devnet transaction on its PDA when it was registered.
+    expect(Date.parse(stagedRehearsalV3Deal.timeline[0].at)).toBeGreaterThan(
+      Date.parse(stagedRehearsalV2Deal.timeline[0].at),
     );
   });
 

@@ -22,11 +22,11 @@ import { dealPath } from "../data/dealSource";
 import { viewDeal } from "../data/dealView";
 import { usePageTitle } from "../layout/usePageTitle";
 import {
+  SentActionError,
   explainFailure,
   explorerTx,
-  signAndSend,
+  sendAndConfirm,
   vaultFor,
-  waitForConfirmation,
   type SendPhase,
 } from "./escrowTx";
 import { useReviewerDeals } from "./useReviewerDeals";
@@ -92,7 +92,7 @@ type ActionKind = "approve" | "hold" | "release";
 
 type ActionState =
   | { phase: "idle" }
-  | { phase: SendPhase; kind: ActionKind; signature?: string }
+  | { phase: SendPhase; kind: ActionKind; signature?: string; attempt: number; of: number }
   | { phase: "confirmed"; kind: ActionKind; signature: string }
   | { phase: "failed"; kind: ActionKind; message: string; signature?: string };
 
@@ -164,7 +164,10 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
   const [relyOn, setRelyOn] = useState<Partial<Record<ReviewerRole, string>>>({});
 
   const busy =
-    action.phase === "checking" || action.phase === "signing" || action.phase === "sent";
+    action.phase === "checking" ||
+    action.phase === "signing" ||
+    action.phase === "sent" ||
+    action.phase === "retrying";
   const open = deal.state === "funded" && !deal.hold;
   const allSigned = deal.reviewers.filter((r) => r.required).every((r) => r.approvedAt);
   const dealPda = deal.escrowAddress;
@@ -180,18 +183,18 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
       abort.current?.abort();
       const controller = new AbortController();
       abort.current = controller;
-      let signature: string | undefined;
       try {
-        signature = await signAndSend({
+        const signature = await sendAndConfirm({
           connection,
           payer: publicKey,
           spec,
           extra,
           signTransaction,
-          onPhase: (phase) => setAction({ phase, kind }),
+          signal: controller.signal,
+          onProgress: (progress) => {
+            if (!controller.signal.aborted) setAction({ ...progress, kind });
+          },
         });
-        setAction({ phase: "sent", kind, signature });
-        await waitForConfirmation(connection, signature, controller.signal);
         if (!controller.signal.aborted) {
           setAction({ phase: "confirmed", kind, signature });
           onConfirmed();
@@ -199,7 +202,12 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
         }
       } catch (error) {
         if (!controller.signal.aborted) {
-          setAction({ phase: "failed", kind, message: explainFailure(error), signature });
+          setAction({
+            phase: "failed",
+            kind,
+            message: explainFailure(error),
+            signature: error instanceof SentActionError ? error.signature : undefined,
+          });
         }
       }
     },
@@ -395,8 +403,14 @@ function ActionStatus({ action }: { action: ActionState }) {
   const words =
     action.phase === "failed"
       ? `${REVIEW.status.failed} ${action.message}`
-      : REVIEW.status[action.phase];
-  const signature = "signature" in action ? action.signature : undefined;
+      : action.phase === "retrying"
+        ? REVIEW.status.retrying(action.attempt, action.of)
+        : action.phase === "sent" && action.attempt > 1
+          ? `${REVIEW.status.sent} ${REVIEW.status.attempt(action.attempt, action.of)}`
+          : REVIEW.status[action.phase];
+  // While retrying, the shown signature expired and never landed; hide it.
+  const signature =
+    action.phase !== "retrying" && "signature" in action ? action.signature : undefined;
   return (
     <div
       className="review-status"

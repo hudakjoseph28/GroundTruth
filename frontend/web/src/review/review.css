@@ -219,6 +219,10 @@
   border-color: var(--red);
 }
 
+.review-status[data-phase="retrying"] {
+  border-color: var(--gold);
+}
+
 .review-sig code {
   font-family: var(--mono);
 }
