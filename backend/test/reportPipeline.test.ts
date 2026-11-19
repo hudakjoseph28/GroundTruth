@@ -75,6 +75,57 @@ describe("biggestOpenQuestion", () => {
     ).toBe("flood");
   });
 
+  it("puts an open floodway flood check ahead of every other open question", () => {
+    expect(
+      biggestOpenQuestion(
+        [
+          check("access", "needsReview"),
+          check("septic", "unknown"),
+          check("flood", "needsReview"),
+        ],
+        { floodInSfha: true, floodway: true },
+      ),
+    ).toBe("flood");
+  });
+
+  it("still puts a reviewer hold ahead of a floodway", () => {
+    expect(
+      biggestOpenQuestion(
+        [check("flood", "needsReview"), check("sellerAuthority", "held")],
+        { floodInSfha: true, floodway: true },
+      ),
+    ).toBe("sellerAuthority");
+  });
+
+  it("ranks an open SFHA flood check without a floodway right after access", () => {
+    const sfha = { floodInSfha: true, floodway: false };
+    expect(
+      biggestOpenQuestion(
+        [check("septic", "unknown"), check("flood", "needsReview")],
+        sfha,
+      ),
+    ).toBe("flood");
+    expect(
+      biggestOpenQuestion(
+        [
+          check("access", "unknown"),
+          check("septic", "unknown"),
+          check("flood", "needsReview"),
+        ],
+        sfha,
+      ),
+    ).toBe("access");
+  });
+
+  it("leaves a Zone X flood finding where it was", () => {
+    expect(
+      biggestOpenQuestion(
+        [check("septic", "unknown"), check("flood", "evidenceFound")],
+        noSfha,
+      ),
+    ).toBe("septic");
+  });
+
   it("falls back to the highest-priority check when nothing is open", () => {
     expect(
       biggestOpenQuestion(

@@ -6742,7 +6742,7 @@
       "parcelKey": "ohio:39049:185-002765",
       "generatedAt": "2026-11-18T23:49:17.790Z",
       "coverage": "partial",
-      "biggestOpenQuestion": "access",
+      "biggestOpenQuestion": "flood",
       "checks": [
         {
           "kind": "zoning",
@@ -6764,7 +6764,7 @@
         },
         {
           "kind": "flood",
-          "status": "evidenceFound",
+          "status": "needsReview",
           "finding": "FEMA's flood map puts this lot in Zone AE (regulatory floodway), a Special Flood Hazard Area (FEMA's 1%-annual-chance floodplain).",
           "limitation": "FEMA's zone lines and the parcel lines come from different maps, so the edges may not line up exactly. A flood zone is not a flood-insurance determination or a building permit.",
           "sources": [
@@ -6792,7 +6792,7 @@
           "responsibleParty": {
             "role": "Community floodplain administrator (city, village, or county)"
           },
-          "nextAction": "Ask your lender whether flood insurance will be required, and ask the community floodplain administrator what building in the floodway requires."
+          "nextAction": "Ask the local floodplain administrator whether a floodplain development permit is needed, and get a flood insurance quote before you commit."
         },
         {
           "kind": "environmental",

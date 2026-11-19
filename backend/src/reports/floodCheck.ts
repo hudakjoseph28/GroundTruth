@@ -10,6 +10,10 @@ import {
 const SFHA_MEANING =
   "a Special Flood Hazard Area (FEMA's 1%-annual-chance floodplain)";
 
+/** What a buyer does when any part of the lot is in a mapped floodplain or floodway. */
+export const SFHA_NEXT_ACTION =
+  "Ask the local floodplain administrator whether a floodplain development permit is needed, and get a flood insurance quote before you commit.";
+
 const FEMA_MAP: ResponsibleParty = {
   role: "FEMA flood map",
   organization: "FEMA Flood Map Service Center",
@@ -21,9 +25,10 @@ const FLOODPLAIN_ADMINISTRATOR: ResponsibleParty = {
 };
 
 /**
- * Turns one FEMA outcome into the flood check. Only `found` becomes
- * `evidenceFound`; every other outcome is `unknown` with a limitation and
- * a next action. `timeoutMs` is the limit the pipeline gave the adapter.
+ * Turns one FEMA outcome into the flood check. `found` becomes
+ * `evidenceFound` when the lot is outside every Special Flood Hazard Area
+ * and floodway, and `needsReview` when any part of it is inside one; every
+ * other outcome is `unknown` with a limitation and a next action. `timeoutMs` is the limit the pipeline gave the adapter.
  */
 export function floodCheck(outcome: FloodOutcome, timeoutMs: number): Check {
   switch (outcome.outcome) {
@@ -110,13 +115,18 @@ function foundCheck(
     .filter(Boolean)
     .join(" ");
 
-  const nextAction = inSfha
-    ? `Ask your lender whether flood insurance will be required, and ask the community floodplain administrator what building ${floodway ? "in the floodway" : "here"} requires.`
+  // Any part of the lot in a Special Flood Hazard Area (Zone A, AE, AO, AH,
+  // V, VE, ...) or a regulatory floodway is a sourced finding someone still
+  // has to decide on: the floodplain administrator rules on a permit, and an
+  // insurer prices the risk. The finding itself is unchanged.
+  const needsReview = inSfha || floodway;
+  const nextAction = needsReview
+    ? SFHA_NEXT_ACTION
     : "Check the current map for this lot on FEMA's Flood Map Service Center before closing; a lender may still order its own flood determination.";
 
   return {
     kind: "flood",
-    status: "evidenceFound",
+    status: needsReview ? "needsReview" : "evidenceFound",
     finding,
     limitation,
     sources: [
@@ -140,7 +150,7 @@ function foundCheck(
         }),
       ),
     ],
-    responsibleParty: inSfha ? FLOODPLAIN_ADMINISTRATOR : FEMA_MAP,
+    responsibleParty: needsReview ? FLOODPLAIN_ADMINISTRATOR : FEMA_MAP,
     nextAction,
   };
 }

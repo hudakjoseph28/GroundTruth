@@ -19,6 +19,7 @@ import {
   createFemaFloodClient,
   NFHL_SERVICE,
 } from "../src/reports/femaFlood.js";
+import { SFHA_NEXT_ACTION } from "../src/reports/floodCheck.js";
 import {
   createFranklinZoningClient,
   FCEDP_ZONING_LAYER,
@@ -290,43 +291,100 @@ describe("GET /api/parcels/:parcelKey/report, live from recorded OGRIP + FEMA", 
     expect(checkOf(report, "zoning").limitation).toContain("Licking County");
   });
 
-  it("names a Special Flood Hazard Area for a parcel inside the AE floodway", async () => {
-    const { app } = scenario("franklin-floodway");
+  /** The two FIRM panels FEMA returns at Big Walnut Creek, with their dates. */
+  const BIG_WALNUT_PANELS = (retrievedAt: string) => [
+    {
+      authority: "FEMA",
+      title: "National Flood Hazard Layer: flood hazard zones",
+      url: `${NFHL_SERVICE}/28`,
+      retrievedAt,
+    },
+    {
+      authority: "FEMA",
+      title: "Flood Insurance Rate Map panel 39049C0431K",
+      url: `${NFHL_SERVICE}/3`,
+      retrievedAt,
+      effectiveDate: "2008-06-17",
+    },
+    {
+      authority: "FEMA",
+      title: "Flood Insurance Rate Map panel 39129C0075J",
+      url: `${NFHL_SERVICE}/3`,
+      retrievedAt,
+      effectiveDate: "2010-07-22",
+    },
+  ];
+
+  it("asks for review when the whole lot is in the AE regulatory floodway (185-002765)", async () => {
+    const { app, recording } = scenario("franklin-floodway");
 
     const res = await request(app).get(
       reportPath(REPORT_SCENARIOS["franklin-floodway"]),
     );
 
     expect(res.status).toBe(200);
-    const flood = checkOf(res.body as ParcelReport, "flood");
-    expect(flood.status).toBe("evidenceFound");
+    expect(res.body).toEqual(recording.apiResponse.body);
+    const report = res.body as ParcelReport;
+    const flood = checkOf(report, "flood");
+    expect(flood.status).toBe("needsReview");
+    // The sourced finding is the same as before: zone, meaning, panels.
     expect(flood.finding).toBe(
       "FEMA's flood map puts this lot in Zone AE (regulatory floodway), a Special Flood Hazard Area (FEMA's 1%-annual-chance floodplain).",
     );
-    expect(flood.nextAction).toContain("flood insurance");
-    expect(flood.nextAction).toContain("floodway");
-    expect(flood.responsibleParty.role).toContain("floodplain administrator");
-    expect(
-      flood.sources.filter((source) => source.effectiveDate).length,
-    ).toBeGreaterThan(0);
+    expect(flood.sources).toEqual(BIG_WALNUT_PANELS(recording.recordedAt));
+    expect(flood.nextAction).toBe(SFHA_NEXT_ACTION);
+    expect(flood.nextAction).toBe(
+      "Ask the local floodplain administrator whether a floodplain development permit is needed, and get a flood insurance quote before you commit.",
+    );
+    expect(flood.responsibleParty).toEqual({
+      role: "Community floodplain administrator (city, village, or county)",
+    });
+    expect(flood.limitation).toContain(
+      "A flood zone is not a flood-insurance determination or a building permit.",
+    );
+    // A floodway leads every open question, even an open access check.
+    expect(checkOf(report, "access").status).toBe("needsReview");
+    expect(report.biggestOpenQuestion).toBe("flood");
+    expect(report.coverage).toBe("partial");
   });
 
-  it("says plainly when a parcel crosses several zones", async () => {
-    const { app } = scenario("franklin-crossing");
+  it("asks for review when part of a lot crossing four zones is in the floodplain (152-001927)", async () => {
+    const { app, recording } = scenario("franklin-crossing");
 
     const res = await request(app).get(
       reportPath(REPORT_SCENARIOS["franklin-crossing"]),
     );
 
     expect(res.status).toBe(200);
-    const flood = checkOf(res.body as ParcelReport, "flood");
-    expect(flood.status).toBe("evidenceFound");
+    expect(res.body).toEqual(recording.apiResponse.body);
+    const report = res.body as ParcelReport;
+    const flood = checkOf(report, "flood");
+    expect(flood.status).toBe("needsReview");
     expect(flood.finding).toBe(
       "The lot crosses 4 FEMA flood zones: Zone AE, Zone AE (regulatory floodway), Zone X (0.2% annual chance flood hazard), and Zone X (area of minimal flood hazard). Part of it is in a Special Flood Hazard Area (FEMA's 1%-annual-chance floodplain).",
     );
+    expect(flood.sources).toEqual(BIG_WALNUT_PANELS(recording.recordedAt));
     expect(flood.limitation).toContain(
       "has not measured how much of the lot lies in each zone",
     );
+    expect(flood.nextAction).toBe(SFHA_NEXT_ACTION);
+    expect(flood.responsibleParty.role).toContain("floodplain administrator");
+    // Part of it is in the AE floodway, so flood leads over the unknown septic.
+    expect(checkOf(report, "septic").status).toBe("unknown");
+    expect(report.biggestOpenQuestion).toBe("flood");
+  });
+
+  it("keeps Zone X (minimal hazard) as evidence found, golden parcel included", async () => {
+    for (const name of ["franklin-golden", "franklin-outside", "licking-outside"] as const) {
+      const { app } = scenario(name);
+      const res = await request(app).get(reportPath(REPORT_SCENARIOS[name]));
+      expect(res.status).toBe(200);
+      const flood = checkOf(res.body as ParcelReport, "flood");
+      expect(flood.status, name).toBe("evidenceFound");
+      expect(flood.finding, name).toContain("Zone X (area of minimal flood hazard)");
+      expect(flood.nextAction, name).not.toBe(SFHA_NEXT_ACTION);
+      expect(flood.responsibleParty.role, name).toBe("FEMA flood map");
+    }
   });
 
   it("keeps flood unknown, with the dated query, where NFHL has no data", async () => {
@@ -1358,8 +1416,10 @@ describe("environmental: NWI wetlands and Franklin stream setbacks, live", () =>
       nextAction:
         "Before you plan a building, driveway, septic system, or fill near the mapped wetland, have a wetland consultant delineate it and ask whether a permit applies. Ask Franklin County Economic Development & Planning what the riparian setback allows on this lot.",
     });
-    // Septic, still unknown, outranks a mapped wetland.
-    expect(report.biggestOpenQuestion).toBe("septic");
+    // Septic, still unknown, outranks a mapped wetland. Part of this lot is
+    // also in the AE floodway, which leads both.
+    expect(checkOf(report, "flood").status).toBe("needsReview");
+    expect(report.biggestOpenQuestion).toBe("flood");
     expect(report.checks.map((check) => check.kind)).toContain("environmental");
   });
 
