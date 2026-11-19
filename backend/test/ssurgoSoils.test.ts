@@ -92,6 +92,17 @@ async function run(
   );
 }
 
+/** Area math differs across platforms in the last float digits. */
+function recordedOutcome(recording: SsurgoRecording) {
+  return {
+    ...recording.outcome,
+    mapUnits: recording.outcome.mapUnits.map((unit) => ({
+      ...unit,
+      share: expect.closeTo(unit.share, 9),
+    })),
+  };
+}
+
 const shares = (outcome: SoilsOutcome) =>
   outcome.outcome === "found"
     ? outcome.mapUnits.map((unit) => [
@@ -114,10 +125,7 @@ describe("SSURGO septic ratings, recorded live on 2026-11-19", () => {
     const outcome = await run(goldenParcel, fetchImpl);
 
     expect(fetchImpl).toHaveBeenCalledTimes(2);
-    expect(outcome).toEqual({
-      ...franklin.outcome,
-      retrievedAt: franklin.recordedAt,
-    });
+    expect(outcome).toEqual(recordedOutcome(franklin));
     expect(outcome).toMatchObject({ outcome: "found", source: "livingAtlas" });
     expect(shares(outcome)).toEqual([
       ["167909", "Ko", "Very limited", 0.4605],
@@ -131,7 +139,7 @@ describe("SSURGO septic ratings, recorded live on 2026-11-19", () => {
     const outcome = await run(secondCountyParcel, replay(licking));
 
     expect(outcome).toEqual({
-      ...licking.outcome,
+      ...recordedOutcome(licking),
       retrievedAt: franklin.recordedAt,
     });
     expect(shares(outcome)).toEqual([
