@@ -10,7 +10,12 @@ export const PARCEL_PAGE = {
   backToResults: "Back to results",
   backToMap: "Back to map",
   noHouseNumber: "no house number",
+  noAddress: "No site address published",
+  loadingTitle: "Parcel",
+  /** The name when Ohio published no street. */
   title: (parcelId: string) => `Parcel ${parcelId}`,
+  /** Tab title when the page is named for a street. The ID keeps two lots on one road apart. */
+  titled: (street: string, parcelId: string) => `${street} · Parcel ${parcelId}`,
   stagedLabel: "Staged sample",
   stagedNote: "A stand-in boundary for the demo, not a surveyed lot.",
   keyLabel: "Parcel key",
@@ -69,7 +74,7 @@ export const EXPLORE = {
 
 export const AREA_VIEW = {
   title: "Google 3D imagery of the area",
-  around: (parcelId: string) => `Around parcel ${parcelId}`,
+  around: (name: string) => `Around ${name}`,
   boundary: "The gold line is the parcel boundary.",
   stagedBoundary: "The gold line is the demo's stand-in boundary, not a surveyed lot.",
   close: "Close",
@@ -83,6 +88,7 @@ export const AREA_VIEW = {
 export const CHECK_TITLES: Record<CheckKind, string> = {
   zoning: "Can you build here?",
   flood: "Flood",
+  environmental: "Wetlands & streams",
   access: "Road access",
   utilities: "Water & sewer",
   easements: "Easements",
@@ -91,6 +97,21 @@ export const CHECK_TITLES: Record<CheckKind, string> = {
   septic: "Septic",
   closing: "Closing",
 };
+
+/**
+ * A card's title. A kind this build does not know (a newer API) reads as
+ * its own words, `radonTest` → "Radon test", instead of an empty heading.
+ */
+export function checkTitle(kind: string): string {
+  const known = (CHECK_TITLES as Partial<Record<string, string>>)[kind];
+  if (known) return known;
+  const words = kind
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .toLowerCase();
+  return words ? `${words.charAt(0).toUpperCase()}${words.slice(1)}` : "Other check";
+}
 
 export const LEDGER = {
   title: "Ledger",

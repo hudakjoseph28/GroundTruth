@@ -7,6 +7,7 @@ import {
 export const CHECK_LABELS: Record<CheckKind, string> = {
   zoning: "Zoning",
   flood: "Flood",
+  environmental: "Wetlands & streams",
   access: "Road access",
   utilities: "Utilities",
   easements: "Easements",

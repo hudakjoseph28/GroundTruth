@@ -1,8 +1,77 @@
 {
   "scenario": "franklin-crossing",
   "parcelKey": "ohio:39049:152-001927",
-  "recordedAt": "2026-11-18T20:14:06.775Z",
+  "recordedAt": "2026-11-18T23:49:21.808Z",
   "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.9317105%2C39.8709444%5D%2C%5B-82.931951%2C39.8678833%5D%2C%5B-82.9319534%2C39.8678521%5D%2C%5B-82.9319751%2C39.8678913%5D%2C%5B-82.9322354%2C39.8683624%5D%2C%5B-82.9328001%2C39.8698057%5D%2C%5B-82.9328388%2C39.8701257%5D%2C%5B-82.9329327%2C39.8704898%5D%2C%5B-82.9329206%2C39.8705913%5D%2C%5B-82.9325821%2C39.8709354%5D%2C%5B-82.9324647%2C39.8710498%5D%2C%5B-82.9323413%2C39.8711604%5D%2C%5B-82.932212%2C39.871267%5D%2C%5B-82.9320772%2C39.8713694%5D%2C%5B-82.931937%2C39.8714674%5D%2C%5B-82.9317916%2C39.8715609%5D%2C%5B-82.9316414%2C39.8716496%5D%2C%5B-82.9316803%2C39.8713298%5D%2C%5B-82.9317105%2C39.8709444%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=IMAGE_YR&returnDistinctValues=true&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "PROJECT_NAME",
+        "fieldAliases": {
+          "IMAGE_YR": "IMAGE_YR"
+        },
+        "fields": [
+          {
+            "name": "IMAGE_YR",
+            "type": "esriFieldTypeSmallInteger",
+            "alias": "IMAGE_YR"
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "IMAGE_YR": 2007
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.9317105%2C39.8709444%5D%2C%5B-82.931951%2C39.8678833%5D%2C%5B-82.9319534%2C39.8678521%5D%2C%5B-82.9319751%2C39.8678913%5D%2C%5B-82.9322354%2C39.8683624%5D%2C%5B-82.9328001%2C39.8698057%5D%2C%5B-82.9328388%2C39.8701257%5D%2C%5B-82.9329327%2C39.8704898%5D%2C%5B-82.9329206%2C39.8705913%5D%2C%5B-82.9325821%2C39.8709354%5D%2C%5B-82.9324647%2C39.8710498%5D%2C%5B-82.9323413%2C39.8711604%5D%2C%5B-82.932212%2C39.871267%5D%2C%5B-82.9320772%2C39.8713694%5D%2C%5B-82.931937%2C39.8714674%5D%2C%5B-82.9317916%2C39.8715609%5D%2C%5B-82.9316414%2C39.8716496%5D%2C%5B-82.9316803%2C39.8713298%5D%2C%5B-82.9317105%2C39.8709444%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=ATTRIBUTE%2CWETLAND_TYPE&returnDistinctValues=true&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "Wetlands.ATTRIBUTE",
+        "fieldAliases": {
+          "ATTRIBUTE": "ATTRIBUTE",
+          "WETLAND_TYPE": "WETLAND_TYPE"
+        },
+        "fields": [
+          {
+            "name": "ATTRIBUTE",
+            "type": "esriFieldTypeString",
+            "alias": "ATTRIBUTE",
+            "length": 15
+          },
+          {
+            "name": "WETLAND_TYPE",
+            "type": "esriFieldTypeString",
+            "alias": "WETLAND_TYPE",
+            "length": 50
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "ATTRIBUTE": "R2UBH",
+              "WETLAND_TYPE": "Riverine"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/export",
+      "requestBody": "bbox=-9232052.041172888%2C4846757.448155895%2C-9231907.888282303%2C4847308.241290074&bboxSR=3857&imageSR=3857&size=134%2C512&dpi=96&format=png32&transparent=true&dynamicLayers=%5B%7B%22id%22%3A100%2C%22source%22%3A%7B%22type%22%3A%22mapLayer%22%2C%22mapLayerId%22%3A0%7D%2C%22definitionExpression%22%3A%22Wetlands.WETLAND_TYPE+%3D+%27Riverine%27%22%2C%22drawingInfo%22%3A%7B%22renderer%22%3A%7B%22type%22%3A%22simple%22%2C%22symbol%22%3A%7B%22type%22%3A%22esriSFS%22%2C%22style%22%3A%22esriSFSSolid%22%2C%22color%22%3A%5B0%2C0%2C128%2C255%5D%2C%22outline%22%3A%7B%22type%22%3A%22esriSLS%22%2C%22style%22%3A%22esriSLSNull%22%7D%7D%7D%7D%7D%5D&f=image",
+      "status": 200,
+      "contentType": "image/png",
+      "bodyBase64": "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"
+    },
     {
       "method": "POST",
       "url": "https://gis.franklincountyohio.gov/hosting/rest/services/ParcelFeatures/Parcel_Features/MapServer/6/query",
@@ -8198,6 +8267,21 @@
       }
     },
     {
+      "method": "POST",
+      "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/Franklin_County_Stream_Buffers/FeatureServer/0/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.9317105%2C39.8709444%5D%2C%5B-82.931951%2C39.8678833%5D%2C%5B-82.9319534%2C39.8678521%5D%2C%5B-82.9319751%2C39.8678913%5D%2C%5B-82.9322354%2C39.8683624%5D%2C%5B-82.9328001%2C39.8698057%5D%2C%5B-82.9328388%2C39.8701257%5D%2C%5B-82.9329327%2C39.8704898%5D%2C%5B-82.9329206%2C39.8705913%5D%2C%5B-82.9325821%2C39.8709354%5D%2C%5B-82.9324647%2C39.8710498%5D%2C%5B-82.9323413%2C39.8711604%5D%2C%5B-82.932212%2C39.871267%5D%2C%5B-82.9320772%2C39.8713694%5D%2C%5B-82.931937%2C39.8714674%5D%2C%5B-82.9317916%2C39.8715609%5D%2C%5B-82.9316414%2C39.8716496%5D%2C%5B-82.9316803%2C39.8713298%5D%2C%5B-82.9317105%2C39.8709444%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelRelation&relationParam=T********&outFields=OBJECTID%2CName&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "GlobalID",
+        "features": []
+      }
+    },
+    {
       "method": "GET",
       "url": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27152-001927%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
       "status": 200,
@@ -8312,7 +8396,7 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39049:152-001927",
-      "generatedAt": "2026-11-18T20:14:06.775Z",
+      "generatedAt": "2026-11-18T23:49:21.808Z",
       "coverage": "partial",
       "biggestOpenQuestion": "septic",
       "checks": [
@@ -8326,7 +8410,7 @@
               "authority": "Franklin County Economic Development & Planning",
               "title": "FCEDP Zoning Districts 2025: districts under the parcel",
               "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEDP_Zoning_Districts_2025_View/FeatureServer/0",
-              "retrievedAt": "2026-11-18T20:14:06.775Z"
+              "retrievedAt": "2026-11-18T23:49:21.808Z"
             }
           ],
           "responsibleParty": {
@@ -8344,20 +8428,20 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-18T20:14:06.775Z"
+              "retrievedAt": "2026-11-18T23:49:21.808Z"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39049C0431K",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-18T20:14:06.775Z",
+              "retrievedAt": "2026-11-18T23:49:21.808Z",
               "effectiveDate": "2008-06-17"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39129C0075J",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-18T20:14:06.775Z",
+              "retrievedAt": "2026-11-18T23:49:21.808Z",
               "effectiveDate": "2010-07-22"
             }
           ],
@@ -8365,6 +8449,38 @@
             "role": "Community floodplain administrator (city, village, or county)"
           },
           "nextAction": "Ask your lender whether flood insurance will be required, and ask the community floodplain administrator what building in the floodway requires."
+        },
+        {
+          "kind": "environmental",
+          "status": "needsReview",
+          "finding": "The National Wetlands Inventory maps Riverine (R2UBH) on about 30% of this lot. Franklin County's stream-buffer map puts no part of it in a riparian setback.",
+          "limitation": "NWI outlines are drawn from aerial imagery (here from 2007) and are approximate: they are not a wetland delineation, and the shares are measured against the mapped OGRIP boundary, not a survey. Filling or building in a wetland or stream can need a Clean Water Act Section 404 permit from the U.S. Army Corps of Engineers or a permit from Ohio EPA.",
+          "sources": [
+            {
+              "authority": "U.S. Fish and Wildlife Service",
+              "title": "National Wetlands Inventory: riverine mapped on the parcel",
+              "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0",
+              "retrievedAt": "2026-11-18T23:49:21.808Z"
+            },
+            {
+              "authority": "U.S. Fish and Wildlife Service",
+              "title": "National Wetlands Inventory: mapped from 2007 imagery",
+              "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3",
+              "retrievedAt": "2026-11-18T23:49:21.808Z"
+            },
+            {
+              "authority": "Franklin County Economic Development & Planning",
+              "title": "Stream buffers: no riparian setback on the parcel",
+              "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/Franklin_County_Stream_Buffers/FeatureServer/0",
+              "retrievedAt": "2026-11-18T23:49:21.808Z"
+            }
+          ],
+          "responsibleParty": {
+            "role": "County soil and water conservation district, or a wetland consultant",
+            "organization": "Franklin Soil & Water Conservation District",
+            "publicContactUrl": "https://www.franklinswcd.org/"
+          },
+          "nextAction": "Before you plan a building, driveway, septic system, or fill near the mapped wetland, have a wetland consultant delineate it and ask whether a permit applies."
         },
         {
           "kind": "access",
@@ -8376,13 +8492,13 @@
               "authority": "Franklin County",
               "title": "Tax parcel right-of-way layer: public road right-of-way within 1 m of the parcel",
               "url": "https://gis.franklincountyohio.gov/hosting/rest/services/ParcelFeatures/Parcel_Features/MapServer/6",
-              "retrievedAt": "2026-11-18T20:14:06.775Z"
+              "retrievedAt": "2026-11-18T23:49:21.808Z"
             },
             {
               "authority": "Franklin County Engineer",
               "title": "Public road sections: Old Rathmell Ct centerline meets the parcel boundary",
               "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEO_Road_Sections_Public/FeatureServer/0",
-              "retrievedAt": "2026-11-18T20:14:06.775Z"
+              "retrievedAt": "2026-11-18T23:49:21.808Z"
             }
           ],
           "responsibleParty": {

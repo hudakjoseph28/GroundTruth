@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigationType } from "react-router-dom";
 import { SITE } from "../content/site";
+import { DealTicker } from "../feed/DealTicker";
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
 import "./layout.css";
@@ -13,6 +14,7 @@ export function SiteLayout({ footer = true }: { footer?: boolean }) {
       <a className="skip" href="#content">
         {SITE.skip}
       </a>
+      <DealTicker />
       <SiteHeader />
       <main id="content">
         <Outlet />

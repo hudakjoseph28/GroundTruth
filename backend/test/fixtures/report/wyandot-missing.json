@@ -1,8 +1,62 @@
 {
   "scenario": "wyandot-missing",
   "parcelKey": "ohio:39175:010025000000",
-  "recordedAt": "2026-11-18T20:14:07.258Z",
+  "recordedAt": "2026-11-18T23:49:25.861Z",
   "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-83.1306816%2C40.7331653%5D%2C%5B-83.1307899%2C40.7331646%5D%2C%5B-83.1307868%2C40.7341938%5D%2C%5B-83.1306785%2C40.7341946%5D%2C%5B-83.1299632%2C40.7341996%5D%2C%5B-83.1299579%2C40.7341996%5D%2C%5B-83.1299507%2C40.7341996%5D%2C%5B-83.1299539%2C40.7331704%5D%2C%5B-83.1299611%2C40.7331703%5D%2C%5B-83.1299721%2C40.7331703%5D%2C%5B-83.1306816%2C40.7331653%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=IMAGE_YR&returnDistinctValues=true&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "PROJECT_NAME",
+        "fieldAliases": {
+          "IMAGE_YR": "IMAGE_YR"
+        },
+        "fields": [
+          {
+            "name": "IMAGE_YR",
+            "type": "esriFieldTypeSmallInteger",
+            "alias": "IMAGE_YR"
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "IMAGE_YR": 2023
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-83.1306816%2C40.7331653%5D%2C%5B-83.1307899%2C40.7331646%5D%2C%5B-83.1307868%2C40.7341938%5D%2C%5B-83.1306785%2C40.7341946%5D%2C%5B-83.1299632%2C40.7341996%5D%2C%5B-83.1299579%2C40.7341996%5D%2C%5B-83.1299507%2C40.7341996%5D%2C%5B-83.1299539%2C40.7331704%5D%2C%5B-83.1299611%2C40.7331703%5D%2C%5B-83.1299721%2C40.7331703%5D%2C%5B-83.1306816%2C40.7331653%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=ATTRIBUTE%2CWETLAND_TYPE&returnDistinctValues=true&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "Wetlands.ATTRIBUTE",
+        "fieldAliases": {
+          "ATTRIBUTE": "ATTRIBUTE",
+          "WETLAND_TYPE": "WETLAND_TYPE"
+        },
+        "fields": [
+          {
+            "name": "ATTRIBUTE",
+            "type": "esriFieldTypeString",
+            "alias": "ATTRIBUTE",
+            "length": 15
+          },
+          {
+            "name": "WETLAND_TYPE",
+            "type": "esriFieldTypeString",
+            "alias": "WETLAND_TYPE",
+            "length": 50
+          }
+        ],
+        "features": []
+      }
+    },
     {
       "method": "POST",
       "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0/query",
@@ -212,8 +266,8 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39175:010025000000",
-      "generatedAt": "2026-11-18T20:14:07.258Z",
-      "coverage": "boundaryOnly",
+      "generatedAt": "2026-11-18T23:49:25.861Z",
+      "coverage": "partial",
       "biggestOpenQuestion": "access",
       "checks": [
         {
@@ -237,19 +291,44 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: study availability",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0",
-              "retrievedAt": "2026-11-18T20:14:07.258Z"
+              "retrievedAt": "2026-11-18T23:49:25.861Z"
             },
             {
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-18T20:14:07.258Z"
+              "retrievedAt": "2026-11-18T23:49:25.861Z"
             }
           ],
           "responsibleParty": {
             "role": "Community floodplain administrator (city, village, or county)"
           },
           "nextAction": "Ask the floodplain administrator for the city, village, or county whether a paper flood map or local study covers the lot."
+        },
+        {
+          "kind": "environmental",
+          "status": "evidenceFound",
+          "finding": "The National Wetlands Inventory maps no wetland on this lot.",
+          "limitation": "\"NWI shows none\" is not a wetland delineation. The NWI is drawn from aerial imagery (here from 2023) and misses many small, forested, or seasonally dry wetlands; only a delineation in the field, confirmed by the U.S. Army Corps of Engineers or Ohio EPA, says whether regulated wetlands are on the lot.",
+          "sources": [
+            {
+              "authority": "U.S. Fish and Wildlife Service",
+              "title": "National Wetlands Inventory: no wetland mapped on the parcel",
+              "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0",
+              "retrievedAt": "2026-11-18T23:49:25.861Z"
+            },
+            {
+              "authority": "U.S. Fish and Wildlife Service",
+              "title": "National Wetlands Inventory: mapped from 2023 imagery",
+              "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3",
+              "retrievedAt": "2026-11-18T23:49:25.861Z"
+            }
+          ],
+          "responsibleParty": {
+            "role": "County soil and water conservation district, or a wetland consultant",
+            "organization": "Wyandot Soil and Water Conservation District"
+          },
+          "nextAction": "If the lot has low, wet, or wooded ground, ask the county soil and water conservation district or a wetland consultant whether a wetland delineation is worth doing before you build."
         },
         {
           "kind": "access",

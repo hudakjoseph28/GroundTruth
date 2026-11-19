@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { StatusPill } from "../../components/StatusPill";
-import { CHECK_TITLES, LEDGER } from "../../content/parcel";
+import { checkTitle, LEDGER } from "../../content/parcel";
 import { shortAddress, type LedgerRecord } from "../../data/ledger";
 import { STATUS_LABELS } from "../../labels";
 import { CopyButton } from "./CopyButton";
@@ -58,7 +58,7 @@ export function RecordCard({
                 onOpen(event.currentTarget.closest(".record")?.querySelector(".record-node") ?? null)
               }
             >
-              {CHECK_TITLES[check.kind]}
+              {checkTitle(check.kind)}
               <span className="visually-hidden">
                 : {record.statusLabel ?? STATUS_LABELS[check.status]}. {LEDGER.details}
               </span>
