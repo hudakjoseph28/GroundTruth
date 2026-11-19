@@ -33,7 +33,7 @@ export interface ServerEnv {
   elevenLabsAgentId: string | undefined;
   /** Twilio for staged deal text alerts. Unset: opt-ins are refused and nothing is texted. */
   twilio: TwilioConfig | undefined;
-  /** Devnet RPC the reviewer Blink reads; it refuses any other cluster by genesis hash. */
+  /** Devnet RPC for the reviewer Blink and Solana Pay funding (one setting, one connection); both refuse any other cluster by genesis hash. */
   solanaRpcUrl: string;
 }
 

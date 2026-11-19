@@ -477,6 +477,7 @@
 .deal-reviewers,
 .deal-hold,
 .deal-texts,
+.deal-pay,
 .deal-handoff {
   border: 1px solid var(--line);
   border-radius: var(--radius-l);
@@ -607,6 +608,7 @@
 
 .deal-section-head h2,
 .deal-hold h2,
+.deal-pay h2,
 .deal-handoff h2 {
   margin: 0;
   font-size: var(--step--1);
@@ -981,6 +983,47 @@
   border-radius: var(--radius-s);
 }
 
+/* ---------- Fund with Solana Pay (draft deals) ---------- */
+
+/* Shown at every width: a desktop shows the QR to a phone wallet, and a
+   phone taps the link into its own wallet. */
+.deal-pay {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-4);
+  border-top: 3px solid var(--gold-text);
+  padding: var(--s-4);
+}
+
+/* Fixed size at every width; the wide layout's 100% QR is the handoff's. */
+.deal-pay .qr {
+  width: 8.5rem;
+  height: 8.5rem;
+}
+
+.deal-pay p {
+  margin: var(--s-1) 0 0;
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+.deal-pay .deal-pay-actions {
+  margin-top: var(--s-2);
+}
+
+.deal-pay .deal-pay-link .mono {
+  color: var(--text);
+  font-size: var(--step--1);
+  overflow-wrap: anywhere;
+}
+
+.deal-pay .deal-pay-note {
+  border-top: 1px solid var(--line-soft);
+  padding-top: var(--s-2);
+  font-size: var(--step--1);
+}
+
 /* ---------- Text me updates (staged demo opt-in) ---------- */
 
 .deal-texts {
@@ -1221,6 +1264,10 @@
 }
 
 @media (max-width: 31rem) {
+  .deal-pay {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .money-flow {
     padding-inline: var(--s-3);
   }

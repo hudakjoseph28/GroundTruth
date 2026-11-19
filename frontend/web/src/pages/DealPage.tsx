@@ -22,6 +22,7 @@ import {
 import { DOCUMENTS, TIMELINE_DOCUMENT } from "../content/documents";
 import { QrCode } from "../deal/QrCode";
 import { MoneyFlow } from "../deal/MoneyFlow";
+import { SolanaPayFund } from "../deal/SolanaPayFund";
 import { StageScreen } from "../deal/stage/StageScreen";
 import { wantsStage } from "../deal/stage/stageView";
 import { DealDocuments } from "../documents/DealDocuments";
@@ -171,6 +172,14 @@ function DealScreen({ live }: { live: LiveDeal }) {
           state={deal.state}
           liveState={live.liveState}
         />
+        {/* Only a draft can be funded; the API refuses every other state. */}
+        {deal.state === "draft" && (
+          <SolanaPayFund
+            dealId={deal.id}
+            amount={deal.amount}
+            buyerWallet={live.deal.buyerWallet}
+          />
+        )}
         <Reviewers deal={deal} />
         {deal.hold && <HoldCard hold={deal.hold} />}
         {/* A closed deal has no more events to text about. */}

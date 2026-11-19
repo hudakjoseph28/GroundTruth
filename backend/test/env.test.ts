@@ -19,7 +19,7 @@ describe("readServerEnv", () => {
     });
   });
 
-  it("reads SOLANA_RPC_URL for the reviewer Blink and rejects a non-URL", () => {
+  it("reads SOLANA_RPC_URL (Blink and Solana Pay) and rejects a non-URL", () => {
     expect(
       readServerEnv({
         DATABASE_URL,

@@ -46,8 +46,9 @@ export const secondCountyReport: ParcelReport = toReport(secondCounty.report);
  * required title, survey, and septic reviewers: `stagedDeal` is held
  * (release rejected, buyer refunded) and `stagedReleasedDeal` is released to
  * the seller after every approval, both 25 test USDC and run on 2026-11-18;
- * `stagedLiveDeal` (10 test USDC) is released live on stage, and
- * `stagedRehearsalDeal` is its copy for rehearsing that moment.
+ * `stagedLiveDeal` (10 test USDC) is released live on stage,
+ * `stagedRehearsalDeal` is its copy for rehearsing that moment, and
+ * `stagedPayRehearsalDeal` (1 test USDC) rehearses funding by Solana Pay.
  *
  * Public keys only. The wallets are the staged demo keypairs that
  * escrow/scripts/demo-deals.ts generated (their private keys stay in the
@@ -62,6 +63,7 @@ export const STAGED_DEAL_ID_LABELS = {
   live: "groundtruth-demo-live-v1",
   rehearsal: "groundtruth-demo-rehearsal-v1",
   rehearsalV2: "groundtruth-demo-rehearsal-v2",
+  payRehearsal: "groundtruth-demo-pay-rehearsal-v1",
 } as const;
 
 const stagedParticipants = {
@@ -107,6 +109,9 @@ const REGISTERED_AT = {
   rehearsal: "2026-11-18T22:40:31.000Z",
   // When the v2 fixture was written (before any transaction on its PDA).
   rehearsalV2: "2026-11-18T23:23:17.000Z",
+  // When the Solana Pay rehearsal fixture was written (before any
+  // transaction on its PDA).
+  payRehearsal: "2026-11-19T04:29:27.000Z",
 } as const;
 
 /** The held demo deal. Its ID predates the second deal; the web reads it. */
@@ -211,12 +216,38 @@ export const stagedRehearsalV2Deal = {
   ],
 } satisfies Deal;
 
+/**
+ * The Solana Pay rehearsal deal: `demo:deals stage-init --deal
+ * staged-devnet-deal-pay-rehearsal` only initializes it on devnet, so it
+ * stays a draft until the buyer wallet funds it from the deal page's Solana
+ * Pay QR (the API builds the unsigned `fund` transaction; the wallet signs).
+ * 1 test USDC, so it fits in what the staged buyer holds. Same wallets and
+ * parcel as the other staged deals; its own PDA.
+ */
+export const stagedPayRehearsalDeal = {
+  id: "staged-devnet-deal-pay-rehearsal",
+  ...stagedParticipants,
+  amountBaseUnits: "1000000",
+  escrowAddress: "9zy4EJot1UdRFjHzhBJrQPiQBQpp7oXhBhmBKrbtqszL",
+  timeline: [
+    {
+      id: "staged-devnet-deal-pay-rehearsal-created",
+      at: REGISTERED_AT.payRehearsal,
+      type: "dealCreated",
+      actorRole: "buyer",
+      buyerMessage: "Staged devnet deal created. No funds have moved.",
+      confirmationStatus: "offChainEvidence",
+    },
+  ],
+} satisfies Deal;
+
 export const stagedDemoDeals = [
   stagedDeal,
   stagedReleasedDeal,
   stagedLiveDeal,
   stagedRehearsalDeal,
   stagedRehearsalV2Deal,
+  stagedPayRehearsalDeal,
 ] as const;
 
 /**
@@ -254,6 +285,14 @@ export const stagedDemoChainAccounts = {
     dealIdHex:
       "6554bc65047df74393d5596eb8bb9d493bb646c30f7f798de1566b150b0db7cc",
     vault: "4awpxEmXL8fHDFDE9Lu6qHGq6NdBVpLjUUgT3nCHtCpt",
+    buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+  },
+  [stagedPayRehearsalDeal.id]: {
+    outcome: "payRehearsal",
+    dealIdLabel: STAGED_DEAL_ID_LABELS.payRehearsal,
+    dealIdHex:
+      "17e0f6568f539dba9581cef87392ac8b62226fdc71036ca5a2f94d1edcce6b9e",
+    vault: "a5mZ4QjeqxruNU29vrWgGa1q6DLbsvHKZ4T64Mfvft3",
     buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
   },
   [stagedReleasedDeal.id]: {

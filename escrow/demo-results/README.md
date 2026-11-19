@@ -24,3 +24,7 @@ The "after refund" balances were read when the third invocation started, before 
 - both vaults closed.
 
 The same 11 transactions are recorded as backend test data in `backend/test/fixtures/devnet/` (`program-history.json`, `demo-run/`).
+
+## 2026-11-19 Solana Pay rehearsal: [`devnet-solana-pay-fund-v1.md`](devnet-solana-pay-fund-v1.md)
+
+The 1 test USDC deal `staged-devnet-deal-pay-rehearsal` was initialized with `demo:deals stage-init` ([`devnet-stage-pay-rehearsal-v1.md`](devnet-stage-pay-rehearsal-v1.md)). It was then funded with the unsigned transaction from `POST /api/deals/:id/solana-pay/fund`, signed by the staged buyer key through the official `@solana/pay` client. No real wallet app was used.

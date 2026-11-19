@@ -195,6 +195,19 @@ export const HANDOFF = {
   alt: (url: string) => `QR code for ${url}`,
 } as const;
 
+export const SOLANA_PAY = {
+  title: "Fund with Solana Pay",
+  body: (amount: string) =>
+    `Scan with a Solana Pay wallet set to devnet to move ${amount} test USDC from the buyer into escrow.`,
+  buyerOnly: (wallet: string) =>
+    `Only the deal's buyer wallet (${wallet}) can fund it. Any other wallet is refused.`,
+  open: "Open in wallet",
+  link: "Request link",
+  signing:
+    "GroundTruth builds the transaction; your wallet signs and sends it. The API never signs, and the program checks every rule.",
+  alt: (url: string) => `Solana Pay QR code for ${url}`,
+} as const;
+
 export const TEXT_ALERTS = {
   title: "Text me updates",
   body: "Get a text when this deal is funded, a hold is placed, a release is rejected, or the payment is released.",

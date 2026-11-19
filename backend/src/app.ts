@@ -35,6 +35,10 @@ import {
 } from "./routes/quicknodeWebhook.js";
 import { reportRoute, type ReportRouteOptions } from "./routes/report.js";
 import { createSmsSubscription } from "./routes/smsSubscriptions.js";
+import {
+  solanaPayRoutes,
+  type SolanaPayRouteOptions,
+} from "./routes/solanaPay.js";
 import { createSmsAlertDispatcher } from "./sms/alerts.js";
 import type { SmsSender } from "./sms/sender.js";
 import { recordOwnerCall } from "./voice/ownerCall.js";
@@ -56,6 +60,8 @@ export interface AppOptions {
   documents?: DocumentRouteOptions;
   /** Reviewer-approval Blink: the devnet reads it needs. Defaults to public devnet RPC. */
   actions?: { chain?: ActionChain };
+  /** Solana Pay funding: the devnet reads (default: the same chain as the Blink) and the icon wallets show. */
+  solanaPay?: SolanaPayRouteOptions;
 }
 
 export function createApp(commit: string, options: AppOptions = {}) {
@@ -92,7 +98,10 @@ export function createApp(commit: string, options: AppOptions = {}) {
 
   // Solana Actions (Blink): reviewer approval on the staged rehearsal deal.
   // Builds unsigned transactions only; the reviewer's wallet signs.
-  const actions = actionRoutes(options.actions?.chain ?? createDevnetChain());
+  // One devnet reader (SOLANA_RPC_URL, genesis-checked) for the Blink and
+  // Solana Pay unless a test passes its own.
+  const devnet = createDevnetChain();
+  const actions = actionRoutes(options.actions?.chain ?? devnet);
   app.get("/actions.json", actions.actionsJson);
   app.options("/actions.json", actions.preflight);
   app.use("/api/actions", actions.router);
@@ -126,6 +135,17 @@ export function createApp(commit: string, options: AppOptions = {}) {
   app.get("/api/deals/:id/documents", documents.list);
   app.post("/api/deals/:id/documents", ...documents.upload);
   app.post("/api/deals/:id/documents/:documentId/file", ...documents.file);
+  const solanaPay = solanaPayRoutes(prisma, {
+    ...options.solanaPay,
+    chain: options.solanaPay?.chain ?? options.actions?.chain ?? devnet,
+  });
+  app.options(
+    "/api/deals/:id/solana-pay/fund",
+    solanaPay.cors,
+    solanaPay.preflight,
+  );
+  app.get("/api/deals/:id/solana-pay/fund", ...solanaPay.label);
+  app.post("/api/deals/:id/solana-pay/fund", ...solanaPay.transaction);
   app.post(
     "/api/deals/:id/sms-subscriptions",
     ...createSmsSubscription(prisma, { enabled: Boolean(options.sms?.sender) }),

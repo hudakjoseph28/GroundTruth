@@ -348,10 +348,35 @@ NAIP's response time varies the most. The web waits 10 s for a build (`LAND_BUIL
 | `staged-devnet-deal-live` | released live on stage (10 USDC) | `2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg` | `groundtruth-demo-live-v1` |
 | `staged-devnet-deal-rehearsal` | rehearsal copy of the live deal (10 USDC); used up testing the reviewer portal (#45) | `6KQJYssz234KjxrMkREcxpcKbok34aaFyihDST6DmH5u` | `groundtruth-demo-rehearsal-v1` |
 | `staged-devnet-deal-rehearsal-v2` | second rehearsal copy (10 USDC); funded with all three approvals on 2026-11-19 (the septic one tested deal documents), so only the release is left | `EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X` | `groundtruth-demo-rehearsal-v2` |
+| `staged-devnet-deal-pay-rehearsal` | Solana Pay rehearsal (1 USDC): initialized by `demo:deals stage-init`, then funded on 2026-11-19 from the Solana Pay transaction request ([record](../escrow/demo-results/devnet-solana-pay-fund-v1.md)) | `9zy4EJot1UdRFjHzhBJrQPiQBQpp7oXhBhmBKrbtqszL` | `groundtruth-demo-pay-rehearsal-v1` |
 
 The first two are 25 test USDC and ran on 2026-11-18. The addresses are what `pnpm --filter @groundtruth/escrow demo:deals plan` prints for the staged demo wallets, and `test/stagedDemoDeals.test.ts` re-derives each one. Public keys only. Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 
 Timeline rows are ordered by time, then chain slot, then event index. A confirmed row is unique by transaction signature + event index, which is the QuickNode replay guard.
+
+### Solana Pay funding (transaction request)
+
+`/api/deals/:id/solana-pay/fund` is a [Solana Pay transaction request](https://github.com/solana-foundation/solana-pay/blob/master/typescript/packages/solana-pay/spec/SPEC.md#specification-transaction-request). The deal page shows it as a QR code and a `solana:` link while the deal is a draft.
+
+- `GET` answers `{ label, icon }`.
+- `POST { "account": "<base58>" }` answers `{ transaction, message }`. `transaction` is the buyer's `fund`, base64, unsigned:
+  - the fee payer is the buyer and the blockhash is recent;
+  - it has one instruction to the escrow program, built from the checked-in IDL (`fundInstruction` in `@groundtruth/shared`);
+  - its accounts are buyer, deal PDA, buyer USDC account, vault, mint, and token program.
+- **The API never signs.** It holds no key. The wallet signs and sends, and the program checks every rule again.
+- **Refusals** carry the spec's `message` (a wallet shows its first 80 characters) beside the usual `error` envelope:
+
+  | Status | When |
+  | --- | --- |
+  | `400` | The body has no valid base58 `account`. |
+  | `404` | The deal is unknown or not public. |
+  | `403` | The account is not the deal's bound buyer. |
+  | `409` | The API's state is not `draft`; or devnet shows the deal already funded (the chain wins); or the deal PDA isn't initialized; or the on-chain buyer, mint, amount, seller token account, or vault differ from the deal row. |
+  | `502` | Devnet did not answer. Retryable. |
+  | `503` | `SOLANA_RPC_URL` is not devnet (its genesis hash is checked). |
+
+- **CORS** is open (`*`) on this route only, because the spec expects wallets to call from anywhere. Nothing it returns is private.
+- **Rehearse on a new deal only.** `staged-devnet-deal-pay-rehearsal` was the first. A second rehearsal needs a new fixture and label, then `pnpm --filter @groundtruth/escrow demo:deals stage-init --deal <id>`. Never initialize the live deal this way.
 
 ## QuickNode Stream webhook
 
