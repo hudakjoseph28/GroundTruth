@@ -17,8 +17,6 @@ export interface ChainFrame {
   now: number;
   /** When the hand-off began, or null while the chain is still waiting. */
   handoffAt: number | null;
-  /** One label per block, or null while the slot is being read. */
-  labels: readonly string[] | null;
   /** Where the land block's eight corners sit on screen, when there is one. */
   target: readonly Point[] | null;
   /**
@@ -106,7 +104,7 @@ export function drawBox(
 }
 
 export function drawChain(context: CanvasRenderingContext2D, frame: ChainFrame): void {
-  const { width, height, now, handoffAt, labels, target, origin } = frame;
+  const { width, height, now, handoffAt, target, origin } = frame;
   const { count, spacing, size, centers } = chainLayout(width, height);
   const offsets = cubeCorners(size);
   const last = count - 1;
@@ -210,16 +208,6 @@ export function drawChain(context: CanvasRenderingContext2D, frame: ChainFrame):
         1,
         2 + 8 * lit,
       );
-    }
-
-    const label = labels?.[index];
-    const labelAlpha = appear * rest * (carried ? clamp((now - ARRIVE_MS * 0.6) / 200) : 1);
-    if (label && labelAlpha > 0) {
-      context.font = `${spacing < 130 ? 10 : 11}px ui-monospace, SFMono-Regular, Menlo, monospace`;
-      context.textAlign = "center";
-      context.textBaseline = "top";
-      context.fillStyle = `rgba(169,169,169,${labelAlpha})`;
-      context.fillText(label, center.x, center.y + size * 0.5 + 10);
     }
   });
 
