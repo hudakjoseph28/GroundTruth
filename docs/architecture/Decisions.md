@@ -32,5 +32,6 @@ Append a dated row instead of erasing history:
 | --- | --- | --- | --- | --- |
 | — | No replacements yet | — | — | — |
 | 2026-11-12 | D1 accepted | `pnpm install --frozen-lockfile`, `pnpm -r build`, `pnpm -r typecheck`, `pnpm lint`, and `pnpm format` passed from a clean checkout | none | Joey Hudak |
+| 2026-11-19 | Deal documents: approval memos use SPL **Memo v1** (`Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo`) and the API reads the memo from the instruction, not the logs | On devnet, `getAccountInfo MemoSq4gqABAXKb96qnH8TyNmwnmJ6NerJ2SZcfSLgW` returned `"value": null` (slot 523847109) and simulating `sign_approval` + a Memo v2 instruction failed with `ProgramAccountNotFound`. Memo v1 is deployed (executable, BPFLoader1) but logs nothing of its text. | The web sends Memo v1; the QuickNode filter adds `memos` (text of top-level Memo v1/v2 instructions, from jsonParsed) to successful entries; no change to the escrow program. Switch back to v2 only if it is redeployed on devnet; the filter already accepts both. | Gagan |
 
 A replacement is complete only when [README](../../README.md), [Architecture](Architecture.md), [DataContract](DataContract.md), affected phase files, environment examples, and deployment notes agree.

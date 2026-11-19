@@ -67,7 +67,14 @@ export async function applyConfirmedEvent(
 
 async function applyInTransaction(
   tx: Prisma.TransactionClient,
-  { signature, slot, blockTime, eventIndex, event }: ConfirmedEvent,
+  {
+    signature,
+    slot,
+    blockTime,
+    eventIndex,
+    event,
+    documentSha256,
+  }: ConfirmedEvent,
 ): Promise<ApplyResult> {
   const existing = await tx.timelineEventRecord.findUnique({
     where: {
@@ -175,6 +182,10 @@ async function applyInTransaction(
       eventIndex,
       slot: BigInt(slot),
       confirmationStatus: "confirmed",
+      // Only an approval relies on a document; the hash is matched to the
+      // deal's uploads when the deal is read (deals/mapDeal.ts).
+      citedDocumentSha256:
+        event.name === "ApprovalSigned" ? (documentSha256 ?? null) : null,
     },
   });
   await queueSmsAlerts(tx, {

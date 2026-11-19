@@ -6,6 +6,10 @@ import { prisma } from "./db.js";
 import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
 import { getDeal, getDealTimeline } from "./routes/deals.js";
 import {
+  documentRoutes,
+  type DocumentRouteOptions,
+} from "./routes/documents.js";
+import {
   elevenLabsWebhook,
   type ElevenLabsWebhookOptions,
 } from "./routes/elevenlabsWebhook.js";
@@ -39,6 +43,8 @@ export interface AppOptions {
   land?: LandAssetService;
   /** Staged deal text alerts. No sender: opt-ins answer 503 and nothing is texted. */
   sms?: { sender?: SmsSender; log?: (line: string) => void };
+  /** Deal documents: the clock that wallet signatures are checked against. */
+  documents?: DocumentRouteOptions;
 }
 
 export function createApp(commit: string, options: AppOptions = {}) {
@@ -80,6 +86,10 @@ export function createApp(commit: string, options: AppOptions = {}) {
   );
   app.get("/api/deals/:id", getDeal);
   app.get("/api/deals/:id/timeline", getDealTimeline);
+  const documents = documentRoutes(prisma, options.documents);
+  app.get("/api/deals/:id/documents", documents.list);
+  app.post("/api/deals/:id/documents", ...documents.upload);
+  app.post("/api/deals/:id/documents/:documentId/file", ...documents.file);
   app.post(
     "/api/deals/:id/sms-subscriptions",
     ...createSmsSubscription(prisma, { enabled: Boolean(options.sms?.sender) }),

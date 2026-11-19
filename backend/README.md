@@ -321,7 +321,7 @@ NAIP's response time varies the most. The web waits 10 s for a build (`LAND_BUIL
 | `staged-devnet-deal-released` | released to the seller | `3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu` | `groundtruth-demo-released-v1` |
 | `staged-devnet-deal-live` | released live on stage (10 USDC) | `2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg` | `groundtruth-demo-live-v1` |
 | `staged-devnet-deal-rehearsal` | rehearsal copy of the live deal (10 USDC); used up testing the reviewer portal (#45) | `6KQJYssz234KjxrMkREcxpcKbok34aaFyihDST6DmH5u` | `groundtruth-demo-rehearsal-v1` |
-| `staged-devnet-deal-rehearsal-v2` | second rehearsal copy (10 USDC) | `EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X` | `groundtruth-demo-rehearsal-v2` |
+| `staged-devnet-deal-rehearsal-v2` | second rehearsal copy (10 USDC); funded with all three approvals on 2026-11-19 (the septic one tested deal documents), so only the release is left | `EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X` | `groundtruth-demo-rehearsal-v2` |
 
 The first two are 25 test USDC and ran on 2026-11-18. The addresses are what `pnpm --filter @groundtruth/escrow demo:deals plan` prints for the staged demo wallets, and `test/stagedDemoDeals.test.ts` re-derives each one. Public keys only. Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 
@@ -345,7 +345,7 @@ Timeline rows are ordered by time, then chain slot, then event index. A confirme
    ] }
    ```
 
-   A failed entry must carry `releaseAccounts` and a successful one must not, or the delivery gets `400`. The filter, [src/routes/quicknodeWebhook.ts](src/routes/quicknodeWebhook.ts) and `quicknodeFilters.test.ts` change together.
+   A successful entry may also carry `memos`: the text of its top-level SPL Memo v1/v2 instructions (`"memos": ["groundtruth:doc:<sha256>"]`), which deal documents use. A failed entry must carry `releaseAccounts` and a successful one must not, or the delivery gets `400`. The filter, [src/routes/quicknodeWebhook.ts](src/routes/quicknodeWebhook.ts) and `quicknodeFilters.test.ts` change together.
 
 3. **Decode.** [src/chain/escrowDecoder.ts](src/chain/escrowDecoder.ts) reads events with the checked-in IDL's own Borsh coder (`@anchor-lang/core` 1.2.2, the client for the program's Anchor 1.2.2).
    - Anchor's `emit!` writes `Program data: <base64>`. Only lines written while the GroundTruth program is running count: the decoder tracks the `Program <id> invoke` / `success` / `failed` stack against `GROUNDTRUTH_PROGRAM_ID`, so another program's logs cannot pass as GroundTruth events.
@@ -394,7 +394,7 @@ Filters live in [quicknode/](quicknode/) and are pasted into the Stream's filter
 | File | Use |
 | --- | --- |
 | `heartbeat-filter.js` | `{ "transactions": [] }` for every block. Proves signing and delivery before the program exists. |
-| `groundtruth-filter.js` | The real filter. `PROGRAM_ID` is the escrow program deployed to devnet in #22, `ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG` (the same `GROUNDTRUTH_PROGRAM_ID` the decoder uses; `quicknodeFilters.test.ts` checks they match). Sends successful program transactions and failed `release` attempts; `RELEASE_IX_DATA` is the `release` discriminator in base58, checked against the IDL by `quicknodeFilters.test.ts`. |
+| `groundtruth-filter.js` | The real filter. `PROGRAM_ID` is the escrow program deployed to devnet in #22, `ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG` (the same `GROUNDTRUTH_PROGRAM_ID` the decoder uses; `quicknodeFilters.test.ts` checks they match). Sends successful program transactions (with `memos` when they carry top-level Memo instructions) and failed `release` attempts; `RELEASE_IX_DATA` is the `release` discriminator in base58, checked against the IDL by `quicknodeFilters.test.ts`. |
 | `inspect-filter.js` | Preview only. Reports the Block payload's field layout. |
 
 `quicknodeFilters.test.ts` runs the filter files and posts their output to the webhook, so a shape change on either side fails a test.
@@ -418,6 +418,23 @@ Filters live in [quicknode/](quicknode/) and are pasted into the Stream's filter
 | Filter check | `groundtruth-filter.js` with a stand-in program ID returned the expected `{ transactions: [...] }` for devnet block `522700233` in the final-payload preview |
 
 The first start (22:56:59 UTC) was stopped after three `503`s because the token was not yet set. Resuming it after the token was set produced the run above.
+
+## Deal documents (staged demo)
+
+A deal's buyer, seller, or assigned reviewers can upload supporting documents (title commitment, survey plat, septic/soil evaluation, zoning letter, other), and a reviewer can tie their on-chain approval to one of them. There are no accounts: every write and every file read is a fresh wallet signature. The API never signs anything.
+
+| Route | Who | Answers |
+| --- | --- | --- |
+| `GET /api/deals/:id/documents` | anyone | `200 DealDocument[]`: type, filename, detected content type, size, SHA-256, uploader role, time. Never the bytes or the uploader's wallet. |
+| `POST /api/deals/:id/documents` | a deal participant | Raw file body. Headers: `x-groundtruth-document-type`, `x-groundtruth-filename` (URI-encoded), and the four signature headers. `201 DealDocument`. |
+| `POST /api/deals/:id/documents/:documentId/file` | a deal participant | The file, `cache-control: private, no-store`. Needs its own fresh signature. |
+
+- **Signature.** The browser has Phantom sign `documentAuthMessage()` from `@groundtruth/shared`: the action, deal ID, the file's SHA-256 (upload) or document ID (view), wallet, time, and a random nonce. It sends `x-groundtruth-wallet`, `-issued-at`, `-nonce`, and `-signature` (base64 ed25519). The API rebuilds the message from the route and the bytes it received, so a signature covers exactly one file or one document. It refuses (`401`) a missing, malformed, or wrong signature, one older than 5 minutes or more than 1 minute in the future, and a reused nonce (`DocumentAuthNonceRecord`). A valid signature from a wallet that is not the deal's buyer, seller, or a reviewer gets `403`. See [src/documents/walletAuth.ts](src/documents/walletAuth.ts).
+- **Files.** PDF, PNG, or JPG, up to 10 MB (`413` above). The type is read from the first bytes and must match the extension (`415` otherwise). The API computes the SHA-256 and stores the bytes in `DealDocumentFileRecord`, apart from the metadata, so a list query never loads them. The same bytes twice on one deal get `409`.
+- **Approval with a document.** In `/review`, a reviewer can pick a document before approving. The transaction then carries a Memo instruction `groundtruth:doc:<sha256>` next to `sign_approval`. The Stream filter passes the memo text as `memos`; [src/chain/documentMemo.ts](src/chain/documentMemo.ts) takes the hash when exactly one document is named, and `applyConfirmedEvent` stores it on the approval's timeline row. When the deal is read, the hash is matched to the deal's documents: the row gets `citedDocument` and reads "The septic reviewer signed their approval, relying on “Septic evaluation.pdf” (hash on-chain)." A hash that matches no upload is kept and said plainly.
+- **Memo program.** Memo v2 (`MemoSq4…`) has no account on devnet as of 2026-11-19, so the web sends Memo v1 (`Memo1Uhk…`). v1 does not log its text, which is why the hash is read from the instruction and not from logs. The filter accepts both.
+- **Deploy note.** The live Stream runs the filter pasted into QuickNode. Re-paste `quicknode/groundtruth-filter.js` before relying on live document citations; until then a live approval still projects, without its citation. `replay:devnet` always uses the repo's filter.
+- **Tests:** `test/documents.test.ts` (mocked Prisma: non-participant, wrong type, oversize, bad/expired/replayed signatures, metadata-only list, downloads), `test/documentMemo.test.ts` (filter and parser, including memo text from another program being ignored), `test/documentCitation.test.ts` (matching and non-matching hashes), and `test/db/documents.db.test.ts` (upload, list, download, and a Stream delivery linking the approval, against PostgreSQL).
 
 ## Deal text alerts (staged demo, Twilio)
 

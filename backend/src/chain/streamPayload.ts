@@ -12,7 +12,8 @@ const base58Key = z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/);
  * The body our Stream filter returns, in block order: successful
  * transactions that touched the GroundTruth program, and failed ones whose
  * failing instruction was a GroundTruth `release` (with that instruction's
- * accounts, so the deal can be found). Keep in sync with
+ * accounts, so the deal can be found). A successful one may carry `memos`,
+ * the text of its top-level Memo instructions. Keep in sync with
  * quicknode/groundtruth-filter.js and backend/README.md.
  *
  * The QuickNode webhook and `replay:devnet` both go through this module, so
@@ -28,6 +29,8 @@ export const streamPayloadSchema = z.object({
         logMessages: z.array(z.string()),
         err: z.unknown().optional(),
         releaseAccounts: z.array(base58Key).min(2).optional(),
+        /** Text of the transaction's top-level SPL Memo instructions. */
+        memos: z.array(z.string().max(1024)).max(16).optional(),
       })
       .refine(
         (tx) =>

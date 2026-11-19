@@ -188,6 +188,8 @@ export interface TimelineRow {
   confirmed: boolean;
   /** Present only on confirmed rows that carry a signature. */
   signature?: string;
+  /** The document hash this approval's transaction committed to, if any. */
+  citation?: { sha256: string; documentId?: string; filename?: string };
 }
 
 const ROW_TONES: Record<TimelineEventType, Tone> = {
@@ -227,6 +229,15 @@ export function viewTimeline(timeline: readonly TimelineEvent[]): TimelineRow[] 
         blocked: event.type === "releaseRejected",
         confirmed,
         signature: confirmed ? event.transactionSignature : undefined,
+        ...(confirmed && event.citedDocument
+          ? {
+              citation: {
+                sha256: event.citedDocument.sha256,
+                documentId: event.citedDocument.document?.id,
+                filename: event.citedDocument.document?.filename,
+              },
+            }
+          : {}),
       };
     })
     .reverse();
