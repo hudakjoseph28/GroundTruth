@@ -102,6 +102,57 @@ describe("golden parcel fixture", () => {
     expect(Number.isNaN(Date.parse(auditor?.retrievedAt ?? ""))).toBe(false);
   });
 
+  it("screens septic soils from the Living Atlas SSURGO copy, needing review", () => {
+    const septic = check("septic");
+    expect(septic.status).toBe("needsReview");
+    const units = [
+      ...septic.finding.matchAll(
+        /([\d.]+)% (?:of the parcel )?as map unit (\w+)/g,
+      ),
+    ].map(([, share, symbol]) => [symbol, Number(share)]);
+    expect(units).toEqual([
+      ["Ko", 46.05],
+      ["CrB", 38.31],
+      ["CeB2", 15.64],
+    ]);
+    expect(
+      units.reduce((sum, [, share]) => sum + Number(share), 0),
+    ).toBeCloseTo(100, 6);
+    expect(septic.finding).toContain(
+      "All three are rated “Very limited” for septic-tank absorption fields.",
+    );
+    expect(septic.finding).not.toMatch(/not limited|somewhat limited/i);
+    expect(`${septic.finding} ${septic.limitation}`).not.toMatch(
+      /septic\s+(system\s+)?will\s+work|suitable for (a )?septic/i,
+    );
+    expect(septic.sources).toEqual([
+      {
+        authority:
+          "USDA Natural Resources Conservation Service (SSURGO), hosted by Esri ArcGIS Living Atlas",
+        title:
+          "USA Soils Map Units (gSSURGO): septic-tank absorption fields, dominant-condition rating (engstafdcd)",
+        url: "https://services5.arcgis.com/7weheFjxuNkGGiZi/arcgis/rest/services/USA_Soils_Map_Units/FeatureServer/0",
+        retrievedAt: "2026-11-19T03:48:19.000Z",
+      },
+    ]);
+    expect(septic.responsibleParty).toEqual({
+      role: "Local health district (sewage treatment systems)",
+      organization: "Franklin County Public Health",
+      publicContactUrl: "https://myfcph.org/forms-permits/",
+    });
+    expect(septic.nextAction).toMatch(
+      /^Ask Franklin County Public Health for a site and soil evaluation/,
+    );
+  });
+
+  it("keeps access the biggest open question with septic now under review", () => {
+    expect(
+      biggestOpenQuestion(goldenReport.checks, { floodInSfha: false }),
+    ).toBe("access");
+    expect(goldenReport.biggestOpenQuestion).toBe("access");
+    expect(seededReport(goldenParcel, goldenReport)).toEqual(goldenReport);
+  });
+
   it("has a dated source for every finding and none for unknowns", () => {
     for (const entry of goldenReport.checks) {
       if (entry.status === "unknown") {

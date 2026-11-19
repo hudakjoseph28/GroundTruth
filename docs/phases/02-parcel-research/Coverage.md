@@ -19,7 +19,7 @@
 
 | Role | Parcel key | Where | Report | Fixture |
 | --- | --- | --- | --- | --- |
-| **Golden parcel** | `ohio:39049:230-000918` | Franklin County, Pleasant Township, Seaman Rd rear lot. Vacant agricultural land. | Seeded, `partial`. Access `needsReview`, zoning and flood `evidenceFound`, utilities and easements `unknown`. Biggest open question: access. | `packages/shared/src/fixtures/golden-parcel.json` |
+| **Golden parcel** | `ohio:39049:230-000918` | Franklin County, Pleasant Township, Seaman Rd rear lot. Vacant agricultural land. | Seeded, `partial`. Access `needsReview`, zoning and flood `evidenceFound`, septic `needsReview` (SSURGO, all three map units “Very limited”; see [QA-Proof](../04-pitch/QA-Proof.md)), utilities and easements `unknown`. Biggest open question: access. | `packages/shared/src/fixtures/golden-parcel.json` |
 | **Second-county parcel** | `ohio:39089:00500729609000` | Licking County, Bowling Green Township, 93 Woody Knoll Dr. Vacant residential land, 1.2 ac. | Seeded, `partial`. Flood `evidenceFound`; zoning, access, utilities, easements, seller authority, survey and septic `unknown`. Biggest open question: access. | `packages/shared/src/fixtures/second-county-parcel.json` |
 
 Stage search: type `230-000918`. `230000918` and `seaman` also find it in the web catalog.

@@ -167,6 +167,26 @@
           "publicContactUrl": "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs"
         },
         "nextAction": "Ask a title company to search the recorded documents for this parcel."
+      },
+      {
+        "kind": "septic",
+        "status": "needsReview",
+        "finding": "USDA NRCS SSURGO (Esri Living Atlas copy) maps 46.05% of the parcel as map unit Ko (Kokomo silty clay loam, 0 to 2 percent slopes), 38.31% as map unit CrB (Crosby silt loam, Southern Ohio Till Plain, 2 to 6 percent slopes), and 15.64% as map unit CeB2 (Celina silt loam, 2 to 6 percent slopes, eroded). All three are rated “Very limited” for septic-tank absorption fields. These published soil limitations do not establish that an on-site sewage system is feasible.",
+        "limitation": "The rating describes a map unit's dominant soil condition for septic-tank absorption fields. It does not confirm sewer availability, choose a system or drain-field location, account for every site condition, or replace a permit and an on-site soil evaluation.",
+        "sources": [
+          {
+            "authority": "USDA Natural Resources Conservation Service (SSURGO), hosted by Esri ArcGIS Living Atlas",
+            "title": "USA Soils Map Units (gSSURGO): septic-tank absorption fields, dominant-condition rating (engstafdcd)",
+            "url": "https://services5.arcgis.com/7weheFjxuNkGGiZi/arcgis/rest/services/USA_Soils_Map_Units/FeatureServer/0",
+            "retrievedAt": "2026-11-19T03:48:19.000Z"
+          }
+        ],
+        "responsibleParty": {
+          "role": "Local health district (sewage treatment systems)",
+          "organization": "Franklin County Public Health",
+          "publicContactUrl": "https://myfcph.org/forms-permits/"
+        },
+        "nextAction": "Ask Franklin County Public Health for a site and soil evaluation before you plan a septic system or close."
       }
     ]
   }

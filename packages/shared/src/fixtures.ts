@@ -15,7 +15,9 @@ import secondCounty from "./fixtures/second-county-parcel.json" with { type: "js
  * OGRIP polygon; every report source carries the time it was retrieved.
  * Captured by .context tooling from live sources, see the PR that added it.
  * `acreage` is absent because OGRIP publishes 0 for Franklin; the Auditor's
- * legal acreage is cited inside the zoning check instead.
+ * legal acreage is cited inside the zoning check instead. The septic check
+ * (added 2026-11-19) is the SSURGO soil screening from Esri's Living Atlas
+ * copy of USDA gSSURGO, checked live on that date; see QA-Proof.md.
  */
 export const goldenParcel: Parcel = toParcel(golden.parcel);
 export const goldenReport: ParcelReport = toReport(golden.report);
