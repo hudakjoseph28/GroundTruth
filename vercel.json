@@ -9,6 +9,10 @@
       "source": "/api/:path*",
       "destination": "https://api-production-db8a8106.up.railway.app/api/:path*"
     },
+    {
+      "source": "/actions.json",
+      "destination": "https://api-production-db8a8106.up.railway.app/actions.json"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

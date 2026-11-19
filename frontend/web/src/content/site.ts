@@ -20,6 +20,9 @@ export const NAV = [
   { label: "For reviewers", hash: "reviewers" },
 ] as const;
 
+/** A page of its own, after the homepage sections. */
+export const ROADMAP_LINK = { label: "Roadmap", to: "/roadmap" } as const;
+
 export const DOCS = { label: "Docs", href: REPO_URL, note: "GitHub" } as const;
 
 export const DEMO = { label: "Franklin parcel" } as const;

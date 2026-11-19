@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { FOOTER, NAV, SITE } from "../content/site";
+import { PROOF_LINK } from "../content/proof";
+import { FOOTER, NAV, ROADMAP_LINK, SITE } from "../content/site";
 import { shortAddress } from "../data/ledger";
 import { sampleParcelPath } from "../data/parcelSource";
 import { CopyButton } from "../parcel/Ledger/CopyButton";
@@ -29,7 +30,13 @@ export function SiteFooter() {
               </li>
             ))}
             <li>
+              <Link to={ROADMAP_LINK.to}>{ROADMAP_LINK.label}</Link>
+            </li>
+            <li>
               <Link to={sampleParcelPath()}>{FOOTER.demoParcel}</Link>
+            </li>
+            <li>
+              <Link to="/proof">{PROOF_LINK.label}</Link>
             </li>
           </ul>
         </nav>
