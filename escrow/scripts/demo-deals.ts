@@ -7,7 +7,7 @@
  *   pnpm --filter @groundtruth/escrow demo:deals plan            # addresses, no tx
  *   pnpm --filter @groundtruth/escrow demo:deals stage-prep      # live deal, part 1
  *   pnpm --filter @groundtruth/escrow demo:deals stage-finish    # live deal, on stage
- *   ... demo:deals stage-prep --deal staged-devnet-deal-rehearsal-v2 # practise run
+ *   ... demo:deals stage-prep --deal staged-devnet-deal-rehearsal-v3 # practise run
  *   pnpm --filter @groundtruth/escrow demo:deals stage-init      # Solana Pay rehearsal
  *   pnpm --filter @groundtruth/escrow demo:deals simulate        # local, no devnet tx
  *   pnpm --filter @groundtruth/escrow demo:deals run             # sends devnet txs
@@ -42,17 +42,18 @@
  *                 it fast. Refuses unless the deal is funded with title and
  *                 survey approved and no hold.
  *                 Records: demo-results/devnet-stage-live-v1.{json,md}, or
- *                 devnet-stage-rehearsal-v1 / -v2 for the rehearsal deals.
+ *                 devnet-stage-rehearsal-v1 / -v2 / -v3 for the rehearsal deals.
  *   stage-init    Initializes a stage deal (--deal, default
  *                 staged-devnet-deal-pay-rehearsal, 1 USDC) and nothing
  *                 else, so it stays a draft for the buyer to fund from the
  *                 deal page's Solana Pay QR (the API builds the unsigned
  *                 fund; the buyer's wallet signs). No rehearsal: initialize
- *                 moves no USDC. Skips a deal already on chain. Records:
- *                 demo-results/devnet-stage-pay-rehearsal-v1.{json,md}.
- *   --deal staged-devnet-deal-rehearsal-v2 (v1 is used up)
+ *                 moves no USDC. Skips a deal already on chain. Sends through
+ *                 the same priority-fee / resend loop as every other mode.
+ *                 Records: demo-results/devnet-stage-pay-rehearsal-v1.{json,md}.
+ *   --deal staged-devnet-deal-rehearsal-v3 (v1 and v2 are used up)
  *                 Runs stage-prep / stage-finish on the rehearsal copy of the
- *                 live deal (same 10 USDC and flow, its own PDA), so the
+ *                 live deal (same flow, its own PDA; v3 holds 5 USDC), so the
  *                 stage moment can be practised without consuming the live deal.
  *   run       Refuses unless the plan matches the fixtures, neither deal PDA
  *             exists on devnet yet, `check` passes, and a `simulate` rehearsal of the
@@ -77,6 +78,15 @@
  * buyer needs the deal amount once, not twice. The buyer pays every fee and
  * rent; the seller and reviewers only sign and need no SOL.
  *
+ * Sending (devnet): each transaction gets a ComputeBudget unit limit sized
+ * from a simulation and a unit price from recent prioritization fees on the
+ * accounts it writes (75th percentile, capped at 100,000 micro-lamports per
+ * unit), a fresh blockhash with its lastValidBlockHeight, rebroadcasts while
+ * unconfirmed, and an automatic re-sign and resend on a new blockhash if the
+ * old one expires unseen (it can then never land). Each step's record keeps
+ * the limit and price it used. `simulate` (LiteSVM) sends the bare
+ * instructions, as before.
+ *
  * Keys: escrow/.demo-wallets/<role>.json (Solana CLI keypair format, mode
  * 0600, gitignored). Only public keys are printed or recorded.
  */
@@ -94,6 +104,7 @@ import { BN, BorshCoder, utils, type Idl } from "@anchor-lang/core";
 import {
   GROUNDTRUTH_ESCROW_IDL,
   GROUNDTRUTH_PROGRAM_ID,
+  MAX_COMPUTE_UNITS,
   USDC_MINT_DEVNET,
   STAGED_DEAL_ID_LABELS,
   stagedDeal,
@@ -102,8 +113,15 @@ import {
   stagedPayRehearsalDeal,
   stagedRehearsalDeal,
   stagedRehearsalV2Deal,
+  stagedRehearsalV3Deal,
   stagedReleasedDeal,
+  computeBudgetInstructions,
+  computeUnitLimit,
+  maxPriorityFeeLamports,
+  priorityFeeMicroLamports,
+  sendUntilLanded,
   type Deal,
+  type EscrowInstructionSpec,
 } from "@groundtruth/shared";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -162,13 +180,22 @@ const DEFAULT_AMOUNT = BigInt(stagedDeal.amountBaseUnits); // 25 USDC
 /** 8-byte discriminator + DealAccount::INIT_SPACE with 8 reviewers (529). */
 const DEAL_ACCOUNT_SPACE = 537;
 const TOKEN_ACCOUNT_SPACE = 165;
-/** Devnet base fee per signature; the script adds no priority fees. */
+/** Devnet base fee per signature. */
 const FEE_PER_SIGNATURE = 5000n;
 /**
  * Signatures in a full run: seller ATA 1; held: init 1, fund 1, hold 2,
  * release 1, refund 1; released: init 1, fund 1, approvals 3 x 2, release 1.
  */
 const SIGNATURES_PER_RUN = 16n;
+/** Transactions in a full run (seller ATA 1, held 5, released 6). */
+const TRANSACTIONS_PER_RUN = 12n;
+/**
+ * Most a run can pay in priority fees: every transaction at the capped unit
+ * price and the full compute ceiling. Real runs pay far less: the limit is
+ * sized from a simulation, and devnet's recent fees are usually zero.
+ */
+const MAX_PRIORITY_FEES_PER_RUN =
+  TRANSACTIONS_PER_RUN * maxPriorityFeeLamports();
 /** Headroom on top of the computed SOL need. */
 const SOL_MARGIN = 10_000_000n; // 0.01 SOL
 /** Fixed run ID of the live stage deal's record (both halves share it). */
@@ -178,6 +205,7 @@ const STAGE_DEAL_IDS = [
   stagedLiveDeal.id,
   stagedRehearsalDeal.id,
   stagedRehearsalV2Deal.id,
+  stagedRehearsalV3Deal.id,
   stagedPayRehearsalDeal.id,
 ] as const;
 /** Each stage deal's record: demo-results/devnet-<run id>.{json,md}. */
@@ -186,6 +214,8 @@ const stageRunId = (outcome: Outcome) =>
     ? "stage-rehearsal-v1"
     : outcome === "rehearsalV2"
     ? "stage-rehearsal-v2"
+    : outcome === "rehearsalV3"
+    ? "stage-rehearsal-v3"
     : outcome === "payRehearsal"
     ? "stage-pay-rehearsal-v1"
     : STAGE_RUN_ID;
@@ -310,6 +340,7 @@ const OUTCOMES = [
   "live",
   "rehearsal",
   "rehearsalV2",
+  "rehearsalV3",
   "payRehearsal",
 ] as const;
 type Outcome = (typeof OUTCOMES)[number];
@@ -319,6 +350,7 @@ const FIXTURES: Record<Outcome, Deal> = {
   live: stagedLiveDeal,
   rehearsal: stagedRehearsalDeal,
   rehearsalV2: stagedRehearsalV2Deal,
+  rehearsalV3: stagedRehearsalV3Deal,
   payRehearsal: stagedPayRehearsalDeal,
 };
 /** `run` drives the held and released closings; `stage-*` drives the live one. */
@@ -365,6 +397,7 @@ function planDeals(wallets: Wallets, runAmount: bigint): DealPlan[] {
         outcome === "live" ||
         outcome === "rehearsal" ||
         outcome === "rehearsalV2" ||
+        outcome === "rehearsalV3" ||
         outcome === "payRehearsal"
           ? BigInt(FIXTURES[outcome].amountBaseUnits)
           : runAmount,
@@ -477,9 +510,18 @@ async function existingDeals(chain: Chain, plans: DealPlan[]) {
 interface Sent {
   signature: string;
   slot: number | null;
-  /** RPC-shaped error, e.g. { InstructionError: [0, { Custom: 6019 }] }. */
+  /** RPC-shaped error, e.g. { InstructionError: [2, { Custom: 6019 }] }. */
   err: unknown;
   logs: string[];
+  /**
+   * Instructions prepended before the caller's (devnet: the two ComputeBudget
+   * ones), so the caller's instruction i is the transaction's i + offset.
+   */
+  instructionOffset: number;
+  /** Devnet only: what the transaction asked for and paid per unit. */
+  computeBudget?: { units: number; microLamports: number };
+  /** Devnet only: fresh-blockhash attempts it took (1 = first try). */
+  attempts?: number;
 }
 
 interface AccountView {
@@ -533,6 +575,29 @@ async function signedTx(
   return tx;
 }
 
+/** ComputeBudget limit and price instructions (from @groundtruth/shared). */
+function budgetInstructions(budget: {
+  units: number;
+  microLamports: number;
+}): TransactionInstruction[] {
+  return computeBudgetInstructions(budget).map(
+    (spec: EscrowInstructionSpec) =>
+      new TransactionInstruction({
+        programId: new PublicKey(spec.programId),
+        keys: [],
+        data: Buffer.from(spec.data),
+      }),
+  );
+}
+
+/**
+ * Devnet: every transaction carries a ComputeBudget unit limit (simulated
+ * units plus margin) and a unit price from recent prioritization fees
+ * (capped), is signed on a fresh blockhash with its lastValidBlockHeight,
+ * and is rebroadcast while unconfirmed. If that blockhash expires with the
+ * transaction unseen, it can never land, so it is rebuilt, re-signed, and
+ * resent (up to 3 attempts). See sendUntilLanded in @groundtruth/shared.
+ */
 function devnetChain(): Chain & { connection: Connection } {
   const connection = new Connection(RPC_URL, {
     commitment: "confirmed",
@@ -542,31 +607,95 @@ function devnetChain(): Chain & { connection: Connection } {
     kind: "devnet",
     connection,
     async send(ixs, feePayer, signers, opts = {}) {
-      const latest = await withRpcRetry("getLatestBlockhash", () =>
-        connection.getLatestBlockhash("confirmed"),
-      );
-      const tx = await signedTx(ixs, feePayer, signers, latest.blockhash);
-      // A transaction expected to fail skips preflight, so the program's
-      // rejection is recorded on chain instead of only in a simulation.
-      const signature = await withRpcRetry("sendRawTransaction", () =>
-        connection.sendRawTransaction(tx.serialize(), {
-          skipPreflight: Boolean(opts.expectFailure),
-          preflightCommitment: "confirmed",
-        }),
-      );
-      // Poll the status ourselves: web3's confirmTransaction makes
-      // background RPC calls whose rate-limit errors escape any retry.
-      for (let attempt = 0; ; attempt++) {
-        const { value } = await withRpcRetry("getSignatureStatuses", () =>
-          connection.getSignatureStatuses([signature]),
-        );
-        const status = value[0];
-        if (status && status.confirmationStatus !== "processed") break;
-        if (attempt >= 90) {
-          throw new Error(`${signature} not confirmed after 90s`);
-        }
-        await new Promise((r) => setTimeout(r, 1000));
-      }
+      // Accounts the transaction writes, whose recent fees set its price.
+      const writable = [
+        ...new Set(
+          ixs.flatMap((ix) =>
+            ix.keys.filter((k) => k.isWritable).map((k) => k.pubkey.toBase58()),
+          ),
+        ),
+      ]
+        .slice(0, 128)
+        .map((key) => new PublicKey(key));
+      let budget = { units: MAX_COMPUTE_UNITS, microLamports: 0 };
+      const landed = await sendUntilLanded({
+        // A fresh blockhash, fee read, and simulation every attempt.
+        async prepare() {
+          const fees = await withRpcRetry("getRecentPrioritizationFees", () =>
+            connection.getRecentPrioritizationFees({
+              lockedWritableAccounts: writable,
+            }),
+          ).catch(() => []);
+          const microLamports = priorityFeeMicroLamports(fees);
+          const latest = await withRpcRetry("getLatestBlockhash", () =>
+            connection.getLatestBlockhash("confirmed"),
+          );
+          const build = (units: number) =>
+            signedTx(
+              [...budgetInstructions({ units, microLamports }), ...ixs],
+              feePayer,
+              signers,
+              latest.blockhash,
+            );
+          // Simulated at the ceiling to size the limit. A transaction
+          // expected to fail still reports the units it used.
+          const simulation = await withRpcRetry("simulateTransaction", () =>
+            build(MAX_COMPUTE_UNITS).then((tx) =>
+              connection.simulateTransaction(tx),
+            ),
+          ).catch(() => null);
+          budget = {
+            units: computeUnitLimit(simulation?.value.unitsConsumed),
+            microLamports,
+          };
+          const tx = await build(budget.units);
+          return {
+            signature: utils.bytes.bs58.encode(tx.signature!),
+            serialized: tx.serialize(),
+            lastValidBlockHeight: latest.lastValidBlockHeight,
+          };
+        },
+        // A transaction expected to fail skips preflight, so the program's
+        // rejection is recorded on chain instead of only in a simulation.
+        // Rebroadcasts of the same bytes skip it too, and don't back off.
+        broadcast: async (bytes, first) => {
+          const send = () =>
+            connection.sendRawTransaction(bytes, {
+              skipPreflight: Boolean(opts.expectFailure) || !first,
+              preflightCommitment: "confirmed",
+              maxRetries: 0,
+            });
+          await (first ? withRpcRetry("sendRawTransaction", send) : send());
+        },
+        // Poll the status ourselves: web3's confirmTransaction makes
+        // background RPC calls whose rate-limit errors escape any retry.
+        status: async (signature, deep) => {
+          const { value } = await withRpcRetry("getSignatureStatuses", () =>
+            connection.getSignatureStatuses([signature], {
+              searchTransactionHistory: deep,
+            }),
+          );
+          const status = value[0];
+          return status
+            ? {
+                confirmationStatus: status.confirmationStatus ?? "processed",
+                err: status.err,
+              }
+            : null;
+        },
+        blockHeight: () =>
+          withRpcRetry("getBlockHeight", () =>
+            connection.getBlockHeight("confirmed"),
+          ),
+        onEvent(event) {
+          if (event.kind === "expired") {
+            console.log(
+              `  (blockhash expired before devnet saw ${event.signature}; it can never land. Resending on a fresh blockhash: attempt ${event.next} of ${event.of})`,
+            );
+          }
+        },
+      });
+      const { signature } = landed;
       for (let attempt = 0; attempt < 20; attempt++) {
         const got = await withRpcRetry("getTransaction", () =>
           connection.getTransaction(signature, {
@@ -580,6 +709,9 @@ function devnetChain(): Chain & { connection: Connection } {
             slot: got.slot,
             err: got.meta.err,
             logs: got.meta.logMessages ?? [],
+            instructionOffset: 2,
+            computeBudget: budget,
+            attempts: landed.attempts,
           };
         }
         await new Promise((r) => setTimeout(r, 1000));
@@ -847,7 +979,9 @@ async function simulationChain(wallets: Wallets, usdc: bigint) {
             .filter((group) => group.instructions.length > 0),
         },
       });
-      return { signature, slot, err, logs: meta.logs() };
+      // No ComputeBudget instructions here: the simulation records feed the
+      // backend's replay fixtures, which match the original recorded runs.
+      return { signature, slot, err, logs: meta.logs(), instructionOffset: 0 };
     },
     async account(key) {
       const acct = svm.getAccount(address(key.toBase58()));
@@ -971,6 +1105,7 @@ async function checkFunding(
     2n * tokenRent +
     (sellerAta_ ? 0n : tokenRent) +
     SIGNATURES_PER_RUN * FEE_PER_SIGNATURE +
+    MAX_PRIORITY_FEES_PER_RUN +
     SOL_MARGIN;
   const buyerSol = buyerAcct?.lamports ?? 0n;
   return {
@@ -1052,6 +1187,11 @@ interface Step {
   stateAfter: string;
   /** Sent by an earlier, interrupted run; recovered from chain history. */
   recovered?: boolean;
+  /** Devnet: the ComputeBudget unit limit and price (micro-lamports per unit). */
+  computeUnitLimit?: number;
+  computeUnitPriceMicroLamports?: number;
+  /** Devnet: fresh-blockhash attempts it took, when more than one. */
+  attempts?: number;
 }
 
 interface Balances {
@@ -1273,6 +1413,11 @@ function makeSend(chain: Chain, buyer: Keypair, save: () => void) {
       ok: sent.err === null,
       ...(sent.err !== null && { err: sent.err }),
       ...(errorLine && { programError: `${errorLine[1]} (${errorLine[2]})` }),
+      ...(sent.computeBudget && {
+        computeUnitLimit: sent.computeBudget.units,
+        computeUnitPriceMicroLamports: sent.computeBudget.microLamports,
+      }),
+      ...(sent.attempts && sent.attempts > 1 && { attempts: sent.attempts }),
       stateAfter: await stateOf(),
     };
     target.push(entry);
@@ -1567,7 +1712,12 @@ async function runClosings(
       const expected = `${heldError.name} (${heldError.code})`;
       expect(
         JSON.stringify(sent.err) ===
-          JSON.stringify({ InstructionError: [0, { Custom: heldError.code }] }),
+          JSON.stringify({
+            InstructionError: [
+              sent.instructionOffset,
+              { Custom: heldError.code },
+            ],
+          }),
         `release failed with ${JSON.stringify(sent.err)}${
           entry.programError ? ` = ${entry.programError}` : ""
         }, expected ${expected}`,
@@ -1748,6 +1898,8 @@ async function runStage(
   const [title, survey, septic] = REVIEWERS;
   console.log(`\n${plan.outcome} deal ${dealPda.toBase58()} (${phase})`);
 
+  // Every send below, stage-init's included, goes through chain.send: on
+  // devnet that is sendUntilLanded (priority fee, fresh blockhash, resend).
   if (phase === "init" || phase === "prep") {
     if (!(await chain.account(sellerAta))) {
       await send(
@@ -1943,7 +2095,7 @@ async function main() {
     ].includes(mode)
   ) {
     throw new Error(
-      `usage: demo-deals.ts [plan|check|simulate|run|stage-init|stage-prep|stage-finish] [--amount <usdc>] [--held-error <IDL error name>] [--resume <previous devnet-*.json>] [--deal staged-devnet-deal-live|staged-devnet-deal-rehearsal|staged-devnet-deal-rehearsal-v2|staged-devnet-deal-pay-rehearsal]`,
+      `usage: demo-deals.ts [plan|check|simulate|run|stage-init|stage-prep|stage-finish] [--amount <usdc>] [--held-error <IDL error name>] [--resume <previous devnet-*.json>] [--deal staged-devnet-deal-live|staged-devnet-deal-rehearsal|staged-devnet-deal-rehearsal-v2|staged-devnet-deal-rehearsal-v3|staged-devnet-deal-pay-rehearsal]`,
     );
   }
   if (flags.resume && mode !== "run") {
@@ -2010,8 +2162,9 @@ async function main() {
   const plans = planDeals(wallets, amount);
   const runPlans = plans.filter((p) => RUN_OUTCOMES.includes(p.outcome));
   const livePlan = plans.find((p) => p.outcome === "live")!;
-  // The current rehearsal deal: v1 was used up testing the reviewer portal (#45).
-  const rehearsalPlan = plans.find((p) => p.outcome === "rehearsalV2")!;
+  // The current rehearsal deal: v1 was used up testing the reviewer portal
+  // (#45), v2 testing the hardened transaction sending.
+  const rehearsalPlan = plans.find((p) => p.outcome === "rehearsalV3")!;
   /** The deal stage-* drives: --deal, default the live one (stage-init: the Solana Pay rehearsal). */
   const stagePlan = plans.find(
     (p) =>
@@ -2316,7 +2469,7 @@ async function main() {
         rehearsal.prep
       }\n  stage-finish (rehearsal)  ${
         rehearsal.finish
-      }\n  (rehearsal: add --deal ${stagedRehearsalV2Deal.id})`,
+      }\n  (rehearsal: add --deal ${stagedRehearsalV3Deal.id})`,
     );
     process.exitCode =
       ready ||

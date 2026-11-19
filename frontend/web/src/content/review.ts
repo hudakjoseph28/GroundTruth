@@ -38,6 +38,11 @@ export const REVIEW = {
     checking: "Checking the transaction with Solana devnet…",
     signing: "Approve the request in your wallet…",
     sent: "Sent. Waiting for confirmation on Solana devnet…",
+    /** After a blockhash expired with the transaction unseen, so it can never land. */
+    retrying: (attempt: number, of: number) =>
+      `Retrying… Solana devnet didn't pick the transaction up before it expired, so it can't land and nothing moved. Approve the new request in your wallet (attempt ${attempt} of ${of}).`,
+    /** Shown after "Sent." on a second or later attempt. */
+    attempt: (attempt: number, of: number) => `Attempt ${attempt} of ${of}.`,
     confirmed:
       "Confirmed on Solana devnet. The deal page updates when the Stream delivers it.",
     failed: "Not completed.",
@@ -57,6 +62,8 @@ export const REVIEW = {
     noFee: "Your wallet needs a little devnet SOL to pay the network fee.",
     timeout:
       "Solana devnet hasn't confirmed this yet. Check the Explorer link; it may still land.",
+    expired: (of: number) =>
+      `Solana devnet didn't pick the transaction up in ${of} tries. Each one expired unseen, so none can land and nothing moved. Try again in a moment.`,
     6014: "This wallet isn't a reviewer on this deal.",
     6015: "This wallet reviews this deal, but not in that role.",
     6016: "You've already signed this deal.",

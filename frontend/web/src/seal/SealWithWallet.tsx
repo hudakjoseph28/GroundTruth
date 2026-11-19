@@ -4,10 +4,10 @@ import { SEAL } from "../content/seal";
 import { explorerTxUrl, shortAddress } from "../data/ledger";
 import { CopyButton } from "../parcel/Ledger/CopyButton";
 import {
+  SentActionError,
   explainFailure,
-  signAndSend,
-  waitForConfirmation,
-  type SendPhase,
+  sendAndConfirm,
+  type SendProgress,
 } from "../review/escrowTx";
 import { WalletBar } from "../review/WalletBar";
 import { WalletRoot } from "../review/WalletRoot";
@@ -15,7 +15,7 @@ import { reportMemo, reportMemoInstruction } from "./reportHash";
 
 type Saving =
   | { phase: "idle" }
-  | { phase: SendPhase; signature?: string }
+  | SendProgress
   | { phase: "confirmed"; signature: string }
   | { phase: "failed"; message: string; signature?: string };
 
@@ -50,7 +50,8 @@ function Sender({
   const busy =
     saving.phase === "checking" ||
     saving.phase === "signing" ||
-    saving.phase === "sent";
+    saving.phase === "sent" ||
+    saving.phase === "retrying";
 
   const save = useCallback(async () => {
     if (!publicKey) return;
@@ -61,9 +62,10 @@ function Sender({
     abort.current?.abort();
     const controller = new AbortController();
     abort.current = controller;
-    let signature: string | undefined;
     try {
-      signature = await signAndSend({
+      // The same sender as /review: capped priority fee, fresh blockhash,
+      // rebroadcast, and a re-sign on a new blockhash if one expires unseen.
+      const signature = await sendAndConfirm({
         connection,
         payer: publicKey,
         spec: reportMemoInstruction({
@@ -71,10 +73,11 @@ function Sender({
           sha256: hash,
         }),
         signTransaction,
-        onPhase: (phase) => setSaving({ phase }),
+        signal: controller.signal,
+        onProgress: (progress) => {
+          if (!controller.signal.aborted) setSaving(progress);
+        },
       });
-      setSaving({ phase: "sent", signature });
-      await waitForConfirmation(connection, signature, controller.signal);
       if (!controller.signal.aborted) {
         setSaving({ phase: "confirmed", signature });
         onConfirmed(signature);
@@ -84,7 +87,8 @@ function Sender({
         setSaving({
           phase: "failed",
           message: explainFailure(error),
-          signature,
+          signature:
+            error instanceof SentActionError ? error.signature : undefined,
         });
       }
     }
@@ -122,8 +126,13 @@ function Sender({
           <p>
             {saving.phase === "failed"
               ? `${SEAL.status.failed} ${saving.message}`
-              : SEAL.status[saving.phase]}
+              : saving.phase === "retrying"
+                ? SEAL.retrying(saving.attempt, saving.of)
+                : SEAL.status[saving.phase]}
           </p>
+          {saving.phase === "sent" && saving.attempt > 1 && (
+            <p>{SEAL.attempt(saving.attempt, saving.of)}</p>
+          )}
           {signature && (
             <>
               <p className="seal-signature">

@@ -68,6 +68,7 @@ export {
   stagedPayRehearsalDeal,
   stagedRehearsalDeal,
   stagedRehearsalV2Deal,
+  stagedRehearsalV3Deal,
   stagedReleasedDeal,
 } from "./fixtures.js";
 
@@ -146,3 +147,26 @@ export type {
   MapShape,
   ParcelLayers,
 } from "./layers.js";
+
+export {
+  COMPUTE_BUDGET_PROGRAM_ID,
+  COMPUTE_UNIT_MARGIN,
+  MAX_COMPUTE_UNITS,
+  MAX_SEND_ATTEMPTS,
+  NotLandedError,
+  PRIORITY_FEE,
+  computeBudgetInstructions,
+  computeUnitLimit,
+  isBlockhashExpiredError,
+  maxPriorityFeeLamports,
+  priorityFeeMicroLamports,
+  sendUntilLanded,
+  writableAccounts,
+} from "./transactionSend.js";
+export type {
+  Landed,
+  LandingIo,
+  SendEvent,
+  SignatureState,
+  SignedAttempt,
+} from "./transactionSend.js";

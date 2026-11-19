@@ -27,6 +27,10 @@ export const SEAL = {
     confirmed: "Saved on Solana devnet.",
     failed: "Not saved.",
   },
+  /** After a blockhash expired with the memo unseen, so it can never land. */
+  retrying: (attempt: number, of: number) =>
+    `Retrying… Solana devnet didn't pick the transaction up before it expired, so nothing was saved. Approve the new request in your wallet (attempt ${attempt} of ${of}).`,
+  attempt: (attempt: number, of: number) => `Attempt ${attempt} of ${of}.`,
   noSigner: "This wallet can't sign transactions here. Connect Phantom.",
   signature: "Signature",
   copySignature: "Copy the transaction signature",

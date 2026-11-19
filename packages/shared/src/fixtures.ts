@@ -64,6 +64,7 @@ export const STAGED_DEAL_ID_LABELS = {
   rehearsal: "groundtruth-demo-rehearsal-v1",
   rehearsalV2: "groundtruth-demo-rehearsal-v2",
   payRehearsal: "groundtruth-demo-pay-rehearsal-v1",
+  rehearsalV3: "groundtruth-demo-rehearsal-v3",
 } as const;
 
 const stagedParticipants = {
@@ -112,6 +113,8 @@ const REGISTERED_AT = {
   // When the Solana Pay rehearsal fixture was written (before any
   // transaction on its PDA).
   payRehearsal: "2026-11-19T04:29:27.000Z",
+  // When the v3 fixture was written (before any transaction on its PDA).
+  rehearsalV3: "2026-11-19T04:31:53.000Z",
 } as const;
 
 /** The held demo deal. Its ID predates the second deal; the web reads it. */
@@ -241,6 +244,29 @@ export const stagedPayRehearsalDeal = {
   ],
 } satisfies Deal;
 
+/**
+ * The third rehearsal copy of the live deal. v2 was used up testing the
+ * hardened transaction sending (priority fee, blockhash resend) on
+ * 2026-11-19. Same wallets and parcel, its own PDA, and 5 test USDC instead
+ * of 10: the staged buyer had 5 left and Circle's faucet needs a person.
+ */
+export const stagedRehearsalV3Deal = {
+  id: "staged-devnet-deal-rehearsal-v3",
+  ...stagedParticipants,
+  amountBaseUnits: "5000000",
+  escrowAddress: "ESMKH5PB2jSd5U4L8hvC1XMVerhYsuRN6U3B6GHrLzf7",
+  timeline: [
+    {
+      id: "staged-devnet-deal-rehearsal-v3-created",
+      at: REGISTERED_AT.rehearsalV3,
+      type: "dealCreated",
+      actorRole: "buyer",
+      buyerMessage: "Staged devnet deal created. No funds have moved.",
+      confirmationStatus: "offChainEvidence",
+    },
+  ],
+} satisfies Deal;
+
 export const stagedDemoDeals = [
   stagedDeal,
   stagedReleasedDeal,
@@ -248,6 +274,7 @@ export const stagedDemoDeals = [
   stagedRehearsalDeal,
   stagedRehearsalV2Deal,
   stagedPayRehearsalDeal,
+  stagedRehearsalV3Deal,
 ] as const;
 
 /**
@@ -293,6 +320,14 @@ export const stagedDemoChainAccounts = {
     dealIdHex:
       "17e0f6568f539dba9581cef87392ac8b62226fdc71036ca5a2f94d1edcce6b9e",
     vault: "a5mZ4QjeqxruNU29vrWgGa1q6DLbsvHKZ4T64Mfvft3",
+    buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
+  },
+  [stagedRehearsalV3Deal.id]: {
+    outcome: "rehearsalV3",
+    dealIdLabel: STAGED_DEAL_ID_LABELS.rehearsalV3,
+    dealIdHex:
+      "f77b159c9e7399ecb98604f72ab4e3695ff2966e734ece81930314f15b9597fd",
+    vault: "6JB6qRdQE2wXPr8oZUUM2UtQmY6oCVx5P4QRreytJ1qC",
     buyerTokenAccount: "7gXgJ3bk14SoqoKd6VaYanGpxsg8s9UXJ9AqJyLekJ73",
   },
   [stagedReleasedDeal.id]: {
