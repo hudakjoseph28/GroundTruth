@@ -56,6 +56,26 @@ export interface ParcelSearchResult {
   matchedOn: "siteAddress" | "parcelId";
 }
 
+/** One parcel drawn on the explore map: its summary and published outline. */
+export type ParcelOutline = Omit<Parcel, "geometry"> & {
+  outline: GeoJsonPolygon | GeoJsonMultiPolygon;
+};
+
+/**
+ * The parcels whose published boundaries touch one map box, from
+ * `GET /api/parcels/area?bbox=`. `truncated` means OGRIP holds more parcels
+ * there than one answer carries: the map shows these and asks to zoom in.
+ */
+export interface ParcelArea {
+  /** `[west, south, east, north]` in WGS84 degrees, as asked. */
+  bbox: [number, number, number, number];
+  parcels: ParcelOutline[];
+  truncated: boolean;
+  authority: "Ohio OGRIP";
+  sourceUrl: string;
+  retrievedAt: string;
+}
+
 export const CHECK_KINDS = [
   "zoning",
   "flood",

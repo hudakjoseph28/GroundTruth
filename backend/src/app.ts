@@ -71,6 +71,8 @@ export function createApp(commit: string, options: AppOptions = {}) {
   app.get("/api/health", getHealth(commit));
   app.get("/api/coverage", parcels.coverage);
   app.get("/api/parcels/search", parcels.search);
+  // Before `:parcelKey`; `area` is never a parcel key (ohio:FIPS:ID).
+  app.get("/api/parcels/area", parcels.area);
   app.get("/api/parcels/:parcelKey", parcels.getParcel);
   app.get("/api/parcels/:parcelKey/land", land.meta);
   app.get("/api/parcels/:parcelKey/land/:file", land.file);

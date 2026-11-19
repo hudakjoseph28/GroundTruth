@@ -1,0 +1,375 @@
+/* /explore: a full-screen map with the search, status, and parcel card over it. */
+
+.explore-page {
+  position: relative;
+  height: calc(100svh - var(--header-h));
+  height: calc(100dvh - var(--header-h));
+  min-height: 26rem;
+  overflow: hidden;
+  background: var(--surface-1);
+}
+
+.explore-map {
+  position: absolute;
+  inset: 0;
+}
+
+.explore-map:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+/* ---------- Search and status, top left ---------- */
+
+.explore-top {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  right: var(--s-3);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  max-width: 27rem;
+  pointer-events: none;
+}
+
+.explore-top > * {
+  pointer-events: auto;
+}
+
+.explore-search {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  background: rgba(11, 11, 12, 0.94);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.explore-search:focus-within {
+  border-color: rgba(196, 161, 90, 0.75);
+}
+
+.explore-search-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 4px 4px 4px 0.8rem;
+}
+
+.explore-search input {
+  flex: 1 1 6rem;
+  min-width: 0;
+  height: 2.5rem;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  /* 16px or more: iOS does not zoom the page into the field. */
+  font-size: max(1rem, 16px);
+}
+
+.explore-search input::placeholder {
+  color: #85858a;
+}
+
+.explore-search input:focus-visible {
+  outline: none;
+}
+
+.explore-search-clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.explore-search-clear:hover {
+  color: var(--text);
+}
+
+.explore-search-clear svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.explore-results {
+  max-height: min(55svh, 24rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--border);
+  padding: var(--s-2) 0;
+}
+
+.explore-results-group + .explore-results-group {
+  margin-top: var(--s-2);
+}
+
+.explore-results-label {
+  margin: 0;
+  padding: var(--s-1) var(--s-4);
+  color: var(--text-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.explore-results ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.explore-results li button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  min-height: var(--tap);
+  border: 0;
+  padding: var(--s-2) var(--s-4);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.explore-results li button:hover,
+.explore-results li button:focus-visible {
+  outline: none;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.explore-results li button:focus-visible {
+  box-shadow: inset 2px 0 0 var(--gold);
+}
+
+.explore-result-address {
+  font-size: 0.95rem;
+  font-weight: 560;
+}
+
+.explore-result-meta {
+  color: var(--text-2);
+  font-size: 0.8rem;
+}
+
+.explore-results-note {
+  margin: 0;
+  padding: var(--s-2) var(--s-4);
+  color: #d7d7d7;
+  font-size: 0.88rem;
+}
+
+.explore-results-note.is-error {
+  color: var(--red-text);
+}
+
+.explore-status {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-3);
+  max-width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  padding: 0.45rem 0.5rem 0.45rem 0.85rem;
+  background: rgba(11, 11, 12, 0.9);
+  color: var(--text);
+  font-size: 0.88rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.explore-status:not(:has(button)) {
+  padding-right: 0.85rem;
+}
+
+.explore-status.is-error {
+  border-color: rgba(214, 69, 69, 0.6);
+}
+
+.explore-spinner {
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: explore-spin 800ms linear infinite;
+}
+
+@keyframes explore-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Basemap switch, top right ---------- */
+
+.explore-basemap {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  z-index: 2;
+}
+
+/* ---------- The parcel card, bottom left ---------- */
+
+.explore-card {
+  position: absolute;
+  left: var(--s-3);
+  bottom: var(--s-8);
+  z-index: 3;
+  width: min(22rem, calc(100% - 2 * var(--s-3)));
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  padding: var(--s-4);
+  background: rgba(11, 11, 12, 0.96);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+.explore-card h2 {
+  margin: 0 2.5rem var(--s-2) 0;
+  font-size: 1.1rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.explore-card h2:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.explore-card-close {
+  position: absolute;
+  top: var(--s-2);
+  right: var(--s-2);
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: var(--radius-m);
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.explore-card-close:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.explore-card-close svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.explore-card-facts {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 var(--s-4);
+  padding: 0;
+  list-style: none;
+  color: #d7d7d7;
+  font-size: 0.92rem;
+}
+
+.explore-card-id {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
+.explore-card-open {
+  width: 100%;
+}
+
+.explore-card-note {
+  margin: var(--s-2) 0 0;
+  font-size: 0.78rem;
+}
+
+/* ---------- MapLibre's controls, in the site's dark ---------- */
+
+.explore-page .maplibregl-ctrl-group {
+  border: 1px solid var(--border-strong);
+  background: rgba(11, 11, 12, 0.92);
+  box-shadow: none;
+}
+
+.explore-page .maplibregl-ctrl-group button {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.explore-page .maplibregl-ctrl-group button + button {
+  border-top-color: var(--border);
+}
+
+.explore-page .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1);
+}
+
+.explore-page .maplibregl-ctrl-group button:not(:disabled):hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.explore-page .maplibregl-ctrl-attrib {
+  font-size: 0.72rem;
+}
+
+/* ---------- Phone: search across the top, card as a bottom sheet ---------- */
+
+@media (max-width: 40rem) {
+  .explore-top {
+    top: var(--s-2);
+    left: var(--s-2);
+    right: var(--s-2);
+    max-width: none;
+  }
+
+  .explore-basemap {
+    top: auto;
+    right: auto;
+    left: var(--s-2);
+    bottom: var(--s-8);
+  }
+
+  .explore-card {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    border-width: 1px 0 0;
+    border-radius: var(--radius-l) var(--radius-l) 0 0;
+    padding-bottom: calc(var(--s-4) + env(safe-area-inset-bottom));
+    /* Opaque: the map's controls sit under the sheet. */
+    background: var(--surface-1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .explore-spinner {
+    animation: none;
+  }
+}

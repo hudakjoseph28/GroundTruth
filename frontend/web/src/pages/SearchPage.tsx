@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { ExploreLink } from "../components/ExploreLink";
 import { SearchForm } from "../components/SearchForm";
 import { goldenParcel, type ParcelSearchResult } from "@groundtruth/shared";
 import { SAVED_DEMO, SEARCH, SEARCH_EXAMPLES } from "../content/search";
@@ -64,8 +65,14 @@ export function SearchPage() {
   return (
     <section className="sheet search-page">
       <h1>{SEARCH.title}</h1>
-      <SearchForm key={query} initialQuery={query} autoFocus showSampleLink={false} />
+      <SearchForm
+        key={query}
+        initialQuery={query}
+        autoFocus
+        showSampleLink={false}
+      />
       {!blank && <SearchExamples current={query} />}
+      <ExploreLink />
       {blank ? (
         <SearchStart
           recent={recent}
@@ -85,7 +92,9 @@ export function SearchPage() {
                 state={{ fromSearch: query }}
                 onPointerDown={warmSlot}
                 onFocus={warmSlot}
-                data-featured={result.parcel.key === goldenParcel.key || undefined}
+                data-featured={
+                  result.parcel.key === goldenParcel.key || undefined
+                }
               >
                 <ResultCard result={result} />
               </Link>
@@ -140,7 +149,9 @@ function ResultCard({ result }: { result: ParcelSearchResult }) {
       </span>
       <span className="result-meta quiet">
         {named.street ? (
-          <span className="result-id">{SEARCH.parcelId(parcel.sourceParcelId)}</span>
+          <span className="result-id">
+            {SEARCH.parcelId(parcel.sourceParcelId)}
+          </span>
         ) : (
           <span>{SEARCH.noAddress}</span>
         )}
@@ -157,14 +168,23 @@ function ResultCard({ result }: { result: ParcelSearchResult }) {
 }
 
 /** Coverage, the demo parcel, then searches this browser has already run. */
-function SearchStart({ recent, onClear }: { recent: readonly string[]; onClear: () => void }) {
+function SearchStart({
+  recent,
+  onClear,
+}: {
+  recent: readonly string[];
+  onClear: () => void;
+}) {
   const rest = recent.filter((item) => item !== SAVED_DEMO.query);
   return (
     <div className="search-start">
       <p className="search-coverage">{SEARCH.coverage}</p>
       <div className="search-saved">
         <p>{SEARCH.saved}</p>
-        <Link className="saved-demo" to={`/search?q=${encodeURIComponent(SAVED_DEMO.query)}`}>
+        <Link
+          className="saved-demo"
+          to={`/search?q=${encodeURIComponent(SAVED_DEMO.query)}`}
+        >
           <span className="saved-demo-flag">{SAVED_DEMO.why}</span>
           <span className="result-address">
             {SAVED_DEMO.name}{" "}
@@ -174,7 +194,9 @@ function SearchStart({ recent, onClear }: { recent: readonly string[]; onClear: 
             <span>{SEARCH.county(SAVED_DEMO.county)}</span>
           </span>
           <span className="result-meta quiet">
-            <span className="result-id">{SEARCH.parcelId(SAVED_DEMO.parcelId)}</span>
+            <span className="result-id">
+              {SEARCH.parcelId(SAVED_DEMO.parcelId)}
+            </span>
           </span>
         </Link>
       </div>
@@ -188,7 +210,10 @@ function SearchStart({ recent, onClear }: { recent: readonly string[]; onClear: 
           </p>
           <ul>
             {rest.map((item, index) => (
-              <li key={item} style={{ animationDelay: `${160 + index * 50}ms` }}>
+              <li
+                key={item}
+                style={{ animationDelay: `${160 + index * 50}ms` }}
+              >
                 <Link to={`/search?q=${encodeURIComponent(item)}`}>{item}</Link>
               </li>
             ))}
@@ -212,7 +237,9 @@ function SearchExamples({ current }: { current: string }) {
             <Link
               className="example-chip"
               to={`/search?q=${encodeURIComponent(example.query)}`}
-              aria-current={example.query === current.trim() ? "page" : undefined}
+              aria-current={
+                example.query === current.trim() ? "page" : undefined
+              }
             >
               <span className="example-kind">{example.kind}</span>
               {example.query}
