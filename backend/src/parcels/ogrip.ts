@@ -843,8 +843,9 @@ export function createOgripClient(
    * measured 2026-11-16), `zoning` in Franklin County, where the
    * county's zoning map is read live, and `environmental` everywhere: the
    * National Wetlands Inventory has mapped all of Ohio (its mapping-status
-   * layer lists Alaska as the only area with no data). Every other check
-   * has no adapter yet. Counties missing from the count get no row.
+   * layer lists Alaska as the only area with no data), plus `septic`
+   * statewide through USDA NRCS Soil Data Access. Counties missing from
+   * the count get no row.
    */
   async function getCoverage(): Promise<Coverage[]> {
     const nowMs = now().getTime();
@@ -884,6 +885,7 @@ export function createOgripClient(
         ...(hasNfhlStudy(county.fips) ? (["flood"] as const) : []),
         // National Wetlands Inventory (src/reports/nwiWetlands.ts).
         "environmental" as const,
+        "septic" as const,
       ],
       lastVerifiedAt: measuredAt,
     }));

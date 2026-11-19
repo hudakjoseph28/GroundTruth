@@ -85,6 +85,47 @@ export const AREA_VIEW = {
 
 // ---------- Ledger ----------
 
+/** A check's name inside a sentence: "Check first: road access". */
+const CHECK_NOUNS: Record<CheckKind, string> = {
+  zoning: "zoning",
+  flood: "flood risk",
+  environmental: "wetlands and streams",
+  access: "road access",
+  utilities: "water and sewer",
+  easements: "easements",
+  sellerAuthority: "seller authority",
+  survey: "the survey",
+  septic: "septic",
+  closing: "the closing",
+};
+
+const listed = (items: readonly string[]) =>
+  items.length <= 2
+    ? items.join(" and ")
+    : `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+
+/**
+ * The bottom line above the ledger. Its strongest claim is "Possibly
+ * buildable": never that a lot can be built on, or that it is safe.
+ */
+export const SUMMARY = {
+  title: "Bottom line",
+  lead: (lead: "possibly" | "tooEarly", held: readonly string[]) => {
+    const base = lead === "possibly" ? "Possibly buildable" : "Too early to tell";
+    if (held.length === 0) return `${base}.`;
+    const joiner = lead === "possibly" ? "but" : "and";
+    return `${base}, ${joiner} ${listed(held)} ${held.length === 1 ? "is" : "are"} on hold.`;
+  },
+  checkFirst: (noun: string, party: string | null) =>
+    party ? `Check first: ${noun} (${party}).` : `Check first: ${noun}.`,
+  noun: (kind: string) =>
+    (CHECK_NOUNS as Partial<Record<string, string>>)[kind] ?? checkTitle(kind).toLowerCase(),
+  answered: (answered: number, total: number) => `${answered} of ${total} checks answered`,
+  checks: "Every check, by status",
+  tip: (title: string, status: string) => `${title} · ${status}`,
+  biggest: "biggest open question",
+} as const;
+
 export const CHECK_TITLES: Record<CheckKind, string> = {
   zoning: "Can you build here?",
   flood: "Flood",
@@ -118,12 +159,6 @@ export const LEDGER = {
   lede: "Each check on this parcel, who decides it, and whether that decision is on-chain.",
   /** For a parcel with no deal: nothing here is headed for a chain. */
   ledeNoDeal: "Each check on this lot: what public records show, and who can answer the rest.",
-  summary: (answered: number, total: number) => {
-    const open = total - answered;
-    const lead = `${answered} of ${total} checks ${answered === 1 ? "has" : "have"} evidence or a reviewer's decision so far.`;
-    if (open === 0) return lead;
-    return `${lead} The other ${open} ${open === 1 ? "is" : "are"} open, and ${open === 1 ? "its card names" : "each card names"} who can answer it.`;
-  },
   stagedTag: "Staged demo data",
   stagedNote:
     "The closing statuses are a staged example of how a held closing reads. They are not read from the chain.",
@@ -239,7 +274,6 @@ export const INSPECTOR = {
     held: "Held",
     pending: "Waiting on a decision",
   },
-  illustration: "How this decision reaches the escrow. Illustration only: it is not on-chain yet.",
   confirmed: "Confirmed on Solana devnet.",
   stagedExample: "Staged example. Not a record retrieved for this parcel.",
   finding: "What we know",
@@ -258,12 +292,4 @@ export const INSPECTOR = {
 export const TRANSITION = {
   loading: "Loading parcel…",
   skip: "Press any key to skip",
-  slot: (slot: number) => `slot ${slot.toLocaleString("en-US")}`,
-  slotShort: (slot: number) => slot.toLocaleString("en-US"),
-  caption: {
-    pending: "Reading the latest Solana devnet slot…",
-    live: (slot: number) =>
-      `Counting up from Solana devnet slot ${slot.toLocaleString("en-US")}, read as this page opened.`,
-    illustrative: "Illustrative slot numbers. The devnet slot could not be read.",
-  },
 } as const;

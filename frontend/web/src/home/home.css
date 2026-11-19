@@ -3,11 +3,6 @@
    Motion is transform and opacity wherever it repeats; with reduced motion
    every diagram rests on its final frame. */
 
-/* The homepage's content column is a little wider than the default. */
-#root:has(.home) {
-  --page-max: 90rem;
-}
-
 .home {
   position: relative;
   overflow-x: clip;
@@ -235,15 +230,6 @@
   align-items: center;
   gap: 0.4rem;
   white-space: nowrap;
-}
-
-.hero-caption {
-  position: absolute;
-  right: var(--pad);
-  bottom: 0.8rem;
-  margin: 0;
-  color: var(--quiet);
-  font-size: 0.7rem;
 }
 
 @container page (min-width: 60rem) {
@@ -1334,6 +1320,7 @@
   min-width: 0;
 }
 
+/* Half a row wide, so one step down from the other section titles. */
 .reviewers h2 {
   max-width: 21ch;
   font-size: var(--step-2);
@@ -1982,10 +1969,6 @@
 
 /* ---------- Proof strip ---------- */
 
-.proof {
-  padding-block: var(--space-l);
-}
-
 .proof-list {
   display: grid;
   gap: var(--space-m);
@@ -2106,6 +2089,7 @@
 /* ---------- Built with ---------- */
 
 .built h2 {
+  margin-top: 0;
   max-width: none;
 }
 

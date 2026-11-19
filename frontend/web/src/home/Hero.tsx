@@ -1,7 +1,6 @@
 import { ExploreLink } from "../components/ExploreLink";
 import { Link } from "react-router-dom";
 import { SearchForm } from "../components/SearchForm";
-import { ATTESTATION_COPY } from "../content/attestations";
 import { HERO } from "../content/home";
 import { Icon } from "./icons";
 import { LivingParcel } from "./LivingParcel";
@@ -59,7 +58,6 @@ export function Hero() {
         </div>
         <LivingParcel variant="hero" />
       </div>
-      <p className="hero-caption">{ATTESTATION_COPY.caption}</p>
     </section>
   );
 }

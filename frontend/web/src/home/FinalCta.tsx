@@ -21,7 +21,7 @@ export function FinalCta() {
           <h2 id="cta-title">{CTA.title}</h2>
           <SearchForm ariaLabel={CTA.searchLabel} showSampleLink={false} launchEmpty />
           <Link
-            className="btn btn-primary"
+            className="btn"
             to={sampleParcelPath()}
             onPointerDown={warmSlot}
             onFocus={warmSlot}

@@ -1,6 +1,6 @@
 # @groundtruth/backend
 
-Express API: live Ohio parcel search and boundaries (OGRIP), live parcel reports with a FEMA flood check, staged deals, and the QuickNode webhook. Responses use the v1 types from `@groundtruth/shared`.
+Express API: live Ohio parcel search and boundaries (OGRIP), live parcel reports with FEMA flood and USDA NRCS soils/septic checks, staged deals, and the QuickNode webhook. Responses use the v1 types from `@groundtruth/shared`.
 
 ## Local database
 
@@ -23,7 +23,7 @@ pnpm --filter @groundtruth/backend dev
 
 `GET /api/health` returns `{ "status": "ok", "commit": "..." }`.
 
-`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`; see [Parcel report](#parcel-report-live-ogrip--fema). The parcel key is URL-encoded, for example `ohio%3A39049%3A230-000918`.
+`GET /api/parcels/:parcelKey/report` returns a `ParcelReport`; see [Parcel report](#parcel-report-live-ogrip--fema--usda-ssurgo). The parcel key is URL-encoded, for example `ohio%3A39049%3A230-000918`.
 
 ## Parcel search (live Ohio OGRIP)
 
@@ -34,7 +34,7 @@ These routes query Ohio's statewide parcel layer and address locator from the AP
 | `GET /api/parcels/search?q=` | `ParcelSearchResult[]`, up to 10. `q` is trimmed and must be 3–120 characters (`400 INVALID_REQUEST` otherwise). `[]` means a valid query with no match. |
 | `GET /api/parcels/area?bbox=west,south,east,north` | `ParcelArea`: outlines, addresses, counties, and acreage of the parcels touching the box, for the web's `/explore` map. One OGRIP envelope query (about 0.6–0.9 s and 230 KB for 500 outlines, measured 2026-11-18), at most 500 parcels, `truncated: true` when OGRIP holds more. Each side of the box may be at most 0.25° (`400 INVALID_REQUEST` otherwise); a box outside Ohio is `404 NO_COVERAGE`. Code: [src/parcels/area.ts](src/parcels/area.ts), `getArea` in [src/parcels/ogrip.ts](src/parcels/ogrip.ts). |
 | `GET /api/parcels/:parcelKey` | `Parcel` with the published boundary. `404 NOT_FOUND` if OGRIP has no such parcel in that county; `404 NO_COVERAGE` for a county code outside Ohio's 88. |
-| `GET /api/coverage` | `Coverage[]`: one row per county in a live count of OGRIP parcels with published IDs (cached 1 hour). `boundarySearchable` means only that the count was above zero at `lastVerifiedAt`, the time of that count. `evidenceKinds` lists the checks a live report can back with a source in that county. Today that is `flood` in the 83 counties where FEMA has an NFHL study (not Fayette, Henry, Vinton, Williams, or Wyandot, which have none; measured 2026-11-16, see [FEMA flood check](#fema-flood-check)), `zoning` in Franklin, and `environmental` in all 88 (NWI's mapping status is digital across Ohio; measured 2026-11-18, see [Environmental check](#environmental-check-wetlands-and-franklin-stream-setbacks)). It names a check that can run, not a result: a given lot can still come back `unknown`. A row says nothing about report depth. |
+| `GET /api/coverage` | `Coverage[]`: one row per county in a live count of OGRIP parcels with published IDs (cached 1 hour). `boundarySearchable` means only that the count was above zero at `lastVerifiedAt`, the time of that count. `evidenceKinds` lists checks a live report can back with a source: `environmental` and `septic` in all 88 counties, `flood` in the 83 counties where FEMA has an NFHL study, and `zoning` in Franklin. It names checks that can run, not results: a given lot can still come back `unknown`. A row says nothing about report depth. |
 
 **Parcel key rule.** `ohio:<countyFips>:<LocalParcelID exactly as published>`. No punctuation is added or removed, so keys differ by county the way OGRIP does: Franklin publishes `010-042534` (`ohio:39049:010-042534`), Licking publishes `00100000601000` (`ohio:39089:00100000601000`). Published IDs that do not match `[A-Za-z0-9][A-Za-z0-9._-]*`, or are all zeros, get no key.
 
@@ -116,20 +116,20 @@ pnpm --filter @groundtruth/backend record:ogrip franklin-address  # one scenario
 
 Scenarios live in [test/fixtures/ogrip/scenarios.ts](test/fixtures/ogrip/scenarios.ts). Those listed in `LOCATOR_DOWN` are recorded with the recorder answering HTTP 503 for the locator (marked `forcedFailure`), so the fallback runs against real parcel-layer responses.
 
-## Parcel report (live OGRIP + FEMA)
+## Parcel report (live OGRIP + FEMA + USDA SSURGO)
 
 `GET /api/parcels/:parcelKey/report` builds a report for any OGRIP parcel. Code: [src/reports/](src/reports/), route in [src/routes/report.ts](src/routes/report.ts).
 
 1. **Stored report in force?** Serve it. A report with no `expiresAt` was seeded or verified by hand (the golden parcel `ohio:39049:230-000918` and the second-county parcel `ohio:39089:00500729609000`). It is always served and never overwritten. A live copy is served until its `expiresAt`.
 2. **Otherwise, live.** Load the parcel through the OGRIP adapter (`404 NOT_FOUND` if OGRIP has no such parcel, `404 NO_COVERAGE` for a non-Ohio county code, `504`/`502` on an OGRIP failure). Then run every check at once, each with its own limit ([src/reports/pipeline.ts](src/reports/pipeline.ts)). Once the parcel exists the answer is always `200`. A slow, failed, or crashing check becomes an `unknown` check inside the report.
-3. **Cache.** A live report where no check failed for a passing reason is written to PostgreSQL after the response, for 24 hours (`LIVE_REPORT_TTL_MS`). Each source keeps its own `retrievedAt`. A report with a timed-out check is not stored, so the next request asks FEMA again. A database failure never blocks a live report.
+3. **Cache.** A live report where no check failed for a passing reason is written to PostgreSQL after the response, for 24 hours (`LIVE_REPORT_TTL_MS`). Each source keeps its own `retrievedAt`. A report with a timed-out check is not stored, so the next request asks the provider again. A database failure never blocks a live report.
 
 **Checks.** The report has nine checks in contract order: `zoning`, `flood`, `environmental`, `access`, `utilities`, `easements`, `sellerAuthority`, `survey`, `septic`. It has no `closing` check, because closing state comes from the deal, not the parcel.
 
-- `flood` runs live against FEMA, and `environmental` against the National Wetlands Inventory and, in Franklin, the county's stream buffers (below). Franklin parcels also get live `zoning` and `access`.
-- The rest have no adapter yet. Each is `unknown` from a plain-English template ([src/reports/templates.ts](src/reports/templates.ts)) that names what is missing, the limitation, who resolves it, and the next action. Contact links appear only where checked by hand: Franklin County Planning & Zoning, Recorder, and Public Health (live on 2026-11-16), and the ALTA seller-impersonation handout. Other counties get the office by name and no link.
+- `flood` runs live against FEMA; `environmental` runs against the National Wetlands Inventory and, in Franklin, the county's stream buffers; and `septic` runs against USDA NRCS Soil Data Access for every parcel (below).
+- Franklin parcels also get live `zoning` and `access`. Checks without an adapter remain `unknown` from a plain-English template ([src/reports/templates.ts](src/reports/templates.ts)) that names what is missing, the limitation, who resolves it, and the next action.
 
-**Coverage.** `boundaryOnly` when no check has a supporting source, `deep` when every check does, `partial` otherwise. With only flood live, a report is `partial` when FEMA finds a zone and `boundaryOnly` otherwise.
+**Coverage.** `boundaryOnly` when no check has a supporting source, `deep` when every check does, `partial` otherwise. A rated SSURGO response is sourced and therefore makes an otherwise template-only report `partial`; a timeout, unavailable response, missing map unit, or unrated map unit remains `unknown`.
 
 **`biggestOpenQuestion`** ([`biggestOpenQuestion()`](src/reports/pipeline.ts)):
 
@@ -138,7 +138,19 @@ Scenarios live in [test/fixtures/ogrip/scenarios.ts](test/fixtures/ogrip/scenari
 3. Otherwise `flood` if FEMA found a Special Flood Hazard Area.
 4. Otherwise the first check in that order.
 
-Until access has an adapter, every live report's answer is `access`.
+Outside Franklin County, access still uses the unknown template, so it remains the biggest open question ahead of the new septic screening.
+
+### USDA NRCS SSURGO septic screening
+
+Every live parcel report sends the full OGRIP polygon to USDA NRCS [Soil Data Access](https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest). One fixed query intersects `mupolygon` with the parcel, groups overlap area by `mukey`, and joins `mapunit` and `muaggatt.engstafdcd`. That field is SSURGO's published dominant-condition rating for septic-tank absorption fields.
+
+SDA gets 3000 ms of the check's 6000 ms. If it fails, returns an unusable answer, or uses its budget, the adapter queries Esri's public ArcGIS Living Atlas [USA Soils Map Units](https://www.arcgis.com/home/item.html?id=d4c54647dd4c4405a9f4f0bc9fd351e9) layer (Esri's annual build of USDA gSSURGO) with the parcel's bounding box. It reads the same `MUKEY`, `MUSYM`, `muname`, and `engstafdcd` fields and measures each map unit's exact overlap with the parcel locally (`polygon-clipping`, `@turf/area`). The finding then says the Living Atlas copy was used, and the source cites that layer.
+
+Only the three published screening classes used by the product are accepted: `Very limited`, `Somewhat limited`, and `Not limited`. Each returned map unit includes its share of the parcel, computed from the relative intersection areas. A rated response is always `needsReview`; wording says the interpretation does not establish that an on-site sewage system is feasible. The check cites whichever service answered (Soil Data Access or the Living Atlas copy) with the response's `retrievedAt`.
+
+No map unit, an unrated/other value, an unexpected response, an HTTP failure, or the check's own 6000 ms timeout becomes `unknown` with no positive or negative conclusion. The timeout runs alongside the flood, zoning, access, and template checks; it cannot hold up another check, and a transient failure is not cached. Every outcome ends with the same next action: use the [Ohio Department of Health homeowner page](https://odh.ohio.gov/know-our-programs/sewage-treatment-systems/information-for-homeowners/) to find the local health district and obtain its site and soil evaluation before planning a septic system.
+
+The seeded golden report is served before providers run and remains unchanged. `pnpm --filter @groundtruth/backend record:ssurgo` records every HTTP exchange for 230-000918 and Licking 00500729609000 into `test/fixtures/ssurgo/`, and writes nothing unless both end in rated map units. The checked-in recordings (2026-11-19) are real: SDA's HTTP 502 followed by the Living Atlas answer. Tests replay them, the 2026-11-18 SDA 502, SDA hanging past its budget, a check-level timeout, and malformed, truncated, and unrated fallback answers. No real SDA success response has been recorded yet; the SDA parser is tested against its documented table shape.
 
 ### FEMA flood check
 
@@ -255,7 +267,7 @@ Every parcel gets a live `environmental` check: wetlands from the U.S. Fish and 
 
 ### Recorded fixtures
 
-Report tests replay real OGRIP, FEMA, NWI, and Franklin County responses from [test/fixtures/report/](test/fixtures/report/), matched by method, URL, and POST body, so they never touch the network. NWI's drawing of a lot is stored as base64 PNG. A JSON answer over 1 MB (the Big Darby setback outline) is stored once, compact, under `bodies/`, named by its request, and shared by every scenario that made it. After changing a query, re-record and review the diff:
+Report tests replay saved OGRIP, FEMA, NWI, Franklin County, and USDA responses from [test/fixtures/report/](test/fixtures/report/) and [test/fixtures/ssurgo/](test/fixtures/ssurgo/), matched by method, URL, and POST body, so they never touch the network. NWI's drawing of a lot is stored as base64 PNG. A JSON answer over 1 MB (the Big Darby setback outline) is stored once, compact, under `bodies/`, named by its request, and shared by every scenario that made it. After changing a query, re-record and review the diff:
 
 ```bash
 pnpm --filter @groundtruth/backend record:report                    # every scenario

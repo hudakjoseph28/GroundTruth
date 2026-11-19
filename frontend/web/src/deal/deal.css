@@ -9,7 +9,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-s);
-  padding: var(--s-3) var(--pad) var(--space-l);
+  padding: var(--space-m) var(--pad) var(--space-l);
 }
 
 .deal-page[data-tone="pending"],
@@ -108,6 +108,245 @@
   display: grid;
   gap: var(--space-s);
   align-content: start;
+}
+
+/* ---------- Money flow: confirmed location of the deal amount ---------- */
+
+.money-flow {
+  --money-position: 10%;
+  --money-origin: 10%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  background:
+    linear-gradient(110deg, var(--tone-wash), transparent 38%), var(--surface-1);
+}
+
+.money-flow[data-location="vault"] {
+  --money-position: 50%;
+}
+
+.money-flow[data-location="seller"] {
+  --money-position: 90%;
+}
+
+.money-flow[data-state="funded"] {
+  --money-origin: 10%;
+}
+
+.money-flow[data-state="held"],
+.money-flow[data-state="released"],
+.money-flow[data-state="refunded"] {
+  --money-origin: 50%;
+}
+
+.money-flow-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: end;
+  gap: var(--s-1) var(--s-4);
+}
+
+.money-flow-head .eyebrow,
+.money-flow-head h2,
+.money-flow-statement {
+  margin: 0;
+}
+
+.money-flow-head h2 {
+  margin-top: 0.15rem;
+  color: var(--text);
+  font-size: var(--step-1);
+  letter-spacing: -0.015em;
+}
+
+.money-flow-statement {
+  color: var(--tone-text);
+  font-size: 0.9rem;
+  font-weight: 560;
+}
+
+.money-flow-track {
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) minmax(1.4rem, 0.45fr) minmax(0, 1fr)
+    minmax(1.4rem, 0.45fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0;
+  min-height: 8.25rem;
+  margin-top: var(--s-2);
+  padding-top: 3rem;
+}
+
+.money-flow-stop {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  align-self: stretch;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+  padding: 1.5rem 0.4rem 0.55rem;
+  background: rgba(255, 255, 255, 0.018);
+  color: var(--text-2);
+  text-align: center;
+  transition:
+    border-color 240ms ease,
+    background 240ms ease;
+}
+
+.money-flow-stop[data-active="true"] {
+  border-color: var(--tone);
+  background: var(--tone-wash);
+}
+
+.money-flow-stop-icon {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-bottom: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.money-flow-stop-icon > span {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.money-flow-stop[data-active="true"] .money-flow-stop-icon {
+  border-color: var(--tone);
+  color: var(--tone-text);
+}
+
+.money-flow-stop strong {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--text);
+  font-size: 0.88rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.money-flow-stop > span:last-child {
+  overflow: hidden;
+  max-width: 100%;
+  margin-top: 0.16rem;
+  font-size: 0.7rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.money-flow-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--text-3);
+}
+
+.money-flow-arrow > span {
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+}
+
+.money-flow-arrow svg {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.money-flow-token {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: var(--money-position);
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 0 0.35rem;
+  min-width: 6.9rem;
+  border: 1px solid var(--tone);
+  border-radius: 999px;
+  padding: 0.42rem 0.72rem;
+  background: #121212;
+  color: var(--tone-text);
+  text-align: center;
+  box-shadow: 0 0 0 4px var(--tone-wash);
+  transform: translateX(-50%);
+}
+
+.money-flow-token strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.money-flow-token > span {
+  color: var(--text-2);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.money-flow-token[data-locked="true"] {
+  grid-template-columns: auto auto auto;
+  border-color: var(--red);
+  color: var(--red-text);
+  box-shadow: 0 0 0 4px rgba(214, 69, 69, 0.1);
+}
+
+.money-flow-lock {
+  width: 0.9rem;
+  height: 0.9rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.money-flow-token[data-live="true"] {
+  animation: money-flow-move 720ms var(--ease-out);
+}
+
+.money-flow[data-state="held"] .money-flow-token[data-live="true"] {
+  animation: money-flow-lock 620ms var(--ease-out);
+}
+
+@keyframes money-flow-move {
+  from {
+    left: var(--money-origin);
+    opacity: 0.72;
+  }
+  55% {
+    transform: translateX(-50%) scale(1.07);
+  }
+  to {
+    left: var(--money-position);
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes money-flow-lock {
+  from {
+    opacity: 0.65;
+    transform: translateX(-50%) scale(0.9);
+  }
+  55% {
+    transform: translateX(-50%) scale(1.07);
+  }
 }
 
 .deal-hero,
@@ -501,15 +740,18 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.15em 0;
-  margin: 0;
+  margin: 0 0 0 -1.2em;
+  clip-path: inset(0 0 0 1.2em);
   color: var(--text-2);
   font-size: var(--step--1);
 }
 
-.deal-row-foot > * + *::before {
+.deal-row-foot > *::before {
   content: "·";
-  margin: 0 0.5em;
+  display: inline-block;
+  width: 1.2em;
   color: var(--text-3);
+  text-align: center;
 }
 
 /* The receipt: its own line, and a full-height tap target on a phone. */
@@ -747,6 +989,7 @@
     grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
     grid-template-areas:
       "top top"
+      "flow flow"
       "summary timeline"
       "documents timeline"
       "aside timeline";
@@ -757,6 +1000,10 @@
 
   .deal-top {
     grid-area: top;
+  }
+
+  .money-flow {
+    grid-area: flow;
   }
 
   .deal-summary {
@@ -790,6 +1037,7 @@
     grid-template-columns: minmax(0, 26rem) minmax(0, 1fr) minmax(0, 13rem);
     grid-template-areas:
       "top top top"
+      "flow flow flow"
       "summary timeline aside"
       "documents timeline aside";
     grid-template-rows: auto auto 1fr;
@@ -817,5 +1065,51 @@
   .deal-row[data-fresh="true"] {
     animation: none;
     box-shadow: 0 0 0 2px var(--gold-text);
+  }
+
+  .money-flow-stop,
+  .money-flow-token[data-live="true"],
+  .money-flow[data-state="held"] .money-flow-token[data-live="true"] {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (max-width: 31rem) {
+  .money-flow {
+    padding-inline: var(--s-3);
+  }
+
+  .money-flow-head {
+    display: grid;
+  }
+
+  .money-flow-track {
+    grid-template-columns: minmax(0, 1fr) 1rem minmax(0, 1fr) 1rem minmax(
+        0,
+        1fr
+      );
+    min-height: 7.7rem;
+  }
+
+  .money-flow-stop {
+    padding-inline: 0.2rem;
+  }
+
+  .money-flow-stop strong {
+    font-size: 0.75rem;
+  }
+
+  .money-flow-stop > span:last-child {
+    font-size: 0.62rem;
+  }
+
+  .money-flow-token {
+    min-width: 0;
+    padding-inline: 0.55rem;
+  }
+
+  .money-flow-token > span {
+    display: none;
   }
 }

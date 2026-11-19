@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import type { Parcel } from "@groundtruth/shared";
 import {
@@ -12,6 +12,7 @@ import {
 } from "../content/deal";
 import { DOCUMENTS, TIMELINE_DOCUMENT } from "../content/documents";
 import { QrCode } from "../deal/QrCode";
+import { MoneyFlow } from "../deal/MoneyFlow";
 import { DealDocuments } from "../documents/DealDocuments";
 import { shortHash } from "../documents/fileCheck";
 import { useDealDocuments } from "../documents/useDealDocuments";
@@ -39,7 +40,9 @@ import { getParcel, parcelPath, sampleParcelPath } from "../data/parcelSource";
 import "../deal/deal.css";
 
 // Wallet code loads only when a participant asks to upload or open a file.
-const DocumentsWithWallet = lazy(() => import("../documents/DocumentsWithWallet"));
+const DocumentsWithWallet = lazy(
+  () => import("../documents/DocumentsWithWallet"),
+);
 
 /** One staged deal: where the money is, why it can or cannot move, and what happened. */
 export function DealPage() {
@@ -128,6 +131,12 @@ function DealScreen({ live }: { live: LiveDeal }) {
         <LiveLine updatedAt={live.updatedAt} stale={live.stale} />
       </header>
 
+      <MoneyFlow
+        amount={deal.amount}
+        state={deal.state}
+        live={live.liveState === deal.state}
+      />
+
       <div className="deal-summary">
         <Hero
           deal={deal}
@@ -170,7 +179,9 @@ function DealScreen({ live }: { live: LiveDeal }) {
       <div className="deal-documents" id="documents">
         {participant ? (
           <Suspense
-            fallback={<DealDocuments state={documents.state} timeline={live.timeline} />}
+            fallback={
+              <DealDocuments state={documents.state} timeline={live.timeline} />
+            }
           >
             <DocumentsWithWallet
               deal={live.deal}
@@ -376,7 +387,9 @@ function Row({ row, fresh }: { row: TimelineRow; fresh: boolean }) {
             {row.citation.filename && row.citation.documentId ? (
               <>
                 {TIMELINE_DOCUMENT.relying}{" "}
-                <a href={`#document-${row.citation.documentId}`}>{row.citation.filename}</a>
+                <a href={`#document-${row.citation.documentId}`}>
+                  {row.citation.filename}
+                </a>
               </>
             ) : (
               TIMELINE_DOCUMENT.unmatched
@@ -429,7 +442,20 @@ function Handoff({ dealId }: { dealId: string }) {
         <h2 id="deal-handoff-title">{HANDOFF.title}</h2>
         <p>{HANDOFF.body}</p>
         <p className="mono deal-handoff-url">
-          {url.replace(/^https?:\/\//, "")}
+          {/* A narrow column breaks the address after a slash, not mid-word. */}
+          {url
+            .replace(/^https?:\/\//, "")
+            .split("/")
+            .map((part, index) => (
+              <Fragment key={index}>
+                {index > 0 && (
+                  <>
+                    /<wbr />
+                  </>
+                )}
+                {part}
+              </Fragment>
+            ))}
         </p>
       </div>
     </section>
