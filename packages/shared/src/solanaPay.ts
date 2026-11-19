@@ -4,10 +4,6 @@
 // wallet signs and sends it. Nothing here signs.
 import type { ApiError } from "./contract.js";
 
-/** Genesis hash of Solana devnet. The API refuses to build on any other cluster. */
-export const SOLANA_PAY_DEVNET_GENESIS_HASH =
-  "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG" as const;
-
 /** The transaction request endpoint for one deal, as a path on the API. */
 export function solanaPayFundPath(dealId: string): string {
   return `/api/deals/${encodeURIComponent(dealId)}/solana-pay/fund`;

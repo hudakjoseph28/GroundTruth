@@ -1,4 +1,5 @@
 export type {
+  ActivityEvent,
   ApiError,
   Check,
   CheckKind,
@@ -128,11 +129,7 @@ export type {
   HoldReasonCode,
 } from "./reviewerInstructions.js";
 
-export {
-  SOLANA_PAY_DEVNET_GENESIS_HASH,
-  solanaPayFundPath,
-  solanaPayUrl,
-} from "./solanaPay.js";
+export { solanaPayFundPath, solanaPayUrl } from "./solanaPay.js";
 export type {
   SolanaPayError,
   SolanaPayLabel,

@@ -1,4 +1,4 @@
-import { DEFAULT_SOLANA_RPC_URL } from "./chain/fundTransaction.js";
+import { DEFAULT_SOLANA_RPC_URL } from "./actions/devnetChain.js";
 import { DEFAULT_OGRIP_TIMEOUT_MS } from "./parcels/ogrip.js";
 import type { TwilioConfig } from "./sms/sender.js";
 import {
@@ -33,7 +33,7 @@ export interface ServerEnv {
   elevenLabsAgentId: string | undefined;
   /** Twilio for staged deal text alerts. Unset: opt-ins are refused and nothing is texted. */
   twilio: TwilioConfig | undefined;
-  /** Public Solana RPC for Solana Pay funding; must be devnet (checked by genesis hash). */
+  /** Devnet RPC for the reviewer Blink and Solana Pay funding (one setting, one connection); both refuse any other cluster by genesis hash. */
   solanaRpcUrl: string;
 }
 
@@ -106,7 +106,13 @@ function readTwilio(source: NodeJS.ProcessEnv): TwilioConfig | undefined {
 function readRpcUrl(value: string | undefined): string {
   const url = value?.trim();
   if (!url) return DEFAULT_SOLANA_RPC_URL;
-  if (!/^https?:\/\/\S+$/.test(url)) {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("SOLANA_RPC_URL must be an http(s) URL");
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
     throw new Error("SOLANA_RPC_URL must be an http(s) URL");
   }
   return url;

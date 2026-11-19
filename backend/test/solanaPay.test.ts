@@ -4,7 +4,6 @@ import { BN, BorshCoder, web3, type Idl } from "@anchor-lang/core";
 import {
   GROUNDTRUTH_ESCROW_IDL,
   GROUNDTRUTH_PROGRAM_ID,
-  SOLANA_PAY_DEVNET_GENESIS_HASH,
   TOKEN_PROGRAM_ID,
   USDC_MINT_DEVNET,
   solanaPayFundPath,
@@ -14,6 +13,7 @@ import {
 } from "@groundtruth/shared";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DEVNET_GENESIS_HASH } from "../src/actions/devnetChain.js";
 import type { FundChain } from "../src/chain/fundTransaction.js";
 
 const findUnique = vi.hoisted(() => vi.fn());
@@ -90,12 +90,9 @@ function app() {
 beforeEach(async () => {
   const data = await dealAccount();
   chain = {
-    genesisHash: vi.fn(async () => SOLANA_PAY_DEVNET_GENESIS_HASH),
+    genesisHash: vi.fn(async () => DEVNET_GENESIS_HASH),
     account: vi.fn(async () => ({ owner: GROUNDTRUTH_PROGRAM_ID, data })),
-    latestBlockhash: vi.fn(async () => ({
-      blockhash: BLOCKHASH,
-      lastValidBlockHeight: 1000,
-    })),
+    latestBlockhash: vi.fn(async () => BLOCKHASH),
   };
   findUnique.mockResolvedValue(row());
 });
@@ -296,6 +293,19 @@ describe("POST /api/deals/:id/solana-pay/fund", () => {
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe("INVALID_REQUEST");
     expect(findUnique).not.toHaveBeenCalled();
+  });
+
+  it("reads devnet through the Blink's chain when given no chain of its own", async () => {
+    const shared = createApp("test-commit", {
+      actions: { chain: chain as unknown as FundChain },
+    });
+    const res = await request(shared)
+      .post(PATH)
+      .set("content-type", "application/json")
+      .send(JSON.stringify({ account: deal.buyerWallet }));
+    expect(res.status).toBe(200);
+    expect(chain.genesisHash).toHaveBeenCalled();
+    expect(chain.account).toHaveBeenCalledWith(deal.escrowAddress);
   });
 
   it("accepts extra request fields, as the spec asks", async () => {

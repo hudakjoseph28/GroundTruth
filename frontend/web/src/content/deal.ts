@@ -234,3 +234,49 @@ export const NOT_FOUND = {
   search: "Search for a parcel",
   parcel: "Open the Franklin parcel",
 } as const;
+
+/** The deal's parcel, drawn as a small block of land beside the summary. */
+export const DEAL_LAND = {
+  /** Read by screen readers in place of the picture. */
+  description: (parcelId: string) =>
+    `Aerial imagery of parcel ${parcelId} on its terrain, with the county parcel boundary outlined.`,
+  loading: "Loading the parcel picture…",
+  seal: {
+    held: "Payout held",
+    released: "Payout released",
+  },
+  /** What the boundary's color means, in words, for the states that change it. */
+  boundary: {
+    held: "Boundary in red while a reviewer hold locks the payout.",
+    released: "Boundary in green: the payout reached the bound seller.",
+  },
+} as const;
+
+/** Stage mode (`/deals/:id?stage=1`): the same deal, sized for a projector. */
+export const STAGE = {
+  eyebrow: "GroundTruth deal",
+  staged: "Solana devnet · test USDC · staged reviewer wallets",
+  reviewers: "Required sign-offs",
+  count: (signed: number, required: number) =>
+    `${signed} of ${required} signed`,
+  status: {
+    signed: "Signed",
+    held: "Hold placed",
+    waiting: "Waiting",
+    notSigned: "Did not sign",
+  },
+  stagedWallet: "Staged wallet",
+  arrived: (role: string, status: string) => `${role} reviewer: ${status}.`,
+  paid: "Paid to seller",
+  paidLine: (amount: string) => `Paid to seller: ${amount} test USDC`,
+  paidNote:
+    "Confirmed on Solana devnet. The program paid only the bound seller.",
+  refunded: "Refunded to buyer",
+  explorer: "View the payment on Solana Explorer",
+  escrowExplorer: "View the escrow account on Solana Explorer",
+  phone: "Follow on your phone",
+  phoneBody: "Scan for this deal's live page. No app or wallet needed.",
+  fullScreen: "Full screen",
+  exit: "Exit stage mode",
+  open: "Stage mode for a projector",
+} as const;

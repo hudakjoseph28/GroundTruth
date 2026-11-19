@@ -13,8 +13,8 @@ import express, {
   type Response,
 } from "express";
 import { z } from "zod";
+import { createDevnetChain } from "../actions/devnetChain.js";
 import {
-  createFundChain,
   createFundTransactionBuilder,
   type FundBuild,
   type FundChain,
@@ -23,9 +23,8 @@ import { formatUsdc } from "../chain/usdc.js";
 import { HttpError, logSafeFailure } from "../http/errors.js";
 
 export interface SolanaPayRouteOptions {
-  /** Public devnet reads. Defaults to SOLANA_RPC_URL or api.devnet.solana.com. */
+  /** Devnet reads; the app passes the reader it shares with the Blink. */
   chain?: FundChain;
-  rpcUrl?: string;
   /** Absolute SVG/PNG/WebP URL the wallet shows next to the label. */
   iconUrl?: string;
 }
@@ -58,7 +57,7 @@ export function solanaPayRoutes(
   options: SolanaPayRouteOptions = {},
 ) {
   const build = createFundTransactionBuilder(
-    options.chain ?? createFundChain(options.rpcUrl),
+    options.chain ?? createDevnetChain(),
   );
   const iconUrl = options.iconUrl ?? DEFAULT_SOLANA_PAY_ICON;
 

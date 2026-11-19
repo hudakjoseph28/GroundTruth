@@ -1,4 +1,5 @@
 import { useId } from "react";
+import type { BoundaryTone } from "./boundaryTone";
 import type { LandAssets } from "./landAssets";
 import { regionUV } from "./landMeta";
 
@@ -12,6 +13,7 @@ export function FlatLand({
   ring,
   overlay = null,
   boundary = true,
+  tone = "gold",
 }: {
   assets: LandAssets;
   ring: number[][];
@@ -19,6 +21,8 @@ export function FlatLand({
   overlay?: string | null;
   /** False hides the gold boundary line. */
   boundary?: boolean;
+  /** How the boundary is drawn (see boundaryTone.ts). */
+  tone?: BoundaryTone;
 }) {
   const clip = useId();
   const points = ring
@@ -43,7 +47,7 @@ export function FlatLand({
       <image href={assets.imageryUrl} width="100" height="100" opacity="0.42" />
       <image href={assets.imageryUrl} width="100" height="100" clipPath={`url(#${clip})`} />
       {overlay && <image href={overlay} width="100" height="100" data-land-layers />}
-      {boundary && <polygon className="land-flat-outline" points={points} />}
+      {boundary && <polygon className="land-flat-outline" data-tone={tone} points={points} />}
     </svg>
   );
 }

@@ -3,11 +3,14 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   GROUNDTRUTH_ESCROW_IDL,
   GROUNDTRUTH_PROGRAM_ID,
-  SOLANA_PAY_DEVNET_GENESIS_HASH,
   TOKEN_PROGRAM_ID,
   USDC_MINT_DEVNET,
   fundInstruction,
 } from "@groundtruth/shared";
+import {
+  DEVNET_GENESIS_HASH,
+  type ActionChain,
+} from "../actions/devnetChain.js";
 
 /**
  * The buyer's unsigned `fund` transaction for a Solana Pay transaction
@@ -16,33 +19,11 @@ import {
  * the buyer's wallet sends it.
  */
 
-/** The public devnet reads the builder needs. Tests pass a fake. */
-export interface FundChain {
-  genesisHash(): Promise<string>;
-  /** Raw account, or null when nothing exists at the address. */
-  account(address: string): Promise<{ owner: string; data: Uint8Array } | null>;
-  latestBlockhash(): Promise<{
-    blockhash: string;
-    lastValidBlockHeight: number;
-  }>;
-}
-
-export const DEFAULT_SOLANA_RPC_URL = "https://api.devnet.solana.com";
-
-export function createFundChain(rpcUrl = DEFAULT_SOLANA_RPC_URL): FundChain {
-  const connection = new web3.Connection(rpcUrl, "confirmed");
-  return {
-    genesisHash: () => connection.getGenesisHash(),
-    account: async (address) => {
-      const info = await connection.getAccountInfo(
-        new web3.PublicKey(address),
-        "confirmed",
-      );
-      return info ? { owner: info.owner.toBase58(), data: info.data } : null;
-    },
-    latestBlockhash: () => connection.getLatestBlockhash("confirmed"),
-  };
-}
+/**
+ * The devnet reads the builder needs: the same reader (SOLANA_RPC_URL, one
+ * connection) the reviewer Blink uses. Tests pass a fake.
+ */
+export type FundChain = ActionChain;
 
 /** The deal row fields the transaction is bound to. */
 export interface FundableDeal {
@@ -120,7 +101,7 @@ export function createFundTransactionBuilder(chain: FundChain) {
     deal: FundableDeal,
   ): Promise<FundBuild> {
     if (!devnetChecked) {
-      if ((await chain.genesisHash()) !== SOLANA_PAY_DEVNET_GENESIS_HASH) {
+      if ((await chain.genesisHash()) !== DEVNET_GENESIS_HASH) {
         return { ok: false, kind: "notDevnet" };
       }
       devnetChecked = true;
@@ -167,11 +148,9 @@ export function createFundTransactionBuilder(chain: FundChain) {
       vault: onChain.vault,
       mint: onChain.mint,
     });
-    const { blockhash, lastValidBlockHeight } = await chain.latestBlockhash();
     const transaction = new web3.Transaction({
       feePayer: new web3.PublicKey(onChain.buyer),
-      blockhash,
-      lastValidBlockHeight,
+      recentBlockhash: await chain.latestBlockhash(),
     }).add(
       new web3.TransactionInstruction({
         programId: new web3.PublicKey(spec.programId),

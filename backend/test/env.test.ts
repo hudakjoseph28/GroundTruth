@@ -19,11 +19,13 @@ describe("readServerEnv", () => {
     });
   });
 
-  it("reads SOLANA_RPC_URL and refuses a value that is not a URL", () => {
+  it("reads SOLANA_RPC_URL (Blink and Solana Pay) and rejects a non-URL", () => {
     expect(
-      readServerEnv({ DATABASE_URL, SOLANA_RPC_URL: "https://rpc.example/x" })
-        .solanaRpcUrl,
-    ).toBe("https://rpc.example/x");
+      readServerEnv({
+        DATABASE_URL,
+        SOLANA_RPC_URL: " https://rpc.example/devnet ",
+      }).solanaRpcUrl,
+    ).toBe("https://rpc.example/devnet");
     expect(() =>
       readServerEnv({ DATABASE_URL, SOLANA_RPC_URL: "devnet" }),
     ).toThrow("SOLANA_RPC_URL must be an http(s) URL");

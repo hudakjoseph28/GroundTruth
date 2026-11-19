@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ESCROW, LEDGER } from "../../content/parcel";
 import type { EscrowSummary, LedgerRecord, ParcelLedger } from "../../data/ledger";
 import { readDevnetSlot } from "../BlockTransition/devnetSlot";
@@ -44,6 +44,7 @@ export function Ledger({
   dealNotice,
   revealed,
   animated,
+  after,
 }: {
   ledger: ParcelLedger;
   /** Every staged deal on this parcel the API returned, for the links under the escrow. */
@@ -54,6 +55,8 @@ export function Ledger({
   revealed: boolean;
   /** False when the visitor asked for reduced motion. */
   animated: boolean;
+  /** Shown under the checks, e.g. saving the report on Solana. */
+  after?: ReactNode;
 }) {
   const [open, setOpen] = useState<{ record: LedgerRecord; origin: Origin | null } | null>(null);
   const hidden = usePageHidden();
@@ -121,6 +124,7 @@ export function Ledger({
           {LEDGER.empty}
         </p>
       )}
+      {after}
 
       <Inspector
         record={open?.record ?? null}

@@ -24,6 +24,7 @@ import { Ledger } from "../parcel/Ledger/Ledger";
 import { LandBlock } from "../parcel/ParcelScene/LandBlock";
 import { useLandAssets } from "../parcel/ParcelScene/useLandAssets";
 import { useRenderMode } from "../parcel/useRenderMode";
+import { ReportSeal } from "../seal/ReportSeal";
 import "../parcel/parcel.css";
 
 export function ParcelPage() {
@@ -321,6 +322,7 @@ function ParcelView({ parcel }: { parcel: Parcel }) {
             dealNotice={dealNotice}
             revealed={revealed}
             animated={mode !== "reduced"}
+            after={<ReportSeal report={reportOutcome.report} />}
           />
         ) : (
           <section className="ledger ledger-pending" aria-live="polite">

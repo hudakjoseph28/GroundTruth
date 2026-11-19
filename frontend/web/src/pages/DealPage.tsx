@@ -1,12 +1,21 @@
-import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import type { Parcel } from "@groundtruth/shared";
+import {
+  Fragment,
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import type { Deal, Parcel } from "@groundtruth/shared";
 import {
   DEAL_PAGE,
   HANDOFF,
   HOLD,
   LIVE,
   REVIEWERS,
+  STAGE,
   STATE_LABELS,
   TIMELINE,
 } from "../content/deal";
@@ -14,6 +23,8 @@ import { DOCUMENTS, TIMELINE_DOCUMENT } from "../content/documents";
 import { QrCode } from "../deal/QrCode";
 import { MoneyFlow } from "../deal/MoneyFlow";
 import { SolanaPayFund } from "../deal/SolanaPayFund";
+import { StageScreen } from "../deal/stage/StageScreen";
+import { wantsStage } from "../deal/stage/stageView";
 import { DealDocuments } from "../documents/DealDocuments";
 import { shortHash } from "../documents/fileCheck";
 import { useDealDocuments } from "../documents/useDealDocuments";
@@ -39,17 +50,21 @@ import { usePageTitle } from "../layout/usePageTitle";
 import { VerifyOnChain } from "../verify/VerifyOnChain";
 import { parcelName } from "../data/address";
 import { getParcel, parcelPath, sampleParcelPath } from "../data/parcelSource";
+import { SceneBoundary } from "../parcel/SceneBoundary";
 import "../deal/deal.css";
 
 // Wallet code loads only when a participant asks to upload or open a file.
 const DocumentsWithWallet = lazy(
   () => import("../documents/DocumentsWithWallet"),
 );
+// The parcel's land block, and three.js behind it, load after the deal shows.
+const DealLand = lazy(() => import("../deal/DealLand"));
 
 /** One staged deal: where the money is, why it can or cannot move, and what happened. */
 export function DealPage() {
   const params = useParams();
   const dealId = params.dealId ?? "";
+  const [search] = useSearchParams();
   const feed = useDealFeed(dealId);
   usePageTitle(
     feed.status === "ready"
@@ -112,7 +127,12 @@ export function DealPage() {
       </section>
     );
   }
-  return <DealScreen live={feed} />;
+  // Stage mode reads the same feed; only the drawing changes.
+  return wantsStage(search) ? (
+    <StageScreen live={feed} />
+  ) : (
+    <DealScreen live={feed} />
+  );
 }
 
 function DealScreen({ live }: { live: LiveDeal }) {
@@ -145,7 +165,12 @@ function DealScreen({ live }: { live: LiveDeal }) {
         <Hero
           deal={deal}
           live={live.liveState === deal.state}
+          parcel={parcel ?? null}
+        />
+        <DealLandSlot
           parcel={parcel}
+          state={deal.state}
+          liveState={live.liveState}
         />
         {/* Only a draft can be funded; the API refuses every other state. */}
         {deal.state === "draft" && (
@@ -221,6 +246,12 @@ function DealScreen({ live }: { live: LiveDeal }) {
 
       <aside className="deal-aside">
         <Handoff dealId={deal.id} />
+        <p className="deal-stage-link">
+          <Link to={`${dealPath(deal.id)}?stage=1`}>
+            {STAGE.open}
+            <span aria-hidden="true"> →</span>
+          </Link>
+        </p>
         {deal.escrowAddress && (
           <p className="deal-account">
             {DEAL_PAGE.escrowAddress}{" "}
@@ -483,14 +514,69 @@ function NewTab() {
   );
 }
 
-/** The deal's parcel, for its county. The page does not wait for it. */
-function useParcel(parcelKey: string): Parcel | null {
-  const [loaded, setLoaded] = useState<Parcel | null>(null);
+/**
+ * Room for the parcel's land block. The block loads once the slot is near the
+ * screen; until then, and while it loads, the slot keeps its place so the
+ * reviewers below do not jump. It closes up if the parcel cannot be had.
+ */
+function DealLandSlot({
+  parcel,
+  state,
+  liveState,
+}: {
+  parcel: Parcel | null | undefined;
+  state: Deal["state"];
+  liveState: Deal["state"] | null;
+}) {
+  const slot = useRef<HTMLDivElement>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const node = slot.current;
+    if (!node || near) return;
+    const watcher = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setNear(true);
+      },
+      { rootMargin: "200px 0px" },
+    );
+    watcher.observe(node);
+    return () => watcher.disconnect();
+  }, [near]);
+
+  if (parcel === null) return null;
+  const placeholder = <div className="deal-land" aria-hidden="true" />;
+  return (
+    <div ref={slot} className="deal-land-slot">
+      {parcel && near ? (
+        <SceneBoundary fallback={null}>
+          <Suspense fallback={placeholder}>
+            <DealLand parcel={parcel} state={state} liveState={liveState} />
+          </Suspense>
+        </SceneBoundary>
+      ) : (
+        placeholder
+      )}
+    </div>
+  );
+}
+
+/**
+ * The deal's parcel, for its county and its land block. The page does not
+ * wait for it. Undefined while loading; null when it cannot be had.
+ */
+function useParcel(parcelKey: string): Parcel | null | undefined {
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    parcel: Parcel | null;
+  } | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     getParcel(parcelKey, controller.signal).then(
       (outcome) => {
-        if (outcome.status === "found") setLoaded(outcome.parcel);
+        setLoaded({
+          key: parcelKey,
+          parcel: outcome.status === "found" ? outcome.parcel : null,
+        });
       },
       () => {
         // Aborted: the page closed or moved to another deal.
@@ -498,5 +584,5 @@ function useParcel(parcelKey: string): Parcel | null {
     );
     return () => controller.abort();
   }, [parcelKey]);
-  return loaded?.key === parcelKey ? loaded : null;
+  return loaded?.key === parcelKey ? loaded.parcel : undefined;
 }

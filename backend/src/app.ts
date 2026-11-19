@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
 import type { Parcel, ParcelLayers } from "@groundtruth/shared";
 import express from "express";
+import { createDevnetChain, type ActionChain } from "./actions/devnetChain.js";
 import { applyConfirmedEvent } from "./chain/applyEvent.js";
 import { createEscrowDecoder } from "./chain/escrowDecoder.js";
 import { prisma } from "./db.js";
 import { HttpError, logSafeFailure, sendApiError } from "./http/errors.js";
+import { actionRoutes } from "./routes/actions.js";
+import { getActivity } from "./routes/activity.js";
 import { getDeal, getDealTimeline } from "./routes/deals.js";
 import {
   documentRoutes,
@@ -55,7 +58,9 @@ export interface AppOptions {
   sms?: { sender?: SmsSender; log?: (line: string) => void };
   /** Deal documents: the clock that wallet signatures are checked against. */
   documents?: DocumentRouteOptions;
-  /** Solana Pay funding: the devnet reads and the icon wallets show. */
+  /** Reviewer-approval Blink: the devnet reads it needs. Defaults to public devnet RPC. */
+  actions?: { chain?: ActionChain };
+  /** Solana Pay funding: the devnet reads (default: the same chain as the Blink) and the icon wallets show. */
   solanaPay?: SolanaPayRouteOptions;
 }
 
@@ -90,6 +95,17 @@ export function createApp(commit: string, options: AppOptions = {}) {
   );
 
   app.get("/api/health", getHealth(commit));
+
+  // Solana Actions (Blink): reviewer approval on the staged rehearsal deal.
+  // Builds unsigned transactions only; the reviewer's wallet signs.
+  // One devnet reader (SOLANA_RPC_URL, genesis-checked) for the Blink and
+  // Solana Pay unless a test passes its own.
+  const devnet = createDevnetChain();
+  const actions = actionRoutes(options.actions?.chain ?? devnet);
+  app.get("/actions.json", actions.actionsJson);
+  app.options("/actions.json", actions.preflight);
+  app.use("/api/actions", actions.router);
+
   app.get("/api/coverage", parcels.coverage);
   app.get("/api/parcels/search", parcels.search);
   // Before `:parcelKey`; `area` is never a parcel key (ohio:FIPS:ID).
@@ -112,13 +128,17 @@ export function createApp(commit: string, options: AppOptions = {}) {
       ogrip,
     }),
   );
+  app.get("/api/activity", getActivity);
   app.get("/api/deals/:id", getDeal);
   app.get("/api/deals/:id/timeline", getDealTimeline);
   const documents = documentRoutes(prisma, options.documents);
   app.get("/api/deals/:id/documents", documents.list);
   app.post("/api/deals/:id/documents", ...documents.upload);
   app.post("/api/deals/:id/documents/:documentId/file", ...documents.file);
-  const solanaPay = solanaPayRoutes(prisma, options.solanaPay);
+  const solanaPay = solanaPayRoutes(prisma, {
+    ...options.solanaPay,
+    chain: options.solanaPay?.chain ?? options.actions?.chain ?? devnet,
+  });
   app.options(
     "/api/deals/:id/solana-pay/fund",
     solanaPay.cors,

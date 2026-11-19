@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { Deal } from "@groundtruth/shared";
 import { VERIFY } from "../content/verify";
 import { explorerAddressUrl, shortAddress } from "../data/ledger";
@@ -16,7 +16,18 @@ type Check =
   | { status: "running" }
   | { status: "done"; read: ChainRead; app: Deal; comparison: Comparison | null };
 
-export function VerifyOnChain({ deal }: { deal: Deal }) {
+export function VerifyOnChain({
+  deal,
+  id = "verify",
+  intro = VERIFY.intro,
+}: {
+  deal: Deal;
+  /** The section's anchor; the deal page links to #verify. */
+  id?: string;
+  /** What the check compares with, when it is not the page it sits on. */
+  intro?: string;
+}) {
+  const titleId = useId();
   const [check, setCheck] = useState<Check>({ status: "idle" });
   const run = useRef(0);
   useEffect(
@@ -63,16 +74,16 @@ export function VerifyOnChain({ deal }: { deal: Deal }) {
   return (
     <section
       className="deal-verify"
-      id="verify"
+      id={id}
       data-result={result}
-      aria-labelledby="deal-verify-title"
+      aria-labelledby={titleId}
       aria-busy={check.status === "running"}
     >
       <header className="deal-verify-head">
         <div>
           <p className="eyebrow">{VERIFY.eyebrow}</p>
-          <h2 id="deal-verify-title">{VERIFY.title}</h2>
-          <p className="deal-verify-intro">{VERIFY.intro}</p>
+          <h2 id={titleId}>{VERIFY.title}</h2>
+          <p className="deal-verify-intro">{intro}</p>
         </div>
         {address ? (
           <button
