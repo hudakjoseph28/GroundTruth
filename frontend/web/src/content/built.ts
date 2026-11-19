@@ -4,7 +4,6 @@
  * set as wordmarks rather than drawn.
  */
 export const BUILT = {
-  eyebrow: "Built with",
   title: "Built with",
   lede: "Real parcel data, a real escrow on Solana, and a voice agent that calls the owner.",
   program: "Program on Explorer",

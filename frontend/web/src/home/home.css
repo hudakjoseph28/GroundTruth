@@ -232,15 +232,6 @@
   white-space: nowrap;
 }
 
-.hero-caption {
-  position: absolute;
-  right: var(--pad);
-  bottom: 0.8rem;
-  margin: 0;
-  color: var(--quiet);
-  font-size: 0.7rem;
-}
-
 @container page (min-width: 60rem) {
   .hero-backdrop {
     background: radial-gradient(36% 46% at 73% 62%, rgba(196, 161, 90, 0.065), transparent 72%);
@@ -2098,6 +2089,7 @@
 /* ---------- Built with ---------- */
 
 .built h2 {
+  margin-top: 0;
   max-width: none;
 }
 
