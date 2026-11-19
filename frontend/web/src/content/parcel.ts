@@ -293,12 +293,4 @@ export const INSPECTOR = {
 export const TRANSITION = {
   loading: "Loading parcel…",
   skip: "Press any key to skip",
-  slot: (slot: number) => `slot ${slot.toLocaleString("en-US")}`,
-  slotShort: (slot: number) => slot.toLocaleString("en-US"),
-  caption: {
-    pending: "Reading the latest Solana devnet slot…",
-    live: (slot: number) =>
-      `Counting up from Solana devnet slot ${slot.toLocaleString("en-US")}, read as this page opened.`,
-    illustrative: "Illustrative slot numbers. The devnet slot could not be read.",
-  },
 } as const;

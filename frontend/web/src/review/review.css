@@ -1,23 +1,16 @@
-/* Reviewer portal: phone first, one column; two columns of deals on wide screens. */
+/* Reviewer portal: phone first, one column; two columns of deals on wide
+   screens. It sits in the same column as every other page. */
 .review {
   width: 100%;
-  max-width: 44rem;
-  margin: 0 auto;
   padding: var(--space-m) var(--pad) var(--space-l);
 }
 
-.review-head h1 {
-  margin: 0.25rem 0 0.5rem;
-  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+.review-head {
+  max-width: 44rem;
 }
 
-.review-devnet {
-  margin: 0;
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  color: var(--gold-text);
-  text-transform: uppercase;
+.review-head h1 {
+  margin: 0.5rem 0;
 }
 
 .review-intro {
@@ -237,10 +230,6 @@
 }
 
 @media (min-width: 60rem) {
-  .review {
-    max-width: 72rem;
-  }
-
   .review-deals {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

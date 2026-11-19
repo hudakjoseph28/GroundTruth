@@ -317,9 +317,9 @@
 
 .site-footer {
   flex: none;
-  margin-top: var(--space-l);
+  margin-top: var(--space-m);
   border-top: 1px solid var(--border);
-  padding: var(--space-l) var(--pad) var(--space-m);
+  padding: var(--s-12) var(--pad) var(--space-m);
   color: var(--text-2);
   font-size: 0.88rem;
 }
