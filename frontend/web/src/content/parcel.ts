@@ -9,7 +9,12 @@ export const PARCEL_PAGE = {
   back: "Back to search",
   backToResults: "Back to results",
   noHouseNumber: "no house number",
+  noAddress: "No site address published",
+  loadingTitle: "Parcel",
+  /** The name when Ohio published no street. */
   title: (parcelId: string) => `Parcel ${parcelId}`,
+  /** Tab title when the page is named for a street. The ID keeps two lots on one road apart. */
+  titled: (street: string, parcelId: string) => `${street} · Parcel ${parcelId}`,
   stagedLabel: "Staged sample",
   stagedNote: "A stand-in boundary for the demo, not a surveyed lot.",
   keyLabel: "Parcel key",
@@ -68,7 +73,7 @@ export const EXPLORE = {
 
 export const AREA_VIEW = {
   title: "Google 3D imagery of the area",
-  around: (parcelId: string) => `Around parcel ${parcelId}`,
+  around: (name: string) => `Around ${name}`,
   boundary: "The gold line is the parcel boundary.",
   stagedBoundary: "The gold line is the demo's stand-in boundary, not a surveyed lot.",
   close: "Close",

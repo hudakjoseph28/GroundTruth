@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Parcel } from "@groundtruth/shared";
-import { AREA_VIEW, EXPLORE } from "../../content/parcel";
+import { AREA_VIEW, EXPLORE, PARCEL_PAGE } from "../../content/parcel";
+import { parcelName } from "../../data/address";
 import { loadMaps3d, type Camera3D, type Map3D } from "./googleMaps";
 import { googleEarthUrl, googleMapsSatelliteUrl } from "./links";
 import "./area.css";
@@ -124,7 +125,11 @@ export default function AreaView3D({
         <div>
           <h2 id="area-title">{AREA_VIEW.title}</h2>
           <p>
-            {AREA_VIEW.around(parcel.sourceParcelId)}.{" "}
+            {AREA_VIEW.around(
+              parcelName(parcel.siteAddress).street ??
+                PARCEL_PAGE.title(parcel.sourceParcelId),
+            )}
+            .{" "}
             {ring.length >= 4 && (staged ? AREA_VIEW.stagedBoundary : AREA_VIEW.boundary)}
           </p>
         </div>

@@ -23,7 +23,7 @@ export function SiteFooter() {
         <nav aria-labelledby="footer-product">
           <h2 id="footer-product">{FOOTER.columns.product}</h2>
           <ul>
-            {NAV.slice(0, 2).map((item) => (
+            {NAV.map((item) => (
               <li key={item.hash}>
                 <Link to={{ pathname: "/", hash: `#${item.hash}` }}>{item.label}</Link>
               </li>

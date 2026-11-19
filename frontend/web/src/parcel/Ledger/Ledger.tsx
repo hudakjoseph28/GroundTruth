@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { stagedLiveDeal } from "@groundtruth/shared";
 import { ESCROW, LEDGER } from "../../content/parcel";
 import type { EscrowSummary, LedgerRecord, ParcelLedger } from "../../data/ledger";
 import { readDevnetSlot } from "../BlockTransition/devnetSlot";
@@ -88,11 +87,7 @@ export function Ledger({
         <section className="closings" aria-labelledby="closings-title">
           <ClosingsHeader />
           {deals.map((deal) => (
-            <EscrowStrip
-              key={deal.dealId}
-              escrow={deal}
-              startOpen={deal.dealId === stagedLiveDeal.id}
-            />
+            <EscrowStrip key={deal.dealId} escrow={deal} />
           ))}
         </section>
       )}

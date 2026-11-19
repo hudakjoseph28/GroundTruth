@@ -1,3 +1,4 @@
+import { BuiltWith } from "../home/BuiltWith";
 import { FinalCta } from "../home/FinalCta";
 import { Hero } from "../home/Hero";
 import { HowItWorks } from "../home/HowItWorks";
@@ -20,6 +21,7 @@ export function HomePage() {
       <Seats />
       <ProofStrip />
       <FinalCta />
+      <BuiltWith />
     </div>
   );
 }
