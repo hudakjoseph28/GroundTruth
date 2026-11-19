@@ -110,6 +110,127 @@
   align-content: start;
 }
 
+/* ---------- The deal's parcel, as a small block of land ---------- */
+
+/* The slot keeps the block's room while the block loads, so nothing below jumps. */
+.deal-land {
+  position: relative;
+  overflow: hidden;
+  height: clamp(14rem, 56cqi, 18rem);
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  background:
+    radial-gradient(ellipse at 50% 62%, var(--tone-wash), transparent 70%),
+    var(--surface-1);
+}
+
+.deal-land-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.deal-land-stage .land-scene canvas {
+  cursor: default;
+}
+
+/* Without WebGL, or with motion reduced: the same imagery, flat and still. */
+.deal-land[data-flat] .land-flat {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: calc(100% - 3.25rem);
+  transform: translate(-50%, -50%);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px var(--border-strong),
+    0 20px 50px rgba(0, 0, 0, 0.55);
+}
+
+/* On the flat picture the lock is placed against the picture, not the card. */
+.deal-land[data-flat] .deal-land-stage {
+  inset: 2.5rem auto 2.75rem 50%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+}
+
+.deal-land[data-flat] .deal-land-stage .land-flat {
+  height: 100%;
+}
+
+/* What the boundary's color means, in words. */
+.deal-land-seal {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin: 0;
+  border: 1px solid var(--tone);
+  border-radius: 999px;
+  padding: 0.2em 0.65em 0.2em 0.5em;
+  background: rgba(10, 10, 10, 0.82);
+  color: var(--tone-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* The hold's lock sits on the parcel itself, small enough to leave the red
+   boundary in view. */
+.deal-land-lock {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1.5px solid var(--red);
+  border-radius: 50%;
+  background: rgba(10, 10, 10, 0.85);
+  box-shadow: 0 0 0 4px rgba(214, 69, 69, 0.18);
+  color: var(--red-text);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.deal-land-lock svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.deal-land-seal svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.deal-land-caption {
+  position: absolute;
+  right: var(--s-3);
+  bottom: var(--s-2);
+  left: var(--s-3);
+  z-index: 1;
+  color: var(--text-2);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  text-align: right;
+}
+
 /* ---------- Money flow: confirmed location of the deal amount ---------- */
 
 .money-flow {

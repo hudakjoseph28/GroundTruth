@@ -1,6 +1,14 @@
-import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useParams } from "react-router-dom";
-import type { Parcel } from "@groundtruth/shared";
+import type { Deal, Parcel } from "@groundtruth/shared";
 import {
   DEAL_PAGE,
   HANDOFF,
@@ -38,12 +46,15 @@ import { usePageTitle } from "../layout/usePageTitle";
 import { VerifyOnChain } from "../verify/VerifyOnChain";
 import { parcelName } from "../data/address";
 import { getParcel, parcelPath, sampleParcelPath } from "../data/parcelSource";
+import { SceneBoundary } from "../parcel/SceneBoundary";
 import "../deal/deal.css";
 
 // Wallet code loads only when a participant asks to upload or open a file.
 const DocumentsWithWallet = lazy(
   () => import("../documents/DocumentsWithWallet"),
 );
+// The parcel's land block, and three.js behind it, load after the deal shows.
+const DealLand = lazy(() => import("../deal/DealLand"));
 
 /** One staged deal: where the money is, why it can or cannot move, and what happened. */
 export function DealPage() {
@@ -144,7 +155,12 @@ function DealScreen({ live }: { live: LiveDeal }) {
         <Hero
           deal={deal}
           live={live.liveState === deal.state}
+          parcel={parcel ?? null}
+        />
+        <DealLandSlot
           parcel={parcel}
+          state={deal.state}
+          liveState={live.liveState}
         />
         <Reviewers deal={deal} />
         {deal.hold && <HoldCard hold={deal.hold} />}
@@ -474,14 +490,69 @@ function NewTab() {
   );
 }
 
-/** The deal's parcel, for its county. The page does not wait for it. */
-function useParcel(parcelKey: string): Parcel | null {
-  const [loaded, setLoaded] = useState<Parcel | null>(null);
+/**
+ * Room for the parcel's land block. The block loads once the slot is near the
+ * screen; until then, and while it loads, the slot keeps its place so the
+ * reviewers below do not jump. It closes up if the parcel cannot be had.
+ */
+function DealLandSlot({
+  parcel,
+  state,
+  liveState,
+}: {
+  parcel: Parcel | null | undefined;
+  state: Deal["state"];
+  liveState: Deal["state"] | null;
+}) {
+  const slot = useRef<HTMLDivElement>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const node = slot.current;
+    if (!node || near) return;
+    const watcher = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setNear(true);
+      },
+      { rootMargin: "200px 0px" },
+    );
+    watcher.observe(node);
+    return () => watcher.disconnect();
+  }, [near]);
+
+  if (parcel === null) return null;
+  const placeholder = <div className="deal-land" aria-hidden="true" />;
+  return (
+    <div ref={slot} className="deal-land-slot">
+      {parcel && near ? (
+        <SceneBoundary fallback={null}>
+          <Suspense fallback={placeholder}>
+            <DealLand parcel={parcel} state={state} liveState={liveState} />
+          </Suspense>
+        </SceneBoundary>
+      ) : (
+        placeholder
+      )}
+    </div>
+  );
+}
+
+/**
+ * The deal's parcel, for its county and its land block. The page does not
+ * wait for it. Undefined while loading; null when it cannot be had.
+ */
+function useParcel(parcelKey: string): Parcel | null | undefined {
+  const [loaded, setLoaded] = useState<{
+    key: string;
+    parcel: Parcel | null;
+  } | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     getParcel(parcelKey, controller.signal).then(
       (outcome) => {
-        if (outcome.status === "found") setLoaded(outcome.parcel);
+        setLoaded({
+          key: parcelKey,
+          parcel: outcome.status === "found" ? outcome.parcel : null,
+        });
       },
       () => {
         // Aborted: the page closed or moved to another deal.
@@ -489,5 +560,5 @@ function useParcel(parcelKey: string): Parcel | null {
     );
     return () => controller.abort();
   }, [parcelKey]);
-  return loaded?.key === parcelKey ? loaded : null;
+  return loaded?.key === parcelKey ? loaded.parcel : undefined;
 }

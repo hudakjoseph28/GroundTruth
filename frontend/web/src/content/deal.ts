@@ -221,3 +221,20 @@ export const NOT_FOUND = {
   search: "Search for a parcel",
   parcel: "Open the Franklin parcel",
 } as const;
+
+/** The deal's parcel, drawn as a small block of land beside the summary. */
+export const DEAL_LAND = {
+  /** Read by screen readers in place of the picture. */
+  description: (parcelId: string) =>
+    `Aerial imagery of parcel ${parcelId} on its terrain, with the county parcel boundary outlined.`,
+  loading: "Loading the parcel picture…",
+  seal: {
+    held: "Payout held",
+    released: "Payout released",
+  },
+  /** What the boundary's color means, in words, for the states that change it. */
+  boundary: {
+    held: "Boundary in red while a reviewer hold locks the payout.",
+    released: "Boundary in green: the payout reached the bound seller.",
+  },
+} as const;
