@@ -71,7 +71,7 @@ Depth beats a checklist. One OGRIP pipeline, one golden report, one program, two
 
 ## Milestones
 
-Owners per the [README roles table](../../README.md#team-and-roles). Every checkpoint ends with something a teammate can open, run, or verify.
+Owners per the [roles table in AGENTS.md](../../AGENTS.md#team-and-roles). Every checkpoint ends with something a teammate can open, run, or verify.
 
 | When | Checkpoint |
 | --- | --- |

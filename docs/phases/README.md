@@ -9,7 +9,7 @@
 | 3 · Connected surfaces | A signed reviewer decision shows on web and a second device. Voice supplies evidence; a Stream supplies confirmed chain state. | Satya (Joey on UI) | After both fixtures exist; target Nov 16–17 | [ConnectSurfaces](03-connect-surfaces/ConnectSurfaces.md) |
 | 4 · Pitch | Consumer submission, 2–3 minute video, 5-minute stage run, and Q&A proof sheet. | Whole team | After the core journey runs; target Nov 18 | [Pitch](04-pitch/Pitch.md) |
 
-Owners are active assignments (see [README](../../README.md#team-and-roles)). Phases 1 and 2 share the verified golden parcel and canonical deal values, but use **two independent on-chain deals** so held and released receipts both survive. A phase exits only when its named commands and manual proof pass; “the code is mostly written” is not a phase result. Hand one route, component, adapter, instruction, or integration to an agent with the [task prompt](../agents/Prompt.md).
+Owners are active assignments (see [AGENTS.md](../../AGENTS.md#team-and-roles)). Phases 1 and 2 share the verified golden parcel and canonical deal values, but use **two independent on-chain deals** so held and released receipts both survive. A phase exits only when its named commands and manual proof pass; “the code is mostly written” is not a phase result. Hand one route, component, adapter, instruction, or integration to an agent with the [task prompt](../agents/Prompt.md).
 
 ## Cross-phase gate
 

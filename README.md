@@ -1,156 +1,277 @@
-# GroundTruth
+<p align="center">
+  <a href="https://groundtruth-lac.vercel.app"><img src="docs/images/hero.jpg" alt="GroundTruth homepage: Know the land before the money moves. A parcel search box beside a 3D block of a real Franklin County lot with escrow, title, and survey callouts." width="100%"></a>
+</p>
 
-**Know the land. Know what comes next.**
+<h1 align="center">GroundTruth</h1>
 
-GroundTruth helps first-time vacant-land buyers in Ohio find a parcel, see a source-backed report on what's known and what's still open, and know exactly who acts next. When they're ready to pay, a Solana devnet USDC escrow holds the money: a reviewer's hold blocks the payout, and cleared sign-offs release it to the seller. Public records supply the evidence, professionals sign the decisions, and the chain enforces where the money goes.
+<p align="center"><strong>Know the land before the money moves.</strong></p>
 
-Built for the [UBC 2026 Hackathon](docs/ubc/UBC-Hackathon.md). **Main track: Consumer Applications. Chain award: Best Use of Solana.** Build window: Thu Nov 12, 7:00 p.m. ET kickoff → Devpost submission **Fri Nov 20, 1:00 p.m. ET** (team target 11:00 a.m. ET). Finals in person at UT Austin, Nov 21.
+<p align="center">
+  <a href="https://github.com/hudakjoseph28/GroundTruth/actions/workflows/ci.yml"><img src="https://github.com/hudakjoseph28/GroundTruth/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet"><img src="https://img.shields.io/badge/Solana-devnet-9945FF?logo=solana&logoColor=white" alt="Solana devnet"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
+</p>
 
-## Ship contract
+<p align="center">
+  <a href="https://groundtruth-lac.vercel.app"><b>Live app</b></a> ·
+  <a href="VIDEO_LINK_HERE"><b>Demo video</b></a> ·
+  <a href="https://groundtruth-lac.vercel.app/walkthrough"><b>Walkthrough</b></a> ·
+  <a href="https://groundtruth-lac.vercel.app/proof"><b>Proof page</b></a> ·
+  <a href="DEVPOST_LINK_HERE"><b>Devpost</b></a>
+</p>
 
-By the first end-to-end checkpoint, a judge can open the public site, search real Ohio parcels, inspect one honest source-backed report, and run two staged closings: one payout rejected because a title hold is active and one payout released to the bound seller after every required approval. The result is not a marketplace, legal opinion, title product, or deed-transfer system. It is a polished decision-and-payment prototype with verifiable evidence.
+GroundTruth helps a first-time buyer of vacant land in Ohio find a parcel, read what public records actually say about it (and what they don't), and pay through a Solana escrow that only releases when the professionals sign off. Public records supply the evidence. Reviewers sign the decisions from their own wallets. The Anchor program decides whether money moves.
 
-## What's live
+**Built for UBC 2026.** Track: TRACK_HERE · Chain award: Best Use of Solana · Bounties: QuickNode, ElevenLabs
 
-Checked Nov 18, 2026 against the deployed site and API and the public devnet RPC.
+## What it does
 
-| Surface | Where | What it does today |
+- **Find any Ohio parcel** by address, street, or parcel ID, using the state's published boundaries for all 88 counties.
+- **See the land in 3D** on real aerial imagery and terrain, with toggleable FEMA flood, wetlands, stream-setback, zoning, and road layers.
+- **Get a straight answer.** A "Bottom line" up top, then nine checks (flood, wetlands, septic soils, zoning, road access, and more), each with its source, its date, what it doesn't prove, and who can resolve it. Missing data says *No answer yet*. It never guesses.
+- **Pay safely.** Test USDC sits in a Solana escrow. A title, survey, or septic reviewer's hold blocks the payout on-chain; once every required reviewer approves, the exact amount goes to the seller the deal was opened with.
+- **Follow the deal from your phone**, with no app or wallet. The deal page updates from QuickNode Streams, links every step to Solana Explorer, and has a **Verify on-chain** button that checks the page against the chain from your own browser.
+
+## Screenshots
+
+All six are from the live site. The parcel and deals are real: a Franklin County lot and staged closings on Solana devnet with test USDC.
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/images/gallery-search.jpg" alt="Search results for Seaman Rd across Adams, Franklin, and Lucas counties"><br><sub><b>Search</b>: live OGRIP results across Ohio counties</sub></td>
+    <td width="33%"><img src="docs/images/gallery-land.jpg" alt="3D block of parcel 230-000918 with the boundary, stream setback, wetlands, zoning, and road layers on"><br><sub><b>3D land with layers</b>: parcel 230-000918, every layer on</sub></td>
+    <td width="33%"><img src="docs/images/gallery-report.jpg" alt="Bottom line card: Possibly buildable, but seller authority is on hold. Check first: road access. 6 of 9 checks answered."><br><sub><b>Report</b>: the Bottom line and the closings on this parcel</sub></td>
+  </tr>
+  <tr>
+    <td width="33%"><img src="docs/images/gallery-deal.jpg" alt="Released deal page: money flow from buyer to escrow vault to seller, 25 test USDC released, timeline with Explorer links and a phone QR code"><br><sub><b>Deal page</b>: money flow, timeline, phone QR</sub></td>
+    <td width="33%"><img src="docs/images/gallery-review-phone.jpg" alt="Reviewer portal on a 390 px phone, connected as the septic reviewer, showing the held deal with the title hold"><br><sub><b>/review on a phone</b>: the reviewer's own wallet signs*</sub></td>
+    <td width="33%"><img src="docs/images/gallery-verify.jpg" alt="Verify on-chain: Matches the chain, all 12 fields agree with the escrow account"><br><sub><b>Verify on-chain</b>: 12 of 12 fields match devnet</sub></td>
+  </tr>
+</table>
+
+<sub>* For this screenshot, the phone browser was given a read-only stand-in for Phantom that exposes the staged septic reviewer's public key and cannot sign. Pages built on made-up data, [`/parcels/sample`](https://groundtruth-lac.vercel.app/parcels/sample), [`/deals/sample`](https://groundtruth-lac.vercel.app/deals/sample), and [`/walkthrough`](https://groundtruth-lac.vercel.app/walkthrough), are tagged **Example · Illustrative data** on the site and are not shown above.</sub>
+
+## How it works
+
+```mermaid
+flowchart LR
+  subgraph Client["Browser and wallet"]
+    W["Web app<br/>Vite + React<br/>(Vercel)"]
+    P["Phantom / any<br/>Solana wallet"]
+  end
+
+  subgraph Server["Express API (Railway)"]
+    A["REST API<br/>search · reports · deals"]
+    WH["Signed webhooks<br/>/api/webhooks/*"]
+  end
+  DB[("PostgreSQL<br/>Prisma")]
+
+  subgraph Records["Public records"]
+    O["Ohio OGRIP parcels<br/>+ LBRS locator"]
+    F["FEMA NFHL"]
+    N["USFWS NWI"]
+    S["USDA SSURGO"]
+    C["Franklin County<br/>zoning · roads · streams"]
+  end
+
+  subgraph Solana["Solana devnet"]
+    E["Anchor escrow program<br/>ASQoBt…EBZG"]
+    V["USDC vault<br/>(ATA owned by deal PDA)"]
+  end
+
+  QN["QuickNode Stream<br/>filtered to the program"]
+  EL["ElevenLabs Agent<br/>owner callback"]
+
+  W -- "/api/*" --> A
+  A --> DB
+  WH --> DB
+  A --> O & F & N & S & C
+  P -- "signs fund · approve · hold · release · refund" --> E
+  E -- "SPL token transfers" --> V
+  W -. "Verify on-chain: public RPC read" .-> E
+  E -- "confirmed blocks" --> QN
+  QN -- "HMAC-signed POST" --> WH
+  EL -- "HMAC-signed post-call webhook" --> WH
+```
+
+The browser only ever calls the GroundTruth API and the user's wallet. Provider keys and webhook secrets live on Railway. The API builds unsigned transactions (Solana Pay, Blinks) but **never signs for a buyer, seller, or reviewer**.
+
+**A deal, from search to payout**
+
+1. **Search.** The buyer finds a lot. The API reads its OGRIP boundary and runs every check at once, each with its own timeout. A slow or failed source becomes `unknown`, never a yes or no.
+2. **Open the escrow.** `initialize_deal` fixes the buyer, seller, seller payout account, reviewers, mint, and amount in a deal PDA.
+3. **Fund.** The buyer signs `fund` (from the deal page, or by scanning a Solana Pay QR code), and the exact amount moves into the vault.
+4. **Review.** Title, survey, and septic reviewers open `/review` and sign `sign_approval` or `place_hold` from their own wallet. An approval can carry a document's SHA-256 in a Memo.
+5. **Watch.** QuickNode streams each confirmed program transaction to the API, and the deal page updates for anyone holding the link.
+6. **Settle.** With every approval in and no hold, `release` pays the bound seller. With a hold, `release` fails with `DealHeld`, and only the buyer can `refund`.
+
+## On-chain (Solana)
+
+**Program:** [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet) on devnet. Rust + Anchor 1.2.2, [deploy transaction](https://explorer.solana.com/tx/4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU?cluster=devnet). Its published IDL ([`uQZLX7r…wZma`](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)) is identical to the checked-in one, and a backend test checks that. Source: [`escrow/programs/groundtruth_escrow`](escrow/programs/groundtruth_escrow/src).
+
+| Instruction | Signer | What the program enforces |
 | --- | --- | --- |
-| Web | <https://groundtruth-lac.vercel.app> (Vercel) | Homepage, search of live Ohio parcels by address or parcel ID, and a parcel page with the boundary Ohio publishes, a 3D land view, and a source-backed report. A deal page at `/deals/:dealId` reads the deal and its timeline from the API, checks the timeline every 2 seconds, links each confirmed row to Solana Explorer, and shows a QR code on desktop for opening it on a phone. While a deal is a draft, it also shows a Solana Pay QR code and link: the buyer's wallet gets the unsigned `fund` transaction from the API, then signs and sends it. The golden parcel's closing strip reads the same API. |
-| API | <https://api-production-db8a8106.up.railway.app> (Railway, with its own Postgres) | `GET /api/health`, `/api/coverage`, `/api/parcels/search`, `/api/parcels/:parcelKey`, `/api/parcels/:parcelKey/report`, `/api/deals/:id`, `/api/deals/:id/timeline`, the Solana Pay transaction request `/api/deals/:id/solana-pay/fund` (builds the buyer's `fund` unsigned; the API never signs), and signed webhooks for QuickNode and ElevenLabs. The web forwards `/api/*` here, so browser code calls relative paths. |
-| Escrow | Solana devnet, program [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet) | Anchor program with 6 instructions (`initialize_deal`, `fund`, `sign_approval`, `place_hold`, `release`, `refund`) and 6 events, covered by 78 Anchor integration tests. Both demo closings ran on Nov 18. |
+| `initialize_deal` | buyer | Creates the deal PDA and vault. Amount > 0, mint must be Circle devnet USDC, seller ≠ buyer, payout account must be the seller's USDC ATA, 1–8 unique reviewers (none can be the buyer or seller), at least one required. |
+| `fund` | buyer | Only from `Draft`. Moves exactly `amount` from the buyer's USDC account into the vault and checks the vault grew by exactly that. → `Funded` |
+| `sign_approval` | assigned reviewer | Only while `Funded`. The wallet must be assigned to the deal with that role. One approval per reviewer. |
+| `place_hold` | assigned reviewer | Only while `Funded`. Records the reviewer, role, reason code (e.g. `SellerIdentityDisputed`), and time. → `Held` |
+| `release` | anyone (fee payer) | Fails with `DealHeld` (6019) if a hold exists. Needs `Funded` and every required approval. Sends exactly `amount` to the bound seller's account and closes the vault once it is empty. → `Released` |
+| `refund` | bound buyer | Only while `Held`. Sends exactly `amount` back to the buyer's own USDC account and closes the vault once it is empty. → `Refunded` |
 
-Merging to `main` does not redeploy; see [backend/README.md](backend/README.md#deployment).
+Each instruction emits an Anchor event (`DealInitialized`, `DealFunded`, `ApprovalSigned`, `HoldPlaced`, `DealReleased`, `DealRefunded`). The backend decodes these with the IDL's Borsh coder.
 
-**Parcel data.** Search and boundaries come from Ohio's statewide OGRIP parcel layer, which covers all 88 counties. We tested it in Franklin and Licking counties. A lot published with house number 0, such as the golden parcel at `0 SEAMAN RD`, is found by locating the street, because the address locator has no point for house number 0; the deployed API does this today. Live reports add a FEMA flood check in the 83 counties with an NFHL study and, in Franklin County, a zoning check. On `main` but **not deployed** as of Nov 19, 03:45 UTC (the API reports `70943b9`, #39): `/explore`, a full-screen map of Ohio that draws every parcel outline in view from zoom 15 in (`GET /api/parcels/area`, at most 500 per view), with a card per parcel that opens its report; a wetlands check from the National Wetlands Inventory in all 88 counties; road-access and riparian stream-setback checks in Franklin County; and street-only search (`Seaman Rd`). See [Readiness](docs/phases/04-pitch/Readiness.md). Seeded reports cover the golden parcel `ohio:39049:230-000918` (Franklin) and the second-county parcel `ohio:39089:00500729609000` (Licking). Missing or timed-out evidence stays `unknown`. What was tested: [Coverage](docs/phases/02-parcel-research/Coverage.md).
+**Accounts.** The deal is a PDA at seeds `["deal", buyer, deal_id]`, where `deal_id` is 32 bytes (for the demo deals, `sha256` of a fixed label, so every address is known in advance). It stores the parties, the seller payout account, the mint, the vault, the amount, the state, up to 8 reviewer assignments, and any hold. The **vault** is the deal PDA's associated USDC token account, so only the program can move funds out of it, signing with the PDA's seeds.
 
-**Example closing (for the demo video).** `/parcels/sample`, `/deals/sample`, and `/walkthrough` show a made-up lot, 250 Hashing Rd (EX-000250), and a made-up released deal, all from one file, [`exampleFixture.ts`](frontend/web/src/example/exampleFixture.ts). The aerial imagery and elevation under the lot are real (baked from rural Franklin County); its flood zone, wetland, setback, zoning, right-of-way, report, deal, documents, and call are invented. Every one of these pages carries an "Example · Illustrative data" tag, and their receipts are never linked to Solana Explorer. They read nothing from the API or devnet, and no real parcel or deal falls back to them.
+**Guarantees**
 
-**Escrow on devnet.** Program [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet), deployed in [`4jSbDsp…P8NU`](https://explorer.solana.com/tx/4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU?cluster=devnet) (#22). Its on-chain Anchor IDL ([`uQZLX7r…wZma`](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)) is identical to the checked-in one. Both closings use the golden parcel, 25 test USDC (Circle's devnet mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`), and staged wallets for the buyer, the seller, and the title, survey, and septic reviewers. All eleven transactions are finalized.
+- **Terms are locked before funding.** Buyer, seller, payout account, reviewers, mint, and amount are set in `initialize_deal`. No instruction changes them later.
+- **Exact payout to the bound seller.** `release` transfers `deal.amount`, no more and no less, to the payout account stored at setup. A different destination is rejected.
+- **A hold blocks release.** `release` checks for a hold first and fails with `DealHeld`. The vault and seller balances don't move.
+- **Only the buyer can refund**, and only after a reviewer's hold. Funds can only go back to the buyer's own USDC account.
+- **No double settlement.** `Released` and `Refunded` are terminal, so a second `release` or `refund` fails the state check.
 
-| Deal | Outcome | Key transactions |
+These rules are covered by 78 Anchor integration tests in [`escrow/tests`](escrow/tests/groundtruth_escrow.ts): wrong mint, wrong destination, unassigned signer, duplicate approval, missing approval, approval after hold, and repeated settlement.
+
+**Document hashes via Memo.** In `/review`, a reviewer can attach a document to their approval. The transaction carries a Memo v1 instruction `groundtruth:doc:<sha256>` next to `sign_approval`. The Stream passes the memo through, and the deal timeline shows which file the reviewer relied on, so anyone with the file can re-hash it and compare. Example: the septic approval [`3WEAsdUE…9Q9w`](https://explorer.solana.com/tx/3WEAsdUEaYQsBiB4eY39mDJ2kSS82fpB8tnTwS5tGV7yo1CkjrNAx1rBsmma45BUr6gF2Zv7PdQFSEz5D5cj9Q9w?cluster=devnet) on a rehearsal deal. Separately, the parcel page can save a report's SHA-256 fingerprint as a Memo from the visitor's own wallet.
+
+**Devnet receipts (Nov 18, 2026, 25 test USDC each)**
+
+| Outcome | Transaction | Balances (buyer / vault / seller) |
 | --- | --- | --- |
-| Held, [`54Va6q…E4tW`](https://explorer.solana.com/address/54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW?cluster=devnet) | The title reviewer's hold blocked the payout. The release was **rejected** with `DealHeld (6019)`: vault 25 → 25, seller 0 → 0. The buyer was then refunded. | Fund [`grkKU9…dd74`](https://explorer.solana.com/tx/grkKU9YqV1xpAkHySCjdhLgavpd5dW3mJsvbiZ1tjEyvuHC9T373Hmscubsm8UapaA7j93pHrseJMepw1C3dd74?cluster=devnet) · hold [`5QovFT…J2ib`](https://explorer.solana.com/tx/5QovFTbAMquUY5M5NpJwZPUJhtcKAcmQ5xmZhvFWT46KfPh3UBkaQMhgQhcuphBqvTiYLUgTmNNS7b8tyR7JJ2ib?cluster=devnet) · rejected release [`Rro8WA…vwGz`](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet) · refund [`SgPJ9j…yaSo`](https://explorer.solana.com/tx/SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo?cluster=devnet) |
-| Released, [`3uBECm…y2yu`](https://explorer.solana.com/address/3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu?cluster=devnet) | After three reviewer approvals, the release **paid exactly 25 test USDC** to the bound seller (0 → 25) and closed the vault. | Fund [`4a2HxS…txgR`](https://explorer.solana.com/tx/4a2HxSta9rKio7BsFMVzTvKfA9yBBSzr9uFzJEtDDNG3wJi7hzsJCgkM8SuCt3qQfkUCg4VUM8VCwxHykhDwtxgR?cluster=devnet) · approvals [`5Rnsas…jBqt`](https://explorer.solana.com/tx/5Rnsas4nLpLJM8ss63dB2768wbTRJteEWBMCE7Z4njzE1JNk547WQ7nQdp38W8Go25tX2YsQtvvn5nRNdEV5jBqt?cluster=devnet) [`3D8ahB…jL9P`](https://explorer.solana.com/tx/3D8ahBLYuhCiZfNZcMgQZZ3UQnHeoNcBFCgu9NLbyao1TZUMCKBn4RjWcKYJhQupNiZy1JiXnyN8UUARFM57jL9P?cluster=devnet) [`7tnvjT…S2fb`](https://explorer.solana.com/tx/7tnvjTxYw6vu7xFKCDTJ4fJGjerS6SCJ3QfSkFn3N916bXaBVEmBnrYwrF9hHSFyCurox1Kct9YdcJGxm4XS2fb?cluster=devnet) · release [`5kWpcH…vHdC`](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet) |
+| **Hold blocks payout.** Release rejected with `DealHeld` (6019) | [`Rro8WA…vwGz`](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet) | 15 / 25 / 0 → **unchanged** |
+| **Refund** to the buyer after the hold | [`SgPJ9j…yaSo`](https://explorer.solana.com/tx/SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo?cluster=devnet) | 40 / closed / 0 |
+| **Release** after three approvals | [`5kWpcH…vHdC`](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet) | 15 / closed / **25** |
 
-The API reports the held deal as `refunded`, and its timeline includes the confirmed `releaseRejected` row. **Those rows came from `replay:devnet`, not QuickNode.** The replacement Stream started at about slot 523724025, after both closings, so it delivered none of their 11 transactions, and QuickNode backfill needs a paid plan. The released deal was backfilled the same way: at 19:01 UTC on Nov 18 the live API still showed it as `draft`, and at 19:05 UTC as `released` with its six chain rows. The run's recorded output and each step's balances are in [#31](https://github.com/hudakjoseph28/UBC-Hackathon/pull/31).
-
-A third deal, the stage deal `staged-devnet-deal-live` ([`2UrftJ…F6Cg`](https://explorer.solana.com/address/2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg?cluster=devnet), 10 test USDC), is half-run for the live demo: initialize [`jmK7fg…pPeE`](https://explorer.solana.com/tx/jmK7fg1PBNa2kYfqbvaDJ3sNWCBSUM4gAbEp529M5QHYeg145EF9RpKGaHKThkZ9PGt2Q9o1jDRFG2ny2GApPeE?cluster=devnet), fund [`5waYrx…PxH5`](https://explorer.solana.com/tx/5waYrx5rD6y7sZttZ73i7H2v1eFyqXvuCkuwxBKC11atb5DQi3CsgHrEyUYrwppxTPPHowg1uxxRejrcaVrJPxH5?cluster=devnet), and the title [`2VSXvY…sFPL`](https://explorer.solana.com/tx/2VSXvYoKQcaHxfK6V8zCFZE9imyBxE8ZF3b8RK7snsP57HxrWdpnYVWUT8puLoZ53bKzvoas2CyuvBUZeRGvsFPL?cluster=devnet) and survey [`Gj327z…M89V`](https://explorer.solana.com/tx/Gj327zRzpfPwqmnTW669iuBQ1DK8e1PTWSMoQKmZcvezZZuZTwFded8mea1bHvHsKLDnfYCBS1w4YikYeNsM89V?cluster=devnet) approvals, in slots 523727603–523727618. The deal is funded with the title and survey approvals on chain; the septic approval and the release are saved for the live demo on Saturday, Nov 21.
+Held deal [`54Va6q…E4tW`](https://explorer.solana.com/address/54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW?cluster=devnet) · released deal [`3uBECm…y2yu`](https://explorer.solana.com/address/3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu?cluster=devnet). The full step-by-step tables are in [`escrow/demo-results/`](escrow/demo-results/README.md) and on the [proof page](https://groundtruth-lac.vercel.app/proof).
 
 ## Sponsor integrations
 
-| Sponsor | Product and role | Configuration | Status |
-| --- | --- | --- | --- |
-| **QuickNode** | **Streams** push confirmed escrow events into the deal timeline. Confirmed chain state wins over cached state. | Network **Solana Devnet**, dataset **Block**. The filter, [`groundtruth-filter.js`](backend/quicknode/groundtruth-filter.js), keeps successful transactions of program `ASQoBt…EBZG` and failed `release` attempts. Destination: **Webhook** → `https://api-production-db8a8106.up.railway.app/api/webhooks/quicknode`, HMAC-signed with the Stream's token. | **Live delivery recorded on Nov 18.** The stage deal's four transactions (initialize, fund, title and survey approvals; slots 523727603–523727618) were applied straight from the Stream, with no replay: the API logged `quicknode applied` for `DealInitialized`, `DealFunded`, and both `ApprovalSigned` events ([Railway log](docs/proof/quicknode-stage-prep.png)). Railway's HTTP log shows each webhook arriving 1–2 s after its block (18:57:20–18:57:24 UTC). The 1.8–3.3 s first measured on the deal timeline came from polling the timeline API every 1.5 s against whole-second block times, so it includes up to 1.5 s of polling delay. The screenshot's app-log lines are all stamped 13:57:29 EST; the arrival times come from the HTTP log, which is not in the repo. The held and released deals were backfilled with `replay:devnet` because QuickNode backfill needs a paid plan, so they are not Stream deliveries. Not yet measured: the update on a second device. An unsigned POST to the webhook gets `401`. |
-| **ElevenLabs** | **ElevenLabs Agents** outbound call (via a Twilio number). An agent phones a consenting teammate who plays the owner of record and asks whether they are selling. The answer becomes **evidence** for the title reviewer and never approves, holds, or releases a deal. | Post-call webhook `POST /api/webhooks/elevenlabs`, HMAC-verified. It stores the outcome and conversation ID, never the transcript, audio, or phone number. | **Staged call recorded on Nov 18.** A real **ElevenLabs Agents** call to a consenting teammate playing the owner of record (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`) ended at 22:10:40 UTC on Nov 18. The API verified its signed post-call webhook and logged `elevenlabs recorded ownerDeniesSale conv_9801m7rbaxvye0yrq4jmyzfyq6xz deal=staged-devnet-deal` at 22:10:54 UTC ([Railway log](docs/proof/elevenlabs-owner-callback.png)). The held deal `staged-devnet-deal` now has an `Evidence received` row on its timeline. The call was recorded **after** that deal's hold (17:41 UTC) and refund (17:46 UTC), so the row appears after them. It is shown as evidence only and changed no deal state. An unsigned POST to the webhook gets `401`. |
+### QuickNode Streams: confirmed chain state drives the timeline
 
-Setup, payload shapes, and proofs: [backend/README.md](backend/README.md#quicknode-stream-webhook) and [ElevenLabs owner callback](backend/README.md#elevenlabs-owner-callback).
+- **Stream:** Solana Devnet, **Block** dataset, destination **Webhook** → `POST /api/webhooks/quicknode`.
+- **Filter** ([`groundtruth-filter.js`](backend/quicknode/groundtruth-filter.js)): keeps every successful transaction that touched the escrow program (directly or by CPI), plus failed `release` attempts, so a `DealHeld` rejection appears on the timeline too. It also passes the text of any Memo instructions, which carry document hashes.
+- **Webhook:** checks QuickNode's HMAC-SHA256 signature (`X-QN-Signature`) against the raw body and decodes events with the program's IDL. Only logs written while our program is executing count. Rows are deduplicated by signature and event index, so retries and replays do nothing. An event the stored deal can't accept (an approval after a hold, a payout to someone else) is refused, not applied. Unsigned requests get `401`.
+- **Measured:** on Nov 18, the live stage deal's four transactions (initialize, fund, and the title and survey approvals) were applied straight from the Stream. Railway's HTTP log shows each webhook arriving **1–2 s after its block**. → [Proof](https://groundtruth-lac.vercel.app/proof#quicknode) · [log screenshot](docs/proof/quicknode-stage-prep.png)
+- Details: [backend/README.md § QuickNode Stream webhook](backend/README.md#quicknode-stream-webhook).
 
-Do not describe a route, test, deployment, or integration as working until the corresponding artifact exists and has been run.
+### ElevenLabs: an owner callback, as evidence only
 
-## The demo story
+- **What:** an **ElevenLabs Agents** outbound call (through a Twilio number) phones the owner on record and asks whether they are selling. This targets seller-impersonation fraud. In the demo, the "owner" is a consenting teammate. No real parcel owner is called.
+- **How:** the agent's `sale_answer` data-collection field arrives through ElevenLabs' HMAC-signed post-call webhook (`POST /api/webhooks/elevenlabs`). It becomes an **Evidence received** row on the deal timeline for the title reviewer. Only the outcome and conversation ID are stored. No transcript, audio, or phone number is stored.
+- **Never authorization.** The call cannot approve, hold, or release anything. Only a reviewer's signature does that.
+- **Recorded:** conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz` on Nov 18. The API logged `elevenlabs recorded ownerDeniesSale … deal=staged-devnet-deal` at 22:10:54 UTC. → [Proof](https://groundtruth-lac.vercel.app/proof#elevenlabs) · [log screenshot](docs/proof/elevenlabs-owner-callback.png) · [agent prompt](backend/elevenlabs/owner-callback-agent.md)
 
-1. **Find it.** A first-time buyer searches real parcels across Ohio counties by address or parcel ID.
-2. **Understand it.** They open a lot and see its biggest open question (say, legal road access) with the dated source and who can resolve it.
-3. **Block a bad payout.** On a disputed deal, an ElevenLabs owner callback flags the seller, a title reviewer signs a hold, and the release **fails on-chain** with the balance intact.
-4. **Release a good one.** On a cleared deal, the final approval lands through a QuickNode Stream and the seller is paid in devnet USDC, with an Explorer link for both outcomes.
+### Circle devnet USDC
 
-## Team and roles
+Every deal is denominated in Circle's devnet test USDC, mint [`4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`](https://explorer.solana.com/address/4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU?cluster=devnet). The program hard-codes it and rejects any other mint.
 
-These are the working assignments. A changed assignment is written here and in the affected phase file before work moves.
+### Solana Pay and Blinks
 
-| Owner | Owns | Phase |
+- **Solana Pay:** while a deal is a draft, its page shows a QR code for the [transaction request](backend/README.md#solana-pay-funding-transaction-request) `/api/deals/:id/solana-pay/fund`. The wallet receives an unsigned `fund` that only the buyer can sign. Funded on devnet: [`2SdfcZ…TH3u`](https://explorer.solana.com/tx/2SdfcZHdc3sUdgjksEKLnMBvV3XkTRXf1ipVwU4esH13NRjEGQous3yNpeXBxwk2xWXtNh3Thck7xcG1EphWTH3u?cluster=devnet) ([record](escrow/demo-results/devnet-solana-pay-fund-v1.md)).
+- **Blink:** a [Solana Action](backend/README.md#reviewer-approval-blink-solana-action) (spec 2.4) lets an assigned reviewer sign their approval from any Blink client. `/actions.json` is live. It covers the rehearsal deal only, and it now shows as disabled because every reviewer on that deal has signed.
+
+## Data sources
+
+| Source | Used for | Coverage |
 | --- | --- | --- |
-| **Joey Hudak** | Buyer UI / frontend (web): homepage + globe, search, parcel report, closing view | 2 & 3 (UI) |
-| **Gagan** | Parcel evidence and data: Ohio OGRIP parcels, FEMA flood, the report pipeline. Gagan originated the GroundTruth idea. | 2 |
-| **Kadhir** | Solana escrow: Anchor program, USDC vault, hold, release, refund | 1 |
-| **Satya** | Backend API, integrations (QuickNode Streams, ElevenLabs), deployment | 3 |
+| [Ohio OGRIP statewide parcels](https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0) + LBRS address locator | Search by address, street, or parcel ID; published boundaries; the `/explore` map | All 88 Ohio counties |
+| [FEMA National Flood Hazard Layer](https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer) | Flood zone, Special Flood Hazard Area, floodway, FIRM panels | The 83 Ohio counties with an NFHL study. The other 5 return `unknown`. |
+| [USFWS National Wetlands Inventory](https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0) | Wetland types and their share of the lot | Wherever NWI has mapped. Unmapped areas are `unknown`, never "none". |
+| USDA NRCS SSURGO, through Soil Data Access (fallback: Esri Living Atlas [USA Soils Map Units](https://www.arcgis.com/home/item.html?id=d4c54647dd4c4405a9f4f0bc9fd351e9), USDA's gSSURGO) | Septic-tank absorption field rating per soil map unit | Every Ohio parcel. A screening, not a site evaluation. |
+| Franklin County layers: FCEDP zoning districts, road right-of-way and road sections, stream buffers, Auditor | Zoning, road access, riparian stream setbacks, legal acreage | Franklin County only |
+| USDA NAIP imagery (USGS National Map), AWS Terrain Tiles | The 3D land view | Imagery and elevation only, never a finding |
 
-The frontend should be the lightest and quickest piece to ship (target: under 3 days). After that, **Joey floats and helps anywhere**, starting with backend and escrow integration.
+Every check stores its source URL and `retrievedAt`. How each one works and what was tested: [backend/README.md](backend/README.md#parcel-report-live-ogrip--fema--usda-ssurgo) · [Coverage](docs/phases/02-parcel-research/Coverage.md).
 
-## Decisions that are closed
+## Tech stack
 
-- **Product:** Ohio-first parcel research followed by conditional settlement; responsive web is the product and native mobile is out of scope this week.
-- **Competition:** Consumer Applications + Best Use of Solana, plus the ElevenLabs bounty (its staged call is recorded; see Sponsor integrations). QuickNode Streams is entered only after its second-device check passes.
-- **Stack:** pnpm workspace, Vite + React + TypeScript, Express + Prisma + PostgreSQL, Anchor on Solana devnet, Vercel for web, Railway for API and database.
-- **Data:** OGRIP statewide parcels for discovery; deeper evidence only where an authoritative source is verified. Missing data remains missing.
-- **Contract:** everyone codes against [DataContract.md](docs/architecture/DataContract.md) (v1). Change it deliberately with the affected owners; never fork a private version.
+| Layer | Tools |
+| --- | --- |
+| Web | React 19, Vite, TypeScript, Three.js, MapLibre GL, react-globe.gl, Solana wallet adapter (Phantom) |
+| API | Node 26, Express 5, Zod, Prisma, PostgreSQL 16 |
+| Chain | Rust, Anchor 1.2.2, SPL Token, SPL Memo, `@solana/web3.js`, Solana Pay transaction requests, Solana Actions (Blinks) |
+| Integrations | QuickNode Streams, ElevenLabs Agents + Twilio, Circle devnet USDC |
+| Shared | `@groundtruth/shared`: one TypeScript contract, the IDL, fixtures, and PDA helpers for web, API, and scripts |
+| Tests and CI | Vitest, Supertest, Anchor/Mocha, LiteSVM, GitHub Actions |
+| Hosting | Vercel (web), Railway (API + Postgres) |
+
+## Run it locally
+
+Requires **Node 26** (`.nvmrc`). pnpm does not need to be installed: the setup script runs the pinned `pnpm@12.18.0` through `npx`.
+
+```bash
+git clone https://github.com/hudakjoseph28/GroundTruth.git && cd GroundTruth
+nvm install && nvm use          # Node 26
+npm run setup                   # pnpm install --frozen-lockfile, then build every package
+```
+
+**Fastest: the web app against the deployed API** (no database, no keys):
+
+```bash
+GROUNDTRUTH_API=https://api-production-db8a8106.up.railway.app npx --yes pnpm@12.18.0 --filter @groundtruth/web dev
+# open http://localhost:5173 and search 230-000918 or "84 W Dodridge St"
+```
+
+**Full stack: your own API and Postgres 16.** Webhook and voice secrets are optional. Without them, those routes answer `503`.
+
+```bash
+docker run --name groundtruth-postgres -e POSTGRES_USER=groundtruth -e POSTGRES_PASSWORD=groundtruth \
+  -e POSTGRES_DB=groundtruth -p 5432:5432 -d postgres:16
+cp backend/.env.example backend/.env           # DATABASE_URL already points at that container
+npx --yes pnpm@12.18.0 --filter @groundtruth/backend db:migrate
+npx --yes pnpm@12.18.0 --filter @groundtruth/backend db:seed
+npx --yes pnpm@12.18.0 --filter @groundtruth/backend dev     # API on :3001
+npx --yes pnpm@12.18.0 --filter @groundtruth/web dev         # web on :5173, proxies /api to :3001
+```
+
+## Testing
+
+| Suite | Command | Tests | In CI |
+| --- | --- | --- | --- |
+| Backend unit + route (recorded provider responses, no network) | `pnpm --filter @groundtruth/backend test` | 774 | ✅ |
+| Web | `pnpm --filter @groundtruth/web test` | 190 | ✅ |
+| Backend against Postgres 16 | `pnpm --filter @groundtruth/backend test:db` | 49 | ✅ |
+| Anchor escrow (local validator) | `pnpm escrow:test` | 78 | needs the Solana, Anchor, and Rust toolchains, so it runs locally |
+
+Counts are from `main` on Nov 19, 2026. [CI](.github/workflows/ci.yml) runs on every PR and every push to `main`: typecheck, lint, the backend and web tests, the web build, and `db:migrate` → `db:seed` → `test:db` against a Postgres 16 service. It uses no secrets. The backend also replays the **real recorded devnet transactions** of both closings through the same filter, webhook, and decoder that live deliveries use.
 
 ## Repo map
 
 ```text
-README.md                 ← you are here
-AGENTS.md                 rules for AI agents (and humans) working in this repo
-docs/
-  ubc/UBC-Hackathon.md    tracks, prizes, judging, dates, submission checklist
-  context/Problem.md      the buyer, the problem, the cited evidence
-  context/ReferenceBuilds.md  earlier projects: what to adapt, what to leave behind
-  architecture/Architecture.md  system boundaries and flows
-  architecture/Decisions.md     accepted hackathon decisions and replacement triggers
-  architecture/DataContract.md  shared types, REST routes, escrow instructions (v1)
-  design/Vision.md        how the website should look and feel (+ vision.jpg)
-  phases/                 build order, owners, acceptance checks
-  agents/Prompt.md        task template for handing work to an agent
-packages/shared/          `@groundtruth/shared` v1 types, golden and second-county parcel fixtures, staged deal
-frontend/web/             Vite app: homepage, live Ohio parcel search, parcel view and report, deal page
-frontend/mobile/          reserved; native app is out of core scope
-backend/                  Express API: live OGRIP search, live and seeded parcel reports, staged deals
-escrow/                   Anchor program: 6 instructions, USDC vault, reviewer holds, release, and refund
+frontend/web/        Vite + React app: home, search, /explore, parcel report + 3D land, deal page, /review, /proof, /roadmap, /walkthrough
+backend/             Express API: OGRIP search, report pipeline, deals, Solana Pay + Actions, QuickNode and ElevenLabs webhooks
+  quicknode/         Stream filters pasted into QuickNode
+  elevenlabs/        the owner-callback agent's prompt and data-collection spec
+  prisma/            schema and migrations
+escrow/              Anchor program (programs/), 78 integration tests (tests/), devnet demo scripts and receipts (scripts/, demo-results/)
+packages/shared/     @groundtruth/shared: API contract types, escrow IDL, PDA helpers, fixtures
+docs/                problem, architecture, data contract, decisions, phases, pitch, proof screenshots, README images
 ```
 
-## Quickstart
+Start with [Architecture](docs/architecture/Architecture.md), the [data contract](docs/architecture/DataContract.md), and the [decision log](docs/architecture/Decisions.md). Contributors and AI agents should read [AGENTS.md](AGENTS.md).
 
-Use Node 26 (`.nvmrc`). From a fresh clone, `npm run setup` installs the locked packages with pnpm 12.18.0 and builds them. pnpm does not need to be on `PATH`: where a command below says `pnpm`, `npx --yes pnpm@12.18.0` works the same.
+## Team
 
-```bash
-npm run setup
-pnpm -r typecheck
-pnpm lint
-pnpm --filter @groundtruth/backend test        # unit and route tests; no database or network
-pnpm --filter @groundtruth/web build
-```
-
-**Run the web against the deployed API** (no database needed):
-
-```bash
-GROUNDTRUTH_API=https://api-production-db8a8106.up.railway.app pnpm --filter @groundtruth/web dev
-```
-
-Then open <http://localhost:5173> and search `230-000918` or `84 W Dodridge St`.
-
-**Run the API locally.** Start Postgres 16, then follow [backend/README.md](backend/README.md#local-database) (`db:migrate`, `db:seed`, `dev`, port 3001). Without `GROUNDTRUTH_API`, the web dev server forwards `/api` to `http://localhost:3001`. `pnpm --filter @groundtruth/backend test:db` runs the database tests.
-
-**Escrow:** `pnpm escrow:test` runs the 78 Anchor tests. It needs the Solana CLI, Anchor CLI, and Rust. [escrow/scripts/demo-deals.ts](escrow/scripts/demo-deals.ts) runs the two demo closings on devnet.
-
-**CI:** [GitHub Actions](.github/workflows/ci.yml) runs on every PR to `main` and every push to it. It typechecks shared and all packages, lints, runs backend unit tests, builds the web app, and runs backend `test:db` against Postgres 16. It skips escrow/Anchor tests because they need the Solana toolchain.
-
-```ts
-import {
-  type Deal,
-  type Parcel,
-  goldenParcel,
-  goldenReport,
-  stagedDeal,
-} from "@groundtruth/shared";
-```
-
-## Definition of a winning build
-
-- The public URL loads signed out and the primary search action is obvious in five seconds.
-- Search returns real OGRIP parcel boundaries from at least two Ohio counties; the golden parcel report shows a dated source, an explicit gap, and the next responsible person.
-- The held deal rejects release on-chain without changing buyer, vault, or seller balances.
-- The cleared deal pays the exact test-USDC amount once; every on-chain claim has a devnet Explorer link.
-- An ElevenLabs call creates evidence for a human reviewer; it never creates an approval by itself.
-- A QuickNode Stream drives the confirmed closing timeline on a second browser or phone.
-- The 2–3 minute video, repo, and deployed app all open for a signed-out judge.
-
-## Read next
-
-| You are… | Read |
+| | Role |
 | --- | --- |
-| Everyone (15 min once) | This README → [Problem](docs/context/Problem.md) → [Architecture](docs/architecture/Architecture.md) → [Data contract](docs/architecture/DataContract.md) → [Phases](docs/phases/README.md) → [Vision](docs/design/Vision.md) → [UBC brief](docs/ubc/UBC-Hackathon.md) |
-| Frontend | [Vision](docs/design/Vision.md), [DataContract](docs/architecture/DataContract.md), [Phase 2](docs/phases/02-parcel-research/ParcelResearch.md) |
-| Parcel data | [Phase 2](docs/phases/02-parcel-research/ParcelResearch.md), [Problem](docs/context/Problem.md), Terra-Zone in [ReferenceBuilds](docs/context/ReferenceBuilds.md#terra-zone) |
-| Escrow | [Phase 1](docs/phases/01-escrow/Escrow.md), [DataContract](docs/architecture/DataContract.md#escrow-v1), Accord in [ReferenceBuilds](docs/context/ReferenceBuilds.md#accord) |
-| Backend / integrations | [Phase 3](docs/phases/03-connect-surfaces/ConnectSurfaces.md), [Architecture](docs/architecture/Architecture.md), [UBC brief](docs/ubc/UBC-Hackathon.md) |
-| An AI agent | [AGENTS.md](AGENTS.md), then [Prompt.md](docs/agents/Prompt.md) |
+| **Joey Hudak** | Frontend: the buyer web app |
+| **Gagan Karnati** | Parcel data and integrations; originated the idea |
+| **Kadhir** | Solana escrow: Anchor program, USDC vault, hold, release, refund |
+| **Satya** | Backend, QuickNode Streams, ElevenLabs, deployment |
+
+## Roadmap
+
+Live today: the "Now" column. Next: a pilot with an Ohio title or closing company, mainnet USDC with sponsored fees, verified reviewer credentials, and more local checks. Later: nationwide parcels, deed e-recording handoff, and seller identity verification. Everything past "Now" is a plan, not a feature. → [groundtruth-lac.vercel.app/roadmap](https://groundtruth-lac.vercel.app/roadmap)
+
+## Honest limits
+
+- **Devnet and test USDC only.** No real money moves, and the program is not audited.
+- **Staged wallets.** The buyer, seller, and title, survey, and septic reviewers are staged devnet keys controlled by the team, not licensed professionals.
+- **Example pages are labeled.** `/parcels/sample`, `/deals/sample`, and `/walkthrough` use a made-up lot and deal, each tagged *Example · Illustrative data*. They never fall back into real parcels or deals.
+- **Ohio only.** Parcels come from Ohio's OGRIP layer. Deeper checks (zoning, road access, stream setbacks) exist in Franklin County so far. Everywhere else they say *No answer yet*.
+- **Decision support, not a verdict.** A report is not a legal buildability opinion, title search, survey, or septic permit.
+- **Sponsor proofs have edges.** The held and released closings were backfilled into the timeline with `replay:devnet`, not delivered by the Stream (QuickNode backfill needs a paid plan). The ElevenLabs call was recorded after that deal's hold and refund, so it shows as evidence on a deal that had already settled.
+
+## License
+
+[MIT](LICENSE) © 2026 the GroundTruth team.

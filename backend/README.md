@@ -556,7 +556,7 @@ pnpm --filter @groundtruth/backend test:db   # against DATABASE_URL after db:mig
 | Surface | Host | URL |
 | --- | --- | --- |
 | Web | Vercel project `groundtruth` | <https://groundtruth-lac.vercel.app> |
-| API | Railway project `groundtruth`, service `api` | <https://api-production-db8a8106.up.railway.app> |
+| API | Railway project `groundtruth`, service `api` | <https://api-production-db8a8106.up.railway.app/api/health> (the root path has no page) |
 | Database | Railway service `Postgres` | private network only |
 
 Both are deployed from a local checkout with the CLIs (`railway up`, `vercel deploy`), not from GitHub, so merging does not redeploy. Satya owns both projects. From the repo root, after `railway login` / `vercel login` and linking (`railway link`, `vercel link --project groundtruth`):
