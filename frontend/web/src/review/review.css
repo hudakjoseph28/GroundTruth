@@ -1,0 +1,247 @@
+/* Reviewer portal: phone first, one column; two columns of deals on wide screens. */
+.review {
+  width: 100%;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: var(--space-m) var(--pad) var(--space-l);
+}
+
+.review-head h1 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+}
+
+.review-devnet {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--gold-text);
+  text-transform: uppercase;
+}
+
+.review-intro {
+  margin: 0 0 var(--space-s);
+  color: color-mix(in srgb, var(--text) 75%, transparent);
+  line-height: 1.5;
+}
+
+.review-wallet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: var(--space-m);
+}
+
+.review-wallet .btn {
+  min-height: var(--tap);
+}
+
+.review-wallet-missing p,
+.review-hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--text) 65%, transparent);
+}
+
+.review-deals {
+  display: grid;
+  gap: var(--space-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-deal {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.review-deal-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.review-amount {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.review-state {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.8125rem;
+}
+
+.review-state[data-tone="pending"] {
+  color: var(--gold-text);
+}
+
+.review-state[data-tone="held"] {
+  color: var(--red-text);
+}
+
+.review-state[data-tone="released"] {
+  color: var(--green-text);
+}
+
+.review-meta,
+.review-roles,
+.review-hold {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.review-meta a {
+  color: inherit;
+}
+
+.review-dealid {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+}
+
+.review-hold {
+  color: var(--red-text);
+}
+
+.review-signoffs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-signoffs li {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  font-size: 0.8125rem;
+}
+
+.review-signoff-role {
+  font-weight: 600;
+}
+
+.review-signoffs [data-status="signed"] .review-signoff-status {
+  color: var(--green-text);
+}
+
+.review-signoffs [data-status="held"] .review-signoff-status {
+  color: var(--red-text);
+}
+
+.review-signoffs [data-status="waiting"] .review-signoff-status {
+  color: var(--gold-text);
+}
+
+.review-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review-btn {
+  width: 100%;
+  min-height: var(--tap);
+}
+
+.review-btn-danger {
+  border-color: var(--red);
+  color: var(--red-text);
+}
+
+.review-blocked {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  font-size: 0.875rem;
+}
+
+.review-holdbox,
+.review-release,
+.review-confirm {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.review-holdbox label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+}
+
+.review-holdbox select {
+  min-height: var(--tap);
+  padding: 0 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-s);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.review-release p,
+.review-confirm p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.review-status {
+  padding: 0.75rem;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border-strong);
+  font-size: 0.875rem;
+}
+
+.review-status p {
+  margin: 0;
+}
+
+.review-status p + p {
+  margin-top: 0.375rem;
+}
+
+.review-status[data-phase="confirmed"] {
+  border-color: var(--green);
+}
+
+.review-status[data-phase="failed"] {
+  border-color: var(--red);
+}
+
+.review-sig code {
+  font-family: var(--mono);
+}
+
+.review-open {
+  justify-self: start;
+  font-size: 0.875rem;
+  color: var(--gold-text);
+}
+
+@media (min-width: 60rem) {
+  .review {
+    max-width: 72rem;
+  }
+
+  .review-deals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,6 +1,7 @@
 import { createApp } from "./app.js";
 import { readServerEnv } from "./env.js";
 import { createOgripClient } from "./parcels/ogrip.js";
+import { createTwilioSender } from "./sms/sender.js";
 
 const env = readServerEnv();
 const app = createApp(env.commit, {
@@ -17,6 +18,7 @@ const app = createApp(env.commit, {
     wetlandsTimeoutMs: env.wetlandsTimeoutMs,
     streamBuffersTimeoutMs: env.streamBuffersTimeoutMs,
   },
+  sms: { sender: env.twilio ? createTwilioSender(env.twilio) : undefined },
 });
 
 app.listen(env.port, () => {

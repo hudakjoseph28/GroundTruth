@@ -187,6 +187,22 @@ export interface Deal {
   timeline: TimelineEvent[];
 }
 
+/**
+ * Staged-demo text alerts for one deal: `POST /api/deals/:id/sms-subscriptions`.
+ * The number is stored for that deal only and is never returned unmasked.
+ */
+export interface DealSmsSubscriptionRequest {
+  phoneNumber: string;
+  /** The visitor ticked the staged-demo consent box. */
+  consent: true;
+}
+
+export interface DealSmsSubscription {
+  dealId: string;
+  /** Only the last four digits, e.g. "+1 ••• ••• 0123". */
+  maskedPhoneNumber: string;
+}
+
 export interface Coverage {
   county: string;
   countyFips: string;

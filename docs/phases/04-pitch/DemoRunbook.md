@@ -11,23 +11,57 @@ This runbook was checked against <https://groundtruth-lac.vercel.app> and its pu
 
 ## Rehearsing the live moment
 
-Practise the 2:45–4:00 segment on the rehearsal deal, never on the live one. `staged-devnet-deal-rehearsal` is a copy of `staged-devnet-deal-live`: the same 10 test USDC, reviewers, and two steps, on its own escrow.
+Practise the 2:45–4:00 segment on the rehearsal deal, never on the live one. `staged-devnet-deal-rehearsal-v2` is a copy of `staged-devnet-deal-live`: the same 10 test USDC, reviewers, and two steps, on its own escrow (PDA `EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X`).
 
-1. Backstage, run `pnpm --filter @groundtruth/escrow demo:deals stage-prep --deal staged-devnet-deal-rehearsal`. It sets up the deal: funded, title and survey signed, septic waiting.
-2. Load <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-rehearsal> on the phone.
-3. Run the segment as written, with `pnpm --filter @groundtruth/escrow demo:deals stage-finish --deal staged-devnet-deal-rehearsal` as the command.
-4. Check that the phone updates, and time it.
+1. Backstage, run `pnpm --filter @groundtruth/escrow demo:deals stage-prep --deal staged-devnet-deal-rehearsal-v2`. It sets up the deal: funded, title and survey signed, septic waiting.
+2. On the laptop, open <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-rehearsal-v2> as the projected tab.
+3. On the phone, in Phantom's in-app browser, open <https://groundtruth-lac.vercel.app/review> connected as the septic reviewer (see the next section). Use the `staged-devnet-deal-rehearsal-v2` card, not `staged-devnet-deal-live`.
+4. Run the segment as written: **Approve as septic reviewer**, then **Release payment to the seller**, both on the phone.
+5. To practise the fallback instead, skip the taps and run `pnpm --filter @groundtruth/escrow demo:deals stage-finish --deal staged-devnet-deal-rehearsal-v2` from the laptop. If a tap fails partway, the same command finishes whatever step is left.
+6. Check that the projected deal page updates, and time it. The run is recorded under `escrow/demo-results/devnet-stage-rehearsal-v2.{json,md}`.
 
-The rehearsal deal can run once. The buyer needs 10 test USDC free for it, on top of the live deal's 10 already in escrow.
+The rehearsal deal can run once, by either path. **`staged-devnet-deal-rehearsal` (v1) is used up.** On Nov 18 it tested the reviewer portal (#45): `stage-prep`, then the septic approval and the release through `/review` ([approval](https://explorer.solana.com/tx/5im6Vt5iBhkRxmcJxRzPcgf2demRR4bBY2oTtZZX5Y4DkuyrDnxcB8Dst2qAPnn8krAJe4ocswMh9TY1rjKmskYY?cluster=devnet), [release](https://explorer.solana.com/tx/3z7BNJH6xrXmoMHY9cvpD37c775prm2PgS4c2xL1SFTEevoe3UnJc2cUgWLXUfYEuzLncLw7J1djRDqhZ4FGsr4z?cluster=devnet)). Do not pass `--deal staged-devnet-deal-rehearsal` again. Each rehearsal needs 10 test USDC free in the buyer's wallet, on top of the live deal's 10 already in escrow.
+
+**Prerequisite:** `staged-devnet-deal-rehearsal-v2` comes from #46. The `--deal` flag accepts it only once #46 is merged. The deal page and `/review` show it only after the API is redeployed and seeded with that build.
+
+## Septic reviewer's staged key in Phantom (for the stage)
+
+The reviewer portal (<https://groundtruth-lac.vercel.app/review>) lets the septic reviewer sign the live deal's last approval from Phantom on stage, then submit the release. This is the **main stage path** for the 2:45–4:00 segment. `stage-finish` from the laptop is the fallback. The septic reviewer's staged keypair is `escrow/.demo-wallets/septic.json`, on the laptop that ran the demo deals. It is gitignored. Never commit, project, paste into chat, or screen-share it.
+
+1. **Use a demo-only Phantom wallet** on the device that will sign: the presenter's phone, or the driver's laptop. Never use a wallet that holds real funds.
+2. **Put Phantom on devnet:** Settings → Developer Settings → **Testnet mode** on, network **Solana Devnet**. The portal always sends to devnet, but Phantom's own preview should match.
+3. **Copy the key to the clipboard without showing it.** On the laptop, from the repository root:
+
+   ```bash
+   cd escrow && node -e 'const { utils } = require("@anchor-lang/core"); process.stdout.write(utils.bytes.bs58.encode(Uint8Array.from(require("./.demo-wallets/septic.json"))))' | pbcopy
+   ```
+
+   It converts the keypair file to the base58 private key Phantom imports, straight into the clipboard. Get it to the phone only over a private channel you control, such as AirDrop to yourself, and never paste it anywhere else.
+4. **Import it:** Phantom → account menu → **Add / Connect Wallet** → **Import Private Key** → paste → name it `GroundTruth septic (staged)`. Then clear the clipboard with `pbcopy < /dev/null`.
+5. **Check the address.** The imported account must be `Ab7KLjree8ZgUrgXvtpb84oHKvzakC6VpRcPqnXoYz3F`, the septic reviewer bound to the deals. Any other address means the wrong file.
+6. **Fee SOL:** the reviewer pays its own network fee. The septic wallet has about 0.05 devnet SOL, enough for hundreds of fees. Top it up at <https://faucet.solana.com> if it drops below 0.01.
+7. **Before the segment:** in Phantom's in-app browser, open <https://groundtruth-lac.vercel.app/review> and tap **Connect Phantom**. The `staged-devnet-deal-live` card must show `10 test USDC`, `Funded`, Title and Survey `Signed`, Septic `Waiting`, and **Approve as septic reviewer**. Do not tap it until the segment.
+8. **On stage:**
+   - tap **Approve as septic reviewer** and approve in Phantom;
+   - wait for `Confirmed on Solana devnet`;
+   - tap **Release payment to the seller** and approve again.
+
+   Each step shows its signature and an Explorer link, and the deal page updates through the Stream as usual.
+9. **After the show,** remove the imported account from Phantom (Settings → Manage Accounts → the account → Remove).
+
+**Prerequisite:** the portal reads deals from the production API, so it needs this web build deployed (Vercel). The live deal is already seeded there.
+
+**If Phantom or the portal fails on stage:** the demo driver runs `pnpm --filter @groundtruth/escrow demo:deals stage-finish` from the laptop, as written in the segment's fallbacks below. It skips any step the phone already confirmed.
 
 ## Pre-show checklist
 
 - [ ] QuickNode Stream is **resumed**, on **Solana Devnet / Block**, using `backend/quicknode/groundtruth-filter.js`, and delivering to `https://api-production-db8a8106.up.railway.app/api/webhooks/quicknode`.
-- [ ] The phone is awake, rotation-locked, at 100% browser zoom, and loaded on <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-live>. It shows `10 test USDC`, `Funded`, `Waiting on 1 sign-off`, `2 of 3 signed`, and `Septic reviewer · Waiting`.
+- [ ] The phone is awake, rotation-locked, and open in **Phantom's in-app browser** on <https://groundtruth-lac.vercel.app/review>, connected as `GroundTruth septic (staged)` (`Ab7KLjree8ZgUrgXvtpb84oHKvzakC6VpRcPqnXoYz3F`) with Phantom on Solana Devnet. The `staged-devnet-deal-live` card shows `10 test USDC`, `Funded`, Title and Survey `Signed`, Septic `Waiting`, and **Approve as septic reviewer**. Do not tap it.
+- [ ] The septic wallet has at least 0.01 devnet SOL for fees.
 - [ ] Laptop and phone are on working Wi-Fi. Turn off VPN, notifications, Low Power Mode, and auto-lock for the presentation.
 - [ ] Laptop is charged and plugged in. The terminal is open at the repository root with dependencies already installed.
 - [ ] `escrow/.demo-wallets/` is present and contains the five existing staged keypair files: `buyer.json`, `seller.json`, `title.json`, `survey.json`, and `septic.json`. Do not open, copy, project, or commit them.
-- [ ] Run the read-only backstage check `pnpm --filter @groundtruth/escrow demo:deals`. It must report `stage-finish ready (septic approval and release)`. **Do not run `stage-finish` before the live segment.**
+- [ ] Run the read-only backstage check `pnpm --filter @groundtruth/escrow demo:deals`. It must report `stage-finish ready (septic approval and release)`, so the laptop fallback is ready. **Do not run `stage-finish` before the live segment.**
 - [ ] **Warm the cache at least 10 minutes before presenting.** On the laptop, open each parcel below once and wait until its land block finishes loading. The first open builds the 3D land (USGS aerial imagery and elevation) and caches it on the API. A cold build can take longer than the 10 seconds the page waits, and the live report is also cached for 24 hours.
   - 230-000918, the demo parcel (baked into the site; this is a render check): <https://groundtruth-lac.vercel.app/parcels/ohio%3A39049%3A230-000918>
   - 84 W Dodridge St, Columbus (search example): <https://groundtruth-lac.vercel.app/parcels/ohio%3A39049%3A010-042534>
@@ -41,8 +75,9 @@ The rehearsal deal can run once. The buyer needs 10 test USDC free for it, on to
   2. <https://groundtruth-lac.vercel.app/parcels/ohio%3A39049%3A230-000918>
   3. <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal>
   4. [Held release on Solana Explorer](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet)
-  5. <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released>
-  6. [Preserved release on Solana Explorer](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet)
+  5. <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-live>. It shows `10 test USDC`, `Funded`, `Waiting on 1 sign-off`, `2 of 3 signed`, and `Septic reviewer · Waiting`.
+  6. <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released>
+  7. [Preserved release on Solana Explorer](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet)
 - [ ] Browser zoom is 100%, the deal timeline and parcel drawers are readable on the projector, and the terminal font is at least 18 pt.
 - [ ] **Audio gate: passed.** Preload the recorded clip of the real ElevenLabs call to a consenting teammate (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`), clearly labeled `Recorded ElevenLabs owner callback · staged participant`. Check that it plays on the projector's audio out. Keep the conversation ID on the private show sheet.
 - [ ] Rehearse the hand signals: presenter raises one finger for “advance,” a flat palm for “hold this screen,” and two fingers for “take the fallback.”
@@ -146,51 +181,57 @@ The rehearsal deal can run once. The buyer needs 10 test USDC free for it, on to
 
 ## 2:45–4:00 · Live final approval and 10 test-USDC release
 
-**Phone URL:** <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-live>. **Terminal working directory:** repository root. **Command:**
+**Main path: the presenter taps on the phone.** Phone: Phantom's in-app browser on <https://groundtruth-lac.vercel.app/review>, connected as the staged septic reviewer. Projector: the laptop's live-deal tab, <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-live>.
+
+**Fallback: `stage-finish` from the laptop.** Terminal working directory: repository root. Command:
 
 ```bash
 pnpm --filter @groundtruth/escrow demo:deals stage-finish
 ```
 
-**Presenter**
+**Demo driver**
 
-1. Hold up the already loaded phone. Do not refresh or tap; its page checks for updates every two seconds.
+1. Switch the projector to the live-deal tab. Do not refresh while the green `Live · Updated …` line is advancing.
 2. Point out `10 test USDC`, `Funded`, `Waiting on 1 sign-off`, `2 of 3 signed`, and `Septic reviewer · Waiting`.
+3. Keep the prepared terminal one keystroke away, with the fallback command typed but **not** run.
 
-**Demo driver — every click and key**
+**Presenter — every tap**
 
-1. Switch the projector to the prepared terminal.
-2. Click the prompt, type or paste `pnpm --filter @groundtruth/escrow demo:deals stage-finish`, and press Return once.
-3. Stop typing. The command sends the septic approval and then release. It prints an `ok` line and a devnet signature for each.
-4. Switch the projector back to the live-deal browser tab or the phone mirror. Do not refresh while the green `Live · Updated …` line is advancing.
+1. Hold up the phone on the `staged-devnet-deal-live` card.
+2. Tap **Approve as septic reviewer**, then approve in Phantom.
+3. Wait for `Confirmed on Solana devnet. The deal page updates when the Stream delivers it.`
+4. Tap **Release payment to the seller**, then approve in Phantom again. Wait for `Confirmed on Solana devnet`.
 
-**Presenter, after confirmation**
+**Demo driver, after confirmation**
 
-3. Wait for `Septic reviewer · Signed`, `3 of 3 signed`, and then `Released · Payment released` to appear. The newest timeline rows are labeled `Approval signed` and `Payment released` with `New` while fresh.
-4. Tap `View transaction` in the newest `Payment released` row. This opens the newly generated release signature on Solana Explorer with `?cluster=devnet`.
+4. On the projected deal page, wait for `Septic reviewer · Signed`, `3 of 3 signed`, and then `Released · Payment released`. The newest timeline rows are labeled `Approval signed` and `Payment released` with `New` while fresh.
+5. Click `View transaction` in the newest `Payment released` row. This opens the new release signature on Solana Explorer with `?cluster=devnet`.
 
 **On screen**
 
-- Before the command: `10 test USDC · Funded`, two signed reviewers, septic waiting
-- Terminal: `ok sign_approval (septic)` followed by its signature, then `ok release released` followed by the release signature
+- Before the taps: `10 test USDC · Funded`, two signed reviewers, septic waiting, on the phone card and the projected deal page
+- Phone, after each tap: `Sent. Waiting for confirmation on Solana devnet…`, then `Confirmed on Solana devnet`, with the signature and `View on Solana Explorer`
 - After Stream delivery and polling: `10 test USDC · Released`, `Payment released`, and `Every required reviewer signed, and the escrow paid 10 test USDC to the bound seller.`
 - New timeline rows for the septic approval and payment, each marked `Confirmed on Solana devnet` and linked to Explorer
 
 **Presenter — say exactly these three lines**
 
-> “This is the same responsive deal page on a phone: 10 test USDC is funded, title and survey are signed, and septic is the one remaining reviewer.”
+> “10 test USDC is funded, title and survey are signed, and septic is the one remaining reviewer—and this phone holds the staged septic reviewer's wallet.”
 
-> “Our driver is sending that last reviewer signature and the release now; QuickNode carries the confirmed program events into the API, and the phone checks that timeline every two seconds.”
+> “I'm signing that last approval and submitting the release from the phone now. GroundTruth never signs for a reviewer; QuickNode carries the confirmed program events into the API, and the deal page checks every two seconds.”
 
 > “Now all three reviews are signed and exactly 10 test USDC went to the bound seller—the destination and amount were fixed before funding, and this Explorer receipt is independently verifiable.”
 
+If the fallback runs, say the second line as: “Our driver is sending that last reviewer signature and the release from the laptop now; QuickNode carries the confirmed program events into the API, and the deal page checks every two seconds.”
+
 **Fallbacks**
 
-- Command fails before either `ok` line: read the error. If it is a transient RPC or rate-limit error, rerun the same command once; it reads on-chain state and skips steps already confirmed. For any other error, do not improvise with wallet files.
-- Septic approval succeeds but release does not: rerun the same command once. It safely skips the confirmed septic approval and attempts only the remaining release.
-- Phone does not update within 10 seconds: refresh the phone once. If it still does not update, show the two terminal signatures and open the release signature directly at `https://explorer.solana.com/tx/<release-signature>?cluster=devnet`. Do not claim a QuickNode delivery unless the timeline actually updates.
+- Phantom or `/review` will not load, connect, or sign, or a tap shows `Not completed.`: the presenter gives the two-finger signal. The driver switches the projector to the terminal, runs `pnpm --filter @groundtruth/escrow demo:deals stage-finish` once, and switches back to the live-deal tab. It reads on-chain state and skips any step the phone already confirmed. It prints an `ok` line and a devnet signature for each step it sends: `ok sign_approval (septic)`, then `ok release released`.
+- Approval confirmed on the phone but the release did not: same command. It skips the confirmed septic approval and sends only the release.
+- `stage-finish` fails before its `ok` line: read the error. If it is a transient RPC or rate-limit error, rerun the same command once. For any other error, do not improvise with wallet files.
+- Deal page does not update within 10 seconds: refresh it once. If it still does not update, open the release signature from the phone's `View on Solana Explorer` link or the terminal output, at `https://explorer.solana.com/tx/<release-signature>?cluster=devnet`. Do not claim a QuickNode delivery unless the timeline actually updates.
 - Stream, API, phone, or live deal is unavailable: switch to <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released>, which shows a **prior** released deal for **25 test USDC**, then open its [preserved release transaction](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet). Say, “This is our preserved Nov 18 run, not the live 10-USDC stage deal.”
-- Explorer slow: keep the product timeline on screen and point to the full release signature. The terminal also saved the result under `escrow/demo-results/devnet-stage-live-v1.{json,md}`.
+- Explorer slow: keep the product timeline on screen and point to the full release signature. If `stage-finish` ran, it also saved the result under `escrow/demo-results/devnet-stage-live-v1.{json,md}`.
 
 ## 4:00–4:40 · Why Consumer, why Solana, and the pilot
 
@@ -222,7 +263,7 @@ Use this only for a slow search, transition, Stream delivery, polling interval, 
 
 ## Two-minute screening version
 
-Do **not** consume the one-time `stage-finish` transaction in the short version. Use the preserved held and released receipts.
+Do **not** consume the live deal in the short version: no phone taps on `staged-devnet-deal-live` and no `stage-finish`. Use the preserved held and released receipts.
 
 | Time | Owner | URL and exact actions | What is on screen | Spoken line |
 | --- | --- | --- | --- | --- |

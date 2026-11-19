@@ -1,9 +1,11 @@
 import {
   stagedDemoDeals,
   type Deal,
+  type DealSmsSubscription,
+  type DealSmsSubscriptionRequest,
   type TimelineEvent,
 } from "@groundtruth/shared";
-import { request, type FailedOutcome } from "./api";
+import { postJson, request, type FailedOutcome } from "./api";
 
 /**
  * Deal data from the GroundTruth API (v1 routes). The API projects deal state
@@ -12,6 +14,7 @@ import { request, type FailedOutcome } from "./api";
  *
  *   GET /api/deals/:id
  *   GET /api/deals/:id/timeline
+ *   POST /api/deals/:id/sms-subscriptions
  *
  * Every function resolves to an outcome and never throws, except when the
  * caller aborts it (an AbortError the caller ignores).
@@ -55,6 +58,34 @@ export async function getDealTimeline(
     return { status: "missing", message: response.error.error.message };
   }
   return { status: "found", timeline: response.body as TimelineEvent[] };
+}
+
+export type TextAlertsOutcome =
+  | { status: "subscribed"; subscription: DealSmsSubscription }
+  /** A 4xx the visitor can act on: a bad number, a closed deal, a full list. */
+  | { status: "rejected"; message: string }
+  | FailedOutcome;
+
+/** Staged demo: texts this number about the deal's future confirmed events. */
+export async function subscribeToDealTexts(
+  dealId: string,
+  phoneNumber: string,
+  signal?: AbortSignal,
+): Promise<TextAlertsOutcome> {
+  const body: DealSmsSubscriptionRequest = { phoneNumber, consent: true };
+  const response = await postJson(
+    `/api/deals/${encodeURIComponent(dealId)}/sms-subscriptions`,
+    body,
+    signal,
+  );
+  if (response.status === "failed") return response.failure;
+  if (response.status === "rejected") {
+    return { status: "rejected", message: response.error.error.message };
+  }
+  return {
+    status: "subscribed",
+    subscription: response.body as DealSmsSubscription,
+  };
 }
 
 export function dealPath(dealId: string): string {

@@ -173,6 +173,25 @@ export const HANDOFF = {
   alt: (url: string) => `QR code for ${url}`,
 } as const;
 
+export const TEXT_ALERTS = {
+  title: "Text me updates",
+  body: "Get a text when this deal is funded, a hold is placed, a release is rejected, or the payment is released.",
+  label: "Mobile number",
+  placeholder: "614 555 0123",
+  hint: "US numbers need no country code. Others start with +.",
+  consent:
+    "I agree to receive staged demo texts about this deal. Message and data rates may apply. Reply STOP to opt out.",
+  note: "Staged demo. Your number is stored only for this deal and used only for these texts. It is never shown on this page.",
+  submit: "Text me updates",
+  sending: "Saving…",
+  needConsent: "Tick the box to agree to the texts first.",
+  needNumber: "Enter a mobile number.",
+  done: (masked: string) => `Texts are on for ${masked}.`,
+  doneNext:
+    "You will get a text for each new confirmed event on this deal, with a link to the transaction on Solana Explorer.",
+  another: "Use another number",
+} as const;
+
 export const NOT_FOUND = {
   title: "Page not found",
   body: "Nothing lives at this address. It may have been mistyped, or the link may be out of date.",

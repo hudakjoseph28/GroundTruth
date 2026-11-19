@@ -23,6 +23,9 @@ import {
   type QuickNodeWebhookOptions,
 } from "./routes/quicknodeWebhook.js";
 import { reportRoute, type ReportRouteOptions } from "./routes/report.js";
+import { createSmsSubscription } from "./routes/smsSubscriptions.js";
+import { createSmsAlertDispatcher } from "./sms/alerts.js";
+import type { SmsSender } from "./sms/sender.js";
 import { recordOwnerCall } from "./voice/ownerCall.js";
 
 export interface AppOptions {
@@ -34,6 +37,8 @@ export interface AppOptions {
   report?: Omit<ReportRouteOptions, "ogrip">;
   /** Land block assets. Defaults to building from live OGRIP, NAIP, and Terrarium, cached in PostgreSQL. */
   land?: LandAssetService;
+  /** Staged deal text alerts. No sender: opt-ins answer 503 and nothing is texted. */
+  sms?: { sender?: SmsSender; log?: (line: string) => void };
 }
 
 export function createApp(commit: string, options: AppOptions = {}) {
@@ -76,13 +81,27 @@ export function createApp(commit: string, options: AppOptions = {}) {
   app.get("/api/deals/:id", getDeal);
   app.get("/api/deals/:id/timeline", getDealTimeline);
   app.post(
+    "/api/deals/:id/sms-subscriptions",
+    ...createSmsSubscription(prisma, { enabled: Boolean(options.sms?.sender) }),
+  );
+
+  const project =
+    options.quicknode?.apply ?? ((event) => applyConfirmedEvent(prisma, event));
+  const textAlerts = options.sms?.sender
+    ? createSmsAlertDispatcher(prisma, options.sms.sender, options.sms.log)
+    : undefined;
+  app.post(
     "/api/webhooks/quicknode",
     ...quickNodeWebhook({
       token: options.quicknode?.token,
       decode: options.quicknode?.decode ?? createEscrowDecoder(),
-      apply:
-        options.quicknode?.apply ??
-        ((event) => applyConfirmedEvent(prisma, event)),
+      // Texts go out after the event's transaction commits, on replays too,
+      // so a refused text is retried; queued alerts make that send-once.
+      apply: async (event) => {
+        const result = await project(event);
+        if (textAlerts && result !== "unknownDeal") await textAlerts(event);
+        return result;
+      },
     }),
   );
   app.post(
