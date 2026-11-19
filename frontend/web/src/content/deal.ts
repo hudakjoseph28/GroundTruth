@@ -43,6 +43,28 @@ export const STATE_LABELS: Record<DealState, string> = {
   refunded: "Refunded",
 };
 
+export const MONEY_FLOW = {
+  eyebrow: "Money flow",
+  title: "Where the money is",
+  buyer: "Buyer",
+  buyerDetail: "Source wallet",
+  vault: "Escrow vault",
+  vaultDetail: "Program controlled",
+  locked: "Locked by reviewer hold",
+  seller: "Seller",
+  sellerDetail: "Bound payout",
+  unit: "test USDC",
+  statement: {
+    draft: (amount: string) =>
+      `${amount} test USDC remains with the buyer until this deal is funded.`,
+    funded: () => "The funds are in the escrow vault.",
+    held: () => "The funds are locked in the escrow vault.",
+    released: (amount: string) => `The seller received ${amount} test USDC.`,
+    refunded: (amount: string) =>
+      `The buyer received ${amount} test USDC back.`,
+  } satisfies Record<DealState, (amount: string) => string>,
+} as const;
+
 const ROLE: Record<ReviewerRole, string> = {
   title: "title",
   survey: "survey",
