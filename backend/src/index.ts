@@ -15,6 +15,8 @@ const app = createApp(env.commit, {
     floodTimeoutMs: env.femaTimeoutMs,
     zoningTimeoutMs: env.zoningTimeoutMs,
     accessTimeoutMs: env.accessTimeoutMs,
+    wetlandsTimeoutMs: env.wetlandsTimeoutMs,
+    streamBuffersTimeoutMs: env.streamBuffersTimeoutMs,
   },
   sms: { sender: env.twilio ? createTwilioSender(env.twilio) : undefined },
 });

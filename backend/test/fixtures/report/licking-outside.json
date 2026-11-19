@@ -1,8 +1,62 @@
 {
   "scenario": "licking-outside",
   "parcelKey": "ohio:39089:00100000601000",
-  "recordedAt": "2026-11-18T20:14:05.478Z",
+  "recordedAt": "2026-11-18T23:49:15.694Z",
   "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6028371%2C40.1984799%5D%2C%5B-82.6010262%2C40.1980867%5D%2C%5B-82.6018498%2C40.1963872%5D%2C%5B-82.6019529%2C40.1964674%5D%2C%5B-82.6024723%2C40.1968835%5D%2C%5B-82.6029132%2C40.1972693%5D%2C%5B-82.6028371%2C40.1984799%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=IMAGE_YR&returnDistinctValues=true&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "PROJECT_NAME",
+        "fieldAliases": {
+          "IMAGE_YR": "IMAGE_YR"
+        },
+        "fields": [
+          {
+            "name": "IMAGE_YR",
+            "type": "esriFieldTypeSmallInteger",
+            "alias": "IMAGE_YR"
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "IMAGE_YR": 2007
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0/query",
+      "requestBody": "geometry=%7B%22rings%22%3A%5B%5B%5B-82.6028371%2C40.1984799%5D%2C%5B-82.6010262%2C40.1980867%5D%2C%5B-82.6018498%2C40.1963872%5D%2C%5B-82.6019529%2C40.1964674%5D%2C%5B-82.6024723%2C40.1968835%5D%2C%5B-82.6029132%2C40.1972693%5D%2C%5B-82.6028371%2C40.1984799%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=ATTRIBUTE%2CWETLAND_TYPE&returnDistinctValues=true&returnGeometry=false&f=json",
+      "status": 200,
+      "body": {
+        "displayFieldName": "Wetlands.ATTRIBUTE",
+        "fieldAliases": {
+          "ATTRIBUTE": "ATTRIBUTE",
+          "WETLAND_TYPE": "WETLAND_TYPE"
+        },
+        "fields": [
+          {
+            "name": "ATTRIBUTE",
+            "type": "esriFieldTypeString",
+            "alias": "ATTRIBUTE",
+            "length": 15
+          },
+          {
+            "name": "WETLAND_TYPE",
+            "type": "esriFieldTypeString",
+            "alias": "WETLAND_TYPE",
+            "length": 50
+          }
+        ],
+        "features": []
+      }
+    },
     {
       "method": "POST",
       "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/0/query",
@@ -215,7 +269,7 @@
     "status": 200,
     "body": {
       "parcelKey": "ohio:39089:00100000601000",
-      "generatedAt": "2026-11-18T20:14:05.478Z",
+      "generatedAt": "2026-11-18T23:49:15.694Z",
       "coverage": "partial",
       "biggestOpenQuestion": "access",
       "checks": [
@@ -240,13 +294,13 @@
               "authority": "FEMA",
               "title": "National Flood Hazard Layer: flood hazard zones",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28",
-              "retrievedAt": "2026-11-18T20:14:05.478Z"
+              "retrievedAt": "2026-11-18T23:49:15.694Z"
             },
             {
               "authority": "FEMA",
               "title": "Flood Insurance Rate Map panel 39089C0155J",
               "url": "https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/3",
-              "retrievedAt": "2026-11-18T20:14:05.478Z",
+              "retrievedAt": "2026-11-18T23:49:15.694Z",
               "effectiveDate": "2015-03-16"
             }
           ],
@@ -256,6 +310,31 @@
             "publicContactUrl": "https://msc.fema.gov/portal/home"
           },
           "nextAction": "Check the current map for this lot on FEMA's Flood Map Service Center before closing; a lender may still order its own flood determination."
+        },
+        {
+          "kind": "environmental",
+          "status": "evidenceFound",
+          "finding": "The National Wetlands Inventory maps no wetland on this lot.",
+          "limitation": "\"NWI shows none\" is not a wetland delineation. The NWI is drawn from aerial imagery (here from 2007) and misses many small, forested, or seasonally dry wetlands; only a delineation in the field, confirmed by the U.S. Army Corps of Engineers or Ohio EPA, says whether regulated wetlands are on the lot.",
+          "sources": [
+            {
+              "authority": "U.S. Fish and Wildlife Service",
+              "title": "National Wetlands Inventory: no wetland mapped on the parcel",
+              "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0",
+              "retrievedAt": "2026-11-18T23:49:15.694Z"
+            },
+            {
+              "authority": "U.S. Fish and Wildlife Service",
+              "title": "National Wetlands Inventory: mapped from 2007 imagery",
+              "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3",
+              "retrievedAt": "2026-11-18T23:49:15.694Z"
+            }
+          ],
+          "responsibleParty": {
+            "role": "County soil and water conservation district, or a wetland consultant",
+            "organization": "Licking Soil and Water Conservation District"
+          },
+          "nextAction": "If the lot has low, wet, or wooded ground, ask the county soil and water conservation district or a wetland consultant whether a wetland delineation is worth doing before you build."
         },
         {
           "kind": "access",

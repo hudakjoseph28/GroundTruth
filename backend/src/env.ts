@@ -3,6 +3,8 @@ import type { TwilioConfig } from "./sms/sender.js";
 import {
   DEFAULT_ACCESS_TIMEOUT_MS,
   DEFAULT_FEMA_TIMEOUT_MS,
+  DEFAULT_STREAM_BUFFERS_TIMEOUT_MS,
+  DEFAULT_WETLANDS_TIMEOUT_MS,
   DEFAULT_ZONING_TIMEOUT_MS,
 } from "./reports/pipeline.js";
 
@@ -20,6 +22,10 @@ export interface ServerEnv {
   zoningTimeoutMs: number;
   /** Limit for a Franklin report's road access check, in milliseconds. */
   accessTimeoutMs: number;
+  /** Limit for a report's NWI wetland lookup, in milliseconds. */
+  wetlandsTimeoutMs: number;
+  /** Limit for a Franklin report's stream-setback lookup, in milliseconds. */
+  streamBuffersTimeoutMs: number;
   /** ElevenLabs post-call webhook secret; the webhook refuses all deliveries without it. */
   elevenLabsWebhookSecret: string | undefined;
   /** Optional: only this agent's calls become evidence. */
@@ -55,6 +61,16 @@ export function readServerEnv(
       "ACCESS_TIMEOUT_MS",
       source.ACCESS_TIMEOUT_MS,
       DEFAULT_ACCESS_TIMEOUT_MS,
+    ),
+    wetlandsTimeoutMs: readTimeout(
+      "WETLANDS_TIMEOUT_MS",
+      source.WETLANDS_TIMEOUT_MS,
+      DEFAULT_WETLANDS_TIMEOUT_MS,
+    ),
+    streamBuffersTimeoutMs: readTimeout(
+      "STREAM_BUFFERS_TIMEOUT_MS",
+      source.STREAM_BUFFERS_TIMEOUT_MS,
+      DEFAULT_STREAM_BUFFERS_TIMEOUT_MS,
     ),
     elevenLabsWebhookSecret:
       source.ELEVENLABS_WEBHOOK_SECRET?.trim() || undefined,

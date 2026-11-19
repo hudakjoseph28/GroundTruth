@@ -15,11 +15,24 @@ import {
 import { zoningCheck } from "./zoningCheck.js";
 import { accessCheck } from "./accessCheck.js";
 import type { FranklinAccessClient } from "./franklinAccess.js";
+import { environmentalCheck } from "./environmentalCheck.js";
+import type {
+  FranklinStreamBuffersClient,
+  StreamSetbackOutcome,
+} from "./franklinStreamBuffers.js";
+import type { NwiWetlandsClient, WetlandsOutcome } from "./nwiWetlands.js";
 import { TEMPLATE_KINDS, templateCheck } from "./templates.js";
 
 export const DEFAULT_FEMA_TIMEOUT_MS = 6_000;
 export const DEFAULT_ZONING_TIMEOUT_MS = 6_000;
 export const DEFAULT_ACCESS_TIMEOUT_MS = 6_000;
+/**
+ * NWI answered in 2.0 to 5.3 s on five Ohio lots on 2026-11-18 (two queries,
+ * then one drawing when wetlands are mapped), and took 8.5 s once.
+ */
+export const DEFAULT_WETLANDS_TIMEOUT_MS = 10_000;
+/** The county layer answers in 0.2 s; a first setback download takes ~2 s. */
+export const DEFAULT_STREAM_BUFFERS_TIMEOUT_MS = 6_000;
 /** Template checks do no I/O; the limit only guards against a bug. */
 const TEMPLATE_TIMEOUT_MS = 1_000;
 
@@ -41,6 +54,20 @@ export interface ReportPipelineOptions {
   access?: FranklinAccessClient;
   /** Limit for the access check (all its queries together). */
   accessTimeoutMs?: number;
+  /**
+   * The National Wetlands Inventory. When set, every parcel gets a live
+   * environmental check; otherwise it keeps the template.
+   */
+  wetlands?: NwiWetlandsClient;
+  /** Limit for the NWI part of the environmental check. */
+  wetlandsTimeoutMs?: number;
+  /**
+   * Franklin County's stream-buffer layer. When set (with `wetlands`),
+   * Franklin parcels' environmental check also reports riparian setbacks.
+   */
+  streamBuffers?: FranklinStreamBuffersClient;
+  /** Limit for the stream-setback part of the environmental check. */
+  streamBuffersTimeoutMs?: number;
   now: () => Date;
 }
 
@@ -142,7 +169,66 @@ export async function buildReport(
         }),
       }
     : null;
-  const live = [zoning, access].filter(
+  const wetlandsClient = options.wetlands;
+  const wetlandsTimeoutMs =
+    options.wetlandsTimeoutMs ?? DEFAULT_WETLANDS_TIMEOUT_MS;
+  const setbacksClient = franklin ? options.streamBuffers : undefined;
+  const setbacksTimeoutMs =
+    options.streamBuffersTimeoutMs ?? DEFAULT_STREAM_BUFFERS_TIMEOUT_MS;
+  const environmentalInputs = (
+    wetlands: WetlandsOutcome,
+    setbacks: StreamSetbackOutcome | null,
+  ) => ({ wetlands, wetlandsTimeoutMs, setbacks, setbacksTimeoutMs });
+  const environmental: CheckRunner | null = wetlandsClient
+    ? {
+        kind: "environmental",
+        // Each source runs on its own limit below; this one only guards
+        // against a bug that ignores them.
+        timeoutMs:
+          Math.max(wetlandsTimeoutMs, setbacksClient ? setbacksTimeoutMs : 0) +
+          1_000,
+        async run(signal) {
+          const [wetlands, setbacks] = await Promise.all([
+            withLimit(
+              wetlandsTimeoutMs,
+              signal,
+              (limited) =>
+                wetlandsClient.wetlands(parcel.geometry.geojson, limited),
+              { outcome: "timeout", cause: "timedOut" } as const,
+            ),
+            setbacksClient
+              ? withLimit(
+                  setbacksTimeoutMs,
+                  signal,
+                  (limited) =>
+                    setbacksClient.setbacks(parcel.geometry.geojson, limited),
+                  { outcome: "timeout", cause: "timedOut" } as const,
+                )
+              : null,
+          ]);
+          return {
+            check: environmentalCheck(
+              parcel,
+              environmentalInputs(wetlands, setbacks),
+            ),
+            transient:
+              wetlands.outcome === "timeout" ||
+              setbacks?.outcome === "timeout",
+          };
+        },
+        failed: (cause) => ({
+          check: environmentalCheck(
+            parcel,
+            environmentalInputs(
+              { outcome: "timeout", cause },
+              setbacksClient ? { outcome: "timeout", cause } : null,
+            ),
+          ),
+          transient: true,
+        }),
+      }
+    : null;
+  const live = [zoning, environmental, access].filter(
     (runner): runner is CheckRunner => runner !== null,
   );
   const templates = TEMPLATE_KINDS.filter(
@@ -205,6 +291,35 @@ async function runWithTimeout(runner: CheckRunner): Promise<CheckResult> {
   }
 }
 
+/**
+ * One source's own limit inside a check that reads several: `run` gets a
+ * signal that aborts after `ms` or when the whole check stops, and a source
+ * that ignores it still yields `onTimeout` on time.
+ */
+async function withLimit<T>(
+  ms: number,
+  parent: AbortSignal,
+  run: (signal: AbortSignal) => Promise<T>,
+  onTimeout: T,
+): Promise<T> {
+  const controller = new AbortController();
+  const stop = () => controller.abort();
+  parent.addEventListener("abort", stop, { once: true });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timedOut = new Promise<T>((resolve) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      resolve(onTimeout);
+    }, ms);
+  });
+  try {
+    return await Promise.race([run(controller.signal), timedOut]);
+  } finally {
+    clearTimeout(timer);
+    parent.removeEventListener("abort", stop);
+  }
+}
+
 function inSfha(outcome: FloodOutcome): boolean {
   return (
     outcome.outcome === "found" &&
@@ -238,12 +353,14 @@ export function reportCoverage(checks: Check[]): ParcelReport["coverage"] {
  * Which question decides whether a first-time buyer can use vacant land,
  * most decisive first. Access and wastewater come first: a lot with no
  * legal access, or no sewer and no workable septic site, usually cannot be
- * built on at all.
+ * built on at all. Wetlands and stream setbacks follow zoning: they limit
+ * where on the lot you can build, and a mapped wetland can need a permit.
  */
 export const OPEN_QUESTION_PRIORITY = [
   "access",
   "septic",
   "zoning",
+  "environmental",
   "flood",
   "utilities",
   "easements",

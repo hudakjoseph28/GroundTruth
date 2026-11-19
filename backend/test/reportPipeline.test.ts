@@ -10,6 +10,7 @@ import {
   type FloodOutcome,
 } from "../src/reports/femaFlood.js";
 import { zoneLabel } from "../src/reports/floodCheck.js";
+import { NWI_OHIO_STATUS_QUERY } from "../src/reports/nwiWetlands.js";
 import { effectiveDateString } from "../src/reports/mapReport.js";
 import {
   biggestOpenQuestion,
@@ -278,6 +279,30 @@ describe("OHIO_COUNTIES_WITHOUT_NFHL", () => {
     expect(new Set(without.map((c) => c.fips))).toEqual(
       OHIO_COUNTIES_WITHOUT_NFHL,
     );
+  });
+});
+
+describe("NWI mapping status across Ohio", () => {
+  const recording = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/report/nwi-ohio-status.json", import.meta.url),
+      "utf8",
+    ),
+  ) as {
+    url: string;
+    status: number;
+    body: { features: { attributes: { STATUS: string } }[] };
+  };
+
+  it("is digital everywhere it touches Ohio, so every county can get a wetland answer", () => {
+    expect(recording.url).toBe(NWI_OHIO_STATUS_QUERY);
+    expect(recording.status).toBe(200);
+    expect(recording.body.features.length).toBeGreaterThan(0);
+    expect(
+      new Set(
+        recording.body.features.map(({ attributes }) => attributes.STATUS),
+      ),
+    ).toEqual(new Set(["Digital"]));
   });
 });
 
