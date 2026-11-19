@@ -6,50 +6,38 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import type { Deal, Parcel } from "@groundtruth/shared";
+import { stagedReleasedDeal, type Deal, type Parcel } from "@groundtruth/shared";
+import { ReceiptLink } from "../components/ReceiptLink";
 import {
   DEAL_PAGE,
   HANDOFF,
-  HOLD,
   LIVE,
-  REVIEWERS,
   STAGE,
   STATE_LABELS,
   TIMELINE,
 } from "../content/deal";
-import { DOCUMENTS, TIMELINE_DOCUMENT } from "../content/documents";
+import { DOCUMENTS } from "../content/documents";
+import { EXAMPLE } from "../content/example";
+import { DealHero, DealHoldCard, DealReviewers, DealRow, NewTab } from "../deal/DealParts";
 import { QrCode } from "../deal/QrCode";
 import { MoneyFlow } from "../deal/MoneyFlow";
 import { SolanaPayFund } from "../deal/SolanaPayFund";
 import { StageScreen } from "../deal/stage/StageScreen";
 import { wantsStage } from "../deal/stage/stageView";
 import { DealDocuments } from "../documents/DealDocuments";
-import { shortHash } from "../documents/fileCheck";
 import { useDealDocuments } from "../documents/useDealDocuments";
 import { TextAlerts } from "../deal/TextAlerts";
 import { useDealFeed, type LiveDeal } from "../deal/useDealFeed";
 import { dealPath } from "../data/dealSource";
-import {
-  formatClock,
-  formatMoment,
-  viewDeal,
-  viewTimeline,
-  type DealView,
-  type HoldView,
-  type ReviewerView,
-  type TimelineRow,
-} from "../data/dealView";
-import {
-  explorerAddressUrl,
-  explorerTxUrl,
-  shortAddress,
-} from "../data/ledger";
+import { formatClock, viewDeal, viewTimeline } from "../data/dealView";
+import { shortAddress } from "../data/ledger";
+import { ExampleTag, useIsExample } from "../example/ExampleContext";
 import { usePageTitle } from "../layout/usePageTitle";
 import { VerifyOnChain } from "../verify/VerifyOnChain";
-import { parcelName } from "../data/address";
-import { getParcel, parcelPath, sampleParcelPath } from "../data/parcelSource";
+import { getParcel, sampleParcelPath } from "../data/parcelSource";
 import { SceneBoundary } from "../parcel/SceneBoundary";
 import "../deal/deal.css";
 
@@ -136,85 +124,16 @@ export function DealPage() {
 }
 
 function DealScreen({ live }: { live: LiveDeal }) {
-  const deal = useMemo(() => viewDeal(live.deal), [live.deal]);
-  const rows = useMemo(() => viewTimeline(live.timeline), [live.timeline]);
-  const parcel = useParcel(deal.parcelKey);
-  const documents = useDealDocuments(deal.id);
+  const parcel = useParcel(live.deal.parcelKey);
+  const documents = useDealDocuments(live.deal.id);
   const [participant, setParticipant] = useState(false);
-  // The newest row that arrived live, read out once for screen readers.
-  const announced = rows.find((row) => live.freshIds.has(row.id));
 
   return (
-    <div className="deal-page" data-tone={deal.tone}>
-      <header className="deal-top">
-        <p className="eyebrow">
-          {DEAL_PAGE.eyebrow} <span className="mono deal-id">{deal.id}</span>
-        </p>
-        <LiveLine updatedAt={live.updatedAt} stale={live.stale} />
-      </header>
-
-      <MoneyFlow
-        amount={deal.amount}
-        state={deal.state}
-        live={live.liveState === deal.state}
-      />
-
-      <VerifyOnChain deal={live.deal} />
-
-      <div className="deal-summary">
-        <Hero
-          deal={deal}
-          live={live.liveState === deal.state}
-          parcel={parcel ?? null}
-        />
-        <DealLandSlot
-          parcel={parcel}
-          state={deal.state}
-          liveState={live.liveState}
-        />
-        {/* Only a draft can be funded; the API refuses every other state. */}
-        {deal.state === "draft" && (
-          <SolanaPayFund
-            dealId={deal.id}
-            amount={deal.amount}
-            buyerWallet={live.deal.buyerWallet}
-          />
-        )}
-        <Reviewers deal={deal} />
-        {deal.hold && <HoldCard hold={deal.hold} />}
-        {/* A closed deal has no more events to text about. */}
-        {deal.state !== "released" && deal.state !== "refunded" && (
-          <TextAlerts dealId={deal.id} />
-        )}
-      </div>
-
-      <section
-        className="deal-timeline"
-        id="timeline"
-        aria-labelledby="deal-timeline-title"
-      >
-        <header className="deal-section-head">
-          <h2 id="deal-timeline-title">{TIMELINE.title}</h2>
-          <p>{TIMELINE.order}</p>
-        </header>
-        {rows.length > 0 ? (
-          <ol className="deal-rows">
-            {rows.map((row) => (
-              <Row key={row.id} row={row} fresh={live.freshIds.has(row.id)} />
-            ))}
-          </ol>
-        ) : (
-          <p className="notice" role="status">
-            {TIMELINE.empty}
-          </p>
-        )}
-        <p className="visually-hidden" aria-live="polite">
-          {announced ? TIMELINE.announce(announced.message) : ""}
-        </p>
-      </section>
-
-      <div className="deal-documents" id="documents">
-        {participant ? (
+    <DealLayout
+      live={live}
+      parcel={parcel}
+      documents={
+        participant ? (
           <Suspense
             fallback={
               <DealDocuments state={documents.state} timeline={live.timeline} />
@@ -241,222 +160,153 @@ function DealScreen({ live }: { live: LiveDeal }) {
               </button>
             }
           />
+        )
+      }
+    />
+  );
+}
+
+/**
+ * The deal page's drawing, from a deal and its timeline. The live page feeds
+ * it from the API; the example deal feeds it from the example fixture, inside
+ * an ExampleProvider, and then reads nothing from the API or from devnet.
+ */
+export function DealLayout({
+  live,
+  parcel,
+  documents,
+}: {
+  live: LiveDeal;
+  /** Undefined while loading; null when it cannot be had. */
+  parcel: Parcel | null | undefined;
+  documents: ReactNode;
+}) {
+  const example = useIsExample();
+  const deal = useMemo(() => viewDeal(live.deal), [live.deal]);
+  const rows = useMemo(() => {
+    const newestFirst = viewTimeline(live.timeline);
+    // The example tells a story, so it reads first to last.
+    return example ? [...newestFirst].reverse() : newestFirst;
+  }, [live.timeline, example]);
+  // The newest row that arrived live, read out once for screen readers.
+  const announced = rows.find((row) => live.freshIds.has(row.id));
+
+  return (
+    <div className="deal-page" data-tone={deal.tone} data-example={example || undefined}>
+      <header className="deal-top">
+        {example ? (
+          <>
+            <p className="eyebrow">{DEAL_PAGE.eyebrow}</p>
+            <ExampleTag kind="deal" />
+          </>
+        ) : (
+          <>
+            <p className="eyebrow">
+              {DEAL_PAGE.eyebrow} <span className="mono deal-id">{deal.id}</span>
+            </p>
+            <LiveLine updatedAt={live.updatedAt} stale={live.stale} />
+          </>
+        )}
+      </header>
+
+      <MoneyFlow
+        amount={deal.amount}
+        state={deal.state}
+        live={live.liveState === deal.state}
+      />
+
+      {/* Reads the escrow account on devnet; an example has none. */}
+      {!example && <VerifyOnChain deal={live.deal} />}
+
+      <div className="deal-summary">
+        <DealHero
+          deal={deal}
+          live={live.liveState === deal.state}
+          parcel={parcel ?? null}
+        />
+        <DealLandSlot
+          parcel={parcel}
+          state={deal.state}
+          liveState={live.liveState}
+        />
+        {/* Only a draft can be funded; the API refuses every other state. */}
+        {deal.state === "draft" && !example && (
+          <SolanaPayFund
+            dealId={deal.id}
+            amount={deal.amount}
+            buyerWallet={live.deal.buyerWallet}
+          />
+        )}
+        <DealReviewers deal={deal} />
+        {deal.hold && <DealHoldCard hold={deal.hold} />}
+        {/* A closed deal has no more events to text about. */}
+        {deal.state !== "released" && deal.state !== "refunded" && !example && (
+          <TextAlerts dealId={deal.id} />
         )}
       </div>
 
-      <aside className="deal-aside">
-        <Handoff dealId={deal.id} />
-        <p className="deal-stage-link">
-          <Link to={`${dealPath(deal.id)}?stage=1`}>
-            {STAGE.open}
-            <span aria-hidden="true"> →</span>
-          </Link>
+      <section
+        className="deal-timeline"
+        id="timeline"
+        aria-labelledby="deal-timeline-title"
+      >
+        <header className="deal-section-head">
+          <h2 id="deal-timeline-title">{TIMELINE.title}</h2>
+          <p>{example ? EXAMPLE.deal.timelineOrder : TIMELINE.order}</p>
+        </header>
+        {rows.length > 0 ? (
+          <ol className="deal-rows">
+            {rows.map((row) => (
+              <DealRow key={row.id} row={row} fresh={live.freshIds.has(row.id)} />
+            ))}
+          </ol>
+        ) : (
+          <p className="notice" role="status">
+            {TIMELINE.empty}
+          </p>
+        )}
+        <p className="visually-hidden" aria-live="polite">
+          {announced ? TIMELINE.announce(announced.message) : ""}
         </p>
+      </section>
+
+      <div className="deal-documents" id="documents">
+        {documents}
+      </div>
+
+      <aside className="deal-aside">
+        <Handoff dealId={deal.id} example={example} />
+        {example ? (
+          <p className="example-real">
+            {EXAMPLE.real.lead}{" "}
+            <Link to={dealPath(stagedReleasedDeal.id)}>
+              {EXAMPLE.real.link}
+              <span aria-hidden="true"> →</span>
+            </Link>
+          </p>
+        ) : (
+          <p className="deal-stage-link">
+            <Link to={`${dealPath(deal.id)}?stage=1`}>
+              {STAGE.open}
+              <span aria-hidden="true"> →</span>
+            </Link>
+          </p>
+        )}
         {deal.escrowAddress && (
           <p className="deal-account">
             {DEAL_PAGE.escrowAddress}{" "}
-            <a
+            <ReceiptLink
               className="mono"
-              href={explorerAddressUrl(deal.escrowAddress)}
-              target="_blank"
-              rel="noreferrer"
+              address={deal.escrowAddress}
               title={deal.escrowAddress}
             >
               {shortAddress(deal.escrowAddress)}
-              <NewTab />
-            </a>
+              {!example && <NewTab />}
+            </ReceiptLink>
           </p>
         )}
       </aside>
     </div>
-  );
-}
-
-/** Amount first and always in the same place, then the state and why. */
-function parcelLinkName(parcelId: string, parcel: Parcel | null): string {
-  const street = parcel ? parcelName(parcel.siteAddress).street : null;
-  return street ? `${street} · ${parcelId}` : DEAL_PAGE.parcel.open(parcelId);
-}
-
-function Hero({
-  deal,
-  live,
-  parcel,
-}: {
-  deal: DealView;
-  /** The state changed while the page was open: draw the eye to it once. */
-  live: boolean;
-  parcel: Parcel | null;
-}) {
-  return (
-    <section className="deal-hero" aria-labelledby="deal-title">
-      <h1 id="deal-title" className="visually-hidden">
-        {DEAL_PAGE.dealId} {deal.id}
-      </h1>
-      <div className="deal-hero-row">
-        <p className="deal-amount">
-          <span className="visually-hidden">{DEAL_PAGE.amount}: </span>
-          <span className="mono">{deal.amount}</span> {DEAL_PAGE.unit}
-        </p>
-        <p className="deal-state" key={deal.state} data-live={live}>
-          <span className="visually-hidden">{DEAL_PAGE.status}: </span>
-          {STATE_LABELS[deal.state]}
-        </p>
-      </div>
-      <p className="deal-headline">{deal.headline}</p>
-      <p className="deal-message">{deal.message}</p>
-      <p className="deal-next">
-        <span>{DEAL_PAGE.next}</span> {deal.next}
-      </p>
-      <p className="deal-parcel">
-        <span>{DEAL_PAGE.parcel.label}</span>{" "}
-        <Link to={parcelPath(deal.parcelKey)}>
-          {parcelLinkName(deal.parcelId, parcel)}
-          {parcel ? ` · ${DEAL_PAGE.parcel.county(parcel.county)}` : ""}
-          <span aria-hidden="true"> →</span>
-        </Link>
-      </p>
-      <p className="tag deal-staged">{DEAL_PAGE.staged}</p>
-    </section>
-  );
-}
-
-const REVIEWER_MARKS: Record<ReviewerView["status"], string> = {
-  signed: "✓",
-  held: "!",
-  waiting: "",
-  notSigned: "–",
-};
-
-function Reviewers({ deal }: { deal: DealView }) {
-  return (
-    <section className="deal-reviewers" aria-labelledby="deal-reviewers-title">
-      <header className="deal-section-head">
-        <h2 id="deal-reviewers-title">{REVIEWERS.title}</h2>
-        <p className="mono">{REVIEWERS.count(deal.signed, deal.required)}</p>
-      </header>
-      <ul>
-        {deal.reviewers.map((reviewer) => (
-          <li key={reviewer.wallet} data-status={reviewer.status}>
-            <span className="deal-reviewer-mark" aria-hidden="true">
-              {REVIEWER_MARKS[reviewer.status]}
-            </span>
-            <p className="deal-reviewer-who">
-              {REVIEWERS.role(reviewer.role)}
-              <span
-                className="mono"
-                title={`${REVIEWERS.wallet} ${reviewer.wallet}`}
-              >
-                {shortAddress(reviewer.wallet)}
-              </span>
-            </p>
-            <p className="deal-reviewer-status">
-              <strong>{REVIEWERS.status[reviewer.status]}</strong>
-              {reviewer.signature && (
-                <a
-                  href={explorerTxUrl(reviewer.signature)}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {REVIEWERS.receipt}
-                  <NewTab />
-                </a>
-              )}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function HoldCard({ hold }: { hold: HoldView }) {
-  return (
-    <section
-      className="deal-hold"
-      data-active={hold.active}
-      aria-labelledby="deal-hold-title"
-    >
-      <h2 id="deal-hold-title">
-        {hold.active ? HOLD.active : HOLD.ended}
-        <span>{hold.reason}</span>
-      </h2>
-      <p className="deal-hold-message">{hold.message}</p>
-      <p className="deal-hold-foot">
-        {HOLD.placedBy(hold.role)} ·{" "}
-        <time dateTime={hold.at}>{formatMoment(hold.at)}</time> ·{" "}
-        <a
-          href={explorerTxUrl(hold.signature)}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {HOLD.receipt}
-          <NewTab />
-        </a>
-      </p>
-      {!hold.active && <p className="deal-hold-foot">{HOLD.endedNote}</p>}
-    </section>
-  );
-}
-
-function Row({ row, fresh }: { row: TimelineRow; fresh: boolean }) {
-  return (
-    <li
-      className="deal-row"
-      data-tone={row.tone}
-      data-blocked={row.blocked}
-      data-confirmed={row.confirmed}
-      data-fresh={fresh}
-    >
-      <span className="deal-row-mark" aria-hidden="true">
-        {row.blocked ? "✕" : ""}
-      </span>
-      <div className="deal-row-body">
-        <p className="deal-row-head">
-          <strong>{row.label}</strong>
-          {row.blocked && (
-            <span className="deal-row-blocked">{TIMELINE.blocked}</span>
-          )}
-          {fresh && <span className="deal-row-new">{TIMELINE.fresh}</span>}
-          <time dateTime={row.at}>{formatMoment(row.at)}</time>
-        </p>
-        <p className="deal-row-message">{row.message}</p>
-        <p className="deal-row-foot">
-          {row.actor && <span>{row.actor}</span>}
-          <span>{row.confirmed ? TIMELINE.confirmed : TIMELINE.offChain}</span>
-        </p>
-        {row.citation && (
-          <p className="deal-row-doc">
-            {row.citation.filename && row.citation.documentId ? (
-              <>
-                {TIMELINE_DOCUMENT.relying}{" "}
-                <a href={`#document-${row.citation.documentId}`}>
-                  {row.citation.filename}
-                </a>
-              </>
-            ) : (
-              TIMELINE_DOCUMENT.unmatched
-            )}
-            <span className="mono" title={row.citation.sha256}>
-              {" · "}
-              {TIMELINE_DOCUMENT.hash} {shortHash(row.citation.sha256)}
-            </span>
-          </p>
-        )}
-        {row.signature && (
-          <a
-            className="deal-row-link"
-            href={explorerTxUrl(row.signature)}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {TIMELINE.explorer}
-            <span className="mono">{shortAddress(row.signature)}</span>
-            <NewTab />
-          </a>
-        )}
-      </div>
-    </li>
   );
 }
 
@@ -476,41 +326,34 @@ function LiveLine({ updatedAt, stale }: { updatedAt: Date; stale: boolean }) {
 }
 
 /** Desktop only: the same public page, for a phone. The stylesheet hides it on narrow screens. */
-function Handoff({ dealId }: { dealId: string }) {
+function Handoff({ dealId, example = false }: { dealId: string; example?: boolean }) {
   const url = `${window.location.origin}${dealPath(dealId)}`;
   return (
     <section className="deal-handoff" aria-labelledby="deal-handoff-title">
       <QrCode value={url} label={HANDOFF.alt(url)} />
       <div>
         <h2 id="deal-handoff-title">{HANDOFF.title}</h2>
-        <p>{HANDOFF.body}</p>
-        <p className="mono deal-handoff-url">
-          {/* A narrow column breaks the address after a slash, not mid-word. */}
-          {url
-            .replace(/^https?:\/\//, "")
-            .split("/")
-            .map((part, index) => (
-              <Fragment key={index}>
-                {index > 0 && (
-                  <>
-                    /<wbr />
-                  </>
-                )}
-                {part}
-              </Fragment>
-            ))}
-        </p>
+        <p>{example ? EXAMPLE.deal.handoff : HANDOFF.body}</p>
+        {!example && (
+          <p className="mono deal-handoff-url">
+            {/* A narrow column breaks the address after a slash, not mid-word. */}
+            {url
+              .replace(/^https?:\/\//, "")
+              .split("/")
+              .map((part, index) => (
+                <Fragment key={index}>
+                  {index > 0 && (
+                    <>
+                      /<wbr />
+                    </>
+                  )}
+                  {part}
+                </Fragment>
+              ))}
+          </p>
+        )}
       </div>
     </section>
-  );
-}
-
-function NewTab() {
-  return (
-    <>
-      <span aria-hidden="true"> ↗</span>
-      <span className="visually-hidden"> ({TIMELINE.newTab})</span>
-    </>
   );
 }
 

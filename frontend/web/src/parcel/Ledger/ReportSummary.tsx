@@ -39,12 +39,16 @@ function ProgressRing({ answered, total }: { answered: number; total: number }) 
 export function ReportSummary({
   ledger,
   onOpen,
+  override,
 }: {
   ledger: ParcelLedger;
   onOpen: (record: LedgerRecord, node: Element | null) => void;
+  /** The example parcel's own bottom line, in place of the worked-out one. */
+  override?: { opening: string; ask: string };
 }) {
-  const line = bottomLine(ledger);
-  if (!line) return null;
+  const worked = bottomLine(ledger);
+  if (!worked) return null;
+  const line = override ? { ...worked, ...override } : worked;
   const total = ledger.records.length;
   const half = Math.ceil(total / 2);
 

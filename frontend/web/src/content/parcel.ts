@@ -34,6 +34,8 @@ export const LAND = {
     "The parcel as a block of land: aerial imagery on its terrain, soil below, and the boundary outlined in gold.",
   labelFlat: "Aerial imagery of the parcel, with the boundary outlined in gold.",
   hint: "Drag to turn it, or click it to explore the area.",
+  /** The example lot has no real surroundings to open. */
+  hintExample: "Drag to turn it. Arrow keys turn it too.",
   exaggerated: (times: number) => `Height exaggerated ×${times}`,
   flat: {
     reduced: "Shown flat because motion is reduced.",
@@ -49,6 +51,7 @@ export const LAND = {
   stage: {
     turning: "Land block. Arrow keys turn it. Enter opens Explore the area.",
     still: "Aerial image of the parcel. Enter opens Explore the area.",
+    example: "The example lot on real aerial imagery and elevation. Arrow keys turn it in 3D.",
   },
   view: {
     label: "Land view",

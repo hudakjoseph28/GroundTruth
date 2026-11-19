@@ -14,7 +14,9 @@ import { Segmented } from "../../components/Segmented";
 import { ParcelBoundary } from "../../components/ParcelBoundary";
 import type { LayerToggleId } from "../../content/layers";
 import { LAND, PARCEL_PAGE } from "../../content/parcel";
-import { LayerPanel } from "../Layers/LayerPanel";
+import { getParcelLayers, type LayersOutcome } from "../../data/layerSource";
+import { useIsExample } from "../../example/ExampleContext";
+import { LAYER_TOGGLES, LayerPanel } from "../Layers/LayerPanel";
 import { paintLayers } from "../Layers/paintLayers";
 import { useParcelLayers } from "../Layers/useParcelLayers";
 import { ExploreMenu } from "../Explore/ExploreMenu";
@@ -50,6 +52,7 @@ export function LandBlock({
   staged,
   revealed,
   onReady,
+  getLayers = getParcelLayers,
 }: {
   parcel: Parcel;
   staged: boolean;
@@ -59,7 +62,10 @@ export function LandBlock({
   mode: RenderMode;
   revealed: boolean;
   onReady: () => void;
+  /** Where the map layers come from: the API, or the example's fixture. */
+  getLayers?: (parcelKey: string, signal: AbortSignal) => Promise<LayersOutcome>;
 }) {
+  const example = useIsExample();
   const ring = useMemo(() => outerRing(parcel.geometry.geojson), [parcel]);
   const loading = assets === undefined || mode === "pending";
   const drawable = Boolean(assets && ring.length >= 3);
@@ -67,9 +73,12 @@ export function LandBlock({
   const show3d = !loading && drawable && view === "3d" && !threeDisabled;
   const show2d = !loading && drawable && !show3d;
 
-  // Map layers: off by default except the boundary. Asked for once the land
-  // can be drawn, so each toggle can say at once what its source found.
-  const [enabled, setEnabled] = useState<ReadonlySet<LayerToggleId>>(() => new Set(["boundary"]));
+  // Map layers: off by default except the boundary (all of them on the
+  // example). Asked for once the land can be drawn, so each toggle can say at
+  // once what its source found.
+  const [enabled, setEnabled] = useState<ReadonlySet<LayerToggleId>>(
+    () => new Set<LayerToggleId>(example ? LAYER_TOGGLES : ["boundary"]),
+  );
   const toggleLayer = useCallback((id: LayerToggleId) => {
     setEnabled((current) => {
       const next = new Set(current);
@@ -78,7 +87,11 @@ export function LandBlock({
       return next;
     });
   }, []);
-  const { layers, wetlandsImage, retry: retryLayers } = useParcelLayers(parcel.key, drawable);
+  const allOn = LAYER_TOGGLES.every((id) => enabled.has(id));
+  const toggleAll = useCallback(() => {
+    setEnabled(allOn ? new Set<LayerToggleId>(["boundary"]) : new Set(LAYER_TOGGLES));
+  }, [allOn]);
+  const { layers, wetlandsImage, retry: retryLayers } = useParcelLayers(parcel.key, drawable, getLayers);
   const overlay = useMemo(() => {
     if (!assets || !layers) return null;
     const on = new Set([...enabled].filter((id): id is MapLayerId => id !== "boundary"));
@@ -89,8 +102,10 @@ export function LandBlock({
       layers,
       enabled: on,
       wetlandsImage,
+      labels: example,
+      lot: ring,
     });
-  }, [assets, layers, enabled, wetlandsImage]);
+  }, [assets, layers, enabled, wetlandsImage, example, ring]);
   const boundary = enabled.has("boundary");
   // The flat picture is SVG, so it takes the layers as an image URL. Encoded
   // only when the flat picture is showing; the 3D block reads the canvas.
@@ -110,7 +125,10 @@ export function LandBlock({
   const [menu, setMenu] = useState<"land" | "button" | null>(null);
   const [areaOpen, setAreaOpen] = useState(false);
 
-  const openFromLand = useCallback(() => setMenu((opened) => opened ?? "land"), []);
+  // The example lot has no real surroundings, so its land opens no menu.
+  const openFromLand = useCallback(() => {
+    if (!example) setMenu((opened) => opened ?? "land");
+  }, [example]);
   const closeMenu = useCallback(
     (refocus: boolean) => {
       if (refocus) (menu === "land" ? stage.current : button.current)?.focus();
@@ -144,7 +162,7 @@ export function LandBlock({
     }
   };
 
-  const explore = (
+  const explore = example ? null : (
     <ExploreMenu
       centroid={parcel.centroid}
       open={menu !== null}
@@ -256,9 +274,11 @@ export function LandBlock({
           data-view={show3d ? "3d" : "2d"}
           role="button"
           tabIndex={0}
-          aria-label={show3d ? LAND.stage.turning : LAND.stage.still}
-          aria-haspopup="true"
-          aria-expanded={menu !== null}
+          aria-label={
+            example ? LAND.stage.example : show3d ? LAND.stage.turning : LAND.stage.still
+          }
+          aria-haspopup={example ? undefined : "true"}
+          aria-expanded={example ? undefined : menu !== null}
           onKeyDown={onStageKey}
           onClick={show2d ? openFromLand : undefined}
         >
@@ -295,7 +315,14 @@ export function LandBlock({
           </div>
         </div>
       </div>
-      <LayerPanel layers={layers} enabled={enabled} onToggle={toggleLayer} onRetry={retryLayers} />
+      <LayerPanel
+        layers={layers}
+        enabled={enabled}
+        allOn={allOn}
+        onToggle={toggleLayer}
+        onToggleAll={toggleAll}
+        onRetry={retryLayers}
+      />
       <figcaption className="land-caption">
         <div className="land-credit">
           <p className="visually-hidden">{show3d ? LAND.label3d : LAND.labelFlat}</p>
@@ -305,7 +332,7 @@ export function LandBlock({
           </p>
           <p>
             {staged && <>{PARCEL_PAGE.stagedNote} </>}
-            {show3d ? LAND.hint : flatHint}
+            {show3d ? (example ? LAND.hintExample : LAND.hint) : flatHint}
           </p>
         </div>
         {explore}

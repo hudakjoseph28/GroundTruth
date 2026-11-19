@@ -1,3 +1,4 @@
+import { ExampleLink } from "../components/ExampleLink";
 import { ExploreLink } from "../components/ExploreLink";
 import { Link } from "react-router-dom";
 import { SearchForm } from "../components/SearchForm";
@@ -46,7 +47,10 @@ export function Hero() {
               {HERO.hints[1].query}
             </Link>
           </p>
-          <ExploreLink />
+          <div className="hero-links">
+            <ExploreLink />
+            <ExampleLink />
+          </div>
           <ul className="hero-trust">
             {HERO.trust.map((item) => (
               <li key={item.label}>

@@ -19,6 +19,8 @@ export function DealDocuments({
   participant,
   fileAction,
   compact = false,
+  note,
+  checkFile = true,
 }: {
   state: DealDocumentsState;
   timeline: readonly TimelineEvent[];
@@ -28,6 +30,10 @@ export function DealDocuments({
   fileAction?: (document: DealDocument) => ReactNode;
   /** The reviewer portal's card: no intro, no file check. */
   compact?: boolean;
+  /** Replaces the staged-demo banner (the example deal says its documents are made up). */
+  note?: string;
+  /** False leaves out "Check a file". */
+  checkFile?: boolean;
 }) {
   const documents = state.status === "ready" ? state.documents : [];
   return (
@@ -41,7 +47,7 @@ export function DealDocuments({
         </header>
       )}
       <p className="docs-banner" role="note">
-        {DOCUMENTS.banner}
+        {note ?? DOCUMENTS.banner}
       </p>
       {!compact && <p className="docs-intro">{DOCUMENTS.intro}</p>}
 
@@ -69,7 +75,7 @@ export function DealDocuments({
       )}
 
       {participant}
-      {!compact && <CheckFile documents={documents} timeline={timeline} />}
+      {!compact && checkFile && <CheckFile documents={documents} timeline={timeline} />}
     </section>
   );
 }

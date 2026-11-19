@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 
 import "../parcel/parcel.css";
 import { ESCROW } from "../content/parcel";
 import { explorerTxUrl, shortAddress } from "../data/ledger";
+import { useIsExample } from "../example/ExampleContext";
 import type { ChainBlock } from "./chainBlocks";
 
 /** Confirmed events as glass cards. Outlines are steps that have not happened. */
@@ -12,6 +13,7 @@ export function ChainStrip({
   blocks: readonly ChainBlock[];
   outlines?: readonly ChainBlock[];
 }) {
+  const example = useIsExample();
   const items = [...blocks, ...outlines];
   const scroller = useRef<HTMLOListElement>(null);
   const more = useOverflow(scroller, items.length);
@@ -31,7 +33,8 @@ export function ChainStrip({
           }
           style={{ "--i": index } as CSSProperties}
         >
-          {block.signature ? (
+          {/* An example's receipts are made up: never linked. */}
+          {block.signature && !example ? (
             <a
               className="block-card"
               href={explorerTxUrl(block.signature)}
@@ -52,6 +55,7 @@ export function ChainStrip({
 }
 
 function BlockBody({ block }: { block: ChainBlock }) {
+  const example = useIsExample();
   const when = new Date(block.at);
   const time = Number.isNaN(when.getTime())
     ? ""
@@ -72,7 +76,7 @@ function BlockBody({ block }: { block: ChainBlock }) {
       {block.signature ? (
         <p className="block-sig mono">
           {shortAddress(block.signature)}
-          <span aria-hidden="true"> ↗</span>
+          {!example && <span aria-hidden="true"> ↗</span>}
         </p>
       ) : (
         <p className="block-sig" />

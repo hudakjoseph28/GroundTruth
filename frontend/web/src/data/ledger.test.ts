@@ -197,3 +197,51 @@ describe("the parcel ledger renders", () => {
     expect(html).toContain("Radon test");
   });
 });
+
+describe("a reviewer's own signed card", () => {
+  const released = stagedDeal; // any deal with a title reviewer
+  const title = released.reviewers.find((reviewer) => reviewer.role === "title")!;
+  const signedDeal = {
+    ...released,
+    state: "funded" as const,
+    hold: undefined,
+    reviewers: released.reviewers.map((reviewer) =>
+      reviewer.role === "title"
+        ? { ...reviewer, approvedAt: "2026-11-19T00:00:00.000Z", approvalTransaction: "sig-title" }
+        : reviewer,
+    ),
+  };
+  const withTitle = (check: Partial<Check>): ParcelReport => ({
+    ...goldenReport,
+    checks: [
+      ...goldenReport.checks.filter((entry) => entry.kind !== "sellerAuthority"),
+      {
+        kind: "sellerAuthority",
+        status: "needsReview",
+        finding: "Report words.",
+        limitation: "Report limit.",
+        sources: [],
+        responsibleParty: { role: "Title reviewer" },
+        nextAction: "Next.",
+        ...check,
+      } as Check,
+    ],
+  });
+
+  it("keeps a report's words that already record this reviewer's sign-off", () => {
+    const ledger = buildLedger(withTitle({ status: "signedOff", reviewerWallet: title.wallet }), signedDeal);
+    const card = ledger.records.find((record) => record.check.kind === "sellerAuthority")!;
+    expect(card.check.finding).toBe("Report words.");
+    expect(card.check.status).toBe("signedOff");
+    expect(card.signature).toBe("sig-title");
+  });
+
+  it("replaces any other report's words with the chain's", () => {
+    for (const check of [{ status: "needsReview" as const }, { status: "signedOff" as const, reviewerWallet: "someone-else" }]) {
+      const ledger = buildLedger(withTitle(check), signedDeal);
+      const card = ledger.records.find((record) => record.check.kind === "sellerAuthority")!;
+      expect(card.check.finding).not.toBe("Report words.");
+      expect(card.check.status).toBe("signedOff");
+    }
+  });
+});

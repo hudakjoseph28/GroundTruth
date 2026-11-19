@@ -175,6 +175,8 @@ export const TIMELINE = {
   } satisfies Record<TimelineEventType, string>,
   blocked: "Blocked · no money moved",
   confirmed: "Confirmed on Solana devnet",
+  /** An example page's on-chain row: what kind of record it is, with no claim it was confirmed. */
+  onChain: "On-chain record",
   offChain: "Off-chain record · not a chain event",
   explorer: "View transaction",
   newTab: "opens Solana Explorer in a new tab",

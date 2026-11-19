@@ -395,6 +395,8 @@
   z-index: 2;
   top: 0;
   left: var(--money-position);
+  /* Near the right edge the token keeps its one line instead of wrapping. */
+  width: max-content;
   display: inline-grid;
   grid-template-columns: auto auto;
   align-items: center;

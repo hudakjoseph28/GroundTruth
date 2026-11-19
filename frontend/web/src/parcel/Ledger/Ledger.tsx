@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { EXAMPLE } from "../../content/example";
 import { ESCROW, LEDGER } from "../../content/parcel";
 import type { EscrowSummary, LedgerRecord, ParcelLedger } from "../../data/ledger";
+import { useIsExample } from "../../example/ExampleContext";
 import { readDevnetSlot } from "../BlockTransition/devnetSlot";
 import { motionVars } from "../motion";
 import { usePageHidden } from "../usePageHidden";
@@ -17,8 +19,11 @@ import { ReportSummary } from "./ReportSummary";
  * All of that motion lives in the stylesheet; this only says when it may run.
  */
 function ClosingsHeader() {
+  const example = useIsExample();
   const [live, setLive] = useState(false);
   useEffect(() => {
+    // An example closing is not on devnet, so devnet is not asked.
+    if (example) return;
     let current = true;
     void readDevnetSlot().then((slot) => {
       if (current) setLive(slot !== null);
@@ -26,14 +31,21 @@ function ClosingsHeader() {
     return () => {
       current = false;
     };
-  }, []);
+  }, [example]);
   return (
     <header className="closings-head">
-      <h3 id="closings-title">{ESCROW.closings}</h3>
-      <p className="closings-live" data-live={live}>
-        <span className="closings-dot" aria-hidden="true" />
-        {live ? ESCROW.devnetLive : ESCROW.devnet}
-      </p>
+      <h3 id="closings-title">{example ? EXAMPLE.parcelDeal : ESCROW.closings}</h3>
+      {example ? (
+        <p className="closings-live" data-live={false}>
+          <span className="closings-dot" aria-hidden="true" />
+          {EXAMPLE.tag.data}
+        </p>
+      ) : (
+        <p className="closings-live" data-live={live}>
+          <span className="closings-dot" aria-hidden="true" />
+          {live ? ESCROW.devnetLive : ESCROW.devnet}
+        </p>
+      )}
     </header>
   );
 }
@@ -45,6 +57,7 @@ export function Ledger({
   revealed,
   animated,
   after,
+  bottomLine,
 }: {
   ledger: ParcelLedger;
   /** Every staged deal on this parcel the API returned, for the links under the escrow. */
@@ -57,6 +70,8 @@ export function Ledger({
   animated: boolean;
   /** Shown under the checks, e.g. saving the report on Solana. */
   after?: ReactNode;
+  /** Replaces the bottom line worked out from the checks (the example's own). */
+  bottomLine?: { opening: string; ask: string };
 }) {
   const [open, setOpen] = useState<{ record: LedgerRecord; origin: Origin | null } | null>(null);
   const hidden = usePageHidden();
@@ -79,7 +94,7 @@ export function Ledger({
       data-paused={hidden || open !== null || !animated}
       style={motionVars(count)}
     >
-      <ReportSummary ledger={ledger} onOpen={show} />
+      <ReportSummary ledger={ledger} onOpen={show} override={bottomLine} />
 
       <header className="ledger-head">
         <h2 id="ledger-title">{LEDGER.title}</h2>

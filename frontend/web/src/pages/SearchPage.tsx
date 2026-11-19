@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { ExampleLink } from "../components/ExampleLink";
 import { ExploreLink } from "../components/ExploreLink";
 import { SearchForm } from "../components/SearchForm";
 import { goldenParcel, type ParcelSearchResult } from "@groundtruth/shared";
@@ -72,7 +73,10 @@ export function SearchPage() {
         showSampleLink={false}
       />
       {!blank && <SearchExamples current={query} />}
-      <ExploreLink />
+      <div className="search-links">
+        <ExploreLink />
+        <ExampleLink />
+      </div>
       {blank ? (
         <SearchStart
           recent={recent}
