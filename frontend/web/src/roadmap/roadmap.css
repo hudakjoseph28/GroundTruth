@@ -1,0 +1,484 @@
+/* /roadmap: a page head, then Now, Next, the pilot measures, and Later.
+   Colors keep their jobs: green = live, gold = the lot in view or pending,
+   red = held. "Planned" is quiet gray and always written out. Motion is a
+   fade on entry and a small lift on hover; with reduced motion, none. */
+
+.roadmap {
+  --quiet: #8b8b90;
+  padding-bottom: var(--space-l);
+}
+
+/* ---------- Head ---------- */
+
+.rm-head {
+  padding: clamp(2.5rem, 1.6rem + 3vw, 5rem) var(--pad) var(--space-m);
+}
+
+.rm-head .eyebrow {
+  margin-bottom: var(--s-2);
+}
+
+.rm-head h1 {
+  margin-bottom: var(--s-4);
+}
+
+.rm-lede {
+  max-width: 40rem;
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--step-1);
+  line-height: 1.45;
+}
+
+.rm-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--space-m);
+}
+
+.rm-jump a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0 1rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 560;
+  text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.rm-jump a:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--surface-2);
+}
+
+.rm-jump-label {
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+.rm-jump-dot,
+.rm-status-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--text-2);
+}
+
+.rm-jump a[data-stage="now"] .rm-jump-dot {
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(63, 168, 106, 0.18);
+}
+
+/* ---------- Stages ---------- */
+
+.rm-stage {
+  padding: var(--space-m) var(--pad);
+}
+
+.rm-stage-head {
+  display: grid;
+  gap: var(--s-2);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-m);
+}
+
+.rm-stage h2,
+.rm-measure h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.75rem;
+  margin: 0;
+  font-size: var(--step-2);
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.rm-stage-label {
+  color: var(--text-2);
+  font-size: var(--step-0);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.rm-stage-head p {
+  max-width: 44rem;
+  margin: 0;
+  color: var(--text-2);
+}
+
+.rm-cards {
+  display: grid;
+  gap: var(--space-s);
+  margin: var(--space-m) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@container page (min-width: 40rem) {
+  .rm-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Three across at most, so the sketches stay large enough to read. */
+@container page (min-width: 64rem) {
+  .rm-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.rm-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1rem 1.2rem 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+  transition:
+    border-color 220ms ease,
+    transform 220ms var(--ease-out);
+}
+
+.rm-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+/* Planned cards sit a step back from the live ones. */
+.rm-card[data-live="false"] {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: none;
+}
+
+.rm-status {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.45rem;
+  margin: 0 0 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 2px 10px 2px 9px;
+  color: var(--text-2);
+  font-size: 0.74rem;
+  font-weight: 560;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.rm-status[data-live="true"] {
+  border-color: rgba(63, 168, 106, 0.4);
+  color: var(--green-text);
+}
+
+.rm-status[data-live="true"] .rm-status-dot {
+  background: var(--green);
+  box-shadow: none;
+}
+
+.rm-card h3 {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0 0 0.4rem;
+  font-size: var(--step-1);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.rm-icon {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.2em;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rm-card[data-live="false"] .rm-icon {
+  stroke: var(--text-2);
+}
+
+.rm-body {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.rm-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.1rem;
+  margin: auto 0 0;
+  padding: 0.6rem 0 0;
+  list-style: none;
+}
+
+.rm-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: var(--tap);
+  color: var(--gold-text);
+  font-size: 0.9rem;
+  font-weight: 560;
+  text-decoration: none;
+}
+
+.rm-links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rm-links svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Sketches ---------- */
+
+.rm-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 8.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0) 0 0 / 14px 14px,
+    rgba(255, 255, 255, 0.015);
+  overflow: hidden;
+}
+
+.rm-art svg {
+  width: min(100%, 20rem);
+  height: 100%;
+  padding: 0.6rem 0 1.1rem;
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rm-art-caption {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.4rem;
+  color: var(--quiet);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+}
+
+.rm-line {
+  stroke: #5a5a60;
+}
+
+.rm-strong {
+  stroke: #b8b8be;
+}
+
+.rm-dim {
+  stroke: #45454a;
+}
+
+.rm-grid {
+  stroke: #262629;
+  stroke-width: 1;
+}
+
+.rm-text {
+  stroke: #3a3a3f;
+  stroke-width: 4;
+}
+
+.rm-panel {
+  fill: #0e0e10;
+}
+
+.rm-panel-dark {
+  fill: var(--bg);
+}
+
+.rm-gold {
+  stroke: var(--gold);
+}
+
+.rm-gold-soft {
+  fill: rgba(196, 161, 90, 0.2);
+}
+
+.rm-boundary {
+  fill: rgba(196, 161, 90, 0.08);
+}
+
+.rm-green {
+  stroke: var(--green);
+}
+
+.rm-red {
+  stroke: var(--red);
+}
+
+.rm-dot,
+.rm-gold-fill,
+.rm-green-fill,
+.rm-dim-fill {
+  stroke: none;
+}
+
+.rm-gold-fill {
+  fill: var(--gold);
+}
+
+.rm-green-fill {
+  fill: var(--green);
+}
+
+.rm-dim-fill {
+  fill: #45454a;
+}
+
+.rm-easement {
+  stroke: rgba(196, 161, 90, 0.55);
+  stroke-width: 7;
+  stroke-dasharray: 2 5;
+  stroke-linecap: butt;
+}
+
+/* Planned sketches are drawn a little fainter than live ones. */
+.rm-card[data-live="false"] .rm-art svg {
+  opacity: 0.85;
+}
+
+.rm-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rm-pulse 2.4s var(--ease-out) infinite;
+}
+
+@keyframes rm-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ---------- Pilot measures ---------- */
+
+.rm-measure {
+  margin: var(--space-m) var(--pad);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: var(--space-m) clamp(1.1rem, 0.6rem + 2vw, 2.25rem);
+  background: var(--surface-1);
+}
+
+.rm-measure .eyebrow {
+  margin-bottom: var(--s-2);
+}
+
+.rm-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-s) var(--space-m);
+  margin: var(--space-m) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: metric;
+}
+
+.rm-metrics li {
+  counter-increment: metric;
+  border-top: 1px solid var(--border-strong);
+  padding-top: var(--s-3);
+}
+
+.rm-metrics h3 {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0 0 0.35rem;
+  font-size: var(--step-0);
+  font-weight: 620;
+  letter-spacing: -0.01em;
+}
+
+.rm-metrics h3::before {
+  content: counter(metric, decimal-leading-zero);
+  color: var(--quiet);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.rm-metrics p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 0.95rem;
+}
+
+.rm-measure-note {
+  margin: var(--space-m) 0 0;
+  color: var(--quiet);
+  font-size: 0.85rem;
+}
+
+/* ---------- Entry, and reduced motion ---------- */
+
+.rm-stage[data-reveal] > section > *,
+.rm-measure[data-reveal] > section > * {
+  transition:
+    opacity 460ms var(--ease-out),
+    transform 460ms var(--ease-out);
+}
+
+.rm-stage[data-reveal="out"] > section > *,
+.rm-measure[data-reveal="out"] > section > * {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.rm-stage[data-reveal="in"] > section > :nth-child(2) {
+  transition-delay: 70ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roadmap *,
+  .roadmap *::before,
+  .roadmap *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .rm-card:hover {
+    transform: none;
+  }
+
+  .rm-stage[data-reveal] > section > *,
+  .rm-measure[data-reveal] > section > * {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { DOCS, MENU, NAV, SITE } from "../content/site";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { DOCS, MENU, NAV, ROADMAP_LINK, SITE } from "../content/site";
 import { BrandMark } from "./BrandMark";
 import { NetworkChip } from "./NetworkChip";
 
@@ -58,6 +58,9 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           {item.label}
         </Link>
       ))}
+      <NavLink to={ROADMAP_LINK.to} onClick={onNavigate}>
+        {ROADMAP_LINK.label}
+      </NavLink>
       <a href={DOCS.href} target="_blank" rel="noreferrer" onClick={onNavigate}>
         {DOCS.label}
         <ExternalIcon />
