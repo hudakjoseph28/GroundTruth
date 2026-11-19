@@ -1,0 +1,77 @@
+// Raw devnet accounts of three staged demo deals, captured with
+// `getAccountInfo` (base64, confirmed) from https://api.devnet.solana.com on
+// 2026-11-19 UTC, so the decoder and comparison tests run offline against
+// real program bytes. Public addresses and data only.
+
+export interface CapturedAccount {
+  address: string;
+  owner: string;
+  slot: number;
+  base64: string;
+}
+
+/** `staged-devnet-deal`: held by the title reviewer, then refunded. */
+export const HELD_DEAL: CapturedAccount = {
+  address: "54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW",
+  owner: "ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG",
+  slot: 523859357,
+  base64:
+    "eVQOznWMXhUVb6LfGtPoXGFtywh7O48KOThi7V269CQvBpdSuAhqnPEd1PNPj0GD62ztC15l" +
+    "1kaXuuw2o7nua306oy9NMqyRUhMJcpX+uWCiQPfzJ9R4UnUermiVkhKfN75b4KHr1qqrvkDK" +
+    "trXriY687EQpksvmQL4h4Tvrhk0VxSIueKrVXDtELLORIVfxOpM9ATQoLQMrX/7NAaLb8bd5" +
+    "BgjfAC6n9gzv2ndhBoU/H0phISuRr0byAQ9BMBa69a86SjJEuqRAeH0BAAAAAAQDAAAAz33z" +
+    "CrRTlQ1eEqdfmJCAky6peL8dapd7pV2Nu9qYPK0AAQCqH7y72if+sE/GPeb45cGeNhuYteWz" +
+    "FBbk/EuGNiX/mQEBAI52ElUIHLAjrOdx1huB7OJ9rY9HdFVSZ+ED9YqOMqc+AgEAAc998wq0" +
+    "U5UNXhKnX5iQgJMuqXi/HWqXe6VdjbvamDytAAA/4/1qAAAAAP4AAAAAAAAAAAAAAAAAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+};
+
+/** `staged-devnet-deal-released`: all three approvals, released. */
+export const RELEASED_DEAL: CapturedAccount = {
+  address: "3uBECmkG9XKbJbGisPjqWNxy6Sb3knVZ2cnwF7jby2yu",
+  owner: "ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG",
+  slot: 523859357,
+  base64:
+    "eVQOznWMXhVIM/kNNIUvz3vB5oM4amQbSFvCquQXjv76NPyFZbES5PEd1PNPj0GD62ztC15l" +
+    "1kaXuuw2o7nua306oy9NMqyRUhMJcpX+uWCiQPfzJ9R4UnUermiVkhKfN75b4KHr1qqrvkDK" +
+    "trXriY687EQpksvmQL4h4Tvrhk0VxSIueKrVXDtELLORIVfxOpM9ATQoLQMrX/7NAaLb8bd5" +
+    "BgjfAC6nbSVONKevUtLJ6r8O7U0/iNBthtySC9Tz6VofFWt98MRAeH0BAAAAAAMDAAAAz33z" +
+    "CrRTlQ1eEqdfmJCAky6peL8dapd7pV2Nu9qYPK0AAQGqH7y72if+sE/GPeb45cGeNhuYteWz" +
+    "FBbk/EuGNiX/mQEBAY52ElUIHLAjrOdx1huB7OJ9rY9HdFVSZ+ED9YqOMqc+AgEBAP8AAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+};
+
+/** `staged-devnet-deal-live`: funded, title and survey signed, septic waiting. */
+export const LIVE_DEAL: CapturedAccount = {
+  address: "2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg",
+  owner: "ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG",
+  slot: 523859359,
+  base64:
+    "eVQOznWMXhWeqX9g17HDvBZMhGXKMCbHJcBMsXyNB9xMXqz2iqobhvEd1PNPj0GD62ztC15l" +
+    "1kaXuuw2o7nua306oy9NMqyRUhMJcpX+uWCiQPfzJ9R4UnUermiVkhKfN75b4KHr1qqrvkDK" +
+    "trXriY687EQpksvmQL4h4Tvrhk0VxSIueKrVXDtELLORIVfxOpM9ATQoLQMrX/7NAaLb8bd5" +
+    "BgjfAC6ncl9aOugiWe/S7DEmj5bIZwMWyYUJUBtp1so2s4e0DOyAlpgAAAAAAAEDAAAAz33z" +
+    "CrRTlQ1eEqdfmJCAky6peL8dapd7pV2Nu9qYPK0AAQGqH7y72if+sE/GPeb45cGeNhuYteWz" +
+    "FBbk/EuGNiX/mQEBAY52ElUIHLAjrOdx1huB7OJ9rY9HdFVSZ+ED9YqOMqc+AgEAAPwAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+};
+
+/** The live deal's vault: 10 test USDC, controlled by the deal PDA. */
+export const LIVE_VAULT: CapturedAccount = {
+  address: "8hTorFjmtUyS3DeRn6A9drtb4cjmSix711bKAydXmHXZ",
+  owner: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  slot: 523859359,
+  base64:
+    "O0Qss5EhV/E6kz0BNCgtAytf/s0Botvxt3kGCN8ALqcV/ogDDAsRAKozqajy6gypWKEMyZYs" +
+    "hFwyvAhSIwQXCYCWmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+    "AAAA",
+};

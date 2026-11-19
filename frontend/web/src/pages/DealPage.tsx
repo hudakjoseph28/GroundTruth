@@ -35,6 +35,7 @@ import {
   shortAddress,
 } from "../data/ledger";
 import { usePageTitle } from "../layout/usePageTitle";
+import { VerifyOnChain } from "../verify/VerifyOnChain";
 import { parcelName } from "../data/address";
 import { getParcel, parcelPath, sampleParcelPath } from "../data/parcelSource";
 import "../deal/deal.css";
@@ -136,6 +137,8 @@ function DealScreen({ live }: { live: LiveDeal }) {
         state={deal.state}
         live={live.liveState === deal.state}
       />
+
+      <VerifyOnChain deal={live.deal} />
 
       <div className="deal-summary">
         <Hero

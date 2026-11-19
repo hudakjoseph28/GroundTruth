@@ -1,0 +1,277 @@
+/* "Verify on-chain" on the deal page. Phone first: each field stacks its
+   on-chain and GroundTruth values; from 44rem it is a four-column table.
+   Tokens come from index.css. */
+
+.deal-verify {
+  --verify-tone: var(--line);
+  display: grid;
+  gap: var(--s-4);
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--verify-tone);
+  border-radius: var(--radius-l);
+  padding: var(--s-4);
+  background: var(--surface-1);
+}
+
+.deal-verify[data-result="match"] {
+  --verify-tone: var(--green);
+}
+
+.deal-verify[data-result="mismatch"],
+.deal-verify[data-result="failed"] {
+  --verify-tone: var(--red);
+}
+
+.deal-verify[data-result="unknown"] {
+  --verify-tone: var(--gold);
+}
+
+.deal-verify-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3) var(--s-6);
+}
+
+.deal-verify-head > div {
+  flex: 1 1 26rem;
+  min-width: 0;
+}
+
+.deal-verify-head .eyebrow {
+  margin: 0;
+}
+
+.deal-verify-head h2 {
+  margin: var(--s-1) 0 0;
+  font-size: var(--step-1);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.deal-verify-intro {
+  max-width: 62ch;
+  margin: var(--s-2) 0 0;
+  color: var(--text-2);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.deal-verify-head .btn {
+  flex: 0 0 auto;
+  min-height: var(--tap);
+}
+
+.deal-verify-head .notice {
+  margin: 0;
+}
+
+/* ---------- Result banner ---------- */
+
+.deal-verify-banner {
+  --banner: var(--green);
+  --banner-text: var(--green-text);
+  border: 1px solid var(--banner);
+  border-radius: var(--radius-m);
+  padding: var(--s-3) var(--s-4);
+  background: color-mix(in srgb, var(--banner) 12%, transparent);
+}
+
+.deal-verify-banner[data-tone="bad"] {
+  --banner: var(--red);
+  --banner-text: var(--red-text);
+}
+
+.deal-verify-banner[data-tone="unknown"] {
+  --banner: var(--gold);
+  --banner-text: var(--gold-text);
+}
+
+.deal-verify-banner strong {
+  display: block;
+  color: var(--banner-text);
+  font-size: var(--step-0);
+  font-weight: 700;
+}
+
+.deal-verify-banner p,
+.deal-verify-banner ul {
+  margin: var(--s-1) 0 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.deal-verify-banner ul {
+  padding-left: 1.1rem;
+}
+
+.deal-verify-outdated {
+  margin: var(--s-2) 0 0;
+}
+
+/* ---------- Field table ---------- */
+
+.deal-verify-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.deal-verify-table thead {
+  display: none;
+}
+
+.deal-verify-table tbody tr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-areas:
+    "field field mark"
+    "chain app app";
+  gap: var(--s-1) var(--s-3);
+  border-top: 1px solid var(--line-soft);
+  padding: var(--s-2) 0;
+}
+
+.deal-verify-table th[scope="row"] {
+  grid-area: field;
+  color: #d7d7d7;
+  font-weight: 600;
+  text-align: left;
+}
+
+.deal-verify-table td:nth-of-type(1) {
+  grid-area: chain;
+}
+
+.deal-verify-table td:nth-of-type(2) {
+  grid-area: app;
+}
+
+.deal-verify-table td[data-label]::before {
+  content: attr(data-label);
+  display: block;
+  color: var(--text-2);
+  font-size: var(--step--1);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.deal-verify-table td > span:not(.visually-hidden) {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.deal-verify-table td .mono {
+  color: var(--text-2);
+  font-size: 0.82rem;
+}
+
+.deal-verify-mark {
+  grid-area: mark;
+  color: var(--green-text);
+  font-weight: 700;
+  text-align: right;
+}
+
+.deal-verify-table tr[data-match="false"] {
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+}
+
+.deal-verify-table tr[data-match="false"] .deal-verify-mark,
+.deal-verify-table tr[data-match="false"] th[scope="row"] {
+  color: var(--red-text);
+}
+
+.deal-verify-note {
+  margin-top: var(--s-1);
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+@container page (min-width: 44rem) {
+  .deal-verify-table thead {
+    display: table-header-group;
+  }
+
+  .deal-verify-table th[scope="col"] {
+    padding: 0 var(--s-3) var(--s-2) 0;
+    color: var(--text-2);
+    font-size: var(--step--1);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .deal-verify-table tbody tr {
+    display: table-row;
+  }
+
+  .deal-verify-table tbody th,
+  .deal-verify-table tbody td {
+    border-top: 1px solid var(--line-soft);
+    padding: var(--s-2) var(--s-3) var(--s-2) 0;
+    vertical-align: top;
+  }
+
+  .deal-verify-table tbody tr > :first-child {
+    padding-left: var(--s-2);
+  }
+
+  .deal-verify-table td[data-label]::before {
+    content: none;
+  }
+
+  .deal-verify-table td > span:not(.visually-hidden) {
+    display: inline;
+  }
+
+  .deal-verify-table td > span + .mono::before {
+    content: " · ";
+    color: var(--text-3);
+  }
+
+  .deal-verify-table .deal-verify-note {
+    display: block;
+  }
+}
+
+/* ---------- Footer: Explorer links and where the read came from ---------- */
+
+.deal-verify-foot {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.deal-verify-accounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-4);
+  margin: 0;
+}
+
+.deal-verify-accounts a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  min-height: var(--tap);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  padding: 0 var(--s-3);
+  color: var(--text);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.deal-verify-accounts a:hover {
+  border-color: var(--border-strong);
+}
+
+.deal-verify-source {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
