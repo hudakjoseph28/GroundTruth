@@ -65,6 +65,27 @@ export const LAND = {
   },
 } as const;
 
+export const ELEVATION = {
+  kicker: "Terrain",
+  title: "Elevation at a glance",
+  source: "USGS 3DEP map elevation via AWS Terrain Tiles",
+  notSurvey: "Map-derived estimate, not a survey",
+  lowest: "Lowest point",
+  highest: "Highest point",
+  rise: "Total rise",
+  averageSlope: "Average slope",
+  steepestSlope: "Steepest slope",
+  profile: "Elevation profile",
+  profileHint: "Drag either numbered end across the lot to choose a path.",
+  across: "across the selected line",
+  selectorLabel: "Choose the line used for the elevation profile",
+  handle: (number: number) => `Profile line end ${number}`,
+  handlePlace: (eastMeters: number, southMeters: number) =>
+    `${Math.round(eastMeters * 3.28084)} ft from the left, ${Math.round(southMeters * 3.28084)} ft from the top of the outline`,
+  chartLabel: (low: string, high: string, distance: string) =>
+    `Elevation profile from ${low} to ${high} feet over ${distance} feet`,
+} as const;
+
 // Links out to the real surroundings. Google's names are theirs; the in-app
 // view is labeled as Google's imagery, not as anything about the parcel.
 export const EXPLORE = {
