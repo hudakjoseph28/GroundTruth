@@ -1,0 +1,152 @@
+{
+  "name": "golden-230-000918",
+  "parcel": {
+    "key": "ohio:39049:230-000918",
+    "sourceParcelId": "230-000918",
+    "county": "Franklin",
+    "countyFips": "39049",
+    "siteAddress": "0 Seaman Rd",
+    "centroid": {
+      "latitude": 39.883872187,
+      "longitude": -83.248572451
+    },
+    "geometry": {
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -83.2483202,
+              39.8829772
+            ],
+            [
+              -83.2483232,
+              39.8829807
+            ],
+            [
+              -83.2491642,
+              39.8839868
+            ],
+            [
+              -83.2492292,
+              39.884877
+            ],
+            [
+              -83.2490753,
+              39.884954
+            ],
+            [
+              -83.2476656,
+              39.8833056
+            ],
+            [
+              -83.2483202,
+              39.8829772
+            ]
+          ]
+        ]
+      },
+      "authority": "Ohio OGRIP",
+      "sourceUrl": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27230-000918%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "retrievedAt": "2026-11-17T00:54:44.000Z"
+    }
+  },
+  "recordedAt": "2026-11-20T00:15:58.950Z",
+  "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0/query",
+      "body": "where=1%3D1&geometry=%7B%22rings%22%3A%5B%5B%5B-83.2483202%2C39.8829772%5D%2C%5B-83.2483232%2C39.8829807%5D%2C%5B-83.2491642%2C39.8839868%5D%2C%5B-83.2492292%2C39.884877%5D%2C%5B-83.2490753%2C39.884954%5D%2C%5B-83.2476656%2C39.8833056%5D%2C%5B-83.2483202%2C39.8829772%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=CWNS_ID%2CFACILITY_NAME%2CMethod&f=json",
+      "status": 200,
+      "responseBody": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "features": []
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0/query",
+      "body": "where=1%3D1&geometry=%7B%22rings%22%3A%5B%5B%5B-83.2483202%2C39.8829772%5D%2C%5B-83.2483232%2C39.8829807%5D%2C%5B-83.2491642%2C39.8839868%5D%2C%5B-83.2492292%2C39.884877%5D%2C%5B-83.2490753%2C39.884954%5D%2C%5B-83.2476656%2C39.8833056%5D%2C%5B-83.2483202%2C39.8829772%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=PWSID%2CPWS_Name%2CSymbology_Field&f=json",
+      "status": 200,
+      "responseBody": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "features": []
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCSE_Service_Areas/FeatureServer/0/query",
+      "body": "where=1%3D1&geometry=%7B%22rings%22%3A%5B%5B%5B-83.2483202%2C39.8829772%5D%2C%5B-83.2483232%2C39.8829807%5D%2C%5B-83.2491642%2C39.8839868%5D%2C%5B-83.2492292%2C39.884877%5D%2C%5B-83.2490753%2C39.884954%5D%2C%5B-83.2476656%2C39.8833056%5D%2C%5B-83.2483202%2C39.8829772%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=AREA_NAME%2CSERVICE&f=json",
+      "status": 200,
+      "responseBody": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "features": []
+      }
+    }
+  ],
+  "outcome": {
+    "waterSystems": {
+      "status": "answered",
+      "retrievedAt": "2026-11-20T00:15:58.950Z",
+      "value": []
+    },
+    "sewersheds": {
+      "status": "answered",
+      "retrievedAt": "2026-11-20T00:15:58.950Z",
+      "value": []
+    },
+    "countyAreas": {
+      "status": "answered",
+      "retrievedAt": "2026-11-20T00:15:58.950Z",
+      "value": []
+    },
+    "mains": []
+  },
+  "check": {
+    "kind": "utilities",
+    "status": "needsReview",
+    "finding": "Not inside any community water system or wastewater plant's sewershed on EPA's maps, or any Franklin County Sanitary Engineering service area. No public water or sewer main map is published for this area, so the distance to a main wasn't measured. No public water or sewer is mapped for this lot, so it likely needs a private well and a septic system.",
+    "limitation": "These maps show where a utility serves or where its mains run. They don't guarantee capacity for this lot, a tap permit, or what connecting costs. A lot outside every mapped service area can still be served by a line these maps don't show, or by an extension.",
+    "sources": [
+      {
+        "authority": "U.S. Environmental Protection Agency",
+        "title": "Community Water System Service Area Boundaries",
+        "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0",
+        "retrievedAt": "2026-11-20T00:15:58.950Z"
+      },
+      {
+        "authority": "U.S. Environmental Protection Agency",
+        "title": "Sewersheds of publicly owned treatment works (Clean Watersheds Needs Survey 2022)",
+        "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0",
+        "retrievedAt": "2026-11-20T00:15:58.950Z"
+      },
+      {
+        "authority": "Franklin County Sanitary Engineering",
+        "title": "Water and sewer service areas",
+        "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCSE_Service_Areas/FeatureServer/0",
+        "retrievedAt": "2026-11-20T00:15:58.950Z"
+      }
+    ],
+    "responsibleParty": {
+      "role": "Water and sewer utility",
+      "organization": "Franklin County Sanitary Engineering",
+      "publicContactUrl": "https://www.franklincountyohio.gov/Agency-Directory/Sanitary-Engineering"
+    },
+    "nextAction": "Ask Franklin County Sanitary Engineering for a water/sewer availability letter before you buy. If neither can reach the lot, ask Franklin County Public Health about well and septic permits."
+  }
+}

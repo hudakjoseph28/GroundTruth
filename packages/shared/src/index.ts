@@ -170,3 +170,5 @@ export type {
   SignatureState,
   SignedAttempt,
 } from "./transactionSend.js";
+
+export { NO_PUBLIC_SEWER, findsNoPublicSewer } from "./utilities.js";

@@ -15,6 +15,7 @@
     "time:search": "tsx scripts/time-address-search.ts",
     "record:report": "tsx scripts/record-report-fixtures.ts",
     "record:ssurgo": "tsx scripts/record-ssurgo-fixtures.ts",
+    "record:utilities": "tsx scripts/record-utilities-fixtures.ts",
     "record:layers": "tsx scripts/record-layer-fixtures.ts",
     "record:devnet": "tsx scripts/record-devnet-transactions.ts",
     "replay:devnet": "node --env-file-if-exists=.env --import tsx scripts/replay-devnet.ts",
