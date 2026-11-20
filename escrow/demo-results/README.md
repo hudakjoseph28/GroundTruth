@@ -34,3 +34,7 @@ To exercise the resend on purpose, the run went through a local test proxy (the 
 ## 2026-11-19 Solana Pay rehearsal: [`devnet-solana-pay-fund-v1.md`](devnet-solana-pay-fund-v1.md)
 
 The 1 test USDC deal `staged-devnet-deal-pay-rehearsal` was initialized with `demo:deals stage-init` ([`devnet-stage-pay-rehearsal-v1.md`](devnet-stage-pay-rehearsal-v1.md)). It was then funded with the unsigned transaction from `POST /api/deals/:id/solana-pay/fund`, signed by the staged buyer key through the official `@solana/pay` client. No real wallet app was used.
+
+## 2026-11-20 (UTC) Fee-sponsored approval: [`devnet-fee-sponsored-approval-v1.md`](devnet-fee-sponsored-approval-v1.md)
+
+The title reviewer approved `staged-devnet-deal-pay-rehearsal` from `/review`, with GroundTruth's dedicated devnet fee payer paying the network fee ([`5WhMnUap…kuqP`](https://explorer.solana.com/tx/5WhMnUapBd9wRt3R6hzRmVDK5J55geqRDCqB52Ygw7EWmE2DqamkX65tBZcAEJb7EzRV5sE9SkbM1TiE8Ne4kuqP?cluster=devnet)). The fee payer lost 10,000 lamports and the title wallet lost none. The API signed only as fee payer. Without the reviewer's signature, devnet's signature check refuses the transaction. The wallet was an injected Phantom-compatible provider, not the extension. The live deal and rehearsal v3 were not touched.

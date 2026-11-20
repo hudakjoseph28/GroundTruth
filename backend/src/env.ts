@@ -1,5 +1,6 @@
 import { DEFAULT_SOLANA_RPC_URL } from "./actions/devnetChain.js";
 import { DEFAULT_OGRIP_TIMEOUT_MS } from "./parcels/ogrip.js";
+import { readFeeSponsor, type FeeSponsorConfig } from "./sponsor/feePayer.js";
 import type { TwilioConfig } from "./sms/sender.js";
 import {
   DEFAULT_ACCESS_TIMEOUT_MS,
@@ -35,6 +36,8 @@ export interface ServerEnv {
   twilio: TwilioConfig | undefined;
   /** Devnet RPC for the reviewer Blink and Solana Pay funding (one setting, one connection); both refuse any other cluster by genesis hash. */
   solanaRpcUrl: string;
+  /** Devnet fee payer for reviewer transactions in /review. Unset: reviewers pay their own fees. */
+  feeSponsor: FeeSponsorConfig | undefined;
 }
 
 export function readServerEnv(
@@ -80,6 +83,7 @@ export function readServerEnv(
     elevenLabsAgentId: source.ELEVENLABS_AGENT_ID?.trim() || undefined,
     twilio: readTwilio(source),
     solanaRpcUrl: readRpcUrl(source.SOLANA_RPC_URL),
+    feeSponsor: readFeeSponsor(source),
   };
 }
 

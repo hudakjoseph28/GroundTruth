@@ -34,6 +34,15 @@ export const REVIEW = {
     release: "Release payment to the seller",
     releaseNote: "Every required reviewer has signed. Anyone can submit the release; the program pays only the bound seller.",
   },
+  /** Fee sponsorship: GroundTruth's devnet fee payer covers the network fee. */
+  fee: {
+    sponsored: "Network fee paid by GroundTruth",
+    sponsoredNote:
+      "GroundTruth's own devnet fee account pays the network fee. Your wallet signs only as the reviewer, and the escrow program still checks your signature.",
+    wallet: "Your wallet pays the network fee (a little devnet SOL).",
+    fellBack:
+      "GroundTruth couldn't cover the fee this time, so your wallet pays the network fee.",
+  },
   status: {
     checking: "Checking the transaction with Solana devnet…",
     signing: "Approve the request in your wallet…",
@@ -72,6 +81,8 @@ export const REVIEW = {
     6018: "Not every required reviewer has signed yet.",
     6021: "The escrow doesn't hold the full amount, so it can't pay out.",
     program: (message: string) => `The escrow program refused it: ${message}`,
+    sponsorMismatch:
+      "GroundTruth's fee-covered transaction didn't match what you asked to sign, so it never reached your wallet. Nothing was signed.",
     unknown:
       "Solana devnet didn't accept the transaction. Try again in a moment.",
   },

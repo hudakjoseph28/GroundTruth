@@ -24,7 +24,14 @@ const app = createApp(env.commit, {
   // One devnet reader for both: the reviewer Blink and Solana Pay funding.
   actions: { chain: devnet },
   solanaPay: { chain: devnet },
+  feeSponsor: { config: env.feeSponsor, chain: devnet },
 });
+
+if (env.feeSponsor) {
+  console.log(
+    `Fee sponsorship on: devnet fee payer ${env.feeSponsor.keypair.publicKey.toBase58()}, ${env.feeSponsor.maxPerDeal} per deal`,
+  );
+}
 
 app.listen(env.port, () => {
   console.log(`GroundTruth API listening on ${env.port}`);

@@ -9,11 +9,14 @@ import {
   computeUnitLimit,
   escrowErrorByCode,
   priorityFeeMicroLamports,
+  sameInstructions,
   sendUntilLanded,
+  sponsorRefusal,
   writableAccounts,
   type EscrowInstructionSpec,
   type SignatureState,
   type SignedAttempt,
+  type SponsoredTransactionResponse,
 } from "@groundtruth/shared";
 import {
   PublicKey,
@@ -174,6 +177,103 @@ async function buildAndSign(input: {
   };
 }
 
+/** Who pays the network fee for the transaction in flight. */
+export type FeePaidBy = "groundtruth" | "wallet";
+
+/**
+ * GroundTruth couldn't cover this fee (sponsorship off, rate-limited, capped,
+ * out of devnet SOL, or unreachable). Nothing was signed, so the portal
+ * falls back to the reviewer's wallet paying the fee.
+ */
+export class SponsorDeclined extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SponsorDeclined";
+  }
+}
+
+/** Fee sponsorship for one action: the advertised fee payer and how to ask the API. */
+export interface Sponsor {
+  feePayer: string;
+  dealPda: string;
+  /** The API's fee-payer-signed transaction. Throws SponsorDeclined to fall back, ActionError to stop. */
+  request: () => Promise<SponsoredTransactionResponse>;
+}
+
+/**
+ * Asks the API for the transaction with GroundTruth's fee payer already
+ * signed, checks it is exactly what the reviewer asked for (the shared
+ * sponsor guard, then instruction-for-instruction), and only then has the
+ * wallet add the reviewer's signature. The fee payer's signature must
+ * survive the wallet unchanged; it is the transaction ID.
+ */
+async function sponsorAndSign(input: {
+  sponsor: Sponsor;
+  payer: PublicKey;
+  instructions: EscrowInstructionSpec[];
+  signTransaction: (tx: VersionedTransaction) => Promise<VersionedTransaction>;
+  beforeSigning: () => void;
+}): Promise<SignedAttempt> {
+  const { sponsor, payer } = input;
+  const answer = await input.sponsor.request();
+  let tx: VersionedTransaction;
+  try {
+    tx = VersionedTransaction.deserialize(Buffer.from(answer.transaction, "base64"));
+  } catch {
+    throw new ActionError(REVIEW.errors.sponsorMismatch);
+  }
+  const message = tx.message;
+  const view = {
+    accountKeys: message.staticAccountKeys.map((key) => key.toBase58()),
+    numRequiredSignatures: message.header.numRequiredSignatures,
+    addressTableLookups: message.addressTableLookups.length,
+    instructions: message.compiledInstructions,
+  };
+  const feePayerSignature = tx.signatures[0];
+  if (
+    answer.feePayer !== sponsor.feePayer ||
+    sponsorRefusal(view, {
+      feePayer: sponsor.feePayer,
+      wallet: payer.toBase58(),
+      dealPda: sponsor.dealPda,
+    }) !== null ||
+    !sameInstructions(
+      {
+        ...view,
+        isSigner: (index) => message.isAccountSigner(index),
+        isWritable: (index) => message.isAccountWritable(index),
+      },
+      input.instructions,
+    ) ||
+    !feePayerSignature ||
+    feePayerSignature.every((byte) => byte === 0) ||
+    encodeBase58(feePayerSignature) !== answer.signature
+  ) {
+    throw new ActionError(REVIEW.errors.sponsorMismatch);
+  }
+
+  input.beforeSigning();
+  let signed: VersionedTransaction;
+  try {
+    signed = await input.signTransaction(tx);
+  } catch (error) {
+    throw new ActionError(explainFailure(error));
+  }
+  const reviewerSignature = signed.signatures[1];
+  if (
+    encodeBase58(signed.signatures[0] ?? new Uint8Array(64)) !== answer.signature ||
+    !reviewerSignature ||
+    reviewerSignature.every((byte) => byte === 0)
+  ) {
+    throw new ActionError(REVIEW.errors.unknown);
+  }
+  return {
+    signature: answer.signature,
+    serialized: signed.serialize(),
+    lastValidBlockHeight: answer.lastValidBlockHeight,
+  };
+}
+
 /** Thrown when an action fails after a transaction was signed and sent. */
 export class SentActionError extends ActionError {
   constructor(
@@ -201,6 +301,14 @@ export async function sendAndConfirm(input: {
   extra?: EscrowInstructionSpec[];
   signTransaction: (tx: VersionedTransaction) => Promise<VersionedTransaction>;
   onProgress: (progress: SendProgress) => void;
+  /**
+   * GroundTruth's fee sponsorship, when it is on: each attempt asks the API
+   * for a fresh fee-payer-signed transaction. If GroundTruth declines, the
+   * wallet pays the fee from then on.
+   */
+  sponsor?: Sponsor;
+  /** Who pays the fee for the attempt about to be signed. */
+  onFeePaidBy?: (paidBy: FeePaidBy) => void;
   signal?: AbortSignal;
   /** Test hooks: polling interval and sleep. */
   pollMs?: number;
@@ -213,23 +321,45 @@ export async function sendAndConfirm(input: {
   const instructions = [input.spec, ...(input.extra ?? [])];
   let retrying = false;
   let current: string | undefined;
+  let sponsor = input.sponsor;
   try {
     const landed = await sendUntilLanded({
       maxAttempts: of,
       signal: input.signal,
       pollMs: input.pollMs,
       sleep: input.sleep,
-      prepare: (attempt) =>
-        buildAndSign({
+      prepare: async (attempt) => {
+        const beforeSigning = () => {
+          // A retry keeps saying "retrying" while the wallet asks again.
+          if (!retrying) input.onProgress({ phase: "signing", attempt, of });
+        };
+        if (sponsor) {
+          try {
+            const signed = await sponsorAndSign({
+              sponsor,
+              payer: input.payer,
+              instructions,
+              signTransaction: input.signTransaction,
+              beforeSigning: () => {
+                input.onFeePaidBy?.("groundtruth");
+                beforeSigning();
+              },
+            });
+            return signed;
+          } catch (error) {
+            if (!(error instanceof SponsorDeclined)) throw error;
+            sponsor = undefined;
+          }
+        }
+        input.onFeePaidBy?.("wallet");
+        return buildAndSign({
           connection,
           payer: input.payer,
           instructions,
           signTransaction: input.signTransaction,
-          beforeSigning: () => {
-            // A retry keeps saying "retrying" while the wallet asks again.
-            if (!retrying) input.onProgress({ phase: "signing", attempt, of });
-          },
-        }),
+          beforeSigning,
+        });
+      },
       broadcast: async (serialized, first) => {
         await connection.sendRawTransaction(serialized, {
           // The first send is preflighted (a fresh simulation). Rebroadcasts

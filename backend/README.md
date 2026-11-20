@@ -349,7 +349,7 @@ NAIP's response time varies the most. The web waits 10 s for a build (`LAND_BUIL
 | `staged-devnet-deal-rehearsal` | rehearsal copy of the live deal (10 USDC); used up testing the reviewer portal (#45) | `6KQJYssz234KjxrMkREcxpcKbok34aaFyihDST6DmH5u` | `groundtruth-demo-rehearsal-v1` |
 | `staged-devnet-deal-rehearsal-v2` | second rehearsal copy (10 USDC); used up on 2026-11-19: its septic approval tested deal documents, and its release, from `/review`, tested the blockhash resend ([release](https://explorer.solana.com/tx/5vJWxXNeQneizF4B2MwKvWP6Q9uFab3GoR6VJkbzJ2wkUQC9mcVoji8TsH1128Wjoc9y9DF3bc4TpUL5v5qDqmqs?cluster=devnet)) | `EPYNKVUCSUJvmuKa5NqJqNmswcdziLRJHUgwTkkC8J2X` | `groundtruth-demo-rehearsal-v2` |
 | `staged-devnet-deal-rehearsal-v3` | third rehearsal copy (**5** USDC: the buyer had 5 left); stage-prep ran on 2026-11-19, so it is funded with title and survey signed and septic waiting | `ESMKH5PB2jSd5U4L8hvC1XMVerhYsuRN6U3B6GHrLzf7` | `groundtruth-demo-rehearsal-v3` |
-| `staged-devnet-deal-pay-rehearsal` | Solana Pay rehearsal (1 USDC): initialized by `demo:deals stage-init`, then funded on 2026-11-19 from the Solana Pay transaction request ([record](../escrow/demo-results/devnet-solana-pay-fund-v1.md)) | `9zy4EJot1UdRFjHzhBJrQPiQBQpp7oXhBhmBKrbtqszL` | `groundtruth-demo-pay-rehearsal-v1` |
+| `staged-devnet-deal-pay-rehearsal` | Solana Pay rehearsal (1 USDC): initialized by `demo:deals stage-init`, then funded on 2026-11-19 from the Solana Pay transaction request ([record](../escrow/demo-results/devnet-solana-pay-fund-v1.md)); its title approval tested fee sponsorship from `/review` on 2026-11-20 UTC ([record](../escrow/demo-results/devnet-fee-sponsored-approval-v1.md)) | `9zy4EJot1UdRFjHzhBJrQPiQBQpp7oXhBhmBKrbtqszL` | `groundtruth-demo-pay-rehearsal-v1` |
 
 The first two are 25 test USDC and ran on 2026-11-18. The addresses are what `pnpm --filter @groundtruth/escrow demo:deals plan` prints for the staged demo wallets, and `test/stagedDemoDeals.test.ts` re-derives each one. Public keys only. Re-seeding rewrites the fixture's bound values and its own off-chain timeline rows only. Deal state, approvals, holds, and confirmed timeline rows come from chain events and are never reset by the seed.
 
@@ -364,7 +364,7 @@ Timeline rows are ordered by time, then chain slot, then event index. A confirme
   - the fee payer is the buyer and the blockhash is recent;
   - it has one instruction to the escrow program, built from the checked-in IDL (`fundInstruction` in `@groundtruth/shared`);
   - its accounts are buyer, deal PDA, buyer USDC account, vault, mint, and token program.
-- **The API never signs.** It holds no key. The wallet signs and sends, and the program checks every rule again.
+- **The API never signs this.** This route uses no key. The wallet signs and sends, and the program checks every rule again.
 - **Refusals** carry the spec's `message` (a wallet shows its first 80 characters) beside the usual `error` envelope:
 
   | Status | When |
@@ -541,6 +541,31 @@ A [Solana Action](https://solana.com/docs/advanced/actions) (spec 2.4) that lets
 - **CORS:** `actions.json` and every `/api/actions/*` response (and `OPTIONS` preflight, `204`) carry `Access-Control-Allow-Origin: *`, the spec's allowed methods/headers, `X-Action-Version: 2.4`, and `X-Blockchain-Ids: solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` (devnet).
 - **Try it:** `https://dial.to/?action=solana-action:https://groundtruth-lac.vercel.app/api/actions/approve/staged-devnet-deal-rehearsal-v2&cluster=devnet`, with a reviewer wallet set to devnet. A confirmed approval reaches the deal timeline through the QuickNode Stream like any other.
 - **As of 2026-11-19 the rehearsal deal has all three approvals on devnet**, so the Action shows as disabled ("Every reviewer has signed…") and every reviewer gets `409`. A positive live demo needs a fresh funded rehearsal deal.
+
+## Reviewer fee sponsorship
+
+In `/review`, GroundTruth can pay a reviewer's network fee, so a reviewer wallet with no SOL can still sign. **Devnet only, staged deals only, and only `sign_approval`, `place_hold`, or `release`.** The API signs as GroundTruth's own fee payer and as nothing else; the reviewer's wallet adds the reviewer's signature, and the escrow program checks that signature as it always does (`reviewer: Signer`, or `payer: Signer` for `release`).
+
+| Route | What it does |
+| --- | --- |
+| `GET /api/fee-sponsor` | `{ enabled: false }`, or `{ enabled: true, feePayer, maxPerDeal }`. The portal reads it once and shows **Network fee paid by GroundTruth** when it is on. |
+| `POST /api/deals/:id/sponsored-transaction` | Body `{ action: "sign_approval", account, role, documentSha256? }`, `{ action: "place_hold", account, role, reasonCode }`, or `{ action: "release", account }`. Returns `{ transaction, feePayer, signature, lastValidBlockHeight, action }`: a base64 v0 transaction signed by the fee payer only, with the reviewer's slot empty. `signature` is the fee payer's, which is also the transaction ID. |
+
+**What happens on each POST**, in order. Each refusal is the usual `ApiError`, and nothing is signed:
+
+1. Sponsorship must be on (`503`, `details.sponsor: "off"`). The deal must be in `stagedDemoDeals` (`404`). The body must be one of the three actions (`400`); `fund`, `refund`, `initialize_deal`, or anything else is refused.
+2. Rate limits, in memory: 5 requests per wallet per minute and 30 per minute across the API (`429 RATE_LIMITED`, `details.sponsor: "rateLimited"`). There is no per-IP limit, because browser calls reach Railway through Vercel's rewrite.
+3. The API reads the deal PDA at `confirmed` from `SOLANA_RPC_URL`. The genesis hash must be devnet, the owner the escrow program, and the deal ID and mint the staged deal's (`503` otherwise). If the fee payer is any key the deal binds (buyer, seller, seller token account, vault, mint, PDA, or a reviewer), the API refuses (`503`, `misconfigured`).
+4. The API makes the program's own checks first, so a request the program would refuse costs nothing. The deal must be `Funded` (`409`). The wallet must be an assigned reviewer (`403`), in the role it asks for (`403`). An approval must not be signed already (`409`). A release needs every required approval (`409`).
+5. The API builds the instruction from the IDL (`release` uses the reviewer as its `payer` account), plus a ComputeBudget limit and price (the price capped as in the portal). It simulates the transaction on devnet. A program error is `409` with `details.programError`. A fee payer without SOL is `503`, `outOfSol`.
+6. **Guard.** `sponsorRefusal` in `@groundtruth/shared` must accept the compiled message (`500` and a log line otherwise). The rules: the fee payer first and the reviewer second are the only signers, and there are no lookup tables. Allowed are at most one unit limit and one unit price, within caps, and exactly one escrow `sign_approval`, `place_hold`, or `release` for this deal, signed by the reviewer. Only with `sign_approval`, one `groundtruth:doc:<sha256>` Memo v1 signed by the reviewer is also allowed. **No instruction may reference the fee payer**, so it pays network fees and can lose nothing else.
+7. The API signs as fee payer and writes a `SponsoredFeeRecord` row (deal, action, wallet, role, signature). **Per-deal cap:** at most `FEE_SPONSOR_MAX_PER_DEAL` (default 12) rows per deal, ever, counted under a PostgreSQL advisory lock, so racing requests can't exceed it (`429`, `dealCap`). Signatures count when issued, resend attempts included, whether or not they land.
+
+**In the portal** (`frontend/web/src/review/`), the browser runs the same `sponsorRefusal` again. It also checks that the instructions are exactly the ones the reviewer clicked for and that the fee payer is the advertised one. Only then does the wallet sign. After signing, the fee payer's signature must be unchanged. If GroundTruth declines (`429`, a `503`, or unreachable), the portal says so and the wallet pays the fee instead. A refusal the program would also make stops the action with the API's words.
+
+**Setup:** generate a fresh devnet keypair (never a staged wallet; the API refuses to start with one) and fund it with devnet SOL. Set `FEE_SPONSOR_SECRET_KEY` (the solana-keygen JSON array) in Railway variables, and optionally `FEE_SPONSOR_MAX_PER_DEAL`. At startup the API logs the fee payer's public key. One sponsored approval costs 10,000 lamports (two signatures, no priority fee on a quiet devnet), so 0.2 SOL covers about 20,000.
+
+**Devnet proof (2026-11-20 UTC, rehearsal deal `staged-devnet-deal-pay-rehearsal` only):** the title reviewer approved from `/review` with GroundTruth paying the fee. The transaction's fee payer lost 10,000 lamports and the title wallet lost nothing. A fee-payer-signed transaction without the reviewer's signature fails devnet's signature check. See [the record](../escrow/demo-results/devnet-fee-sponsored-approval-v1.md).
 
 ## Tests
 

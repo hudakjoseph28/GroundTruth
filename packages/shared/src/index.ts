@@ -130,6 +130,22 @@ export type {
   HoldReasonCode,
 } from "./reviewerInstructions.js";
 
+export {
+  SPONSORED_ACTIONS,
+  escrowInstructionName,
+  sameInstructions,
+  sponsorRefusal,
+  sponsoredTransactionPath,
+} from "./feeSponsor.js";
+export type {
+  FeeSponsorStatus,
+  SponsorPolicy,
+  SponsoredAction,
+  SponsoredMessageView,
+  SponsoredTransactionRequest,
+  SponsoredTransactionResponse,
+} from "./feeSponsor.js";
+
 export { solanaPayFundPath, solanaPayUrl } from "./solanaPay.js";
 export type {
   SolanaPayError,

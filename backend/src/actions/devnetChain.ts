@@ -18,9 +18,29 @@ export interface ActionChain {
   latestBlockhash(): Promise<string>;
 }
 
+/** A devnet simulation's answer, as the sponsor route needs it. */
+export interface Simulation {
+  err: unknown;
+  logs: string[] | null;
+  unitsConsumed: number | undefined;
+}
+
+/**
+ * The extra devnet reads fee sponsorship needs: a blockhash with its expiry,
+ * recent priority fees, and a simulation. Still read-only; the sponsor route
+ * signs as fee payer itself and never sends.
+ */
+export interface SponsorChain extends ActionChain {
+  blockhash(): Promise<{ blockhash: string; lastValidBlockHeight: number }>;
+  recentPriorityFees(
+    writable: string[],
+  ): Promise<{ prioritizationFee: number }[]>;
+  simulate(transaction: web3.VersionedTransaction): Promise<Simulation>;
+}
+
 export function createDevnetChain(
   rpcUrl: string = DEFAULT_SOLANA_RPC_URL,
-): ActionChain {
+): SponsorChain {
   const connection = new web3.Connection(rpcUrl, "confirmed");
   return {
     genesisHash: () => connection.getGenesisHash(),
@@ -34,6 +54,23 @@ export function createDevnetChain(
     },
     async latestBlockhash() {
       return (await connection.getLatestBlockhash("confirmed")).blockhash;
+    },
+    blockhash: () => connection.getLatestBlockhash("confirmed"),
+    recentPriorityFees: (writable) =>
+      connection.getRecentPrioritizationFees({
+        lockedWritableAccounts: writable.map((key) => new web3.PublicKey(key)),
+      }),
+    async simulate(transaction) {
+      const { value } = await connection.simulateTransaction(transaction, {
+        sigVerify: false,
+        replaceRecentBlockhash: false,
+        commitment: "confirmed",
+      });
+      return {
+        err: value.err,
+        logs: value.logs,
+        unitsConsumed: value.unitsConsumed,
+      };
     },
   };
 }

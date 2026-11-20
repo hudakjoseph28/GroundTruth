@@ -251,3 +251,19 @@ model LandAssetRecord {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   expiresAt DateTime @db.Timestamptz(3)
 }
+
+/// One fee-payer signature the API issued for a sponsored reviewer
+/// transaction (POST /api/deals/:id/sponsored-transaction, src/sponsor).
+/// The per-deal cap counts these rows. dealId is a staged deal's ID, checked
+/// against the shared fixtures, so there is no foreign key.
+model SponsoredFeeRecord {
+  /// The fee payer's signature, which is the transaction ID.
+  signature String   @id
+  dealId    String
+  action    String
+  wallet    String
+  role      String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([dealId])
+}
