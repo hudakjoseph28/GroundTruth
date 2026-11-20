@@ -8,6 +8,7 @@
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
     "demo:deals": "tsx scripts/demo-deals.ts",
+    "sas:credentials": "tsx scripts/sas-credentials.ts",
     "typecheck": "tsc -p tsconfig.scripts.json"
   },
   "dependencies": {

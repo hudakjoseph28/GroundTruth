@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import type { Parcel } from "@groundtruth/shared";
 import { ReceiptLink } from "../components/ReceiptLink";
+import { CredentialBadge } from "../credential/CredentialBadge";
+import type { CredentialReads } from "../credential/useReviewerCredentials";
 import { DEAL_PAGE, HOLD, REVIEWERS, STATE_LABELS, TIMELINE } from "../content/deal";
 import { TIMELINE_DOCUMENT } from "../content/documents";
 import { EXAMPLE } from "../content/example";
@@ -77,8 +79,17 @@ const REVIEWER_MARKS: Record<ReviewerView["status"], string> = {
   notSigned: "–",
 };
 
-/** The required reviewers, each with their status and, once they act, the receipt. */
-export function DealReviewers({ deal }: { deal: DealView }) {
+/**
+ * The required reviewers, each with their status and, once they act, the
+ * receipt. With `credentials`, each also shows their staged SAS credential.
+ */
+export function DealReviewers({
+  deal,
+  credentials,
+}: {
+  deal: DealView;
+  credentials?: CredentialReads | null;
+}) {
   const example = useIsExample();
   return (
     <section className="deal-reviewers" aria-labelledby="deal-reviewers-title">
@@ -97,6 +108,9 @@ export function DealReviewers({ deal }: { deal: DealView }) {
               <span className="mono" title={`${REVIEWERS.wallet} ${reviewer.wallet}`}>
                 {shortAddress(reviewer.wallet)}
               </span>
+              {credentials && (
+                <CredentialBadge reads={credentials} wallet={reviewer.wallet} role={reviewer.role} />
+              )}
             </p>
             <p className="deal-reviewer-status">
               <strong>{REVIEWERS.status[reviewer.status]}</strong>
