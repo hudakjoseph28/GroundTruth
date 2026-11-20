@@ -1,5 +1,6 @@
 import { createDevnetChain } from "./actions/devnetChain.js";
 import { createApp } from "./app.js";
+import { createClaudeDocumentReader } from "./documents/claudeReader.js";
 import { readServerEnv } from "./env.js";
 import { createOgripClient } from "./parcels/ogrip.js";
 import { createElevenLabsParcelVoice } from "./questions/elevenlabs.js";
@@ -21,6 +22,13 @@ const app = createApp(env.commit, {
     accessTimeoutMs: env.accessTimeoutMs,
     wetlandsTimeoutMs: env.wetlandsTimeoutMs,
     streamBuffersTimeoutMs: env.streamBuffersTimeoutMs,
+    utilitiesTimeoutMs: env.utilitiesTimeoutMs,
+  },
+  // Advisory document parcel checks; off (uploads stored unread) without a key.
+  documents: {
+    reader: env.anthropicApiKey
+      ? createClaudeDocumentReader({ apiKey: env.anthropicApiKey })
+      : undefined,
   },
   questions: {
     selector: env.openAiApiKey

@@ -3,6 +3,7 @@ import {
   type ApiError,
   type DealDocument,
   type DealDocumentType,
+  type DocumentFindings,
 } from "@groundtruth/shared";
 import { request, type FailedOutcome } from "./api";
 
@@ -12,6 +13,7 @@ import { request, type FailedOutcome } from "./api";
  *   GET  /api/deals/:id/documents                    public metadata
  *   POST /api/deals/:id/documents                    signed upload, raw body
  *   POST /api/deals/:id/documents/:documentId/file   signed download
+ *   POST /api/deals/:id/documents/findings           signed: what each document says
  *
  * Signed requests carry the wallet's signature in headers (signedRequest.ts).
  */
@@ -72,6 +74,18 @@ export async function fetchDocumentFile(input: {
   );
   if (response.status !== "ok") return response;
   return { status: "ok", value: await response.response.blob() };
+}
+
+export async function fetchDocumentFindings(input: {
+  dealId: string;
+  auth: Record<string, string>;
+}): Promise<SignedOutcome<DocumentFindings[]>> {
+  const response = await send(
+    `/api/deals/${encodeURIComponent(input.dealId)}/documents/findings`,
+    { method: "POST", headers: { accept: "application/json", ...input.auth } },
+  );
+  if (response.status !== "ok") return response;
+  return { status: "ok", value: (await response.response.json()) as DocumentFindings[] };
 }
 
 async function send(

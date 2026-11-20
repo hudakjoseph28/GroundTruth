@@ -20,7 +20,7 @@ Buying vacant land can look simple until the buyer asks basic questions: Can I b
 
 GroundTruth brings that evidence into one buyer-readable report. It shows what a public record supports, what it does not establish, who can resolve the open question, and what the buyer should do next. It is decision support, not a legal buildability opinion, title search, survey, identity service, or deed-transfer system.
 
-The web demo searches live Ohio OGRIP parcels by address or parcel ID and opens each published boundary. The statewide layer covers all 88 counties, and we checked the deployed search in Franklin and Licking counties. The backend also builds live FEMA flood checks in the 83 counties with an NFHL study. Missing or timed-out evidence stays `unknown` instead of becoming a guessed answer.
+The web demo searches live Ohio OGRIP parcels by address or parcel ID and opens each published boundary. The statewide layer covers all 88 counties, and we checked the deployed search in Franklin and Licking counties. The backend also builds live FEMA flood checks in the 83 counties with an NFHL study, and a water and sewer check for every lot: which community water system and which wastewater plant's sewershed EPA maps it inside, and, in Franklin County, the county sanitary engineer's service areas and the distance to the nearest public main where Dublin, Grove City, or Canal Winchester publishes its main map. When no public sewer is mapped, the report's bottom line says the septic soils matter and quotes their USDA rating. Missing or timed-out evidence stays `unknown` instead of becoming a guessed answer.
 
 Our golden parcel is a real 3.015-acre vacant lot in Franklin County. County zoning maps it Rural, but county GIS shows no road right-of-way touching it and the nearest mapped road centerline is about 106 metres away. A title reviewer still has to determine whether a recorded access easement exists. That is the moment we want a first-time buyer to understand: acreage and zoning can look promising while legal access remains unresolved.
 
@@ -60,7 +60,7 @@ We built GroundTruth as a pnpm workspace with one shared TypeScript contract. Th
 
 For parcel discovery, the backend queries Ohio's statewide OGRIP parcel FeatureServer. Parcel IDs are normalized without changing the published local ID, and address search uses Ohio's LBRS locator with a bounded site-address fallback. The API returns the published geometry, source URL, and retrieval time.
 
-For reports, each evidence check runs independently. The live pipeline combines the OGRIP parcel with FEMA's National Flood Hazard Layer and the National Wetlands Inventory everywhere, plus Franklin County's zoning, road, and stream-buffer layers in Franklin. A provider miss, timeout, or uncovered county becomes an explicit `unknown` check with a responsible party and next action. The manually verified Franklin fixture adds county zoning, the zoning resolution, the Auditor's legal acreage, county right-of-way and road layers, and the Big Darby riparian-setback layer. The Licking fixture deliberately demonstrates a partial report.
+For reports, each evidence check runs independently. The live pipeline combines the OGRIP parcel with FEMA's National Flood Hazard Layer, the National Wetlands Inventory, USDA soils, and EPA's community water system and sewershed maps everywhere, plus Franklin County's zoning, road, stream-buffer, and sanitary engineering service-area layers in Franklin, and the water and sewer main maps of the three Franklin County cities that publish them. A provider miss, timeout, or uncovered county becomes an explicit `unknown` check with a responsible party and next action. The manually verified Franklin fixture adds county zoning, the zoning resolution, the Auditor's legal acreage, county right-of-way and road layers, and the Big Darby riparian-setback layer. The Licking fixture deliberately demonstrates a partial report.
 
 Prisma maps the shared contract into PostgreSQL for seeded and cached reports. The API exposes health, parcel search, parcel detail, report, coverage, staged deal, and timeline routes. Tests replay recorded public-provider responses so the normal, missing-data, and timeout paths remain reproducible without inventing facts.
 
@@ -101,7 +101,7 @@ Not shown on devnet: a second release attempt on the released deal. The vault is
 
 The hardest product challenge was resisting a confident answer when the records did not support one. A parcel boundary can show that a lot is near a road, but it cannot prove a legal right of access. A tax land-use class is not zoning. Zone X means minimal mapped flood hazard, not zero flood risk. We had to make those limitations useful instead of hiding them in fine print.
 
-Ohio's statewide parcel layer gives us broad discovery, but local evidence is fragmented. Counties use different parcel-ID formats, addresses are inconsistent, vacant lots may have no house number, and local zoning or utility data may live in a separate system. We built normalization and failure states around those differences instead of pretending every county has the same depth.
+Ohio's statewide parcel layer gives us broad discovery, but local evidence is fragmented. Counties use different parcel-ID formats, addresses are inconsistent, vacant lots may have no house number, and local zoning or utility data may live in a separate system. Columbus, for one, publishes no map of its water or sewer mains, so a Columbus lot gets its EPA water and sewer service areas but no distance to a main, and the report says so. We built normalization and failure states around those differences instead of pretending every county has the same depth.
 
 External services also fail in ordinary ways. OGRIP or FEMA can time out, return no match, or omit a county study. We designed the report so one failed check does not erase the evidence that did return, and so a timeout never turns into a positive or negative land-use conclusion.
 
@@ -112,6 +112,7 @@ Finally, we had to keep three kinds of truth separate: a public record supplies 
 - We search real OGRIP parcel data through the backend for all 88 Ohio counties and preserve the published parcel IDs and boundaries.
 - We tested the full search, boundary, and report path in Franklin and Licking counties rather than presenting an invented sample.
 - We built live FEMA flood checks for the 83 Ohio counties with an NFHL study and return an honest `unknown` state for the five without one.
+- We check public water and sewer for every Ohio lot. Run live on the rural golden parcel, the check finds no mapped public water or sewer and says a private well and a septic system are likely; on a Grove City lot it finds city water and sewer mains along the lot line. A map never stands in for an availability letter: every answer names who to ask for one.
 - We created a deeply sourced Franklin County golden report with zoning and flood evidence, a legal-access review flag, dated sources, and a named next actor.
 - We created a second-county report that stays useful when a local check is not integrated instead of filling the gap with a fallback value.
 - We handle provider timeouts without guessing, and recorded tests cover parcel-ID variations, addresses, missing parcels, flood-zone combinations, and missing FEMA studies.
@@ -138,7 +139,7 @@ This section and the site's roadmap page (`/roadmap`) say the same thing; change
 ### Now (live today, on Solana devnet with test USDC and staged reviewer wallets)
 
 - **Ohio parcel search and the 3D land view.** Search any Ohio parcel by address or parcel ID, using the state's OGRIP boundaries for all 88 counties. Open a lot to see its boundary in gold on real aerial imagery and terrain, and turn it in 3D.
-- **Sourced reports, check by check.** Flood, wetlands and septic soils are read from FEMA, the National Wetlands Inventory and the USDA soil survey wherever those maps cover the lot. Zoning, road access and stream setbacks are read in Franklin County so far, and any check without a record says No answer yet instead of guessing.
+- **Sourced reports, check by check.** Flood, wetlands, septic soils and public water and sewer service are read from FEMA, the National Wetlands Inventory, the USDA soil survey and EPA wherever those maps cover the lot. Zoning, road access and stream setbacks are read in Franklin County so far, and any check without a record says No answer yet instead of guessing.
 - **Solana escrow: holds block payouts, approvals release.** A reviewer's hold makes the payout fail on-chain, and the test USDC stays in the vault. Once every required reviewer approves, the program releases the exact USDC amount the deal was opened with.
 - **Reviewer portal, documents, and Verify on-chain.** Title, survey and septic reviewers approve or hold from their wallet, on a phone too through the Phantom app's browser. Each document's hash is written on-chain, and Verify on-chain reads the escrow account straight from Solana devnet to check the page against it.
 - **Live updates and an owner callback.** QuickNode Streams sends each confirmed escrow transaction to the backend, and the deal's timeline updates without a reload. An ElevenLabs voice agent's call to the owner on record is saved on the held deal's timeline as evidence, never as an approval.
@@ -155,7 +156,7 @@ Still open in the live build:
 - **Mainnet with real USDC and sponsored fees.** Move the escrow from devnet test funds to Solana mainnet and real USDC. Network fees would be sponsored, so a reviewer never needs to hold SOL to sign.
 - **Pay with Solana Pay.** The buyer funds the escrow by scanning a QR code with their wallet. The amount and the escrow address would come filled in, so nothing has to be typed or copied.
 - **Verified reviewer credentials.** Licensed title, survey and septic professionals would carry a credential that can be checked on-chain. The escrow would count an approval only from a wallet that holds the right one.
-- **More local checks.** Zoning for more Ohio counties, and whether a lot can connect to public sewer and water. Easements would be read from recorded documents, each one cited like every other check.
+- **More local checks.** Zoning for more Ohio counties, and the distance to water and sewer mains in more cities than the few that publish their main maps. Easements would be read from recorded documents, each one cited like every other check.
 
 ### How we'll measure the pilot
 
@@ -185,6 +186,8 @@ These are the measures from [Problem.md](../../context/Problem.md#proof-pilot-an
 - Prisma and PostgreSQL
 - Ohio OGRIP statewide parcels and LBRS address locator through ArcGIS REST services
 - FEMA National Flood Hazard Layer
+- US EPA Community Water System Service Area Boundaries and publicly owned treatment works sewersheds (Clean Watersheds Needs Survey 2022)
+- Franklin County Sanitary Engineering service areas, and the public water and sewer main maps of Dublin, Grove City, and Canal Winchester
 - Franklin County Auditor, zoning, road right-of-way, road-section, and stream-buffer sources for the verified golden parcel
 - Vitest and Supertest
 - Vercel and Railway deployment configuration

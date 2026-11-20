@@ -28,8 +28,8 @@
     "height": 257,
     "minMeters": 283.20440673828125,
     "maxMeters": 286.47711181640625,
-    "source": "AWS Terrain Tiles (Terrarium)",
-    "attribution": "Elevation: AWS Terrain Tiles",
+    "source": "USGS 3DEP-derived terrain (AWS Terrain Tiles)",
+    "attribution": "Map elevation: USGS 3DEP via AWS Terrain Tiles · not a survey",
     "sourceUrl": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium"
   }
 }

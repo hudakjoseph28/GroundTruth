@@ -328,6 +328,26 @@ export function classify(
   };
 }
 
+/**
+ * Shortest distance in metres from the parcel's boundary to any of `paths`
+ * (GeoJSON positions, longitude first): 0 when a path crosses the boundary
+ * or lies inside the parcel, null when there is no path to measure. Same
+ * local projection and geometry as the road distances above.
+ */
+export function distanceToPaths(
+  parcelGeometry: GeoJsonPolygon | GeoJsonMultiPolygon,
+  paths: number[][][],
+): number | null {
+  const project = localProjection(parcelGeometry);
+  const rings = (
+    parcelGeometry.type === "Polygon"
+      ? parcelGeometry.coordinates
+      : parcelGeometry.coordinates.flat()
+  ).map(project);
+  if (rings.every((ring) => ring.length < 2)) return null;
+  return closestOnPaths(rings, paths.map(project))?.distance ?? null;
+}
+
 export const isFreeway = (road: MappedRoad) => road.roadClass === FREEWAY_CLASS;
 export const isOutOfCounty = (road: MappedRoad) =>
   road.roadClass === OUT_OF_AREA_CLASS;

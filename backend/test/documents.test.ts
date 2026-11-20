@@ -118,8 +118,11 @@ describe("POST /api/deals/:id/documents", () => {
       sha256: pdfHash,
       uploaderRole: "septic",
       uploadedAt: NOW.toISOString(),
+      // This app has no document reader: the upload is stored unread.
+      parcelCheck: { status: "unavailable" },
     });
     const { data } = db.dealDocumentRecord.create.mock.calls[0]![0];
+    expect(data.check).toEqual({ create: { status: "off" } });
     expect(data).toMatchObject({
       dealId: DEAL_ID,
       sha256: pdfHash,
@@ -346,6 +349,7 @@ describe("GET /api/deals/:id/documents", () => {
         "dealId",
         "filename",
         "id",
+        "parcelCheck",
         "sha256",
         "sizeBytes",
         "type",

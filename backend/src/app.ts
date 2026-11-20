@@ -66,7 +66,7 @@ export interface AppOptions {
   land?: LandAssetService;
   /** Staged deal text alerts. No sender: opt-ins answer 503 and nothing is texted. */
   sms?: { sender?: SmsSender; log?: (line: string) => void };
-  /** Deal documents: the clock that wallet signatures are checked against. */
+  /** Deal documents: the signature clock and the document reader (none: uploads are not read). */
   documents?: DocumentRouteOptions;
   /** Reviewer-approval Blink: the devnet reads it needs. Defaults to public devnet RPC. */
   actions?: { chain?: ActionChain };
@@ -145,6 +145,7 @@ export function createApp(commit: string, options: AppOptions = {}) {
   const documents = documentRoutes(prisma, options.documents);
   app.get("/api/deals/:id/documents", documents.list);
   app.post("/api/deals/:id/documents", ...documents.upload);
+  app.post("/api/deals/:id/documents/findings", ...documents.findings);
   app.post("/api/deals/:id/documents/:documentId/file", ...documents.file);
   const solanaPay = solanaPayRoutes(prisma, {
     ...options.solanaPay,

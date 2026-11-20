@@ -88,7 +88,7 @@ export const STAGES: readonly RoadmapStage[] = [
         id: "report",
         title: "Sourced reports, check by check",
         body: [
-          "Flood, wetlands and septic soils are read from FEMA, the National Wetlands Inventory and the USDA soil survey wherever those maps cover the lot.",
+          "Flood, wetlands, septic soils and public water and sewer service are read from FEMA, the National Wetlands Inventory, the USDA soil survey and EPA wherever those maps cover the lot.",
           "Zoning, road access and stream setbacks are read in Franklin County so far, and any check without a record says No answer yet instead of guessing.",
         ],
         links: [{ label: "Read the Franklin report", to: sampleParcelPath() }],
@@ -182,7 +182,7 @@ export const STAGES: readonly RoadmapStage[] = [
         id: "checks",
         title: "More local checks",
         body: [
-          "Zoning for more Ohio counties, and whether a lot can connect to public sewer and water.",
+          "Zoning for more Ohio counties, and the distance to water and sewer mains in more cities than the few that publish their main maps.",
           "Easements would be read from recorded documents, each one cited like every other check.",
         ],
       },
