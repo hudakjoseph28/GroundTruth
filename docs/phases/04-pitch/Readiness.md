@@ -22,6 +22,7 @@ Re-probed signed out for the README rewrite. The audit below is kept as written;
 - **H4 is partly done.** Rehearsal v3 exists (5 test USDC; see [Escrow](../01-escrow/Escrow.md)).
 - **Still open:** B3 (the README's demo video link is the placeholder `VIDEO_LINK_HERE`), B4, B5, H1 (second-device measurement), and the items not re-checked here.
 - **Ask this lot needs two Railway variables (Satya).** After it deploys, set `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`, default `gpt-4o-mini`) and `ELEVENLABS_API_KEY` on the API service; the voice also needs `ELEVENLABS_AGENT_ID`, the owner-callback agent (confirm it is set; this PR did not read Railway). Until then the parcel page hides the card, and without the ElevenLabs key it hides only the microphone. Check: on `/parcels/ohio%3A39049%3A230-000918`, "What flood zone is shown?" cites the FEMA flood check, and "How much are the annual property taxes?" says "I don't know from the report".
+- **Ask this lot by voice is fixed (Satya), Nov 20, 02:49 UTC.** It had returned `502 Voice transcription is unavailable` because ElevenLabs refused the Railway key. After the key fix, a recorded "What flood zone is shown?" on `230-000918` returned `200` in 3.5 s with the exact transcript, a covered answer citing the FEMA flood layer and both FIRM panels, and 44 s of `audio/mpeg`. The typed question returns the same answer. [VideoScript](VideoScript.md) shot 5b is now filmed by voice, with typed as the backup.
 
 ## Where we stand
 
