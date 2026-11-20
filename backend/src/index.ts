@@ -3,6 +3,8 @@ import { createApp } from "./app.js";
 import { createClaudeDocumentReader } from "./documents/claudeReader.js";
 import { readServerEnv } from "./env.js";
 import { createOgripClient } from "./parcels/ogrip.js";
+import { createElevenLabsParcelVoice } from "./questions/elevenlabs.js";
+import { createOpenAiCheckSelector } from "./questions/openai.js";
 import { createTwilioSender } from "./sms/sender.js";
 
 const env = readServerEnv();
@@ -27,6 +29,21 @@ const app = createApp(env.commit, {
     reader: env.anthropicApiKey
       ? createClaudeDocumentReader({ apiKey: env.anthropicApiKey })
       : undefined,
+  },
+  questions: {
+    selector: env.openAiApiKey
+      ? createOpenAiCheckSelector({
+          apiKey: env.openAiApiKey,
+          model: env.openAiModel,
+        })
+      : undefined,
+    voice:
+      env.elevenLabsApiKey && env.elevenLabsAgentId
+        ? createElevenLabsParcelVoice({
+            apiKey: env.elevenLabsApiKey,
+            agentId: env.elevenLabsAgentId,
+          })
+        : undefined,
   },
   sms: { sender: env.twilio ? createTwilioSender(env.twilio) : undefined },
   // One devnet reader for both: the reviewer Blink and Solana Pay funding.

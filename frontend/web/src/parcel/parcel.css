@@ -122,6 +122,199 @@
   font-family: var(--mono);
 }
 
+/* ---------- Ask this lot ---------- */
+
+.ask-lot {
+  width: min(100%, 68rem);
+  margin: var(--space-xl) auto var(--space-l);
+  border: 1px solid #2d2d2d;
+  border-radius: 14px;
+  padding: clamp(1rem, 3vw, 2rem);
+  background: linear-gradient(145deg, #121313, #090909 55%);
+}
+
+.ask-lot-heading > * {
+  margin: 0;
+}
+
+.ask-lot-heading h2 {
+  margin-top: 0.2rem;
+  font-size: var(--step-2);
+}
+
+.ask-lot-heading > p:last-child {
+  max-width: 52ch;
+  margin-top: 0.5rem;
+  color: var(--text-2);
+}
+
+.ask-lot-eyebrow,
+.ask-lot-status {
+  color: #bfa45d;
+  font-size: var(--step--1);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ask-lot-thread {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ask-lot-question {
+  width: fit-content;
+  max-width: 88%;
+  margin: 0 0 0.55rem auto;
+  border-radius: 14px 14px 3px 14px;
+  padding: 0.7rem 0.9rem;
+  background: #272419;
+}
+
+.ask-lot-exchange article {
+  border-left: 2px solid #bfa45d;
+  padding: 0.2rem 0 0.2rem 1rem;
+}
+
+.ask-lot-exchange article[data-covered="false"] {
+  border-color: #858585;
+}
+
+.ask-lot-exchange article > p {
+  margin: 0.45rem 0;
+  line-height: 1.6;
+}
+
+.ask-lot-exchange article[data-covered="false"] .ask-lot-status {
+  color: #b8b8b8;
+}
+
+.ask-lot-party {
+  color: #d6c990;
+  font-size: var(--step--1);
+}
+
+.ask-lot-citations {
+  display: grid;
+  gap: 0.45rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--step--1);
+}
+
+.ask-lot-citations li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.65rem;
+  color: var(--text-2);
+}
+
+.ask-lot-citations li > span:first-child {
+  color: #ddd;
+  font-weight: 600;
+}
+
+.ask-lot-citations a {
+  color: #d6c990;
+}
+
+.ask-lot-audio {
+  width: min(100%, 26rem);
+  margin-top: 1rem;
+}
+
+.ask-lot-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 1.4rem 0 0.8rem;
+}
+
+.ask-lot-suggestions button {
+  border: 1px solid #343434;
+  border-radius: 999px;
+  padding: 0.55rem 0.75rem;
+  background: #151515;
+  color: #d7d7d7;
+  font: inherit;
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+
+.ask-lot-suggestions button:hover {
+  border-color: #7f7045;
+}
+
+.ask-lot-form label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--text-2);
+  font-size: var(--step--1);
+}
+
+.ask-lot-form > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.5rem;
+}
+
+.ask-lot-form input {
+  min-width: 0;
+  min-height: var(--tap);
+  border: 1px solid #3a3a3a;
+  border-radius: 7px;
+  padding: 0.7rem 0.8rem;
+  background: #090909;
+  color: #f4f1e8;
+  font: inherit;
+}
+
+.ask-lot-form input:focus {
+  border-color: #bfa45d;
+  outline: 2px solid rgb(191 164 93 / 24%);
+}
+
+.ask-lot-mic {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--tap);
+  border: 1px solid #3a3a3a;
+  border-radius: 7px;
+  padding: 0 0.8rem;
+  background: #171717;
+  color: #eee;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ask-lot-mic span {
+  color: #d96050;
+  font-size: 0.72rem;
+}
+
+.ask-lot-mic[aria-pressed="true"] {
+  border-color: #d96050;
+}
+
+.ask-lot .notice {
+  margin-top: 0.8rem;
+}
+
+@media (max-width: 40rem) {
+  .ask-lot-form > div {
+    grid-template-columns: 1fr auto;
+  }
+
+  .ask-lot-form input {
+    grid-column: 1 / -1;
+  }
+}
+
 /* ---------- Land block ---------- */
 
 .land-frame {
@@ -1528,7 +1721,11 @@
   border-radius: 12px;
   padding: 0.85rem 1rem 0.9rem;
   background:
-    radial-gradient(28rem 9rem at 0 0, color-mix(in srgb, var(--tone) 18%, transparent), transparent 68%),
+    radial-gradient(
+      28rem 9rem at 0 0,
+      color-mix(in srgb, var(--tone) 18%, transparent),
+      transparent 68%
+    ),
     rgba(10, 10, 10, 0.92);
   transition: border-color 180ms var(--ease-out);
 }
@@ -1805,7 +2002,12 @@
 }
 
 .block-strip[data-more="true"] {
-  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 2.25rem), transparent);
+  mask-image: linear-gradient(
+    90deg,
+    #000 0,
+    #000 calc(100% - 2.25rem),
+    transparent
+  );
 }
 
 .block-strip li {
@@ -2006,7 +2208,11 @@
   }
 
   .block-strip li[data-join="dashed"]::after {
-    background: repeating-linear-gradient(180deg, var(--gold) 0 4px, transparent 4px 7px);
+    background: repeating-linear-gradient(
+      180deg,
+      var(--gold) 0 4px,
+      transparent 4px 7px
+    );
   }
 }
 
@@ -2239,7 +2445,8 @@
   inset: 0;
   background: #2e2e2e;
   transform-origin: top;
-  animation: link-draw var(--step) linear calc(var(--at) + var(--appear) / 2) backwards;
+  animation: link-draw var(--step) linear calc(var(--at) + var(--appear) / 2)
+    backwards;
 }
 
 /* The pulse. The spark is as tall as its link and slides down by its own
@@ -2251,7 +2458,11 @@
   animation:
     spark-in var(--step) linear calc(var(--at) + var(--appear) / 2) backwards,
     spark-ambient var(--ambient-every) linear
-      calc(var(--settled) + var(--ambient-every) / 2 + var(--i) * var(--ambient-link)) infinite;
+      calc(
+        var(--settled) + var(--ambient-every) / 2 + var(--i) *
+          var(--ambient-link)
+      )
+      infinite;
 }
 
 .record-spark::after {
@@ -2327,9 +2538,14 @@
   position: absolute;
   inset: -45%;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(196, 161, 90, 0.5), rgba(196, 161, 90, 0));
+  background: radial-gradient(
+    closest-side,
+    rgba(196, 161, 90, 0.5),
+    rgba(196, 161, 90, 0)
+  );
   opacity: 0.25;
-  animation: node-breathe 4.2s ease-in-out calc(var(--settled) + var(--i) * 370ms) infinite;
+  animation: node-breathe 4.2s ease-in-out
+    calc(var(--settled) + var(--i) * 370ms) infinite;
 }
 
 /* Opening a record: its node swells and gives way to the details. */

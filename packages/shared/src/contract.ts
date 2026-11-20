@@ -138,6 +138,38 @@ export interface ParcelReport {
   checks: Check[];
 }
 
+// ---------- Ask this lot (additive, 2026-11-19) ----------
+
+export interface ParcelQuestionRequest {
+  question: string;
+}
+
+/** A report check and the exact public record an answer used. */
+export interface ParcelAnswerCitation {
+  checkKind: CheckKind;
+  checkTitle: string;
+  source?: Source;
+}
+
+/**
+ * Buyer-readable answer composed by the API from report fields only. The
+ * model selects checks; it never supplies prose or facts to this object.
+ */
+export interface ParcelAnswer {
+  answer: string;
+  covered: boolean;
+  citations: ParcelAnswerCitation[];
+  responsibleParty: ResponsibleParty;
+}
+
+export interface ParcelVoiceAnswer extends ParcelAnswer {
+  transcript: string;
+  audio?: {
+    contentType: "audio/mpeg";
+    base64: string;
+  };
+}
+
 export type ReviewerRole = "title" | "survey" | "septic";
 
 export const DEAL_STATES = [

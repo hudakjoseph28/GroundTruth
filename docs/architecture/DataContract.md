@@ -107,6 +107,23 @@ export interface ParcelReport {
   checks: Check[];
 }
 
+export interface ParcelQuestionRequest { question: string; }
+export interface ParcelAnswerCitation {
+  checkKind: CheckKind;
+  checkTitle: string;
+  source?: Source; // absent only when the cited responsible check has no source
+}
+export interface ParcelAnswer {
+  answer: string;
+  covered: boolean;
+  citations: ParcelAnswerCitation[];
+  responsibleParty: ResponsibleParty;
+}
+export interface ParcelVoiceAnswer extends ParcelAnswer {
+  transcript: string;
+  audio?: { contentType: "audio/mpeg"; base64: string };
+}
+
 // ---------- Deals ----------
 export type ReviewerRole = "title" | "survey" | "septic";
 export type DealState = "draft" | "funded" | "held" | "released" | "refunded";
@@ -240,6 +257,8 @@ All responses are JSON. Success returns the named object directly. Failure retur
 | `GET /api/parcels/area?bbox=` | `200 ParcelArea` | `bbox` is `west,south,east,north` in WGS84 degrees, each side at most 0.25°. Keyable parcels whose OGRIP boundary touches the box, at most 500; `truncated` says more exist. A multi-part parcel is merged into one outline and keeps `mappedAcreage` only when one part is in the answer. `400 INVALID_REQUEST` for a malformed or oversized box, `404 NO_COVERAGE` for a box outside Ohio, `504`/`502` (retryable) when OGRIP fails, never an empty map in its place. |
 | `GET /api/parcels/:parcelKey` | `200 Parcel` | Key is URL encoded. Returns the published boundary and retrieval metadata. |
 | `GET /api/parcels/:parcelKey/report` | `200 ParcelReport` | Each adapter resolves independently. A timeout yields an `unknown` check inside a successful partial report. |
+| `POST /api/parcels/:parcelKey/questions` | `200 ParcelAnswer` | Body `ParcelQuestionRequest`. The API loads the report; clients cannot supply it. The server-side model returns check IDs only, and the API composes the answer from exact report fields. Every answer cites its check and any source used. Unsupported or unknown questions say “I don't know” and name the check's `responsibleParty`. Text and voice share 6 requests/minute/client and 60/minute overall (`429 RATE_LIMITED`, `retry-after`). `503` when no model key is configured (checked before the body); `502` (retryable) when the model fails. |
+| `POST /api/parcels/:parcelKey/questions/voice` | `200 ParcelVoiceAnswer` | Raw WebM, MP4, Ogg, or MPEG audio (max 8 MB). ElevenLabs transcribes it; the same report-only path answers it; ElevenLabs reads the answer with the voice configured on `ELEVENLABS_AGENT_ID`. Provider keys never reach the browser. |
 | `GET /api/parcels/:parcelKey/land` | `200 LandMeta` | Land block assets for parcels not baked into the web app, built on demand from the OGRIP boundary (USGS NAIP imagery, Terrarium elevation) and cached. `LandMeta` is in `@groundtruth/shared` (`land.ts`). Provider failure is a retryable `502`/`504`, never a substitute image. |
 | `GET /api/parcels/:parcelKey/land/:file` | `200` JPEG or PNG | `imagery.jpg` or `height.png`, the files the `LandMeta` names. |
 | `GET /api/parcels/:parcelKey/layers` | `200 ParcelLayers` | Map layers for the land block's region (`landRegion`): FEMA flood zones, Franklin stream setbacks, NWI wetlands, Franklin zoning district lines, and the nearest Franklin public road right-of-way. `ParcelLayers` is in `@groundtruth/shared` (`layers.ts`). Each layer queries the same source as its report check, on its own limit, and is `found`, `none`, `notCovered`, or `unavailable`; a failing source is `unavailable` inside a `200`, never `none`. Outlines are clipped just outside the region. NWI cannot return its polygons, so wetlands come as NWI's own drawing of the region (PNG data URL). Lot shares (`onLot`) are measured only where the report measures them the same way (setback and zoning) or by the same sampling (flood). A complete answer is cached in memory for an hour; one with an `unavailable` layer is not. |
@@ -337,3 +356,4 @@ A change to a field, status, route, instruction, PDA seed, required reviewer, or
 | 2026-11-20 | Reviewer fee sponsorship: `GET /api/fee-sponsor`, `POST /api/deals/:id/sponsored-transaction`; `FeeSponsorStatus`, `SponsoredTransactionRequest`, `SponsoredTransactionResponse`, `SPONSORED_ACTIONS`, `sponsorRefusal`, `sameInstructions`; error code `RATE_LIMITED`; table `SponsoredFeeRecord` | Additive: new routes, types, an error code, and a table. No `Deal` field, status, instruction, PDA, or state-machine change; the escrow program is unchanged. The API signs as its own fee payer only, never for a participant | `packages/shared/src/feeSponsor.ts`, `contract.ts`; backend `src/routes/feeSponsor.ts`, `src/sponsor/`, migration `20261121000000_sponsored_fees`, tests `test/feeSponsor.test.ts`, `test/feeSponsorGuard.test.ts`, `test/db/sponsorLedger.db.test.ts`; web `src/review/` (`feeSponsor.ts`, `escrowTx.ts`, `ReviewPage.tsx`), `src/content/review.ts`. Fixtures unchanged. Devnet record: `escrow/demo-results/devnet-fee-sponsored-approval-v1.md`. |
 | 2026-11-20 | Document parcel checks: optional `DealDocument.parcelCheck`, `DocumentParcelCheck`, `DocumentFindings`, `DOCUMENT_PARCEL_CHECK_STATUSES`, the `findings` document-auth action, and `POST /api/deals/:id/documents/findings` | Additive: an optional field, new types, a new signed route, and a new signed-message action; existing upload/view messages are byte-for-byte unchanged. No deal status, instruction, PDA, or state-machine change; the check is advisory | `packages/shared/src/contract.ts` and `documents.ts`; backend `src/documents/parcelCheck.ts`, `claudeReader.ts`, `src/routes/documents.ts`, migration `20261121000000_document_parcel_checks`, sample PDFs `test/fixtures/documents/`; web `src/documents/ParcelCheckNote.tsx`, `DocumentFindings.tsx`, `/deals/:dealId`, `/review`. Fixtures unchanged. |
 | 2026-11-19 | Saved reports: the `groundtruth:report:<sha256>` Memo v1 format and its canonical-JSON hash | Additive: a client-side memo format; no type, route, status, instruction, or program change | web `src/seal/` (`reportHash.ts` and its tests), `src/content/seal.ts`, the parcel page. Fixtures unchanged. |
+| 2026-11-19 | Ask this lot: `ParcelQuestionRequest`, `ParcelAnswer`, `ParcelVoiceAnswer`, and text/voice parcel-question routes | Additive: new types, routes, and `RATE_LIMITED`; no `ParcelReport`, check, escrow, or state-machine change | shared contract; backend `src/questions/`, `src/routes/parcelQuestions.ts`; web `src/parcel/AskThisLot/`; refusal set `backend/test/fixtures/refusalQuestions.ts`. |

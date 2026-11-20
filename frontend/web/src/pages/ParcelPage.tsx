@@ -21,6 +21,7 @@ import {
 import { ExampleTag, useIsExample } from "../example/ExampleContext";
 import { usePageTitle } from "../layout/usePageTitle";
 import { BlockTransition } from "../parcel/BlockTransition/BlockTransition";
+import { AskThisLot } from "../parcel/AskThisLot/AskThisLot";
 import type { BuildableAreaEstimate } from "../parcel/BuildableArea/estimate";
 import { readBlockOrigin } from "../parcel/BlockTransition/origin";
 import { Ledger } from "../parcel/Ledger/Ledger";
@@ -396,7 +397,14 @@ export function ParcelView({
             bottomLine={data.bottomLine}
             buildable={buildable}
             // Saving a made-up report on devnet would record nothing true.
-            after={example ? undefined : <ReportSeal report={reportOutcome.report} />}
+            after={
+              example ? undefined : (
+                <>
+                  <AskThisLot parcelKey={parcel.key} />
+                  <ReportSeal report={reportOutcome.report} />
+                </>
+              )
+            }
           />
         ) : (
           <section className="ledger ledger-pending" aria-live="polite">

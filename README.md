@@ -30,6 +30,7 @@ GroundTruth helps a first-time buyer of vacant land in Ohio find a parcel, read 
 - **See the land in 3D** on real aerial imagery and terrain, with toggleable FEMA flood, wetlands, stream-setback, zoning, and road layers.
 - **Read the lot's elevation**: a height-colored layer with contour lines, steep-slope (over 15%) shading, the lowest and highest points, total rise, average and steepest slope, and a draggable elevation profile. It is map-derived USGS 3DEP elevation, labeled as not a survey.
 - **Get a straight answer.** A "Bottom line" up top, then nine checks (flood, wetlands, septic soils, water & sewer, zoning, road access, and more), each with its source, its date, what it doesn't prove, and who can resolve it. Missing data says *No answer yet*. It never guesses.
+- **Ask this lot.** Type a question or use the microphone. The answer can use only that parcel's report, cites every check and source it used, and says “I don't know” with the responsible party when the report has no answer.
 - **Pay safely.** Test USDC sits in a Solana escrow. A title, survey, or septic reviewer's hold blocks the payout on-chain; once every required reviewer approves, the exact amount goes to the seller the deal was opened with.
 - **Follow the deal from your phone**, with no app or wallet. The deal page updates from QuickNode Streams, links every step to Solana Explorer, and has a **Verify on-chain** button that checks the page against the chain from your own browser.
 
@@ -62,7 +63,7 @@ flowchart TB
   end
 
   subgraph Server["Express API (Railway)"]
-    A["REST API: search · reports · deals"]
+    A["REST API: search · reports · questions · deals"]
     WH["Signed webhooks: /api/webhooks/*"]
     DB[("PostgreSQL (Prisma)")]
   end
@@ -82,6 +83,7 @@ flowchart TB
 
   QN["QuickNode Stream, filtered to the program"]
   EL["ElevenLabs Agent: owner callback"]
+  AI["OpenAI: report-check selection only"]
 
   W -- "/api/*" --> A
   A --> DB
@@ -93,6 +95,8 @@ flowchart TB
   E -- "confirmed blocks" --> QN
   QN -- "HMAC-signed POST" --> WH
   EL -- "HMAC-signed post-call webhook" --> WH
+  A -- "strict report JSON prompt" --> AI
+  A -- "speech in/out, configured agent voice" --> EL
 ```
 
 The browser only ever calls the GroundTruth API and the user's wallet. Provider keys and webhook secrets live on Railway. The API builds unsigned transactions (Solana Pay, Blinks) but **never signs for a buyer, seller, or reviewer**. In `/review` it can cover a reviewer's network fee: it signs only as GroundTruth's own devnet fee payer, which is never a deal party, and the reviewer's wallet still signs the approval, hold, or release itself.
@@ -161,6 +165,8 @@ Held deal [`54Va6q…E4tW`](https://explorer.solana.com/address/54Va6qKNQTsbuXTq
 - **How:** the agent's `sale_answer` data-collection field arrives through ElevenLabs' HMAC-signed post-call webhook (`POST /api/webhooks/elevenlabs`). It becomes an **Evidence received** row on the deal timeline for the title reviewer. Only the outcome and conversation ID are stored. No transcript, audio, or phone number is stored.
 - **Never authorization.** The call cannot approve, hold, or release anything. Only a reviewer's signature does that.
 - **Recorded:** conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz` on Nov 18. The API logged `elevenlabs recorded ownerDeniesSale … deal=staged-devnet-deal` at 22:10:54 UTC. → [Proof](https://groundtruth-lac.vercel.app/proof#elevenlabs) · [log screenshot](docs/proof/elevenlabs-owner-callback.png) · [agent prompt](backend/elevenlabs/owner-callback-agent.md)
+
+The same configured agent voice powers the parcel-page microphone without reusing the callback's authority or prompt: ElevenLabs transcribes the question and reads the already grounded answer. The API sends the full report JSON and a strict selection schema to OpenAI; the model returns check identifiers only. Buyer-facing prose is assembled from those exact checks, and unsupported topics are refused before the model call. Both provider keys remain server-side, and text plus voice share a six-question-per-minute limit per client (sixty overall).
 
 ### Circle devnet USDC
 

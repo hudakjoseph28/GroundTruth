@@ -16,8 +16,29 @@ describe("readServerEnv", () => {
       wetlandsTimeoutMs: 10000,
       streamBuffersTimeoutMs: 6000,
       utilitiesTimeoutMs: 8000,
+      elevenLabsWebhookSecret: undefined,
+      elevenLabsAgentId: undefined,
+      elevenLabsApiKey: undefined,
+      openAiApiKey: undefined,
+      openAiModel: "gpt-4o-mini",
+      quicknodeStreamToken: undefined,
+      twilio: undefined,
       solanaRpcUrl: "https://api.devnet.solana.com",
     });
+  });
+
+  it("reads the server-only Ask this lot settings", () => {
+    const env = readServerEnv({
+      DATABASE_URL,
+      OPENAI_API_KEY: " openai-test ",
+      OPENAI_MODEL: "gpt-test",
+      ELEVENLABS_API_KEY: " eleven-test ",
+      ELEVENLABS_AGENT_ID: " agent-test ",
+    });
+    expect(env.openAiApiKey).toBe("openai-test");
+    expect(env.openAiModel).toBe("gpt-test");
+    expect(env.elevenLabsApiKey).toBe("eleven-test");
+    expect(env.elevenLabsAgentId).toBe("agent-test");
   });
 
   it("reads ANTHROPIC_API_KEY for document checks, trimmed, blank as unset", () => {

@@ -35,6 +35,11 @@ export interface ServerEnv {
   elevenLabsWebhookSecret: string | undefined;
   /** Optional: only this agent's calls become evidence. */
   elevenLabsAgentId: string | undefined;
+  /** Server-only key for Ask this lot speech input/output. */
+  elevenLabsApiKey: string | undefined;
+  /** Server-only key and model for report-grounded check selection. */
+  openAiApiKey: string | undefined;
+  openAiModel: string;
   /** Twilio for staged deal text alerts. Unset: opt-ins are refused and nothing is texted. */
   twilio: TwilioConfig | undefined;
   /** Devnet RPC for the reviewer Blink and Solana Pay funding (one setting, one connection); both refuse any other cluster by genesis hash. */
@@ -91,6 +96,9 @@ export function readServerEnv(
     elevenLabsWebhookSecret:
       source.ELEVENLABS_WEBHOOK_SECRET?.trim() || undefined,
     elevenLabsAgentId: source.ELEVENLABS_AGENT_ID?.trim() || undefined,
+    elevenLabsApiKey: source.ELEVENLABS_API_KEY?.trim() || undefined,
+    openAiApiKey: source.OPENAI_API_KEY?.trim() || undefined,
+    openAiModel: source.OPENAI_MODEL?.trim() || "gpt-4o-mini",
     twilio: readTwilio(source),
     solanaRpcUrl: readRpcUrl(source.SOLANA_RPC_URL),
     feeSponsor: readFeeSponsor(source),

@@ -129,6 +129,15 @@ export const STAGES: readonly RoadmapStage[] = [
           { label: "The owner callback", to: `${heldDeal}#timeline` },
         ],
       },
+      {
+        id: "ask",
+        title: "Ask this lot",
+        body: [
+          "Ask a question in plain English or by microphone and get an answer drawn only from that parcel report's checks and sources.",
+          "Every answer cites its check and record, and an uncovered question says I don't know and names the responsible party.",
+        ],
+        links: [{ label: "Ask the Franklin parcel", to: sampleParcelPath() }],
+      },
     ],
   },
   {
@@ -215,14 +224,6 @@ export const STAGES: readonly RoadmapStage[] = [
         body: [
           "A deal could be split into staged payments, each with its own deadline.",
           "If a review never arrives in time, the buyer's money would be refunded automatically.",
-        ],
-      },
-      {
-        id: "ask",
-        title: "Ask this lot",
-        body: [
-          "Ask a question in plain English and get an answer drawn only from the report's sources.",
-          "Every answer would cite its record, and say plainly when the records don't answer the question.",
         ],
       },
       {

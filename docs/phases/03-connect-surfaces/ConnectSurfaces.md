@@ -12,6 +12,7 @@
 - HMAC/signature-verified, idempotent QuickNode and ElevenLabs webhook handlers at the v1 routes.
 - One filtered Solana devnet Stream scoped to the deployed GroundTruth program; its configuration is documented without the secret.
 - One ElevenLabs agent/call configuration using staged data and a consenting teammate; conversation ID and demo outcome saved, raw audio/transcript not copied into Git or the app database.
+- Parcel-question microphone input transcribed by ElevenLabs, with the answer read in the voice configured on that agent; keys stay on the API.
 - Responsive `/deals/:dealId` view, desktop QR, two-second timeline polling, and Explorer links.
 
 ## Build this
@@ -35,6 +36,7 @@ One filtered Stream, one consenting teammate on the ElevenLabs call, one second 
 1. Open the staged deal link in a phone-sized browser. A reviewer approval appears within the measured Stream + polling latency, and a refresh shows the same deal and receipt.
 2. The public staged response contains no private evidence, owner contact data, call transcript/audio, secret, or private key. An unbound wallet cannot approve, hold, release incorrectly, or refund.
 3. The callback result reaches the reviewer as evidence. The reviewer's signature, not the call, is what the program checks. The Stream event matches the saved transaction signature.
+4. A voice parcel question follows the same report-only answer path as text and returns a cited answer; unsupported questions remain explicit gaps.
 
 Run and report:
 
