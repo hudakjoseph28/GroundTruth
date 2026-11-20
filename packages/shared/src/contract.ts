@@ -19,6 +19,7 @@ export interface ApiError {
       | "FORBIDDEN"
       | "CONFLICT"
       | "PENDING_CONFIRMATION"
+      | "RATE_LIMITED"
       | "INTERNAL_ERROR";
     message: string;
     requestId: string;

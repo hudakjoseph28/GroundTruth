@@ -90,16 +90,39 @@ export function usdc(baseUnits: string): string {
   return fraction ? `${whole}.${fraction}` : whole.toString();
 }
 
+/** Every bound party of a deal account, as decoded from devnet. */
+export interface ChainDealAccount extends ChainDeal {
+  buyer: string;
+  seller: string;
+  sellerTokenAccount: string;
+  mint: string;
+  vault: string;
+}
+
 /**
  * Reads the Blink deal's account on devnet. Throws ChainUnavailable when
  * devnet cannot be read, the cluster is not devnet, or the account is not
  * this deal's escrow account; never guesses a state.
  */
 export async function readChainDeal(chain: ActionChain): Promise<ChainDeal> {
+  const { state, reviewers } = await readDealAccount(chain, BLINK_DEAL);
+  return { state, reviewers };
+}
+
+/**
+ * Reads one staged deal's account on devnet at `confirmed`: genesis must be
+ * devnet, the owner the escrow program, and the deal ID and mint the staged
+ * deal's. Throws ChainUnavailable otherwise, and an ActionRefusal (409) when
+ * the account does not exist yet.
+ */
+export async function readDealAccount(
+  chain: ActionChain,
+  deal: { escrowAddress: string; dealIdHex: string },
+): Promise<ChainDealAccount> {
   await assertDevnet(chain);
   let account: Awaited<ReturnType<ActionChain["account"]>>;
   try {
-    account = await chain.account(BLINK_DEAL.escrowAddress);
+    account = await chain.account(deal.escrowAddress);
   } catch {
     throw new ChainUnavailable("Solana devnet could not be read.");
   }
@@ -123,7 +146,7 @@ export async function readChainDeal(chain: ActionChain): Promise<ChainDeal> {
     throw new ChainUnavailable("The deal account could not be decoded.");
   }
   if (
-    hex(raw.deal_id) !== BLINK_DEAL.dealIdHex ||
+    hex(raw.deal_id) !== deal.dealIdHex ||
     base58(raw.mint) !== USDC_MINT_DEVNET
   ) {
     throw new ChainUnavailable(
@@ -140,6 +163,11 @@ export async function readChainDeal(chain: ActionChain): Promise<ChainDeal> {
       required: r.required === true,
       approved: r.approved === true,
     })),
+    buyer: base58(raw.buyer),
+    seller: base58(raw.seller),
+    sellerTokenAccount: base58(raw.seller_token_account),
+    mint: base58(raw.mint),
+    vault: base58(raw.vault),
   };
 }
 
@@ -227,7 +255,7 @@ export async function buildUnsignedApproval(
   return Buffer.from(tx.serialize()).toString("base64");
 }
 
-async function assertDevnet(chain: ActionChain): Promise<void> {
+export async function assertDevnet(chain: ActionChain): Promise<void> {
   let genesis: string;
   try {
     genesis = await chain.genesisHash();

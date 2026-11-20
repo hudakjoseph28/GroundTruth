@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type { Parcel, ParcelLayers } from "@groundtruth/shared";
 import express from "express";
-import { createDevnetChain, type ActionChain } from "./actions/devnetChain.js";
+import {
+  createDevnetChain,
+  type ActionChain,
+  type SponsorChain,
+} from "./actions/devnetChain.js";
 import { applyConfirmedEvent } from "./chain/applyEvent.js";
 import { createEscrowDecoder } from "./chain/escrowDecoder.js";
 import { prisma } from "./db.js";
@@ -17,6 +21,10 @@ import {
   elevenLabsWebhook,
   type ElevenLabsWebhookOptions,
 } from "./routes/elevenlabsWebhook.js";
+import {
+  feeSponsorRoutes,
+  type FeeSponsorRouteOptions,
+} from "./routes/feeSponsor.js";
 import { getHealth } from "./routes/health.js";
 import {
   createLandAssetService,
@@ -40,6 +48,7 @@ import {
   type SolanaPayRouteOptions,
 } from "./routes/solanaPay.js";
 import { createSmsAlertDispatcher } from "./sms/alerts.js";
+import { prismaSponsorLedger } from "./sponsor/ledger.js";
 import type { SmsSender } from "./sms/sender.js";
 import { recordOwnerCall } from "./voice/ownerCall.js";
 
@@ -62,6 +71,8 @@ export interface AppOptions {
   actions?: { chain?: ActionChain };
   /** Solana Pay funding: the devnet reads (default: the same chain as the Blink) and the icon wallets show. */
   solanaPay?: SolanaPayRouteOptions;
+  /** Reviewer fee sponsorship: the fee-payer key (unset: off), devnet reads, ledger, and limiter. */
+  feeSponsor?: Partial<FeeSponsorRouteOptions> & { chain?: SponsorChain };
 }
 
 export function createApp(commit: string, options: AppOptions = {}) {
@@ -147,6 +158,13 @@ export function createApp(commit: string, options: AppOptions = {}) {
   );
   app.get("/api/deals/:id/solana-pay/fund", ...solanaPay.label);
   app.post("/api/deals/:id/solana-pay/fund", ...solanaPay.transaction);
+  const feeSponsor = feeSponsorRoutes({
+    ...options.feeSponsor,
+    chain: options.feeSponsor?.chain ?? devnet,
+    ledger: options.feeSponsor?.ledger ?? prismaSponsorLedger(prisma),
+  });
+  app.get("/api/fee-sponsor", feeSponsor.status);
+  app.post("/api/deals/:id/sponsored-transaction", ...feeSponsor.transaction);
   app.post(
     "/api/deals/:id/sms-subscriptions",
     ...createSmsSubscription(prisma, { enabled: Boolean(options.sms?.sender) }),

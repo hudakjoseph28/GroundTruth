@@ -124,7 +124,7 @@ flowchart TB
 ```
 
 - `frontend/web` deploys to Vercel with an SPA rewrite to `index.html`. It receives only public configuration such as the API base URL, cluster name, and program ID.
-- `backend` and PostgreSQL deploy together on Railway. All provider credentials and webhook secrets stay there.
+- `backend` and PostgreSQL deploy together on Railway. All provider credentials and webhook secrets stay there, and so does the optional devnet fee-payer key for reviewer fee sponsorship. That key signs only as fee payer, never as a deal party.
 - `escrow` deploys to Solana devnet. The checked-in IDL and deployed program ID must match.
 - Pull requests run lint, typecheck, unit tests, web build, API tests, and local Anchor tests. Devnet proof is a deliberate manual gate because faucets and RPCs are external.
 
