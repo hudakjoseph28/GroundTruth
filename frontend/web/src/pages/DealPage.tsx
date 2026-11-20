@@ -9,7 +9,12 @@ import {
   type ReactNode,
 } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { stagedReleasedDeal, type Deal, type Parcel } from "@groundtruth/shared";
+import {
+  showsReviewerCredentials,
+  stagedReleasedDeal,
+  type Deal,
+  type Parcel,
+} from "@groundtruth/shared";
 import { ReceiptLink } from "../components/ReceiptLink";
 import {
   DEAL_PAGE,
@@ -21,6 +26,7 @@ import {
 } from "../content/deal";
 import { DOCUMENTS } from "../content/documents";
 import { EXAMPLE } from "../content/example";
+import { useReviewerCredentials } from "../credential/useReviewerCredentials";
 import { DealHero, DealHoldCard, DealReviewers, DealRow, NewTab } from "../deal/DealParts";
 import { QrCode } from "../deal/QrCode";
 import { MoneyFlow } from "../deal/MoneyFlow";
@@ -183,6 +189,11 @@ export function DealLayout({
 }) {
   const example = useIsExample();
   const deal = useMemo(() => viewDeal(live.deal), [live.deal]);
+  // Staged SAS credentials, read from devnet in the browser: rehearsal deals only.
+  const credentials = useReviewerCredentials(
+    live.deal.reviewers,
+    !example && showsReviewerCredentials(live.deal.id),
+  );
   const rows = useMemo(() => {
     const newestFirst = viewTimeline(live.timeline);
     // The example tells a story, so it reads first to last.
@@ -237,7 +248,7 @@ export function DealLayout({
             buyerWallet={live.deal.buyerWallet}
           />
         )}
-        <DealReviewers deal={deal} />
+        <DealReviewers deal={deal} credentials={credentials} />
         {deal.hold && <DealHoldCard hold={deal.hold} />}
         {/* A closed deal has no more events to text about. */}
         {deal.state !== "released" && deal.state !== "refunded" && !example && (

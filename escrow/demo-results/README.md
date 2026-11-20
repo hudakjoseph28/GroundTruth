@@ -34,3 +34,9 @@ To exercise the resend on purpose, the run went through a local test proxy (the 
 ## 2026-11-19 Solana Pay rehearsal: [`devnet-solana-pay-fund-v1.md`](devnet-solana-pay-fund-v1.md)
 
 The 1 test USDC deal `staged-devnet-deal-pay-rehearsal` was initialized with `demo:deals stage-init` ([`devnet-stage-pay-rehearsal-v1.md`](devnet-stage-pay-rehearsal-v1.md)). It was then funded with the unsigned transaction from `POST /api/deals/:id/solana-pay/fund`, signed by the staged buyer key through the official `@solana/pay` client. No real wallet app was used.
+
+## 2026-11-19 staged reviewer credentials on SAS: [`sas-credentials-devnet.md`](sas-credentials-devnet.md)
+
+`pnpm --filter @groundtruth/escrow sas:credentials issue` created, on the Solana Attestation Service (`22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG`, devnet), a staged issuer, the schema `GroundTruth staged reviewer` (field layout `role: string, issuer: string, staged: bool`), and one attestation per staged reviewer wallet (title, survey, septic). Each attestation's `issuer` field reads "GroundTruth staged demo issuer (devnet test credential, not a license)" and `staged` is `true`. They do not expire. The staged buyer paid the rent; the new staged issuer keypair (`escrow/.demo-wallets/issuer.json`, gitignored, public key `E9jmb9CE…sYBRk`) signed. The escrow program does not read these accounts, and no deal was touched.
+
+The first `issue` run created the credential, the schema, and the title attestation, then stopped at its own read-back: the script had the account discriminators wrong (SAS writes credential 0, schema 1, attestation 2). After the fix, a second run skipped those three and created the survey and septic attestations. All read back OK. The first run's three signatures were copied into the record from its console output. All five are `finalized` with no error per `getSignatureStatuses`.

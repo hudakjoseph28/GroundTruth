@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["scripts/demo-deals.ts"]
+  "include": ["scripts/demo-deals.ts", "scripts/sas-credentials.ts"]
 }

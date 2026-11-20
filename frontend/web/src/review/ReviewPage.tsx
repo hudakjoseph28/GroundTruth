@@ -10,8 +10,11 @@ import {
   type EscrowInstructionSpec,
   type HoldReasonCode,
   type ReviewerRole,
+  showsReviewerCredentials,
 } from "@groundtruth/shared";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { CredentialBadge } from "../credential/CredentialBadge";
+import { useReviewerCredentials } from "../credential/useReviewerCredentials";
 import { HOLD_REASONS, ROLE_LABELS, STATE_LABELS } from "../content/deal";
 import { APPROVE_WITH_DOCUMENT, DOCUMENT_TYPE_LABELS } from "../content/documents";
 import { DealDocuments } from "../documents/DealDocuments";
@@ -152,6 +155,8 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
   const [mine, setMine] = useState<Confirmed>({ approved: [] });
   const deal = useMemo(() => withConfirmed(fromApi, mine, me), [fromApi, mine, me]);
   const view = viewDeal(deal);
+  // Staged SAS credentials, read from devnet in the browser: rehearsal deals only.
+  const credentials = useReviewerCredentials(deal.reviewers, showsReviewerCredentials(deal.id));
   const myRoles = deal.reviewers.filter((r) => r.wallet === me).map((r) => r.role);
   const [action, setAction] = useState<ActionState>({ phase: "idle" });
   const [reason, setReason] = useState<HoldReasonCode>("SELLER_IDENTITY_DISPUTED");
@@ -240,6 +245,7 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
             <span className="review-signoff-status">
               {r.status === "signed" ? "Signed" : r.status === "held" ? "Hold placed" : r.status === "waiting" ? "Waiting" : "Not signed"}
             </span>
+            {credentials && <CredentialBadge reads={credentials} wallet={r.wallet} role={r.role} />}
           </li>
         ))}
       </ul>
