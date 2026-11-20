@@ -26,7 +26,7 @@ export const WALKTHROUGH = {
     land: {
       kicker: "The land",
       title: "The land in 3D, with every layer on it",
-      body: "Real aerial imagery and elevation, turned into a block of land. Drawn on the lot: the flood zone, a wetland, the stream setback, the zoning line, and the road.",
+      body: "Real aerial imagery and elevation, turned into a block of land. Drawn on the lot: the flood zone, a wetland, the stream setback, the zoning line, and the road. Green is what is left once they are subtracted: an estimate from public maps, not a site plan or survey.",
     },
     report: {
       kicker: "The report",

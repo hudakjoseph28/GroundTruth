@@ -10,6 +10,8 @@ import { EscrowStrip } from "./EscrowStrip";
 import { Inspector, type Origin } from "./Inspector";
 import { RecordCard } from "./RecordCard";
 import { ReportSummary } from "./ReportSummary";
+import { BuildableAreaCard } from "../BuildableArea/BuildableAreaCard";
+import type { BuildableAreaEstimate } from "../BuildableArea/estimate";
 
 /**
  * Every check on the parcel as a linked chain of records, under the one
@@ -58,6 +60,7 @@ export function Ledger({
   animated,
   after,
   bottomLine,
+  buildable,
 }: {
   ledger: ParcelLedger;
   /** Every staged deal on this parcel the API returned, for the links under the escrow. */
@@ -72,6 +75,8 @@ export function Ledger({
   after?: ReactNode;
   /** Replaces the bottom line worked out from the checks (the example's own). */
   bottomLine?: { opening: string; ask: string };
+  /** The Buildable area estimate from the land block, once it is worked out. */
+  buildable?: BuildableAreaEstimate | null;
 }) {
   const [open, setOpen] = useState<{ record: LedgerRecord; origin: Origin | null } | null>(null);
   const hidden = usePageHidden();
@@ -94,7 +99,13 @@ export function Ledger({
       data-paused={hidden || open !== null || !animated}
       style={motionVars(count)}
     >
-      <ReportSummary ledger={ledger} onOpen={show} override={bottomLine} />
+      <ReportSummary
+        ledger={ledger}
+        onOpen={show}
+        override={bottomLine}
+        buildableShare={buildable?.buildableShare}
+      />
+      {buildable && <BuildableAreaCard estimate={buildable} />}
 
       <header className="ledger-head">
         <h2 id="ledger-title">{LEDGER.title}</h2>

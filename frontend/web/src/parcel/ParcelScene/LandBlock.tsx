@@ -30,6 +30,11 @@ import type { LandAssets } from "./landAssets";
 import type { Turn } from "./LandBlockScene";
 import { outerRing } from "./landMeta";
 import { useLandView } from "./useLandView";
+import {
+  estimateBuildableArea,
+  type BinaryMask,
+  type BuildableAreaEstimate,
+} from "../BuildableArea/estimate";
 
 const LandBlockScene = lazy(() =>
   import("./LandBlockScene").then((module) => ({ default: module.LandBlockScene })),
@@ -53,6 +58,7 @@ export function LandBlock({
   revealed,
   onReady,
   getLayers = getParcelLayers,
+  onBuildableArea,
 }: {
   parcel: Parcel;
   staged: boolean;
@@ -64,6 +70,8 @@ export function LandBlock({
   onReady: () => void;
   /** Where the map layers come from: the API, or the example's fixture. */
   getLayers?: (parcelKey: string, signal: AbortSignal) => Promise<LayersOutcome>;
+  /** Hears the Buildable area estimate: null until it can be worked out. */
+  onBuildableArea?: (estimate: BuildableAreaEstimate | null) => void;
 }) {
   const example = useIsExample();
   const ring = useMemo(() => outerRing(parcel.geometry.geojson), [parcel]);
@@ -73,11 +81,11 @@ export function LandBlock({
   const show3d = !loading && drawable && view === "3d" && !threeDisabled;
   const show2d = !loading && drawable && !show3d;
 
-  // Map layers: off by default except the boundary (all of them on the
-  // example). Asked for once the land can be drawn, so each toggle can say at
-  // once what its source found.
+  // Map layers: off by default except the boundary and the Buildable area
+  // (all of them on the example). Asked for once the land can be drawn, so
+  // each toggle can say at once what its source found.
   const [enabled, setEnabled] = useState<ReadonlySet<LayerToggleId>>(
-    () => new Set<LayerToggleId>(example ? LAYER_TOGGLES : ["boundary"]),
+    () => new Set<LayerToggleId>(example ? LAYER_TOGGLES : ["boundary", "buildableArea"]),
   );
   const toggleLayer = useCallback((id: LayerToggleId) => {
     setEnabled((current) => {
@@ -92,9 +100,19 @@ export function LandBlock({
     setEnabled(allOn ? new Set<LayerToggleId>(["boundary"]) : new Set(LAYER_TOGGLES));
   }, [allOn]);
   const { layers, wetlandsImage, retry: retryLayers } = useParcelLayers(parcel.key, drawable, getLayers);
+  // The estimate needs the layers and the height map; undefined while either loads.
+  const buildable = useMemo(() => {
+    if (assets === null || ring.length < 3 || layers === null) return null;
+    if (assets === undefined || layers === undefined) return undefined;
+    const wetlandsMask = imageMask(wetlandsImage);
+    return estimateBuildableArea({ parcel, layers, assets, wetlandsMask });
+  }, [assets, layers, wetlandsImage, parcel, ring]);
+  useEffect(() => onBuildableArea?.(buildable ?? null), [buildable, onBuildableArea]);
   const overlay = useMemo(() => {
     if (!assets || !layers) return null;
-    const on = new Set([...enabled].filter((id): id is MapLayerId => id !== "boundary"));
+    const on = new Set(
+      [...enabled].filter((id): id is MapLayerId => id !== "boundary" && id !== "buildableArea"),
+    );
     return paintLayers({
       meta: assets.meta,
       width: assets.imagery.naturalWidth,
@@ -102,10 +120,11 @@ export function LandBlock({
       layers,
       enabled: on,
       wetlandsImage,
+      buildable: enabled.has("buildableArea") ? buildable : null,
       labels: example,
       lot: ring,
     });
-  }, [assets, layers, enabled, wetlandsImage, example, ring]);
+  }, [assets, layers, enabled, wetlandsImage, buildable, example, ring]);
   const boundary = enabled.has("boundary");
   // The flat picture is SVG, so it takes the layers as an image URL. Encoded
   // only when the flat picture is showing; the 3D block reads the canvas.
@@ -322,6 +341,7 @@ export function LandBlock({
         onToggle={toggleLayer}
         onToggleAll={toggleAll}
         onRetry={retryLayers}
+        buildable={buildable}
       />
       <figcaption className="land-caption">
         <div className="land-credit">
@@ -340,6 +360,23 @@ export function LandBlock({
       {areaView}
     </figure>
   );
+}
+
+/** NWI's drawing of the view as a mask: anything it painted is mapped. */
+function imageMask(image: HTMLImageElement | null): BinaryMask | null {
+  if (!image || image.naturalWidth < 1 || image.naturalHeight < 1) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return null;
+  context.drawImage(image, 0, 0);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const data = new Uint8Array(canvas.width * canvas.height);
+  for (let index = 0; index < data.length; index += 1) {
+    data[index] = pixels[index * 4 + 3]! > 24 ? 1 : 0;
+  }
+  return { width: canvas.width, height: canvas.height, data };
 }
 
 function FlatLandReady({ onReady, children }: { onReady: () => void; children: ReactNode }) {

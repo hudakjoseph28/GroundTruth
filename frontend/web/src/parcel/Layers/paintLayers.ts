@@ -5,11 +5,14 @@ import type {
   ParcelLayers,
 } from "@groundtruth/shared";
 import type { LandMeta } from "@groundtruth/shared";
+import type { LayerToggleId } from "../../content/layers";
+import type { BuildableAreaEstimate } from "../BuildableArea/estimate";
 import { regionUV } from "../ParcelScene/landMeta";
 
 /** One colour per layer, far from the boundary's gold and from each other. */
-export const LAYER_COLORS: Record<MapLayerId | "boundary", string> = {
+export const LAYER_COLORS: Record<LayerToggleId, string> = {
   boundary: "#c4a15a",
+  buildableArea: "#52d273",
   flood: "#4d8dff",
   streamSetback: "#b57bff",
   wetlands: "#2fd3b5",
@@ -34,7 +37,8 @@ function rgba(hex: string, alpha: number): string {
 /**
  * Draws the enabled layers onto a transparent canvas the size of the land
  * block's imagery, so the 3D terrain and the 2D picture show the same thing.
- * Returns null when no layer is on.
+ * Returns null when no layer is on. `buildable` is the Buildable area
+ * estimate's mask, shaded green under every other layer.
  *
  * With `labels`, every named shape gets a small tag inside it (the example
  * parcel); otherwise only zoning districts are named, as before.
@@ -46,6 +50,7 @@ export function paintLayers({
   layers,
   enabled,
   wetlandsImage,
+  buildable = null,
   labels = false,
   lot,
 }: {
@@ -55,6 +60,7 @@ export function paintLayers({
   layers: ParcelLayers;
   enabled: ReadonlySet<MapLayerId>;
   wetlandsImage: HTMLImageElement | null;
+  buildable?: BuildableAreaEstimate | null;
   labels?: boolean;
   /** The parcel's outer ring, [longitude, latitude]: labels prefer to sit on the lot. */
   lot?: number[][];
@@ -63,13 +69,14 @@ export function paintLayers({
     const layer = layers.layers.find((candidate) => candidate.id === id);
     return layer && enabled.has(id) && layer.status === "found" ? [layer] : [];
   });
-  if (on.length === 0) return null;
+  if (on.length === 0 && !buildable) return null;
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const context = canvas.getContext("2d");
   if (!context) return null;
+  if (buildable) paintBuildable(context, buildable, width, height);
   /** Line widths and type are given for a 1024 px picture. */
   const scale = width / 1024;
   const toPixel = (lon: number, lat: number): [number, number] => {
@@ -191,6 +198,38 @@ export function paintLayers({
     }
   }
   return canvas;
+}
+
+/**
+ * The estimate's grid covers the same region as the picture, so its kept
+ * cells stretch straight onto it. Hard pixel edges: it is a grid estimate.
+ */
+function paintBuildable(
+  context: CanvasRenderingContext2D,
+  estimate: BuildableAreaEstimate,
+  width: number,
+  height: number,
+) {
+  const size = estimate.gridSize;
+  const grid = document.createElement("canvas");
+  grid.width = size;
+  grid.height = size;
+  const gridContext = grid.getContext("2d");
+  if (!gridContext) return;
+  const pixels = gridContext.createImageData(size, size);
+  const color = Number.parseInt(LAYER_COLORS.buildableArea.slice(1), 16);
+  for (let index = 0; index < estimate.mask.length; index += 1) {
+    if (!estimate.mask[index]) continue;
+    pixels.data[index * 4] = (color >> 16) & 255;
+    pixels.data[index * 4 + 1] = (color >> 8) & 255;
+    pixels.data[index * 4 + 2] = color & 255;
+    pixels.data[index * 4 + 3] = 110;
+  }
+  gridContext.putImageData(pixels, 0, 0);
+  context.save();
+  context.imageSmoothingEnabled = false;
+  context.drawImage(grid, 0, 0, width, height);
+  context.restore();
 }
 
 /** The stream's own blue, a little brighter than the flood zone's. */

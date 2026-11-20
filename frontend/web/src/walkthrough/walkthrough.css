@@ -435,6 +435,10 @@
   }
 }
 
+.walk-land .buildable-card {
+  margin: var(--s-3) 0 0;
+}
+
 /* ---------- 3. The report ---------- */
 
 .walk-report {

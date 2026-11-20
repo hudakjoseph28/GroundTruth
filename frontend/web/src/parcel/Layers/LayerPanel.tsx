@@ -4,13 +4,22 @@ import {
   type MapLayer,
   type ParcelLayers,
 } from "@groundtruth/shared";
+import { BUILDABLE } from "../../content/buildable";
 import { EXAMPLE } from "../../content/example";
-import { LAYERS, layerStatus, type LayerToggleId } from "../../content/layers";
+import {
+  LAYERS,
+  layerStatus,
+  percent,
+  type LayerToggleId,
+} from "../../content/layers";
 import { useIsExample } from "../../example/ExampleContext";
+import { acres } from "../BuildableArea/BuildableAreaCard";
+import type { BuildableAreaEstimate } from "../BuildableArea/estimate";
 import { LAYER_COLORS } from "./paintLayers";
 
 export const LAYER_TOGGLES: readonly LayerToggleId[] = [
   "boundary",
+  "buildableArea",
   ...MAP_LAYER_IDS,
 ];
 
@@ -33,6 +42,7 @@ export function LayerPanel({
   onToggle,
   onToggleAll,
   onRetry,
+  buildable,
 }: {
   /** undefined while loading, null when they could not be loaded. */
   layers: ParcelLayers | null | undefined;
@@ -43,11 +53,13 @@ export function LayerPanel({
   /** Turns every layer on, or back to the boundary alone when all are on. */
   onToggleAll: () => void;
   onRetry: () => void;
+  /** undefined while it is worked out, null when it cannot be. */
+  buildable?: BuildableAreaEstimate | null;
 }) {
   const example = useIsExample();
   const shown = LAYER_TOGGLES.filter((id) => enabled.has(id));
   const layerOf = (id: LayerToggleId): MapLayer | undefined =>
-    id === "boundary"
+    id === "boundary" || id === "buildableArea"
       ? undefined
       : layers?.layers.find((layer) => layer.id === id);
 
@@ -92,13 +104,22 @@ export function LayerPanel({
                 ? example
                   ? EXAMPLE.boundary
                   : LAYERS.boundary
-                : layers === undefined
-                  ? LAYERS.loading
-                  : layers === null
-                    ? LAYERS.failed
-                    : layer
-                      ? layerStatus(layer)
-                      : LAYERS.unavailable;
+                : id === "buildableArea"
+                  ? buildable === undefined
+                    ? LAYERS.loading
+                    : buildable === null
+                      ? BUILDABLE.layerMissing
+                      : `${BUILDABLE.layer(
+                          acres(buildable.buildableAcres),
+                          percent(buildable.buildableShare),
+                        )} ${BUILDABLE.disclaimer}`
+                  : layers === undefined
+                    ? LAYERS.loading
+                    : layers === null
+                      ? LAYERS.failed
+                      : layer
+                        ? layerStatus(layer)
+                        : LAYERS.unavailable;
             return (
               <li
                 key={id}
@@ -120,6 +141,7 @@ export function LayerPanel({
                       <p className="layer-note">{LAYERS.floodLight}</p>
                     )}
                   {id !== "boundary" &&
+                    id !== "buildableArea" &&
                     (layers === null || layer?.status === "unavailable") && (
                       <button
                         type="button"

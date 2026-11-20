@@ -1,4 +1,6 @@
 import type { CSSProperties } from "react";
+import { BUILDABLE } from "../../content/buildable";
+import { percent } from "../../content/layers";
 import { checkTitle, SUMMARY } from "../../content/parcel";
 import { bottomLine } from "../../data/bottomLine";
 import type { LedgerRecord, ParcelLedger } from "../../data/ledger";
@@ -40,11 +42,14 @@ export function ReportSummary({
   ledger,
   onOpen,
   override,
+  buildableShare,
 }: {
   ledger: ParcelLedger;
   onOpen: (record: LedgerRecord, node: Element | null) => void;
   /** The example parcel's own bottom line, in place of the worked-out one. */
   override?: { opening: string; ask: string };
+  /** The Buildable area estimate's share of the lot; under half adds one line. */
+  buildableShare?: number;
 }) {
   const worked = bottomLine(ledger);
   if (!worked) return null;
@@ -61,6 +66,9 @@ export function ReportSummary({
         <strong>{line.opening}</strong>
         {line.ask && <> {line.ask}</>}
       </p>
+      {buildableShare !== undefined && buildableShare < 0.5 && (
+        <p className="summary-buildable">{BUILDABLE.bottomLine(percent(buildableShare))}</p>
+      )}
       <div className="summary-foot">
         <p className="summary-count">
           <ProgressRing answered={ledger.answered} total={total} />

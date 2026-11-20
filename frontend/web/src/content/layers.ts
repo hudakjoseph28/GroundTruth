@@ -1,7 +1,7 @@
 import type { MapLayer, MapLayerId } from "@groundtruth/shared";
 
-/** A toggle on the land view: the parcel boundary, or one of the API's map layers. */
-export type LayerToggleId = "boundary" | MapLayerId;
+/** A toggle on the land view: the parcel boundary, the Buildable area estimate, or one of the API's map layers. */
+export type LayerToggleId = "boundary" | "buildableArea" | MapLayerId;
 
 // Words for the map layers on the land view. Each status line says only what
 // the layer's source answered; "unavailable" never reads as "none".
@@ -15,6 +15,7 @@ export const LAYERS = {
     "The map layers could not be loaded. The report's checks below still hold.",
   names: {
     boundary: "Parcel boundary",
+    buildableArea: "Buildable area",
     flood: "FEMA flood zones",
     streamSetback: "Stream setback",
     wetlands: "Wetlands",
