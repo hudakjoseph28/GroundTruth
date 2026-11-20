@@ -1,74 +1,174 @@
-# GroundTruth Devpost draft
+<!--
+Final Devpost text for GroundTruth (UBC 2026). Copy each "##" section into the matching Devpost field.
 
-**Tagline:** Know the land before the money moves.
+Two web tests read this file, so edit it together with the files they compare it to:
+- frontend/web/src/pages/RoadmapPage.test.tsx: "What's next for GroundTruth" (up to "Technologies used") must contain every card in frontend/web/src/content/roadmap.ts word for word.
+- frontend/web/src/content/proof.test.ts: every link and quoted value on /proof must appear in this file or QA-Proof.md, and the balance tables must match row for row.
 
-**One-sentence pitch:** GroundTruth helps a first-time Ohio land buyer understand a parcel before paying by showing sourced facts, honest gaps, and the person responsible for the next decision.
+A quoted note that starts "Needs a Railway key" marks a feature that is built and merged but switched off on the live API until that key is set. Delete the note once the key is set and the feature answers on the live site.
+-->
 
-> Submission note: Keep every `[PENDING]` label until the named owner confirms the integration and supplies the required proof. Remove the label only after that proof is recorded in the repository.
->
-> Checked Nov 18, 12:55 p.m. ET ([Readiness.md](Readiness.md)): both demo closings ran on devnet at 12:41 to 12:48 p.m. ET, and every escrow claim below was read back from the public RPC and opened on Solana Explorer. ElevenLabs and QuickNode Streams stay `[PENDING]`. No staged call is recorded. The two closings' timeline rows were backfilled with `replay:devnet`, not delivered by the Stream, so they are not Stream proof. The only QuickNode deliveries are the live stage deal's 4 `stage-prep` transactions, whose webhooks arrived 1–2 s after their blocks. The second-device check is still open.
->
-> Updated Nov 18, 2:01 p.m. ET: QuickNode Streams delivered the stage deal's four transactions to the live timeline (below). The two closings above were backfilled with `replay:devnet` and are not Stream deliveries. At that time the API showed the held deal as `refunded` and the released deal still as `draft`; by 2:05 p.m. ET its replay had landed and the API showed it as `released`. ElevenLabs stays `[PENDING]`: no staged call is recorded.
->
-> Updated Nov 18, 5:15 p.m. ET: **ElevenLabs is proven.** The staged owner callback was recorded at 5:10 p.m. ET and appears on the held deal's timeline as evidence (below). The call came after that deal's hold and refund, so it is evidence only. We enter the ElevenLabs bounty.
->
-> Updated Nov 18, 10:50 p.m. ET ([Readiness.md](Readiness.md)): **closing in the product is proven.** On the live site, signed out, <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal> reads `Refunded` with the hold, the `Release rejected · DealHeld (6019)` row, and the refund, and <https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released> reads `Released` with all three approvals. Every row's Explorer link matches the deal account's signatures on the public devnet RPC. That `[PENDING]` label is removed. QuickNode's second-device check is still `[PENDING]`.
+# GroundTruth
+
+**Know the land before the money moves.**
+
+[Live app](https://groundtruth-lac.vercel.app) · [Proof page](https://groundtruth-lac.vercel.app/proof) · [Walkthrough](https://groundtruth-lac.vercel.app/walkthrough) · [GitHub](https://github.com/hudakjoseph28/GroundTruth)
+
+Solana devnet receipts: [a hold blocks the payout (`DealHeld`)](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet) · [the buyer's refund](https://explorer.solana.com/tx/SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo?cluster=devnet) · [the release to the seller](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet)
+
+GroundTruth helps a first-time buyer of vacant land in Ohio see what the public records actually say about a lot, and what they don't, before paying. Then it keeps the deposit in a Solana escrow that releases only when the right professionals sign off.
+
+## Inspiration
+
+One of us grew up hearing family friends talk about buying a cheap lot "out in the country" and building on it someday. When we looked into what that actually takes, it got scary fast. A listing can say "3 acres, great building site" while the county records say no road touches the lot, the soil can't handle a septic system, and part of it sits in a stream setback. None of that is hidden, exactly. It's just spread across a dozen county, state and federal websites that a first-time buyer has never heard of.
+
+Then there's fraud. Vacant land is the easiest thing in real estate to steal, because nobody lives there to notice. Scammers pose as the owner, push for a quick sale, and disappear with the deposit. In ALTA's 2026 survey of 245 title insurance professionals, 59% reported at least one seller-impersonation attempt in 2025, up from 28% in ALTA's 2024 survey (for 2023). Those are reports of attempts, including failed ones, not a rate per sale. 82% rated vacant land at least somewhat common in this kind of fraud, the highest of any property type. The FBI's IC3 issued a warning about vacant-parcel seller impersonation in June 2026.
+
+So we asked a simple question: what if a buyer could see what the records actually say about a lot, and what if their deposit couldn't move until the right professionals signed off?
 
 ## What it does
 
-Buying vacant land can look simple until the buyer asks basic questions: Can I build here? Can I legally reach the lot? Is sewer service available? Is the person asking for my money authorized to sell it? The answers are scattered across parcel maps, county records, FEMA data, local rules, and professional reviews.
+**Start with a real lot.** Parcel 230-000918 in Franklin County, Ohio, is a vacant lot of 3.015 acres according to the county auditor. The county's zoning map puts all of it in the Rural district, which allows a one-family home on 2.5 acres or more. FEMA maps it in Zone X, minimal mapped flood hazard. On paper it looks like a building site.
 
-GroundTruth brings that evidence into one buyer-readable report. It shows what a public record supports, what it does not establish, who can resolve the open question, and what the buyer should do next. It is decision support, not a legal buildability opinion, title search, survey, identity service, or deed-transfer system.
+GroundTruth flags what that listing wouldn't tell you. **No road right-of-way touches the lot** in the county's right-of-way layer. The nearest mapped road, Seaman Rd, is about 107 m away, and the auditor lists the parcel as "SEAMAN RD REAR". Rural zoning requires 150 feet of frontage on a public street or an approved private street. So the first thing the report asks is whether legal access exists, and it names who can answer: a title reviewer looking for a recorded easement, and county zoning. It also shows that all three soil types on the lot are rated "Very limited" for a septic absorption field, and it sends the buyer to Franklin County Public Health for a site evaluation. Acreage and zoning look promising. Access is still an open question.
 
-The web demo searches live Ohio OGRIP parcels by address or parcel ID and opens each published boundary. The statewide layer covers all 88 counties, and we checked the deployed search in Franklin and Licking counties. The backend also builds live FEMA flood checks in the 83 counties with an NFHL study, and a water and sewer check for every lot: which community water system and which wastewater plant's sewershed EPA maps it inside, and, in Franklin County, the county sanitary engineer's service areas and the distance to the nearest public main where Dublin, Grove City, or Canal Winchester publishes its main map. When no public sewer is mapped, the report's bottom line says the septic soils matter and quotes their USDA rating. Missing or timed-out evidence stays `unknown` instead of becoming a guessed answer.
+**What a buyer can do today:**
 
-Our golden parcel is a real 3.015-acre vacant lot in Franklin County. County zoning maps it Rural, but county GIS shows no road right-of-way touching it and the nearest mapped road centerline is about 106 metres away. A title reviewer still has to determine whether a recorded access easement exists. That is the moment we want a first-time buyer to understand: acreage and zoning can look promising while legal access remains unresolved.
+- **Find any Ohio parcel** by address, street or parcel ID, using the state's OGRIP boundaries for all 88 counties. You can type `010042534` and still land on Franklin's `010-042534`.
+- **See the land in 3D** on aerial imagery and terrain, with toggles for FEMA flood zones, wetlands, stream setbacks, zoning and roads.
+- **Read the Bottom line first.** The report opens with one plain sentence and the lot's biggest open question. Then come the checks, each with its source, its retrieval date, what it can't prove, and who can resolve it: flood, wetlands, septic soils, water and sewer, zoning, road access, easements, seller authority, survey and the closing. A check without a record says *No answer yet*. It never guesses.
+- **See how much of the lot is buildable.** GroundTruth starts from the parcel boundary and subtracts every constraint it has a map for: FEMA's flood hazard area, mapped wetlands, the stream setback, slopes over 15%, and the Rural district's side and rear yards from the county zoning code. On the demo lot, the card says about 2.5 of its 3.0 mapped acres (83%) look buildable. Anything it couldn't subtract is named, such as the front yard, which is measured from a right-of-way width no public map gives. It's labeled "Estimate from public maps, not a site plan or survey".
+- **Read the ground.** An elevation layer colors the lot by height and draws contour lines. A second toggle shades slopes over 15%. A summary gives the lowest and highest points, total rise, and average and steepest slope, and a draggable profile shows the rise along any line across the lot. It is map-derived USGS 3DEP elevation, labeled as not a survey.
+- **Ask this lot**, by typing or by microphone. The answer can use only that parcel's report and cites every check and source it relies on. If the report has no answer, it says "I don't know" and names who does. ElevenLabs transcribes the spoken question and reads the answer aloud. Questions the report can't answer (value, taxes, schools, whether the seller can be trusted) are refused before any model is called.
 
-The second fixture is a real 1.2-acre vacant parcel in Licking County. Its boundary and FEMA finding are sourced, while the seeded zoning check remains `unknown` because GroundTruth has not integrated and reviewed that local zoning source yet. The report remains useful by naming the township zoning inspector as the next responsible person.
+  > Needs a Railway key: `OPENAI_API_KEY`. For the microphone, also `ELEVENLABS_API_KEY` and `ELEVENLABS_AGENT_ID` if they aren't set. Until then the live API answers "Ask this lot is not configured yet" and the card is hidden.
 
-ALTA's 2026 survey of 245 title insurance professionals found that 59% of respondents reported at least one seller-impersonation attempt during 2025, compared with 28% of respondents in ALTA's 2024 survey reporting experience during 2023. Those are respondent-level reports of attempts, including failed attempts. They are not a per-sale probability or a count of successful frauds. This is why GroundTruth treats seller authority as a professional decision rather than a fact inferred from a parcel record.
+- **Pay into escrow, not to the seller.** When you're ready, the deposit goes into a Solana escrow, funded from the deal page or by scanning a Solana Pay QR code. The buyer, seller, payout account, reviewers, mint and exact amount are locked in before any money moves.
+- **Verify the owner by phone.** An ElevenLabs voice agent calls the owner of record to ask whether they're actually selling. The answer lands on the deal timeline as evidence for the title reviewer. The call can't approve, hold or release anything.
+- **Reviewers sign from their phone.** Title, survey and septic reviewers open `/review` in Phantom and approve or place a hold. A reviewer can attach a document, and its SHA-256 fingerprint goes on-chain in a Memo beside their approval, so anyone with the file can re-hash it and compare. Each staged reviewer wallet also holds a staged credential on the Solana Attestation Service, shown as "✓ Credential on Solana" on rehearsal deals.
+- **Catch the wrong paperwork.** When a reviewer uploads a deed, survey or septic report, Claude reads its parcel ID, and the card says "Matches this parcel" or shows a red "Different parcel ID found". It's advisory only: it never blocks an upload or an approval.
 
-**Solana escrow:** When the buyer proceeds, staged test USDC sits in a Solana devnet escrow until the staged reviewers sign. We ran both outcomes on devnet on the golden parcel, with staged wallets standing in for the buyer, the seller, and the title, survey, and septic reviewers.
+  > Needs a Railway key: `ANTHROPIC_API_KEY`. We couldn't confirm it's set, because no public deal has an uploaded document yet. Without it, uploads are stored unread and the check reads "unavailable".
 
-- **A hold blocks the payout.** The buyer funded 25 test USDC. The staged title reviewer signed a hold. A [release was then attempted](https://explorer.solana.com/tx/Rro8WAjpc8w7s2taWhSeZaCUnxkLjN3Vx3iJCJdDboGTUVem8ZaX63FFvJhWaHFMHVLJ6EQwc4qG7H8r4MnvwGz?cluster=devnet) and the program rejected it with `DealHeld`: the vault still held 25 and the seller still held 0. The buyer then took a [refund](https://explorer.solana.com/tx/SgPJ9jQCNZfHrp1ipKK3tQ6LYwSaGS9qdhpkshUt8zNJW9JJ2s5V8B9WYuzq5nxLy3sWGvT94ZduEvSDgMzyaSo?cluster=devnet).
-- **Cleared sign-offs release it.** On a second deal, the title, survey, and septic reviewers each signed an approval, and the [release](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet) paid exactly 25 test USDC to the bound seller and closed the vault.
+- **Reviewers don't need SOL.** In `/review`, GroundTruth's own devnet fee payer can cover a reviewer's network fee. It signs only as fee payer, is never a party to the deal, and the reviewer's wallet still signs the approval. Proven on devnet: a title approval [`5WhMnU…kuqP`](https://explorer.solana.com/tx/5WhMnUapBd9wRt3R6hzRmVDK5J55geqRDCqB52Ygw7EWmE2DqamkX65tBZcAEJb7EzRV5sE9SkbM1TiE8Ne4kuqP?cluster=devnet) where the fee payer paid 10,000 lamports and the reviewer's balance didn't change.
 
-**Closing in the product:** Both outcomes are on the live site. The [held deal page](https://groundtruth-lac.vercel.app/deals/staged-devnet-deal) shows the title hold, the rejected release with `DealHeld (6019)`, and the refund. The [released deal page](https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released) shows all three approvals and the payout. Each timeline row links to its transaction on Solana Explorer, and a QR code opens the same page on a phone with no app or wallet.
+  > Needs a Railway key: `FEE_SPONSOR_SECRET_KEY`. The live API's `/api/fee-sponsor` reports `{"enabled":false}`, so until it's set, reviewers pay their own fee.
 
-**ElevenLabs:** The owner callback supplies evidence to a staged title reviewer. The call never approves, holds, releases, or refunds a deal by itself. A real **ElevenLabs Agents** call to a consenting teammate playing the owner of record (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`) ended at 22:10:40 UTC on Nov 18. The API verified its signed post-call webhook and logged `elevenlabs recorded ownerDeniesSale conv_9801m7rbaxvye0yrq4jmyzfyq6xz deal=staged-devnet-deal` at 22:10:54 UTC ([Railway log](../../proof/elevenlabs-owner-callback.png)). The held deal `staged-devnet-deal` shows it as an `Evidence received` row: the person reached as the owner on record said they are not selling.
+- **The program moves the money.** When every required reviewer has approved, the program pays the exact amount to the seller bound at the start. If anyone places a hold, the program itself rejects the payout, and the buyer can take a refund.
+- **Follow the deal from any phone**, with no app or wallet. The deal page updates live from QuickNode Streams, links every step to Solana Explorer, and has a **Verify on-chain** button that reads the escrow account straight from Solana in your browser and checks all 12 fields against the page.
 
-  The call was recorded **after** that deal's hold and refund, so it appears after them on the timeline. In a real closing, this callback is what prompts the title reviewer to hold. Here it is shown as evidence only and changed no deal state. Only the title reviewer's signature, not the call, is what the escrow program checks.
+## Why Solana
 
-**QuickNode Streams:** A Solana devnet Stream, filtered to our escrow program, sends confirmed program events to a signed webhook that writes them to the buyer's deal timeline. On Nov 18 the stage deal `staged-devnet-deal-live` ([`2UrftJ…F6Cg`](https://explorer.solana.com/address/2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg?cluster=devnet)) ran four transactions: initialize [`jmK7fg…pPeE`](https://explorer.solana.com/tx/jmK7fg1PBNa2kYfqbvaDJ3sNWCBSUM4gAbEp529M5QHYeg145EF9RpKGaHKThkZ9PGt2Q9o1jDRFG2ny2GApPeE?cluster=devnet), fund [`5waYrx…PxH5`](https://explorer.solana.com/tx/5waYrx5rD6y7sZttZ73i7H2v1eFyqXvuCkuwxBKC11atb5DQi3CsgHrEyUYrwppxTPPHowg1uxxRejrcaVrJPxH5?cluster=devnet), and the title [`2VSXvY…sFPL`](https://explorer.solana.com/tx/2VSXvYoKQcaHxfK6V8zCFZE9imyBxE8ZF3b8RK7snsP57HxrWdpnYVWUT8puLoZ53bKzvoas2CyuvBUZeRGvsFPL?cluster=devnet) and survey [`Gj327z…M89V`](https://explorer.solana.com/tx/Gj327zRzpfPwqmnTW669iuBQ1DK8e1PTWSMoQKmZcvezZZuZTwFded8mea1bHvHsKLDnfYCBS1w4YikYeNsM89V?cluster=devnet) approvals, in slots 523727603–523727618. All four were applied straight from the Stream, with no replay: the API logged `quicknode applied` for `DealInitialized`, `DealFunded`, and both `ApprovalSigned` events.
-
-![Railway log: four quicknode applied lines for the stage deal](../../proof/quicknode-stage-prep.png)
-
-Railway's HTTP log shows each webhook arriving 1–2 s after its block (18:57:20–18:57:24 UTC). The 1.8–3.3 s first measured on the deal timeline came from polling the timeline API every 1.5 s against whole-second block times, so it includes up to 1.5 s of polling delay. The screenshot's app-log lines are all stamped 13:57:29 EST; the arrival times come from the HTTP log, which is not in the repo.
-
-The two closings above are not Stream deliveries: their timeline rows were backfilled with `replay:devnet`, because QuickNode backfill needs a paid plan. **[PENDING]** The timeline update on a second device has not been measured separately. The team has confirmed the QuickNode bounty entry on the strength of the four Stream deliveries above.
-
-## What makes it different
-
-- **It names the gaps instead of hiding them.** Land tools usually show a listing or a score. GroundTruth shows each check's source and retrieval date, what that source does not establish, and the professional who can answer it. A missing or timed-out source stays `unknown`; it never becomes a guess.
-- **Evidence, decisions, and money stay separate.** Public records supply evidence. A named reviewer signs the decision from their own wallet. The Solana program decides whether money moves: on devnet, a reviewer's hold made it reject a release while the vault kept all 25 test USDC.
-- **A voice call is evidence, never authorization.** The ElevenLabs owner callback lands on the timeline for the title reviewer. It cannot approve, hold, or release anything.
-- **The buyer never needs a wallet to follow along.** The deal page reads confirmed chain state and works on a phone from a QR code. Only the people who sign need a wallet.
+The program makes the hold, the approval set, the mint, the amount and the payout destination enforceable and checkable by anyone. A PDF report can't do that. Solana is fast and cheap enough for that to sit inside an everyday closing. A reviewer signs from Phantom on a phone, and the buyer never needs a wallet just to follow along.
 
 ## How we built it
 
-We built GroundTruth as a pnpm workspace with one shared TypeScript contract. The React web app renders the search flow, parcel boundary, evidence cards, 3D land view, and staged closing interface. The Express API owns public-data access so the browser never talks directly to OGRIP, FEMA, PostgreSQL, or a provider that needs a secret.
+- **Escrow program:** Rust and Anchor 1.2.2 on Solana devnet, using Circle's devnet USDC. Six instructions (`initialize_deal`, `fund`, `sign_approval`, `place_hold`, `release`, `refund`) and one vault per deal, owned by a PDA. 78 Anchor integration tests cover the wrong mint, the wrong payout account, unassigned reviewers, double approvals, approvals after a hold, and paying out twice.
+- **Land data:** a Node and Express API that reads live from Ohio's statewide parcel service (OGRIP) and LBRS address locator, FEMA's National Flood Hazard Layer, the National Wetlands Inventory, USDA soil data, EPA's water system and sewershed maps, and Franklin County's zoning, right-of-way, road, stream-buffer and sanitary engineering layers. Each check runs on its own timeout, so one slow government server never breaks the report.
+- **Buildable area and elevation:** the web app samples a grid over the parcel and subtracts each mapped constraint, counting overlaps once. The Rural yard rules come from Franklin County Zoning Resolution §302.043–302.044, read from the county's 2026 PDF. Elevation, contours, slope and the profile come from USGS 3DEP elevation via AWS Terrain Tiles. Slope is measured over an ~8 m baseline so it follows the real terrain tiles, not the upsampled grid.
+- **Live chain updates:** a QuickNode Stream filters devnet blocks for our program's transactions, including failed `release` attempts, and posts them to our API. We check QuickNode's HMAC signature, decode the events with our IDL, deduplicate retries, and refuse any event the stored deal can't accept. Webhooks reached our API 1–2 seconds after their block.
+- **Voice:** an ElevenLabs Agents outbound call through Twilio places the owner callback, and a signed post-call webhook records only the outcome and conversation ID as evidence. The same agent's voice reads Ask this lot answers.
+- **AI, kept in its lane:** for Ask this lot, OpenAI gets the full report JSON and a strict schema, and returns check IDs only. The answer text is assembled from those exact checks. For documents, Claude reads an upload's parcel ID, and the result is advisory. Neither model can change a deal.
+- **On-chain credentials:** staged reviewer credentials are issued on the Solana Attestation Service (an issuer, a "GroundTruth staged reviewer" schema, and one attestation per role). The browser reads them from devnet in a single `getMultipleAccounts` call.
+- **Frontend:** React 19, TypeScript, Vite, Three.js and MapLibre GL, with a 3D land view, a reviewer portal that works in Phantom on a phone, Solana Pay for funding, a Blink for reviewer approvals, and Verify on-chain.
+- **Testing and deploy:** **1,276 tests**: 897 backend unit and route tests, 248 web tests, 53 tests against PostgreSQL 16, and 78 Anchor tests. CI runs everything except the Anchor suite on every pull request, without secrets. The backend also replays the real recorded devnet transactions of both closings through the same filter, webhook and decoder that live deliveries use. Deployed on Vercel and Railway.
 
-For parcel discovery, the backend queries Ohio's statewide OGRIP parcel FeatureServer. Parcel IDs are normalized without changing the published local ID, and address search uses Ohio's LBRS locator with a bounded site-address fallback. The API returns the published geometry, source URL, and retrieval time.
+## Challenges we ran into
 
-For reports, each evidence check runs independently. The live pipeline combines the OGRIP parcel with FEMA's National Flood Hazard Layer, the National Wetlands Inventory, USDA soils, and EPA's community water system and sewershed maps everywhere, plus Franklin County's zoning, road, stream-buffer, and sanitary engineering service-area layers in Franklin, and the water and sewer main maps of the three Franklin County cities that publish them. A provider miss, timeout, or uncovered county becomes an explicit `unknown` check with a responsible party and next action. The manually verified Franklin fixture adds county zoning, the zoning resolution, the Auditor's legal acreage, county right-of-way and road layers, and the Big Darby riparian-setback layer. The Licking fixture deliberately demonstrates a partial report.
+**Public land data is messy.** Ohio has one statewide parcel database, but its 88 counties format parcel IDs differently, so we measured the live formats before search worked reliably. Addresses were worse. `750 High St, Columbus` is actually two lots, 750 N High and 750 S High, and Ohio's address locator can drop a point hundreds of meters from the real building. We keep a parcel only when its published address has the house number, street and direction the buyer typed. Vacant lots are often published with house number 0, and Franklin County's parcel layer lists 0 acres, so the 3.015 acres on our demo lot come from the county auditor, not the map. Columbus publishes no map of its water or sewer mains, so a Columbus lot gets EPA's service areas but no distance to a main, and the report says so.
 
-Prisma maps the shared contract into PostgreSQL for seeded and cached reports. The API exposes health, parcel search, parcel detail, report, coverage, staged deal, and timeline routes. Tests replay recorded public-provider responses so the normal, missing-data, and timeout paths remain reproducible without inventing facts.
+**The hardest call was what not to say.** A green "you can build here" badge would have been easy. But a lot near a road might not have legal access, a tax class isn't zoning, and FEMA's Zone X means minimal mapped flood risk, not zero. Five Ohio counties have no FEMA flood study at all. So every finding shows its source and what it can't prove, and names the professional who can resolve it. The buildable-area estimate is the same: when a source didn't answer, it says what it skipped instead of treating the land as clear. When a government server times out, that one check says "unknown" and the rest of the report still loads. We never turn a missing answer into a yes or a no.
 
-The web is built with React, Vite, TypeScript, Three.js, and react-globe.gl. The API uses Node.js, Express, Zod, Prisma, and PostgreSQL. Vercel hosts the web deployment and Railway hosts the API and database documented in the repository.
+**The escrow had to be right.** Funds can only go to the seller bound at the start, only assigned reviewers can approve, and a hold blocks payout no matter what the website asks for. During testing we caught a bug: releasing a held deal returned a generic `InvalidDealState` error instead of `DealHeld`, because the program checked the deal's state before checking for a hold. Kadhir fixed the order, tightened the tests and upgraded the program on devnet. Now the held deal's release fails on-chain with `DealHeld (6019)` and the balances don't move. Recording both demo closings took a few tries, because the public devnet RPC kept rate-limiting us, so we kept only signatures we could read back as confirmed.
 
-**Escrow program on devnet:** The Rust and Anchor escrow program is deployed to Solana devnet as [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet) ([deploy transaction](https://explorer.solana.com/tx/4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU?cluster=devnet)). Its published Anchor IDL ([metadata account](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)) is identical to the IDL our backend decodes events with.
+**Getting the chain into the app.** Our first QuickNode Stream was running the wrong filter and quietly delivered thousands of empty batches before we noticed. Once fixed, it delivered new transactions live, but our plan couldn't backfill history, so the two earlier closings were rebuilt from confirmed devnet transactions instead. Our first speed measurement also looked slow because it included the page's polling delay. The webhook logs showed the real number: events reached our backend 1–2 seconds after their block.
 
-**Escrow outcomes on devnet (Nov 18, 2026):** Both deals use the golden parcel, 25 test USDC (Circle's devnet mint `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`), and the same staged wallets. Every transaction below is finalized.
+**Keeping the AI in its lane.** An AI voice agent can gather evidence, but it shouldn't be able to move money. We kept the ElevenLabs callback, the reviewer's decision and the smart contract's enforcement completely separate. That made the design more complex but trustworthy. The same rule shaped Ask this lot: the model only picks which of the report's checks answer the question, and the words the buyer reads come from those checks, so it can't invent a finding or tell someone a lot is "safe". Our staged call is real, and the person playing the owner said they're not selling. We recorded it after that deal's hold and refund, so it appears later on the timeline than it would in a real closing. We left it there. Moving it would have made a cleaner story and a false one.
+
+**Sponsoring fees without signing for anyone.** We wanted reviewers to approve without holding SOL, but our API must never sign for a buyer, seller or reviewer. The fee payer is a separate devnet key that is never a deal party. The API simulates each transaction, refuses any instruction that references the fee payer, and caps how many fees it pays per wallet and per deal. The reviewer's own signature is still the one the program checks.
+
+## Accomplishments that we're proud of
+
+- **Everything in the demo is real.** The blocked payout is an actual failed transaction on Solana devnet with `DealHeld (6019)` in the logs, and you can open it on Explorer yourself. The released deal paid exactly 25 test USDC to the bound seller. Both deal pages show this on the live site: the [held deal](https://groundtruth-lac.vercel.app/deals/staged-devnet-deal) and the [released deal](https://groundtruth-lac.vercel.app/deals/staged-devnet-deal-released).
+- **Our demo lot is a real parcel** in Franklin County that we checked by hand against the auditor, the zoning code and FEMA's maps.
+- **Search covers all 88 Ohio counties**, with live FEMA flood checks in the 83 that have a flood study and an honest `unknown` in the other five. The water and sewer check runs for every Ohio lot. On a Grove City lot it finds city water and sewer mains along the lot line.
+- **A buyer can follow the money without a wallet.** Verify on-chain matched all 12 fields on the released deal against devnet.
+- **Sponsor integrations are real and recorded.** QuickNode Streams delivered four live transactions 1–2 s after their blocks. A real ElevenLabs call reached our signed webhook and landed on the held deal's timeline.
+- **1,276 tests**, and CI runs on every pull request.
+
+## What we learned
+
+Most of the value in real estate tech is in the boring parts: knowing which agency owns which answer, and being honest when you don't know. `unknown` turned out to be a useful product result. A buyer doesn't need false certainty. They need to know what's missing, why it matters, and who can resolve it.
+
+Broad coverage and deep coverage are different measurements. OGRIP gives us statewide parcel discovery, but zoning, access, utilities and septic evidence depend on the local authority, so we show both instead of turning one verified county into a statewide claim.
+
+We also learned that a blockchain is a good fit for exactly one piece of this: making sure the money follows the professionals' decisions in a way anyone can check. Public records narrow the question. A title reviewer, surveyor, zoning official or health department resolves it. The program enforces the signed result, but it can't decide whether land is buildable or a seller is legitimate.
+
+## Honest limits
+
+- **Devnet and test USDC only.** No real money moves, and the program is not audited.
+- **Staged wallets and credentials.** The buyer, the seller, and the title, survey and septic reviewers are staged devnet keys the team controls, not licensed professionals. Their Solana Attestation Service credentials are test credentials the team issued to its own wallets, shown on rehearsal deals only, and the escrow program doesn't check them.
+- **Ohio only, deep in one county.** Parcels come from Ohio's OGRIP layer. Zoning, road access and stream setbacks are read in Franklin County so far. Everywhere else they say *No answer yet*.
+- **The demo lot's water and sewer card still reads *No answer yet*.** Its report was hand-verified on Nov 17, before the live water and sewer check shipped, and a seeded report is never overwritten by a live one. Run live, that check finds no mapped public water or sewer for this lot, so it likely needs a private well and a septic system. The report will show that once we update the verified copy.
+- **Decision support, not a verdict.** A report isn't a legal buildability opinion, title search, survey or septic permit, and the buildable area is an estimate from public maps, not a site plan.
+- **Example pages are labeled.** `/parcels/sample`, `/deals/sample` and `/walkthrough` use a made-up lot and deal, each tagged *Example · Illustrative data*.
+- **Sponsor proofs have edges.** The held and released closings were backfilled into the timeline with `replay:devnet`, not delivered by the Stream, because QuickNode backfill needs a paid plan. A timeline update on a second device hasn't been measured separately. The ElevenLabs call was recorded after its deal's hold and refund, so it shows as evidence on a deal that had already settled.
+
+## What's next for GroundTruth
+
+The site's [roadmap page](https://groundtruth-lac.vercel.app/roadmap) says the same thing. Only **Built today** is built. Every **Next** and **Later** item is a plan, and no pilot or partner exists yet.
+
+### Built today (on Solana devnet, with test USDC and staged reviewer wallets)
+
+- **Ohio parcel search and the 3D land view.** Search any Ohio parcel by address or parcel ID, using the state's OGRIP boundaries for all 88 counties. Open a lot to see its boundary in gold on real aerial imagery and terrain, and turn it in 3D.
+- **Sourced reports, check by check.** Flood, wetlands, septic soils and public water and sewer service are read from FEMA, the National Wetlands Inventory, the USDA soil survey and EPA wherever those maps cover the lot. Zoning, road access and stream setbacks are read in Franklin County so far, and any check without a record says No answer yet instead of guessing.
+- **Solana escrow: holds block payouts, approvals release.** A reviewer's hold makes the payout fail on-chain, and the test USDC stays in the vault. Once every required reviewer approves, the program releases the exact USDC amount the deal was opened with.
+- **Reviewer portal, documents, and Verify on-chain.** Title, survey and septic reviewers approve or hold from their wallet, on a phone too through the Phantom app's browser. A reviewer can attach a document whose SHA-256 is written on-chain beside their approval, and Verify on-chain reads the escrow account straight from Solana devnet to check the page against it.
+- **Live updates and an owner callback.** QuickNode Streams sends each confirmed escrow transaction to the backend, and the deal's timeline updates without a reload. An ElevenLabs voice agent's call to the owner on record is saved on the held deal's timeline as evidence, never as an approval.
+- **Ask this lot.** Ask a question in plain English or by microphone and get an answer drawn only from that parcel report's checks and sources. Every answer cites its check and record, and an uncovered question says I don't know and names the responsible party.
+- **Fund with Solana Pay.** While a deal is a draft, its page shows a Solana Pay QR code that opens the escrow's fund transaction in the buyer's wallet. The amount and the escrow address come filled in, and only the buyer can sign it.
+- **Staged reviewer credentials on Solana.** Each staged reviewer wallet holds a devnet credential on the Solana Attestation Service, and rehearsal deal pages read it from the chain. They are test credentials the team issued to its own wallets, and the escrow program does not check them yet.
+
+Also built: the buildable-area estimate, elevation and slope, the advisory document check, and reviewer fee sponsorship (see *What it does*).
+
+### Next (pilot) · planned, not built yet
+
+- **A title or closing company pilot in Ohio.** Run real deals with an Ohio title or closing company, with its licensed staff as the reviewers and private, signed-in evidence handling in place first. The professionals, not us, would define when money is released and when it is refunded.
+- **Mainnet with real USDC and sponsored fees.** Move the escrow from devnet test funds to Solana mainnet and real USDC. Network fees would be sponsored with the fee-payer flow already built for the reviewer portal, so a reviewer never needs to hold SOL to sign.
+- **Verified reviewer credentials.** Licensed title, survey and septic professionals would carry a credential from a real issuer, such as a licensing board or a title underwriter. The escrow would count an approval only from a wallet that holds the right one.
+- **More local checks.** Zoning for more Ohio counties, and the distance to water and sewer mains in more cities than the few that publish their main maps. Easements would be read from recorded documents, each one cited like every other check.
+
+### How we'll measure the pilot
+
+There is no pilot yet, so there are no results to show.
+
+1. **Time to the first actionable finding:** how long from opening a lot until the buyer has one concrete thing to do next.
+2. **Findings with traceable evidence:** the share of material findings that link to the public record or sign-off behind them.
+3. **Buyers who can explain a pause:** when a deal is paused, whether the buyer can say why and what has to happen next.
+
+### Later (scale) · planned, not built yet
+
+- **Nationwide parcels.** Parcel boundaries beyond Ohio would come from a nationwide provider such as Regrid. FEMA's flood maps are already a national service, so the flood check would carry over wherever FEMA has mapped.
+- **Deed recording handoff.** After the escrow releases, the deed would be handed to the county's e-recording system. The recording receipt would join the deal's timeline beside the payout.
+- **Seller identity verification.** A trusted identity partner would confirm the seller is the owner on record. It would be a step inside the closing flow, finished before any reviewer can approve.
+- **Milestone payments and deadlines.** A deal could be split into staged payments, each with its own deadline. If a review never arrives in time, the buyer's money would be refunded automatically.
+- **Saved lots with alerts.** Save a lot and get an alert when its public records change, such as a new flood map. Each alert would link to the source that changed.
+
+## Technologies used
+
+Rust · Anchor · Solana devnet · SPL Token · SPL Memo · Solana Attestation Service · Solana Pay · Solana Actions (Blinks) · Circle devnet USDC · QuickNode Streams · ElevenLabs Agents · Twilio · OpenAI · Claude (Anthropic) · TypeScript · React · Vite · Three.js · MapLibre GL · Node.js · Express · Zod · Prisma · PostgreSQL · Vitest · LiteSVM · GitHub Actions · Vercel · Railway · Ohio OGRIP parcels and LBRS · FEMA NFHL · USFWS National Wetlands Inventory · USDA NRCS SSURGO · US EPA water system and sewershed maps · USGS 3DEP · USDA NAIP · Franklin County GIS and Auditor
+
+## Program details
+
+- **Network:** Solana devnet
+- **Escrow program:** [`ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG`](https://explorer.solana.com/address/ASQoBtBsz1igQXsWzKZqFYqBGtBX4ErCJjNpuo8rEBZG?cluster=devnet) ([deploy transaction](https://explorer.solana.com/tx/4jSbDspA2EBfhghHxmiZJ5mkce4Ho4CZ34aqawPdMVJzDGjJxXdRfxjjMREgiKdnfpxeDXVgUqpECTwb8T39P8NU?cluster=devnet)). Its published Anchor IDL ([metadata account](https://explorer.solana.com/address/uQZLX7rQRUceEZdPYyxFtE8ei386h3XKatFkRJ3wZma?cluster=devnet)) is identical to the IDL our backend decodes events with.
+- **USDC mint (Circle devnet):** [`4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`](https://explorer.solana.com/address/4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU?cluster=devnet). The program rejects any other mint.
+- **Staged reviewer credentials (Solana Attestation Service):** credential [`BVrSkg…UBB`](https://explorer.solana.com/address/BVrSkgLXY5fJ67anEkj2F2zhSPFr2BxQRnAw8N7taUBB?cluster=devnet), schema [`7tQHRj…GuS`](https://explorer.solana.com/address/7tQHRjjiPvDU6gaYkCz6EABSygRUVxBt3GhKGXVUGGuS?cluster=devnet), and the title [`C51Ds1…t2xJ`](https://explorer.solana.com/address/C51Ds1fUCPZdCenXz2KS8tWZSqAunR6xXQacCKAnt2xJ?cluster=devnet), survey [`BpVTHe…awkR`](https://explorer.solana.com/address/BpVTHemJpJw6rzZg2S9WcAjhEQdE58fWtNYNQ24pawkR?cluster=devnet) and septic [`3L2x6J…nyJ`](https://explorer.solana.com/address/3L2x6J3r8ih56fnjkss1Ka2P7fk59EcL3Z2SGLkpQnyJ?cluster=devnet) attestations.
+- All funds are test USDC, and reviewer wallets are staged for the demo.
+
+### Escrow outcomes on devnet (Nov 18, 2026)
+
+Both deals use the golden parcel, 25 test USDC and the same staged wallets. Every transaction below is finalized.
 
 Held deal, [`54Va6q…E4tW`](https://explorer.solana.com/address/54Va6qKNQTsbuXTqi4tXaPVgdkQh4S7McsCKsjKPE4tW?cluster=devnet):
 
@@ -89,107 +189,18 @@ Released deal, [`3uBECm…2yu`](https://explorer.solana.com/address/3uBECmkG9XKb
 | Three reviewer approvals | [`5Rnsas…jBqt`](https://explorer.solana.com/tx/5Rnsas4nLpLJM8ss63dB2768wbTRJteEWBMCE7Z4njzE1JNk547WQ7nQdp38W8Go25tX2YsQtvvn5nRNdEV5jBqt?cluster=devnet) · [`3D8ahB…jL9P`](https://explorer.solana.com/tx/3D8ahBLYuhCiZfNZcMgQZZ3UQnHeoNcBFCgu9NLbyao1TZUMCKBn4RjWcKYJhQupNiZy1JiXnyN8UUARFM57jL9P?cluster=devnet) · [`7tnvjT…S2fb`](https://explorer.solana.com/tx/7tnvjTxYw6vu7xFKCDTJ4fJGjerS6SCJ3QfSkFn3N916bXaBVEmBnrYwrF9hHSFyCurox1Kct9YdcJGxm4XS2fb?cluster=devnet) | 15 | 25 | 0 |
 | Release to the bound seller | [`5kWpcH…vHdC`](https://explorer.solana.com/tx/5kWpcHzaj1gic1gAehkJcQztexDn2jL2Y765WSXjEvRiFrDmDkYiy5EwY4gYSeeJHo9C6DGnAXrQ9EWDPZhvvHdC?cluster=devnet) | 15 | closed | 25 |
 
-Balances are test USDC after each step, read from the transactions' token balances on the public devnet RPC. Where a step does not touch an account, its value is carried from the steps on either side. The rejected release's log reads: "Error Code: DealHeld. Error Number: 6019. Error Message: Cannot release funds while deal is under active hold."
+Balances are test USDC after each step, read from the transactions' token balances on the public devnet RPC. Where a step doesn't touch an account, its value is carried from the steps on either side. The rejected release's log reads: "Error Code: DealHeld. Error Number: 6019. Error Message: Cannot release funds while deal is under active hold."
 
 Not shown on devnet: a second release attempt on the released deal. The vault is closed, and the local test suite covers repeated settlement.
 
-**Sponsor integrations:**
-- **QuickNode Streams** delivered the stage deal's four transactions to the live timeline (see above). The two closings' timeline rows came from `replay:devnet`, not the Stream.
-- **ElevenLabs:** a real staged owner callback was recorded, verified, and attached to the held deal's timeline as evidence. It was recorded after the hold and refund, so it is evidence only. We enter the ElevenLabs bounty.
+### QuickNode Streams
 
-## Challenges we ran into
+A Solana devnet Stream on the Block dataset, filtered to our escrow program, sends confirmed program events to a signed webhook that writes them to the buyer's deal timeline. On Nov 18 the stage deal `staged-devnet-deal-live` ([`2UrftJ…F6Cg`](https://explorer.solana.com/address/2UrftJMzbvMngu6Mdg4PhFscqkCHnuLksfbSAiddF6Cg?cluster=devnet)) ran four transactions: initialize [`jmK7fg…pPeE`](https://explorer.solana.com/tx/jmK7fg1PBNa2kYfqbvaDJ3sNWCBSUM4gAbEp529M5QHYeg145EF9RpKGaHKThkZ9PGt2Q9o1jDRFG2ny2GApPeE?cluster=devnet), fund [`5waYrx…PxH5`](https://explorer.solana.com/tx/5waYrx5rD6y7sZttZ73i7H2v1eFyqXvuCkuwxBKC11atb5DQi3CsgHrEyUYrwppxTPPHowg1uxxRejrcaVrJPxH5?cluster=devnet), and the title [`2VSXvY…sFPL`](https://explorer.solana.com/tx/2VSXvYoKQcaHxfK6V8zCFZE9imyBxE8ZF3b8RK7snsP57HxrWdpnYVWUT8puLoZ53bKzvoas2CyuvBUZeRGvsFPL?cluster=devnet) and survey [`Gj327z…M89V`](https://explorer.solana.com/tx/Gj327zRzpfPwqmnTW669iuBQ1DK8e1PTWSMoQKmZcvezZZuZTwFded8mea1bHvHsKLDnfYCBS1w4YikYeNsM89V?cluster=devnet) approvals, in slots 523727603–523727618. All four were applied straight from the Stream, with no replay: the API logged `quicknode applied` for `DealInitialized`, `DealFunded`, and both `ApprovalSigned` events ([Railway log](https://github.com/hudakjoseph28/GroundTruth/blob/main/docs/proof/quicknode-stage-prep.png)).
 
-The hardest product challenge was resisting a confident answer when the records did not support one. A parcel boundary can show that a lot is near a road, but it cannot prove a legal right of access. A tax land-use class is not zoning. Zone X means minimal mapped flood hazard, not zero flood risk. We had to make those limitations useful instead of hiding them in fine print.
+Railway's HTTP log shows each webhook arriving 1–2 s after its block (18:57:20–18:57:24 UTC). The 1.8–3.3 s first measured on the deal timeline came from polling the timeline API every 1.5 s against whole-second block times, so it includes up to 1.5 s of polling delay. The screenshot's app-log lines are all stamped 13:57:29 EST; the arrival times come from the HTTP log, which is not in the repo.
 
-Ohio's statewide parcel layer gives us broad discovery, but local evidence is fragmented. Counties use different parcel-ID formats, addresses are inconsistent, vacant lots may have no house number, and local zoning or utility data may live in a separate system. Columbus, for one, publishes no map of its water or sewer mains, so a Columbus lot gets its EPA water and sewer service areas but no distance to a main, and the report says so. We built normalization and failure states around those differences instead of pretending every county has the same depth.
+### ElevenLabs owner callback
 
-External services also fail in ordinary ways. OGRIP or FEMA can time out, return no match, or omit a county study. We designed the report so one failed check does not erase the evidence that did return, and so a timeout never turns into a positive or negative land-use conclusion.
+A real **ElevenLabs Agents** call to a consenting teammate playing the owner of record (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`) ended at 22:10:40 UTC on Nov 18. The API verified its signed post-call webhook and logged `elevenlabs recorded ownerDeniesSale conv_9801m7rbaxvye0yrq4jmyzfyq6xz deal=staged-devnet-deal` at 22:10:54 UTC ([Railway log](https://github.com/hudakjoseph28/GroundTruth/blob/main/docs/proof/elevenlabs-owner-callback.png)). The held deal shows it as an `Evidence received` row: the person reached as the owner on record said they are not selling. Only the outcome and conversation ID are stored, with no transcript, audio or phone number.
 
-Finally, we had to keep three kinds of truth separate: a public record supplies evidence, a qualified reviewer makes a decision, and a payment system enforces where money moves. Blurring those roles would make the demo simpler, but the product less trustworthy.
-
-## Accomplishments that we're proud of
-
-- We search real OGRIP parcel data through the backend for all 88 Ohio counties and preserve the published parcel IDs and boundaries.
-- We tested the full search, boundary, and report path in Franklin and Licking counties rather than presenting an invented sample.
-- We built live FEMA flood checks for the 83 Ohio counties with an NFHL study and return an honest `unknown` state for the five without one.
-- We check public water and sewer for every Ohio lot. Run live on the rural golden parcel, the check finds no mapped public water or sewer and says a private well and a septic system are likely; on a Grove City lot it finds city water and sewer mains along the lot line. A map never stands in for an availability letter: every answer names who to ask for one.
-- We created a deeply sourced Franklin County golden report with zoning and flood evidence, a legal-access review flag, dated sources, and a named next actor.
-- We created a second-county report that stays useful when a local check is not integrated instead of filling the gap with a fallback value.
-- We handle provider timeouts without guessing, and recorded tests cover parcel-ID variations, addresses, missing parcels, flood-zone combinations, and missing FEMA studies.
-- We built a responsive buyer experience with real parcel geometry, baked aerial imagery and elevation for the staged parcels, and clear evidence and limitation states.
-
-- We ran both closings on Solana devnet: a reviewer's hold made the program reject a release with the vault balance unchanged, and three reviewer approvals released exactly 25 test USDC to the bound seller. Each step has an Explorer link above.
-
-- QuickNode Streams delivered four confirmed escrow transactions from devnet to our webhook 1–2 s after their blocks, with no replay ([Railway log](../../proof/quicknode-stage-prep.png)).
-
-- An ElevenLabs Agents call to a consenting teammate playing the owner of record reached our signed webhook. The webhook recorded the answer (`ownerDeniesSale`) as evidence on the held deal's timeline ([Railway log](../../proof/elevenlabs-owner-callback.png)). The call never approves, holds, or releases anything. In this staged run it was recorded after the hold and refund.
-
-## What we learned
-
-We learned that `unknown` can be a useful product result. A buyer does not need false certainty. They need to know what is missing, why it matters, and who can resolve it.
-
-We also learned that broad coverage and deep coverage are different measurements. OGRIP gives us statewide parcel discovery, while zoning, access, utilities, and septic evidence depend on the local authority. GroundTruth should show both measurements instead of turning one verified county into a statewide claim.
-
-The most important design lesson was to keep evidence, professional judgment, and payment enforcement separate. Public records can narrow the question. A title reviewer, surveyor, zoning official, or health authority resolves it. A payment system can then enforce the signed conditions, but it cannot decide whether the land is buildable or whether a seller is legitimate.
-
-## What's next for GroundTruth
-
-This section and the site's roadmap page (`/roadmap`) say the same thing; change them together ([`frontend/web/src/content/roadmap.ts`](../../../frontend/web/src/content/roadmap.ts)). Only **Now** is built. Every **Next** and **Later** item is a plan, and no pilot or partner exists yet.
-
-### Now (live today, on Solana devnet with test USDC and staged reviewer wallets)
-
-- **Ohio parcel search and the 3D land view.** Search any Ohio parcel by address or parcel ID, using the state's OGRIP boundaries for all 88 counties. Open a lot to see its boundary in gold on real aerial imagery and terrain, and turn it in 3D.
-- **Sourced reports, check by check.** Flood, wetlands, septic soils and public water and sewer service are read from FEMA, the National Wetlands Inventory, the USDA soil survey and EPA wherever those maps cover the lot. Zoning, road access and stream setbacks are read in Franklin County so far, and any check without a record says No answer yet instead of guessing.
-- **Solana escrow: holds block payouts, approvals release.** A reviewer's hold makes the payout fail on-chain, and the test USDC stays in the vault. Once every required reviewer approves, the program releases the exact USDC amount the deal was opened with.
-- **Reviewer portal, documents, and Verify on-chain.** Title, survey and septic reviewers approve or hold from their wallet, on a phone too through the Phantom app's browser. Each document's hash is written on-chain, and Verify on-chain reads the escrow account straight from Solana devnet to check the page against it.
-- **Live updates and an owner callback.** QuickNode Streams sends each confirmed escrow transaction to the backend, and the deal's timeline updates without a reload. An ElevenLabs voice agent's call to the owner on record is saved on the held deal's timeline as evidence, never as an approval.
-- **Ask this lot.** Ask a question in plain English or by microphone and get an answer drawn only from that parcel report's checks and sources. Every answer cites its check and record, and an uncovered question says I don't know and names the responsible party.
-
-Still open in the live build:
-
-- **[PENDING] QuickNode Streams:** measure the timeline update on a second device, and deliver the stage deal's septic approval and release through the Stream.
-- **ElevenLabs:** place the owner callback before the title reviewer decides, as it would sit in a real closing. In the staged run it was recorded after the hold.
-
-### Next (pilot) · planned, not built yet
-
-- **A title or closing company pilot in Ohio.** Run real deals with an Ohio title or closing company, with its licensed staff as the reviewers and private, signed-in evidence handling in place first. The professionals, not us, would define when money is released and when it is refunded.
-- **Mainnet with real USDC and sponsored fees.** Move the escrow from devnet test funds to Solana mainnet and real USDC. Network fees would be sponsored, so a reviewer never needs to hold SOL to sign.
-- **Pay with Solana Pay.** The buyer funds the escrow by scanning a QR code with their wallet. The amount and the escrow address would come filled in, so nothing has to be typed or copied.
-- **Verified reviewer credentials.** Licensed title, survey and septic professionals would carry a credential that can be checked on-chain. The escrow would count an approval only from a wallet that holds the right one.
-- **More local checks.** Zoning for more Ohio counties, and the distance to water and sewer mains in more cities than the few that publish their main maps. Easements would be read from recorded documents, each one cited like every other check.
-
-### How we'll measure the pilot
-
-These are the measures from [Problem.md](../../context/Problem.md#proof-pilot-and-beyond). There is no pilot yet, so there are no results to show.
-
-1. **Time to the first actionable finding:** how long from opening a lot until the buyer has one concrete thing to do next.
-2. **Findings with traceable evidence:** the share of material findings that link to the public record or sign-off behind them.
-3. **Buyers who can explain a pause:** when a deal is paused, whether the buyer can say why and what has to happen next.
-
-### Later (scale) · planned, not built yet
-
-- **Nationwide parcels.** Parcel boundaries beyond Ohio would come from a nationwide provider such as Regrid. FEMA's flood maps are already a national service, so the flood check would carry over wherever FEMA has mapped.
-- **Deed recording handoff.** After the escrow releases, the deed would be handed to the county's e-recording system. The recording receipt would join the deal's timeline beside the payout.
-- **Seller identity verification.** A trusted identity partner would confirm the seller is the owner on record. It would be a step inside the closing flow, finished before any reviewer can approve.
-- **Milestone payments and deadlines.** A deal could be split into staged payments, each with its own deadline. If a review never arrives in time, the buyer's money would be refunded automatically.
-- **Saved lots with alerts.** Save a lot and get an alert when its public records change, such as a new flood map. Each alert would link to the source that changed.
-
-## Technologies used
-
-### Working on `main`
-
-- Rust and Anchor: the escrow program is deployed to Solana devnet (see the program link above)
-- Solana devnet escrow deals: SPL Token transfers of Circle test USDC (two deals run, links above)
-- TypeScript and pnpm workspaces
-- React, Vite, Three.js, and react-globe.gl
-- Node.js, Express, and Zod
-- Prisma and PostgreSQL
-- Ohio OGRIP statewide parcels and LBRS address locator through ArcGIS REST services
-- FEMA National Flood Hazard Layer
-- US EPA Community Water System Service Area Boundaries and publicly owned treatment works sewersheds (Clean Watersheds Needs Survey 2022)
-- Franklin County Sanitary Engineering service areas, and the public water and sewer main maps of Dublin, Grove City, and Canal Winchester
-- Franklin County Auditor, zoning, road right-of-way, road-section, and stream-buffer sources for the verified golden parcel
-- Vitest and Supertest
-- Vercel and Railway deployment configuration
-- QuickNode Streams: live delivery of the stage deal's four transactions to the deal timeline (second-device update not yet measured)
-- ElevenLabs Agents: a staged owner callback, recorded as evidence on the held deal's timeline (conversation `conv_9801m7rbaxvye0yrq4jmyzfyq6xz`)
+The call was recorded **after** that deal's hold and refund, so it appears after them on the timeline. In a real closing, this callback is what prompts the title reviewer to hold. Here it is evidence only and changed no deal state. The escrow program checks only the title reviewer's signature, never the call.
