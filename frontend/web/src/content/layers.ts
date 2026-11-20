@@ -1,7 +1,12 @@
 import type { MapLayer, MapLayerId } from "@groundtruth/shared";
 
-/** A toggle on the land view: the parcel boundary, the Buildable area estimate, or one of the API's map layers. */
-export type LayerToggleId = "boundary" | "buildableArea" | MapLayerId;
+export type TerrainLayerId = "elevation" | "slope";
+/** A toggle on the land view: the boundary, the Buildable area estimate, terrain, or one of the API's map layers. */
+export type LayerToggleId =
+  | "boundary"
+  | "buildableArea"
+  | TerrainLayerId
+  | MapLayerId;
 
 // Words for the map layers on the land view. Each status line says only what
 // the layer's source answered; "unavailable" never reads as "none".
@@ -16,12 +21,23 @@ export const LAYERS = {
   names: {
     boundary: "Parcel boundary",
     buildableArea: "Buildable area",
+    elevation: "Elevation",
+    slope: "Slope",
     flood: "FEMA flood zones",
     streamSetback: "Stream setback",
     wetlands: "Wetlands",
     zoning: "Zoning districts",
     roadRightOfWay: "Road right-of-way",
   } satisfies Record<LayerToggleId, string>,
+  elevation: (contourFeet: number) =>
+    `Colored by height, with contour lines every ${contourFeet} ft.`,
+  elevationScale: "Elevation color scale in feet",
+  slope: (steepShare: number | null) =>
+    steepShare === null
+      ? "Areas steeper than 15% are shaded red."
+      : steepShare === 0
+        ? "No part of the lot reads steeper than 15% in the map elevation."
+        : `Shaded red: about ${Math.max(1, Math.round(steepShare * 100))}% of the lot is steeper than 15%.`,
   boundary: "The lot's published OGRIP boundary.",
   floodLight: "Lighter: 0.2% annual chance",
   notCovered: {

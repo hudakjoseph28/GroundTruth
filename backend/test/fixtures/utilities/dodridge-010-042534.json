@@ -1,0 +1,292 @@
+{
+  "name": "dodridge-010-042534",
+  "parcel": {
+    "key": "ohio:39049:010-042534",
+    "sourceParcelId": "010-042534",
+    "county": "Franklin",
+    "countyFips": "39049",
+    "centroid": {
+      "latitude": 40.01657007997583,
+      "longitude": -83.0143792190444
+    },
+    "siteAddress": "84 W Dodridge St",
+    "mappedAcreage": 0.09,
+    "geometry": {
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -83.0142782,
+              40.0164132
+            ],
+            [
+              -83.014393,
+              40.0163945
+            ],
+            [
+              -83.0144793,
+              40.0167287
+            ],
+            [
+              -83.014367,
+              40.0167465
+            ],
+            [
+              -83.0143261,
+              40.016593
+            ],
+            [
+              -83.0142782,
+              40.0164132
+            ]
+          ]
+        ]
+      },
+      "authority": "Ohio OGRIP",
+      "sourceUrl": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Franklin%27+AND+LocalParcelID%3D%27010-042534%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea%2CShape__Area&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "retrievedAt": "2026-11-20T00:16:00.127Z"
+    }
+  },
+  "recordedAt": "2026-11-20T00:16:00.128Z",
+  "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0/query",
+      "body": "where=1%3D1&geometry=%7B%22rings%22%3A%5B%5B%5B-83.0142782%2C40.0164132%5D%2C%5B-83.014393%2C40.0163945%5D%2C%5B-83.0144793%2C40.0167287%5D%2C%5B-83.014367%2C40.0167465%5D%2C%5B-83.0143261%2C40.016593%5D%2C%5B-83.0142782%2C40.0164132%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=CWNS_ID%2CFACILITY_NAME%2CMethod&f=json",
+      "status": 200,
+      "responseBody": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "geometryType": "esriGeometryPolygon",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "CWNS_ID",
+            "type": "esriFieldTypeString",
+            "alias": "CWNS_ID",
+            "sqlType": "sqlTypeOther",
+            "length": 65536,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "FACILITY_NAME",
+            "type": "esriFieldTypeString",
+            "alias": "FACILITY_NAME",
+            "sqlType": "sqlTypeOther",
+            "length": 65536,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "Method",
+            "type": "esriFieldTypeString",
+            "alias": "Method",
+            "sqlType": "sqlTypeOther",
+            "length": 65536,
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "CWNS_ID": "39001792001",
+              "FACILITY_NAME": "Columbus Jackson Pike WWTP & Sewers",
+              "Method": "Sourced"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/1/query",
+      "body": "where=END_FACILITY+%3D+%27Y%27+AND+CWNS_ID+IN+%28%2739001792001%27%29&outFields=CWNS_ID%2CAuthority_Name&returnGeometry=false&f=json",
+      "status": 200,
+      "responseBody": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "geometryType": "esriGeometryPoint",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "CWNS_ID",
+            "type": "esriFieldTypeString",
+            "alias": "CWNS_ID",
+            "sqlType": "sqlTypeOther",
+            "length": 65536,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "Authority_Name",
+            "type": "esriFieldTypeString",
+            "alias": "Authority_Name",
+            "sqlType": "sqlTypeOther",
+            "length": 65536,
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "CWNS_ID": "39001792001",
+              "Authority_Name": "Columbus Division of Sewerage and Drainage"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0/query",
+      "body": "where=1%3D1&geometry=%7B%22rings%22%3A%5B%5B%5B-83.0142782%2C40.0164132%5D%2C%5B-83.014393%2C40.0163945%5D%2C%5B-83.0144793%2C40.0167287%5D%2C%5B-83.014367%2C40.0167465%5D%2C%5B-83.0143261%2C40.016593%5D%2C%5B-83.0142782%2C40.0164132%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=PWSID%2CPWS_Name%2CSymbology_Field&f=json",
+      "status": 200,
+      "responseBody": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "geometryType": "esriGeometryPolygon",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "PWSID",
+            "type": "esriFieldTypeString",
+            "alias": "PWSID",
+            "sqlType": "sqlTypeOther",
+            "length": 2147483647,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "PWS_Name",
+            "type": "esriFieldTypeString",
+            "alias": "PWS_Name",
+            "sqlType": "sqlTypeOther",
+            "length": 8000,
+            "domain": null,
+            "defaultValue": null
+          },
+          {
+            "name": "Symbology_Field",
+            "type": "esriFieldTypeString",
+            "alias": "Symbology_Field",
+            "sqlType": "sqlTypeOther",
+            "length": 8000,
+            "domain": null,
+            "defaultValue": null
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "PWSID": "OH2504412",
+              "PWS_Name": "COLUMBUS PUBLIC WATER SYSTEM",
+              "Symbology_Field": "System Sourced"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCSE_Service_Areas/FeatureServer/0/query",
+      "body": "where=1%3D1&geometry=%7B%22rings%22%3A%5B%5B%5B-83.0142782%2C40.0164132%5D%2C%5B-83.014393%2C40.0163945%5D%2C%5B-83.0144793%2C40.0167287%5D%2C%5B-83.014367%2C40.0167465%5D%2C%5B-83.0143261%2C40.016593%5D%2C%5B-83.0142782%2C40.0164132%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=AREA_NAME%2CSERVICE&f=json",
+      "status": 200,
+      "responseBody": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "features": []
+      }
+    }
+  ],
+  "outcome": {
+    "waterSystems": {
+      "status": "answered",
+      "retrievedAt": "2026-11-20T00:16:00.128Z",
+      "value": [
+        {
+          "pwsid": "OH2504412",
+          "name": "COLUMBUS PUBLIC WATER SYSTEM",
+          "modeled": false
+        }
+      ]
+    },
+    "sewersheds": {
+      "status": "answered",
+      "retrievedAt": "2026-11-20T00:16:00.128Z",
+      "value": [
+        {
+          "cwnsId": "39001792001",
+          "facility": "Columbus Jackson Pike WWTP & Sewers",
+          "modeled": false,
+          "authority": "Columbus Division of Sewerage and Drainage"
+        }
+      ]
+    },
+    "countyAreas": {
+      "status": "answered",
+      "retrievedAt": "2026-11-20T00:16:00.128Z",
+      "value": []
+    },
+    "mains": []
+  },
+  "check": {
+    "kind": "utilities",
+    "status": "needsReview",
+    "finding": "Inside the Columbus Public Water System service area on EPA's community water system map. Inside the Columbus Jackson Pike WWTP & Sewers sewershed on EPA's map. No public water or sewer main map is published for this area, so the distance to a main wasn't measured.",
+    "limitation": "These maps show where a utility serves or where its mains run. They don't guarantee capacity for this lot, a tap permit, or what connecting costs. Being inside a service area doesn't mean a main runs to this lot.",
+    "sources": [
+      {
+        "authority": "U.S. Environmental Protection Agency",
+        "title": "Community Water System Service Area Boundaries",
+        "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0",
+        "retrievedAt": "2026-11-20T00:16:00.128Z"
+      },
+      {
+        "authority": "U.S. Environmental Protection Agency",
+        "title": "Sewersheds of publicly owned treatment works (Clean Watersheds Needs Survey 2022)",
+        "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0",
+        "retrievedAt": "2026-11-20T00:16:00.128Z"
+      },
+      {
+        "authority": "Franklin County Sanitary Engineering",
+        "title": "Water and sewer service areas",
+        "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCSE_Service_Areas/FeatureServer/0",
+        "retrievedAt": "2026-11-20T00:16:00.128Z"
+      }
+    ],
+    "responsibleParty": {
+      "role": "Water and sewer utility",
+      "organization": "Columbus Public Water System and Columbus Division of Sewerage and Drainage"
+    },
+    "nextAction": "Ask the Columbus Public Water System and the Columbus Division of Sewerage and Drainage for a water and sewer availability letter and tap fees before you buy."
+  }
+}

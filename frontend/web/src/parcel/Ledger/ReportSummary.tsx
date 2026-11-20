@@ -65,6 +65,7 @@ export function ReportSummary({
       <p className="summary-line">
         <strong>{line.opening}</strong>
         {line.ask && <> {line.ask}</>}
+        {line.wastewater && <> {line.wastewater}</>}
       </p>
       {buildableShare !== undefined && buildableShare < 0.5 && (
         <p className="summary-buildable">{BUILDABLE.bottomLine(percent(buildableShare))}</p>

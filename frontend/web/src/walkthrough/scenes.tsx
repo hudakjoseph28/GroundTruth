@@ -138,6 +138,8 @@ export function LandScene() {
         onReady={noop}
         getLayers={EXAMPLE_DATA.getLayers}
         onBuildableArea={setBuildable}
+        elevationCard={false}
+        elevationOnOpen
       />
       {buildable && <BuildableAreaCard estimate={buildable} compact />}
     </div>

@@ -109,6 +109,8 @@ describe("buildLandAssets", () => {
         file: "height.png",
         width: HEIGHT_SIZE,
         height: HEIGHT_SIZE,
+        source: TERRARIUM.source,
+        attribution: TERRARIUM.attribution,
       },
     });
     // The bake of this parcel (public/parcels/230-000918/meta.json) is 286 m.

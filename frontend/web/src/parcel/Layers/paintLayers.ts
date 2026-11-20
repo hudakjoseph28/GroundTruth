@@ -13,6 +13,8 @@ import { regionUV } from "../ParcelScene/landMeta";
 export const LAYER_COLORS: Record<LayerToggleId, string> = {
   boundary: "#c4a15a",
   buildableArea: "#52d273",
+  elevation: "#a8963c",
+  slope: "#dc3030",
   flood: "#4d8dff",
   streamSetback: "#b57bff",
   wetlands: "#2fd3b5",

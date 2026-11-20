@@ -12,6 +12,7 @@ import {
 import { describe, expect, it } from "vitest";
 import { BUILDABLE } from "../../content/buildable";
 import { EXAMPLE_PARCEL } from "../../example/exampleFixture";
+import { slopePercentAt, STEEP_SLOPE_PERCENT } from "../Elevation/elevation";
 import {
   estimateBuildableArea,
   insideRings,
@@ -294,6 +295,29 @@ describe("estimateBuildableArea", () => {
     // The steep east half of the lot, give or take the slope window at the seam.
     expect(removed(estimate, "steepSlope")?.share).toBeGreaterThan(0.45);
     expect(removed(estimate, "steepSlope")?.share).toBeLessThan(0.55);
+  });
+
+  it("removes exactly the cells the Slope layer shades", () => {
+    // Rolling ground whose grade swings across 15%, so both sides are tested.
+    const assets = terrain((u) => 0.5 + 0.08 * Math.sin(u * 40));
+    const estimate = run(layersWith(), assets);
+    const size = estimate.gridSize;
+    const ring = box(0.25, 0.25, 0.75, 0.75);
+    let steep = 0;
+    let gentle = 0;
+    for (let row = 0; row < size; row += 1) {
+      for (let col = 0; col < size; col += 1) {
+        const u = (col + 0.5) / size;
+        const v = (row + 0.5) / size;
+        if (!insideRings(lngLat(u, v) as [number, number], [ring])) continue;
+        const shaded = slopePercentAt(assets, { u, v }) >= STEEP_SLOPE_PERCENT;
+        if (shaded) steep += 1;
+        else gentle += 1;
+        expect(estimate.mask[row * size + col]).toBe(shaded ? 0 : 1);
+      }
+    }
+    expect(steep).toBeGreaterThan(0);
+    expect(gentle).toBeGreaterThan(0);
   });
 
   it("draws Rural side and rear yards from the lot line nearest the road", () => {

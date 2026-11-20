@@ -12,16 +12,48 @@ import {
   percent,
   type LayerToggleId,
 } from "../../content/layers";
+import { ELEVATION } from "../../content/parcel";
 import { useIsExample } from "../../example/ExampleContext";
 import { acres } from "../BuildableArea/BuildableAreaCard";
 import type { BuildableAreaEstimate } from "../BuildableArea/estimate";
 import { LAYER_COLORS } from "./paintLayers";
+import {
+  ELEVATION_GRADIENT,
+  type ElevationAnalysis,
+} from "../Elevation/elevation";
+
+/** Toggles drawn in the browser (boundary, estimate, height grid), not API layers: no source status, no retry. */
+const LOCAL = new Set<LayerToggleId>([
+  "boundary",
+  "buildableArea",
+  "elevation",
+  "slope",
+]);
 
 export const LAYER_TOGGLES: readonly LayerToggleId[] = [
   "boundary",
   "buildableArea",
+  "elevation",
+  "slope",
   ...MAP_LAYER_IDS,
 ];
+
+/**
+ * The toggles on when the land first shows. A parcel opens on the aerial
+ * photo: elevation coloring is a toggle, on at the start only where the page
+ * asks for it (the walkthrough). Buildable area is a toggle too. Slope shading
+ * always starts off. The example parcel (and so the walkthrough) starts with
+ * every map layer and the Buildable area on, so each finding is visible.
+ */
+export function initialLayers(
+  example: boolean,
+  elevationOnOpen: boolean,
+): Set<LayerToggleId> {
+  const base: LayerToggleId[] = example
+    ? LAYER_TOGGLES.filter((id) => id !== "slope" && id !== "elevation")
+    : ["boundary"];
+  return new Set(elevationOnOpen ? [...base, "elevation"] : base);
+}
 
 const date = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", {
@@ -43,6 +75,7 @@ export function LayerPanel({
   onToggleAll,
   onRetry,
   buildable,
+  elevation,
 }: {
   /** undefined while loading, null when they could not be loaded. */
   layers: ParcelLayers | null | undefined;
@@ -55,13 +88,13 @@ export function LayerPanel({
   onRetry: () => void;
   /** undefined while it is worked out, null when it cannot be. */
   buildable?: BuildableAreaEstimate | null;
+  /** The lot's elevation, once the height grid has loaded. */
+  elevation?: { analysis: ElevationAnalysis; sourceUrl: string } | null;
 }) {
   const example = useIsExample();
   const shown = LAYER_TOGGLES.filter((id) => enabled.has(id));
   const layerOf = (id: LayerToggleId): MapLayer | undefined =>
-    id === "boundary" || id === "buildableArea"
-      ? undefined
-      : layers?.layers.find((layer) => layer.id === id);
+    LOCAL.has(id) ? undefined : layers?.layers.find((layer) => layer.id === id);
 
   return (
     <div className="layer-panel">
@@ -86,7 +119,7 @@ export function LayerPanel({
             onClick={() => onToggle(id)}
             style={{ "--layer": LAYER_COLORS[id] } as CSSProperties}
           >
-            <span className="layer-swatch" aria-hidden="true" />
+            <span className="layer-swatch" data-kind={id} aria-hidden="true" />
             {LAYERS.names[id]}
           </button>
         ))}
@@ -113,13 +146,17 @@ export function LayerPanel({
                           acres(buildable.buildableAcres),
                           percent(buildable.buildableShare),
                         )} ${BUILDABLE.disclaimer}`
-                  : layers === undefined
-                    ? LAYERS.loading
-                    : layers === null
-                      ? LAYERS.failed
-                      : layer
-                        ? layerStatus(layer)
-                        : LAYERS.unavailable;
+                  : id === "elevation"
+                    ? LAYERS.elevation(elevation?.analysis.contourFeet ?? 2)
+                    : id === "slope"
+                      ? LAYERS.slope(elevation?.analysis.steepShare ?? null)
+                      : layers === undefined
+                        ? LAYERS.loading
+                        : layers === null
+                          ? LAYERS.failed
+                          : layer
+                            ? layerStatus(layer)
+                            : LAYERS.unavailable;
             return (
               <li
                 key={id}
@@ -136,12 +173,47 @@ export function LayerPanel({
                   <p>
                     <strong>{LAYERS.names[id]}</strong> {status}
                   </p>
+                  {id === "elevation" && elevation && (
+                    <>
+                      <div
+                        className="elevation-legend"
+                        role="img"
+                        aria-label={`${LAYERS.elevationScale}: ${Math.round(elevation.analysis.minFeet)} to ${Math.round(elevation.analysis.maxFeet)}`}
+                      >
+                        <span>
+                          {Math.round(
+                            elevation.analysis.minFeet,
+                          ).toLocaleString("en-US")}{" "}
+                          ft
+                        </span>
+                        <span
+                          className="elevation-ramp"
+                          style={{ background: ELEVATION_GRADIENT("90deg") }}
+                        />
+                        <span>
+                          {Math.round(
+                            elevation.analysis.maxFeet,
+                          ).toLocaleString("en-US")}{" "}
+                          ft
+                        </span>
+                      </div>
+                      <p className="layer-note">
+                        <a
+                          href={elevation.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {ELEVATION.source}
+                        </a>
+                        {` · ${ELEVATION.notSurvey}`}
+                      </p>
+                    </>
+                  )}
                   {id === "flood" &&
                     layer?.shapes.some((shape) => shape.tone === "light") && (
                       <p className="layer-note">{LAYERS.floodLight}</p>
                     )}
-                  {id !== "boundary" &&
-                    id !== "buildableArea" &&
+                  {!LOCAL.has(id) &&
                     (layers === null || layer?.status === "unavailable") && (
                       <button
                         type="button"

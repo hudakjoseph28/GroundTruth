@@ -13,6 +13,11 @@ import {
   type ParcelLayers,
 } from "@groundtruth/shared";
 import { BUILDABLE } from "../../content/buildable";
+import {
+  slopePercentAt,
+  STEEP_SLOPE_PERCENT,
+  type HeightGrid,
+} from "../Elevation/elevation";
 import type { LandAssets } from "../ParcelScene/landAssets";
 
 // The Buildable area estimate: the lot, minus every constraint the public maps
@@ -20,7 +25,6 @@ import type { LandAssets } from "../ParcelScene/landAssets";
 // the 3D block and the flat picture can shade exactly the cells it kept.
 
 export const BUILDABLE_GRID_SIZE = 192;
-export const STEEP_SLOPE_PERCENT = 15;
 
 export type BuildableConstraintId =
   | "flood"
@@ -107,7 +111,7 @@ export function estimateBuildableArea({
 }: {
   parcel: Parcel;
   layers: ParcelLayers;
-  assets: Pick<LandAssets, "meta" | "heights" | "heightSize">;
+  assets: HeightGrid;
   wetlandsMask: BinaryMask | null;
   gridSize?: number;
 }): BuildableAreaEstimate {
@@ -305,21 +309,13 @@ function wetlandsConstraint(
   };
 }
 
-/** Slope from the land block's own height map, over a few pixels so one height step is not a cliff. */
-function steepSlopeConstraint(
-  assets: Pick<LandAssets, "meta" | "heights" | "heightSize">,
-): Constraint {
-  const { meta, heights, heightSize: size } = assets;
-  const span = meta.elevation.maxMeters - meta.elevation.minMeters;
-  const reach = 3;
-  const metresX = (2 * reach * meta.groundMeters.width) / size;
-  const metresY = (2 * reach * meta.groundMeters.depth) / size;
-  const at = (col: number, row: number) =>
-    heights[
-      Math.min(size - 1, Math.max(0, row)) * size +
-        Math.min(size - 1, Math.max(0, col))
-    ]! * span;
-  const limit = STEEP_SLOPE_PERCENT / 100;
+/**
+ * Slope from the land block's own height map, with the same reading and
+ * threshold the Slope layer shades (`slopePercentAt`, at or over 15%), so the
+ * shading and this deduction always agree at any point.
+ */
+function steepSlopeConstraint(assets: HeightGrid): Constraint {
+  const { meta } = assets;
   return {
     id: "steepSlope",
     label: BUILDABLE.constraints.steepSlope.label,
@@ -328,13 +324,8 @@ function steepSlopeConstraint(
       title: meta.elevation.attribution,
       url: meta.elevation.sourceUrl,
     },
-    contains: ({ u, v }) => {
-      const col = Math.floor(u * size);
-      const row = Math.floor(v * size);
-      const dx = (at(col + reach, row) - at(col - reach, row)) / metresX;
-      const dy = (at(col, row + reach) - at(col, row - reach)) / metresY;
-      return Math.hypot(dx, dy) > limit;
-    },
+    contains: ({ u, v }) =>
+      slopePercentAt(assets, { u, v }) >= STEEP_SLOPE_PERCENT,
   };
 }
 
