@@ -1,5 +1,6 @@
 import { createDevnetChain } from "./actions/devnetChain.js";
 import { createApp } from "./app.js";
+import { createClaudeDocumentReader } from "./documents/claudeReader.js";
 import { readServerEnv } from "./env.js";
 import { createOgripClient } from "./parcels/ogrip.js";
 import { createTwilioSender } from "./sms/sender.js";
@@ -20,6 +21,12 @@ const app = createApp(env.commit, {
     wetlandsTimeoutMs: env.wetlandsTimeoutMs,
     streamBuffersTimeoutMs: env.streamBuffersTimeoutMs,
     utilitiesTimeoutMs: env.utilitiesTimeoutMs,
+  },
+  // Advisory document parcel checks; off (uploads stored unread) without a key.
+  documents: {
+    reader: env.anthropicApiKey
+      ? createClaudeDocumentReader({ apiKey: env.anthropicApiKey })
+      : undefined,
   },
   sms: { sender: env.twilio ? createTwilioSender(env.twilio) : undefined },
   // One devnet reader for both: the reviewer Blink and Solana Pay funding.

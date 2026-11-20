@@ -57,7 +57,7 @@ export const DOCUMENTS = {
     hashing: "Reading the file…",
     signing: "Sign the upload in your wallet…",
     sending: "Uploading…",
-    done: (filename: string) => `Uploaded “${filename}”.`,
+    done: (filename: string) => `Uploaded “${filename}”. Checking its parcel ID…`,
     tooBig: "That file is larger than 10 MB.",
     wrongType: "Choose a PDF, PNG, or JPG. The file's contents must match its extension.",
     noFile: "Choose a file first.",
@@ -79,6 +79,46 @@ export const DOCUMENTS = {
   errors: {
     rejected: "You declined the signature in your wallet. Nothing was sent.",
     unknown: "That didn't work. Try again in a moment.",
+  },
+} as const;
+
+/**
+ * The advisory parcel check on each document. The public sees the status;
+ * a signed participant also sees what the document says.
+ */
+export const PARCEL_CHECK = {
+  checking: "Checking the parcel ID…",
+  matches: "Matches this parcel",
+  different: "Different parcel ID found",
+  differentId: (found: string) => `Different parcel ID found: ${found}`,
+  dealIs: (parcelId: string) => `This deal is for parcel ${parcelId}.`,
+  signToSee: "Someone on the deal can sign to see which one.",
+  noParcelId: "No parcel ID found in this document",
+  unavailable: "Parcel ID not checked",
+  advisory: "Read by AI. Advisory only: it doesn't approve, hold, or change the deal.",
+  readBy: (model: string) => `Read by AI (${model}). Advisory only: it doesn't approve, hold, or change the deal.`,
+  found: {
+    title: "What the document says",
+    type: "Document",
+    parcelId: "Parcel ID",
+    address: "Address",
+    finding: "Key finding",
+    none: "Not found",
+  },
+  findings: {
+    show: "Show what each document says",
+    refresh: "Refresh what the documents say",
+    signing: "Sign in your wallet…",
+    loading: "Loading…",
+    note: "Signing shows you the parcel ID, address, and key finding the API read from each file. Only people on the deal can see them.",
+  },
+  review: {
+    warning: (count: number) =>
+      count === 1
+        ? "A document on this deal names a different parcel ID. Read it before you approve."
+        : `${count} documents on this deal name a different parcel ID. Read them before you approve.`,
+    chosen: "The document you chose names a different parcel ID than this deal.",
+    advisory: "This check is advisory. It doesn't stop you from approving or holding.",
   },
 } as const;
 

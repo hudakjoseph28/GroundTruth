@@ -265,3 +265,38 @@
 .review-relyon small {
   color: color-mix(in srgb, var(--text) 65%, transparent);
 }
+
+/* A document names a different parcel ID: advisory, shown before approving. */
+.review-parcel-warning {
+  display: grid;
+  gap: 0.4rem;
+  border: 1px solid rgba(214, 69, 69, 0.45);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius-m);
+  background: rgba(214, 69, 69, 0.08);
+  padding: 0.65rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.review-parcel-warning p,
+.review-parcel-warning ul {
+  margin: 0;
+}
+
+.review-parcel-warning strong {
+  color: var(--red-text);
+}
+
+.review-parcel-warning ul {
+  padding-left: 1.1rem;
+  color: var(--text);
+}
+
+.review-parcel-advisory {
+  color: var(--text-2);
+  font-size: 0.8rem;
+}
+
+.review-relyon .review-relyon-warning {
+  color: var(--red-text);
+}

@@ -102,6 +102,7 @@ model DealDocumentRecord {
   uploaderWallet String
   uploadedAt     DateTime            @db.Timestamptz(3)
   file           DealDocumentFileRecord?
+  check          DealDocumentCheckRecord?
 
   /// One copy of the same bytes per deal; an approval memo names the hash.
   @@unique([dealId, sha256])
@@ -114,6 +115,26 @@ model DealDocumentFileRecord {
   documentId String             @id
   document   DealDocumentRecord @relation(fields: [documentId], references: [id], onDelete: Cascade)
   content    Bytes
+}
+
+/// What the API read from one document (src/documents/parcelCheck.ts).
+/// Advisory: nothing here changes deal state. Private except `status` and
+/// `parcelMatch`; the read text goes only to a signed participant.
+model DealDocumentCheckRecord {
+  documentId   String             @id
+  document     DealDocumentRecord @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  /// pending | done | failed | off
+  status       String
+  /// matches | different | noParcelId; set when status is done
+  parcelMatch  String?
+  parcelId     String?
+  address      String?
+  documentType String?
+  keyFinding   String?
+  model        String?
+  /// A short reason code when status is failed; never document text.
+  failure      String?
+  checkedAt    DateTime?          @db.Timestamptz(3)
 }
 
 /// A used document-request nonce. A signed request is accepted once.
