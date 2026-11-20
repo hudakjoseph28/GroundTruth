@@ -19,6 +19,16 @@ describe("readServerEnv", () => {
     });
   });
 
+  it("reads ANTHROPIC_API_KEY for document checks, trimmed, blank as unset", () => {
+    expect(
+      readServerEnv({ DATABASE_URL, ANTHROPIC_API_KEY: " sk-ant-test " })
+        .anthropicApiKey,
+    ).toBe("sk-ant-test");
+    expect(
+      readServerEnv({ DATABASE_URL, ANTHROPIC_API_KEY: "  " }).anthropicApiKey,
+    ).toBeUndefined();
+  });
+
   it("reads SOLANA_RPC_URL (Blink and Solana Pay) and rejects a non-URL", () => {
     expect(
       readServerEnv({

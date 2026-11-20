@@ -5,6 +5,9 @@ export type {
   CheckKind,
   CheckStatus,
   DocumentCitation,
+  DocumentFindings,
+  DocumentParcelCheck,
+  DocumentParcelCheckStatus,
   Coverage,
   Deal,
   DealDocument,
@@ -38,6 +41,7 @@ export {
   DEAL_DOCUMENT_MAX_BYTES,
   DEAL_DOCUMENT_TYPES,
   DEAL_STATES,
+  DOCUMENT_PARCEL_CHECK_STATUSES,
 } from "./contract.js";
 
 export {

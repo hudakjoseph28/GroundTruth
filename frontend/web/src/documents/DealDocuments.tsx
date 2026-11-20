@@ -1,23 +1,26 @@
 import { useState, type ReactNode } from "react";
-import type { DealDocument, TimelineEvent } from "@groundtruth/shared";
+import type { DealDocument, DocumentFindings, TimelineEvent } from "@groundtruth/shared";
 import { DOCUMENTS, DOCUMENT_TYPE_LABELS, UPLOADER_LABELS } from "../content/documents";
 import { formatMoment } from "../data/dealView";
 import { CopyButton } from "../parcel/Ledger/CopyButton";
 import { matchHash, sha256Hex, shortHash, type HashCheck } from "./fileCheck";
+import { ParcelCheckNote } from "./ParcelCheckNote";
 import type { DealDocumentsState } from "./useDealDocuments";
 import "./documents.css";
 
 /**
  * A deal's documents as anyone may see them: type, filename, who uploaded
- * it, when, and its SHA-256. Never the file. Wallet-free, so the public deal
- * page loads no wallet code; a participant's tools come in through the
- * `participant` and `fileAction` slots.
+ * it, when, its SHA-256, and whether the parcel ID it prints is this deal's
+ * (advisory). Never the file or the text read from it. Wallet-free, so the
+ * public deal page loads no wallet code; a participant's tools come in
+ * through the `participant`, `fileAction`, and `findings` slots.
  */
 export function DealDocuments({
   state,
   timeline,
   participant,
   fileAction,
+  findings,
   compact = false,
   note,
   checkFile = true,
@@ -28,6 +31,8 @@ export function DealDocuments({
   participant?: ReactNode;
   /** An "Open file" control for one document, for a connected participant. */
   fileAction?: (document: DealDocument) => ReactNode;
+  /** What each document says, by document ID: a signed participant's view. */
+  findings?: ReadonlyMap<string, DocumentFindings>;
   /** The reviewer portal's card: no intro, no file check. */
   compact?: boolean;
   /** Replaces the staged-demo banner (the example deal says its documents are made up). */
@@ -69,6 +74,7 @@ export function DealDocuments({
               doc={doc}
               cited={timeline.filter((event) => event.citedDocument?.document?.id === doc.id)}
               action={fileAction?.(doc)}
+              findings={findings?.get(doc.id)}
             />
           ))}
         </ul>
@@ -84,10 +90,12 @@ function DocumentRow({
   doc,
   cited,
   action,
+  findings,
 }: {
   doc: DealDocument;
   cited: TimelineEvent[];
   action?: ReactNode;
+  findings?: DocumentFindings;
 }) {
   return (
     <li className="docs-row" id={`document-${doc.id}`} data-cited={cited.length > 0}>
@@ -106,6 +114,7 @@ function DocumentRow({
           <CopyButton value={doc.sha256} label={DOCUMENTS.copyHash} icon />
         </span>
       </p>
+      <ParcelCheckNote doc={doc} findings={findings} />
       {cited.map((event) => (
         <p key={event.id} className="docs-cited">
           {DOCUMENTS.cited(actorName(event.actorRole))}

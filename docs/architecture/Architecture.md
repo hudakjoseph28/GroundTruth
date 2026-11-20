@@ -136,6 +136,7 @@ flowchart TB
 - Return webhook success only after the event is durably queued or written. Reprocessing the same delivery must be harmless.
 - A provider timeout becomes `unknown` with a next action. A chain/RPC timeout becomes `pending confirmation`, never `released` or `held`.
 - The model may rewrite supplied evidence into plain English. It may not browse independently, invent a source, assign a legal status, or authorize money movement.
+- A document parcel check (D13) is advisory: the API reads an uploaded staged document with Claude and says whether its parcel ID is the deal's. It never blocks an upload or an approval and never changes deal state. The public sees only the match status; the text read goes to a deal participant who signs. A read failure is `unavailable`, never a match or mismatch.
 - Test funds, staged roles, illustrative globe traffic, and incomplete coverage are labeled in the interface and video.
 
 ## Architecture exit check

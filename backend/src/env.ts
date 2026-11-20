@@ -35,6 +35,8 @@ export interface ServerEnv {
   twilio: TwilioConfig | undefined;
   /** Devnet RPC for the reviewer Blink and Solana Pay funding (one setting, one connection); both refuse any other cluster by genesis hash. */
   solanaRpcUrl: string;
+  /** Claude API key for reading uploaded deal documents. Unset: uploads are stored unread. */
+  anthropicApiKey: string | undefined;
 }
 
 export function readServerEnv(
@@ -80,6 +82,7 @@ export function readServerEnv(
     elevenLabsAgentId: source.ELEVENLABS_AGENT_ID?.trim() || undefined,
     twilio: readTwilio(source),
     solanaRpcUrl: readRpcUrl(source.SOLANA_RPC_URL),
+    anthropicApiKey: source.ANTHROPIC_API_KEY?.trim() || undefined,
   };
 }
 

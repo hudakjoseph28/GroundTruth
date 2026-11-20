@@ -14,6 +14,8 @@
     "record:ogrip": "tsx scripts/record-ogrip-fixtures.ts",
     "time:search": "tsx scripts/time-address-search.ts",
     "record:report": "tsx scripts/record-report-fixtures.ts",
+    "make:sample-documents": "tsx scripts/make-sample-documents.ts",
+    "check:documents": "node --env-file-if-exists=.env --import tsx scripts/live-document-check.ts",
     "record:ssurgo": "tsx scripts/record-ssurgo-fixtures.ts",
     "record:layers": "tsx scripts/record-layer-fixtures.ts",
     "record:devnet": "tsx scripts/record-devnet-transactions.ts",
@@ -35,6 +37,7 @@
   },
   "dependencies": {
     "@anchor-lang/core": "1.2.2",
+    "@anthropic-ai/sdk": "1.10.0",
     "@groundtruth/shared": "workspace:*",
     "@prisma/client": "6.19.3",
     "@turf/area": "7.4.0",

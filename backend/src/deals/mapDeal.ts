@@ -4,6 +4,7 @@ import {
   DEAL_STATES,
   type Deal,
   type DealDocument,
+  type DocumentParcelCheck,
   type DealParticipantRole,
   type DocumentCitation,
   type DealState,
@@ -286,7 +287,10 @@ export function toActivityEvent(row: StoredActivityRow): ActivityEvent {
   };
 }
 
-export function toDealDocument(row: StoredDealDocument): DealDocument {
+export function toDealDocument(
+  row: StoredDealDocument,
+  parcelCheck?: DocumentParcelCheck,
+): DealDocument {
   return {
     id: row.id,
     dealId: row.dealId,
@@ -305,6 +309,7 @@ export function toDealDocument(row: StoredDealDocument): DealDocument {
       "uploader role",
     ),
     uploadedAt: row.uploadedAt.toISOString(),
+    ...(parcelCheck ? { parcelCheck } : {}),
   };
 }
 
