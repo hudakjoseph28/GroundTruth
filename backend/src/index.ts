@@ -19,6 +19,7 @@ const app = createApp(env.commit, {
     accessTimeoutMs: env.accessTimeoutMs,
     wetlandsTimeoutMs: env.wetlandsTimeoutMs,
     streamBuffersTimeoutMs: env.streamBuffersTimeoutMs,
+    utilitiesTimeoutMs: env.utilitiesTimeoutMs,
   },
   sms: { sender: env.twilio ? createTwilioSender(env.twilio) : undefined },
   // One devnet reader for both: the reviewer Blink and Solana Pay funding.

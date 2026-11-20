@@ -31,6 +31,7 @@ import {
   FRANKLIN_ROW_LAYER,
 } from "../src/reports/franklinAccess.js";
 import { createSsurgoSoilsClient } from "../src/reports/ssurgoSoils.js";
+import { createUtilitiesClient } from "../src/reports/utilities.js";
 import { prismaReportStore, type ReportStore } from "../src/reports/store.js";
 import { LIVE_REPORT_TTL_MS } from "../src/routes/report.js";
 import {
@@ -130,6 +131,9 @@ interface AppSetup {
   /** Franklin County stream-buffer layer; defaults to the recording. */
   streamBuffersFetch?: typeof fetch;
   streamBuffersTimeoutMs?: number;
+  /** Water and sewer maps; absent keeps legacy recordings on the template. */
+  utilitiesFetch?: typeof fetch;
+  utilitiesTimeoutMs?: number;
 }
 
 function appWith(setup: AppSetup) {
@@ -160,6 +164,10 @@ function appWith(setup: AppSetup) {
         fetch: setup.streamBuffersFetch ?? setup.fetch,
         now,
       }),
+      utilities: setup.utilitiesFetch
+        ? createUtilitiesClient({ fetch: setup.utilitiesFetch, now })
+        : null,
+      utilitiesTimeoutMs: setup.utilitiesTimeoutMs ?? 1_000,
       store: setup.store ?? memoryStore(),
       floodTimeoutMs: setup.floodTimeoutMs ?? 1_000,
       zoningTimeoutMs: setup.zoningTimeoutMs ?? 1_000,
@@ -670,6 +678,134 @@ describe("a slow USDA soils check never breaks the report", () => {
     );
     expect(hangingSoils).toHaveBeenCalledTimes(1);
     expect(store.write).not.toHaveBeenCalled();
+  });
+});
+
+/** A water and sewer recording (test/fixtures/utilities), replayed by request. */
+function utilitiesReplay(name: string) {
+  const recording = JSON.parse(
+    readFileSync(
+      new URL(`./fixtures/utilities/${name}.json`, import.meta.url),
+      "utf8",
+    ),
+  ) as {
+    check: Check;
+    exchanges: Array<{
+      method: string;
+      url: string;
+      body: string;
+      status: number;
+      responseBody: unknown;
+    }>;
+  };
+  const byRequest = new Map(
+    recording.exchanges.map((e) => [requestId(e.method, e.url, e.body), e]),
+  );
+  const fetchImpl = vi.fn<typeof fetch>(async (input, init) => {
+    const recorded = byRequest.get(
+      requestId(
+        init?.method ?? "GET",
+        String(input),
+        typeof init?.body === "string" ? init.body : undefined,
+      ),
+    );
+    if (!recorded) throw new Error(`unrecorded request: ${String(input)}`);
+    return Response.json(recorded.responseBody, { status: recorded.status });
+  });
+  return { fetchImpl, check: recording.check };
+}
+
+describe("water and sewer, live from EPA, the county, and city main maps", () => {
+  it("84 W Dodridge St and the golden parcel get the recorded utilities check; every other check is unchanged", async () => {
+    for (const [scenarioName, recordingName] of [
+      ["franklin-outside", "dodridge-010-042534"],
+      ["franklin-golden", "golden-230-000918"],
+    ] as const) {
+      const baseline = load(scenarioName).apiResponse.body as ParcelReport;
+      const utilities = utilitiesReplay(recordingName);
+      const { app } = scenario(scenarioName, {
+        utilitiesFetch: utilities.fetchImpl,
+      });
+
+      const res = await request(app).get(
+        reportPath(REPORT_SCENARIOS[scenarioName]),
+      );
+
+      expect(res.status).toBe(200);
+      const report = res.body as ParcelReport;
+      const check = checkOf(report, "utilities");
+      // Sources carry the replay's clock, not the recorder's.
+      expect({ ...check, sources: [] }).toEqual({
+        ...utilities.check,
+        sources: [],
+      });
+      expect(check.sources.map((source) => source.url)).toEqual(
+        utilities.check.sources.map((source) => source.url),
+      );
+      expect(check.status).toBe("needsReview");
+      expect(report.checks.filter((c) => c.kind !== "utilities")).toEqual(
+        baseline.checks.filter((c) => c.kind !== "utilities"),
+      );
+      // Utilities ranks after flood; it never takes the lead from access.
+      expect(report.biggestOpenQuestion).toBe(baseline.biggestOpenQuestion);
+    }
+  });
+
+  it("has its own timeout, leaves every other check unchanged, and is not cached", async () => {
+    const baseline = load("franklin-outside").apiResponse.body as ParcelReport;
+    const hanging = vi.fn<typeof fetch>(
+      (_input, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }),
+    );
+    const { app, store } = scenario("franklin-outside", {
+      utilitiesFetch: hanging,
+      utilitiesTimeoutMs: 200,
+    });
+
+    const started = Date.now();
+    const res = await request(app).get(
+      reportPath(REPORT_SCENARIOS["franklin-outside"]),
+    );
+
+    expect(res.status).toBe(200);
+    expect(Date.now() - started).toBeLessThan(2_000);
+    const report = res.body as ParcelReport;
+    expect(checkOf(report, "utilities")).toMatchObject({
+      status: "unknown",
+      finding:
+        "EPA's water system and sewershed maps and Franklin County Sanitary Engineering's service area map didn't answer within 0.2 seconds, so water and sewer service weren't checked.",
+      sources: [],
+      responsibleParty: { organization: "Franklin County Sanitary Engineering" },
+    });
+    expect(report.checks.filter((c) => c.kind !== "utilities")).toEqual(
+      baseline.checks.filter((c) => c.kind !== "utilities"),
+    );
+    expect(store.write).not.toHaveBeenCalled();
+  });
+
+  it("leaves the seeded golden and Licking reports exactly as verified: utilities stays the template, no map is asked", async () => {
+    for (const seeded of [goldenReport, secondCountyReport]) {
+      const utilitiesFetch = vi.fn<typeof fetch>();
+      const res = await request(
+        appWith({
+          fetch: vi.fn<typeof fetch>(),
+          utilitiesFetch,
+          at: new Date(),
+          store: memoryStore([seeded]),
+        }),
+      ).get(reportPath(seeded.parcelKey));
+
+      expect(res.body).toEqual(seeded);
+      expect(utilitiesFetch).not.toHaveBeenCalled();
+      expect(checkOf(res.body as ParcelReport, "utilities")).toMatchObject({
+        status: "unknown",
+        finding: "No utility record has been checked for this lot.",
+      });
+    }
   });
 });
 
