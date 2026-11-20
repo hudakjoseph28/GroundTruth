@@ -32,6 +32,7 @@ import {
   DEFAULT_FEMA_TIMEOUT_MS,
   DEFAULT_SOILS_TIMEOUT_MS,
   DEFAULT_STREAM_BUFFERS_TIMEOUT_MS,
+  DEFAULT_UTILITIES_TIMEOUT_MS,
   DEFAULT_WETLANDS_TIMEOUT_MS,
   DEFAULT_ZONING_TIMEOUT_MS,
 } from "../reports/pipeline.js";
@@ -40,6 +41,10 @@ import {
   type SsurgoSoilsClient,
 } from "../reports/ssurgoSoils.js";
 import { prismaReportStore, type ReportStore } from "../reports/store.js";
+import {
+  createUtilitiesClient,
+  type UtilitiesClient,
+} from "../reports/utilities.js";
 
 /** How long a live report is served from PostgreSQL before it is rebuilt. */
 export const LIVE_REPORT_TTL_MS = 24 * 60 * 60 * 1_000;
@@ -70,6 +75,10 @@ export interface ReportRouteOptions {
   streamBuffers?: FranklinStreamBuffersClient;
   /** Limit for the Franklin stream-setback part. Defaults to 6000 ms. */
   streamBuffersTimeoutMs?: number;
+  /** EPA, county, and city water and sewer maps. Null is the test-only opt-out. */
+  utilities?: UtilitiesClient | null;
+  /** Limit for the utilities check. Defaults to 8000 ms. */
+  utilitiesTimeoutMs?: number;
   now?: () => Date;
 }
 
@@ -103,6 +112,16 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
     options.streamBuffers ?? createFranklinStreamBuffersClient();
   const streamBuffersTimeoutMs =
     options.streamBuffersTimeoutMs ?? DEFAULT_STREAM_BUFFERS_TIMEOUT_MS;
+  const utilitiesTimeoutMs =
+    options.utilitiesTimeoutMs ?? DEFAULT_UTILITIES_TIMEOUT_MS;
+  // Each map stops 2 s before the whole check does (6 s of the default 8),
+  // so one slow map drops out and the others' answers are kept.
+  const utilities =
+    options.utilities === undefined
+      ? createUtilitiesClient({
+          sourceTimeoutMs: utilitiesSourceTimeoutMs(utilitiesTimeoutMs),
+        })
+      : options.utilities;
   const now = options.now ?? (() => new Date());
 
   return asyncRoute(async (req, res) => {
@@ -171,6 +190,8 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
       wetlandsTimeoutMs,
       streamBuffers,
       streamBuffersTimeoutMs,
+      utilities: utilities ?? undefined,
+      utilitiesTimeoutMs,
       now,
     });
     res.json(built.report);
@@ -182,6 +203,11 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
       });
     }
   });
+}
+
+/** Each water and sewer map's own limit, inside the whole check's. */
+export function utilitiesSourceTimeoutMs(checkTimeoutMs: number): number {
+  return Math.max(checkTimeoutMs / 2, checkTimeoutMs - 2_000);
 }
 
 /** An OGRIP failure is a retryable v1 error, never a guessed parcel. */

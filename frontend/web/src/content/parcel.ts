@@ -123,6 +123,15 @@ export const SUMMARY = {
     party ? `Check first: ${noun} (${party}).` : `Check first: ${noun}.`,
   noun: (kind: string) =>
     (CHECK_NOUNS as Partial<Record<string, string>>)[kind] ?? checkTitle(kind).toLowerCase(),
+  /**
+   * Said after the ask when the water and sewer check finds no public sewer
+   * mapped for the lot: the soils then decide whether a septic system can
+   * work. The rating is SSURGO's, word for word, never a feasibility call.
+   */
+  noPublicSewer: (rating: { worst: string; all: boolean } | null) =>
+    rating
+      ? `No public sewer is mapped here, so the septic soils matter: USDA rates ${rating.all ? "them" : "part of them"} “${rating.worst}” for a septic drain field.`
+      : "No public sewer is mapped here, so the septic soils matter, and they haven't been rated yet.",
   answered: (answered: number, total: number) => `${answered} of ${total} checks answered`,
   checks: "Every check, by status",
   tip: (title: string, status: string) => `${title} · ${status}`,

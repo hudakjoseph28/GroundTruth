@@ -28,7 +28,7 @@ GroundTruth helps a first-time buyer of vacant land in Ohio find a parcel, read 
 
 - **Find any Ohio parcel** by address, street, or parcel ID, using the state's published boundaries for all 88 counties.
 - **See the land in 3D** on real aerial imagery and terrain, with toggleable FEMA flood, wetlands, stream-setback, zoning, and road layers.
-- **Get a straight answer.** A "Bottom line" up top, then nine checks (flood, wetlands, septic soils, zoning, road access, and more), each with its source, its date, what it doesn't prove, and who can resolve it. Missing data says *No answer yet*. It never guesses.
+- **Get a straight answer.** A "Bottom line" up top, then nine checks (flood, wetlands, septic soils, water & sewer, zoning, road access, and more), each with its source, its date, what it doesn't prove, and who can resolve it. Missing data says *No answer yet*. It never guesses.
 - **Pay safely.** Test USDC sits in a Solana escrow. A title, survey, or septic reviewer's hold blocks the payout on-chain; once every required reviewer approves, the exact amount goes to the seller the deal was opened with.
 - **Follow the deal from your phone**, with no app or wallet. The deal page updates from QuickNode Streams, links every step to Solana Explorer, and has a **Verify on-chain** button that checks the page against the chain from your own browser.
 
@@ -178,7 +178,8 @@ Every deal is denominated in Circle's devnet test USDC, mint [`4zMMC9srt5Ri5X14G
 | [FEMA National Flood Hazard Layer](https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer) | Flood zone, Special Flood Hazard Area, floodway, FIRM panels | The 83 Ohio counties with an NFHL study. The other 5 return `unknown`. |
 | [USFWS National Wetlands Inventory](https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0) | Wetland types and their share of the lot | Wherever NWI has mapped. Unmapped areas are `unknown`, never "none". |
 | USDA NRCS SSURGO, through Soil Data Access (fallback: Esri Living Atlas [USA Soils Map Units](https://www.arcgis.com/home/item.html?id=d4c54647dd4c4405a9f4f0bc9fd351e9), USDA's gSSURGO) | Septic-tank absorption field rating per soil map unit | Every Ohio parcel. A screening, not a site evaluation. |
-| Franklin County layers: FCEDP zoning districts, road right-of-way and road sections, stream buffers, Auditor | Zoning, road access, riparian stream setbacks, legal acreage | Franklin County only |
+| US EPA [community water system service areas](https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0) and [wastewater sewersheds](https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0) | Which water system and sewer utility map the lot inside their area | Every Ohio parcel. Partly modeled by EPA; never an availability letter. |
+| Franklin County layers: FCEDP zoning districts, road right-of-way and road sections, stream buffers, Sanitary Engineering service areas, Auditor; Dublin, Grove City, and Canal Winchester water and sewer main maps | Zoning, road access, riparian stream setbacks, county water and sewer areas, distance to the nearest public main, legal acreage | Franklin County only (main distances in those three cities; Columbus publishes no main map) |
 | USDA NAIP imagery (USGS National Map), AWS Terrain Tiles | The 3D land view | Imagery and elevation only, never a finding |
 
 Every check stores its source URL and `retrievedAt`. How each one works and what was tested: [backend/README.md](backend/README.md#parcel-report-live-ogrip--fema--usda-ssurgo) · [Coverage](docs/phases/02-parcel-research/Coverage.md).
@@ -228,8 +229,8 @@ npx --yes pnpm@12.18.0 --filter @groundtruth/web dev         # web on :5173, pro
 
 | Suite | Command | Tests | In CI |
 | --- | --- | --- | --- |
-| Backend unit + route (recorded provider responses, no network) | `pnpm --filter @groundtruth/backend test` | 774 | ✅ |
-| Web | `pnpm --filter @groundtruth/web test` | 190 | ✅ |
+| Backend unit + route (recorded provider responses, no network) | `pnpm --filter @groundtruth/backend test` | 795 | ✅ |
+| Web | `pnpm --filter @groundtruth/web test` | 197 | ✅ |
 | Backend against Postgres 16 | `pnpm --filter @groundtruth/backend test:db` | 49 | ✅ |
 | Anchor escrow (local validator) | `pnpm escrow:test` | 78 | needs the Solana, Anchor, and Rust toolchains, so it runs locally |
 

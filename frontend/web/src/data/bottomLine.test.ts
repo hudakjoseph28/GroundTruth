@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   goldenReport,
+  NO_PUBLIC_SEWER,
   secondCountyReport,
   stagedDeal,
   stagedReleasedDeal,
@@ -12,7 +13,7 @@ import {
 } from "@groundtruth/shared";
 import { describe, expect, it } from "vitest";
 import { ReportSummary } from "../parcel/Ledger/ReportSummary";
-import { bottomLine } from "./bottomLine";
+import { bottomLine, septicRating } from "./bottomLine";
 import { buildLedger, type ParcelLedger } from "./ledger";
 
 const line = (report: ParcelReport | null, deal: Parameters<typeof buildLedger>[1] = null) =>
@@ -139,6 +140,92 @@ describe("the bottom line", () => {
     expect(line(report)?.ask).toBe(
       "Check first: flood risk (community floodplain administrator).",
     );
+  });
+
+  describe("when the water and sewer check finds no public sewer", () => {
+    /** The golden report with a utilities answer shaped like its live one (recorded 2026-11-19). */
+    const noSewer = (finding: string, report: ParcelReport = goldenReport): ParcelReport => ({
+      ...report,
+      checks: report.checks.map((check) =>
+        check.kind === "utilities"
+          ? {
+              ...check,
+              status: "needsReview",
+              finding,
+              sources: [
+                {
+                  authority: "U.S. Environmental Protection Agency",
+                  title: "Community Water System Service Area Boundaries",
+                  url: "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0",
+                  retrievedAt: "2026-11-20T00:15:58.950Z",
+                },
+              ],
+            }
+          : check,
+      ),
+    });
+    const golden = noSewer(
+      `Not inside any community water system or wastewater plant's sewershed on EPA's maps, or any Franklin County Sanitary Engineering service area. ${NO_PUBLIC_SEWER.waterAndSewer}`,
+    );
+    const withSeptic = (report: ParcelReport, septic: Partial<Check>): ParcelReport => ({
+      ...report,
+      checks: report.checks.map((check) => (check.kind === "septic" ? { ...check, ...septic } : check)),
+    });
+
+    it("adds what the septic soils say, from the septic card's own rating", () => {
+      const result = line(golden);
+      expect(result?.wastewater).toBe(
+        "No public sewer is mapped here, so the septic soils matter: USDA rates them “Very limited” for a septic drain field.",
+      );
+      expect(result?.text).toBe(`${result?.opening} ${result?.ask} ${result?.wastewater}`);
+      // The opening and the ask are unchanged.
+      expect(result?.opening).toBe(line(goldenReport)?.opening);
+      expect(result?.ask).toBe(line(goldenReport)?.ask);
+    });
+
+    it("says part of the soil when the map units disagree, naming the most limiting rating", () => {
+      const mixed = withSeptic(golden, {
+        finding:
+          "USDA NRCS SSURGO maps 60% of the parcel as map unit A (A loam), rated “Somewhat limited” for septic-tank absorption fields and 40% of the parcel as map unit B (B clay), rated “Very limited” for septic-tank absorption fields.",
+      });
+      expect(line(mixed)?.wastewater).toBe(
+        "No public sewer is mapped here, so the septic soils matter: USDA rates part of them “Very limited” for a septic drain field.",
+      );
+    });
+
+    it("says the soils are unrated when the septic check has no answer", () => {
+      const unrated = withSeptic(golden, { status: "unknown", finding: "No septic site review is on file for this lot." });
+      expect(line(unrated)?.wastewater).toBe(
+        "No public sewer is mapped here, so the septic soils matter, and they haven't been rated yet.",
+      );
+      expect(septicRating(unrated.checks.find((check) => check.kind === "septic"))).toBeNull();
+    });
+
+    it("works for the sewer-only sentence too", () => {
+      const result = line(noSewer(`Inside the X service area on EPA's community water system map. ${NO_PUBLIC_SEWER.sewer}`));
+      expect(result?.wastewater).toMatch(/^No public sewer is mapped here, so the septic soils matter/);
+    });
+
+    it("says nothing when sewer is mapped, unchecked, or only the seeded template is there", () => {
+      const inSewershed = noSewer(
+        "Inside the Columbus Public Water System service area on EPA's community water system map. Inside the Columbus Jackson Pike WWTP & Sewers sewershed on EPA's map.",
+      );
+      for (const report of [goldenReport, secondCountyReport, inSewershed]) {
+        expect(line(report)?.wastewater).toBe("");
+        expect(line(report)?.text).not.toMatch(/septic soils/);
+      }
+    });
+
+    it("never calls the lot safe or buildable", () => {
+      expect(line(golden)?.text).not.toMatch(FORBIDDEN);
+    });
+
+    it("renders after the ask in the summary", () => {
+      const html = renderToStaticMarkup(
+        createElement(ReportSummary, { ledger: buildLedger(golden, null), onOpen: () => {} }),
+      );
+      expect(html).toContain("USDA rates them “Very limited” for a septic drain field.");
+    });
   });
 
   it("is absent when there is no report", () => {

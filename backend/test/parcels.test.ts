@@ -439,7 +439,13 @@ describe("GET /api/coverage", () => {
       county: "Franklin",
       countyFips: "39049",
       boundarySearchable: true,
-      evidenceKinds: ["zoning", "flood", "environmental", "septic"],
+      evidenceKinds: [
+        "zoning",
+        "flood",
+        "environmental",
+        "utilities",
+        "septic",
+      ],
       lastVerifiedAt: recording.recordedAt,
     });
     expect(rows.find((row) => row.county === "Licking")?.countyFips).toBe(
@@ -894,7 +900,7 @@ describe("a city or township alone", () => {
 });
 
 describe("coverage claims only what was measured", () => {
-  it("every row claims a searchable boundary, statewide environmental and septic, flood only where NFHL has a study, zoning only in Franklin, and the count's time", async () => {
+  it("every row claims a searchable boundary, statewide environmental, utilities, and septic, flood only where NFHL has a study, zoning only in Franklin, and the count's time", async () => {
     const { app, recording } = scenarioApp("coverage");
 
     const rows = (await request(app).get("/api/coverage")).body as Coverage[];
@@ -919,6 +925,8 @@ describe("coverage claims only what was measured", () => {
         ...(OHIO_COUNTIES_WITHOUT_NFHL.has(row.countyFips) ? [] : ["flood"]),
         // NWI's status layer is digital across Ohio (nwi-ohio-status.json).
         "environmental",
+        // EPA's water system and sewershed maps are nationwide.
+        "utilities",
         "septic",
       ]);
       expect(row.lastVerifiedAt).toBe(recording.recordedAt);
