@@ -787,7 +787,7 @@ describe("water and sewer, live from EPA, the county, and city main maps", () =>
     expect(store.write).not.toHaveBeenCalled();
   });
 
-  it("leaves the seeded golden and Licking reports exactly as verified: utilities stays the template, no map is asked", async () => {
+  it("leaves the seeded golden and Licking reports exactly as verified, and asks no map", async () => {
     for (const seeded of [goldenReport, secondCountyReport]) {
       const utilitiesFetch = vi.fn<typeof fetch>();
       const res = await request(
@@ -801,11 +801,13 @@ describe("water and sewer, live from EPA, the county, and city main maps", () =>
 
       expect(res.body).toEqual(seeded);
       expect(utilitiesFetch).not.toHaveBeenCalled();
-      expect(checkOf(res.body as ParcelReport, "utilities")).toMatchObject({
-        status: "unknown",
-        finding: "No utility record has been checked for this lot.",
-      });
     }
+    // Licking keeps the template; the golden lot carries its seeded answer.
+    expect(checkOf(secondCountyReport, "utilities")).toMatchObject({
+      status: "unknown",
+      finding: "No utility record has been checked for this lot.",
+    });
+    expect(checkOf(goldenReport, "utilities").status).toBe("needsReview");
   });
 });
 
@@ -1424,7 +1426,7 @@ describe("Franklin County road access, live from the county right-of-way and roa
     expect(accessFetch).not.toHaveBeenCalled();
     expect(soilsFetch).not.toHaveBeenCalled();
     expect(checkOf(res.body as ParcelReport, "access").finding).toBe(
-      "No road right-of-way touches this parcel in Franklin County's right-of-way layer. The nearest mapped road, Seaman Rd, is about 107 m away in the county engineer's road layer. The Franklin County Auditor lists the parcel as \"SEAMAN RD REAR\".",
+      "No road right-of-way touches this parcel in Franklin County's right-of-way layer. The nearest mapped road, Seaman Rd, is about 106 m away in the county engineer's road layer. The Franklin County Auditor lists the parcel as \"SEAMAN RD REAR\".",
     );
   });
 
@@ -1709,7 +1711,7 @@ describe("environmental: NWI wetlands and Franklin stream setbacks, live", () =>
     );
   });
 
-  it("leaves the seeded golden and Licking reports exactly as verified: no environmental check, no NWI call", async () => {
+  it("leaves the seeded golden and Licking reports exactly as verified: no NWI call", async () => {
     for (const seeded of [goldenReport, secondCountyReport]) {
       const wetlandsFetch = vi.fn<typeof fetch>();
       const streamBuffersFetch = vi.fn<typeof fetch>();
@@ -1724,14 +1726,14 @@ describe("environmental: NWI wetlands and Franklin stream setbacks, live", () =>
       ).get(reportPath(seeded.parcelKey));
 
       expect(res.body).toEqual(seeded);
-      expect(
-        (res.body as ParcelReport).checks.some(
-          (check) => check.kind === "environmental",
-        ),
-      ).toBe(false);
       expect(wetlandsFetch).not.toHaveBeenCalled();
       expect(streamBuffersFetch).not.toHaveBeenCalled();
     }
+    // Licking has no environmental check; the golden lot's is seeded.
+    expect(
+      secondCountyReport.checks.some((check) => check.kind === "environmental"),
+    ).toBe(false);
+    expect(checkOf(goldenReport, "environmental").status).toBe("needsReview");
   });
 
   it("gives NWI its own limit: on a timeout wetlands are unknown, the setback is still read, and the report is not cached", async () => {

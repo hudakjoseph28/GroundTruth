@@ -59,6 +59,8 @@ export function fakeSponsorChain(
     genesis?: string;
     simulation?: Partial<Simulation>;
     fees?: number[];
+    /** The fee payer's balance in lamports (default 0.2 SOL), or a read failure. */
+    balance?: number | Error;
   } = {},
 ): SponsorChain & { simulated: web3.VersionedTransaction[] } {
   const simulated: web3.VersionedTransaction[] = [];
@@ -73,6 +75,11 @@ export function fakeSponsorChain(
       blockhash: BLOCKHASH,
       lastValidBlockHeight: 1_000,
     }),
+    balance: async () => {
+      const balance = options.balance ?? 200_000_000;
+      if (balance instanceof Error) throw balance;
+      return balance;
+    },
     recentPriorityFees: async () =>
       (options.fees ?? []).map((prioritizationFee) => ({ prioritizationFee })),
     simulate: async (tx) => {

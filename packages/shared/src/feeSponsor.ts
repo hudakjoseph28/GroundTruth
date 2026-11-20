@@ -33,9 +33,32 @@ export type SponsoredAction = (typeof SPONSORED_ACTIONS)[number];
 export const sponsoredTransactionPath = (dealId: string) =>
   `/api/deals/${encodeURIComponent(dealId)}/sponsored-transaction`;
 
+/**
+ * Why `GET /api/fee-sponsor` says off. Safe to show: it never carries the key.
+ *
+ * - `missing_key`: FEE_SPONSOR_SECRET_KEY is unset or blank on this server.
+ * - `bad_key_format`: it is set, but is not 64 bytes as a solana-keygen JSON
+ *   array or base58, or the bytes are not a valid ed25519 keypair.
+ * - `bad_max_per_deal`: FEE_SPONSOR_MAX_PER_DEAL is not an integer 1 to 100.
+ * - `participant_key`: the key is a staged deal's wallet, which is refused.
+ * - `low_balance`: the fee payer holds under 0.001 devnet SOL.
+ */
+export const FEE_SPONSOR_OFF_REASONS = [
+  "missing_key",
+  "bad_key_format",
+  "bad_max_per_deal",
+  "participant_key",
+  "low_balance",
+] as const;
+export type FeeSponsorOffReason = (typeof FEE_SPONSOR_OFF_REASONS)[number];
+
 /** `GET /api/fee-sponsor`: whether this API covers reviewer network fees now. */
 export type FeeSponsorStatus =
-  | { enabled: false }
+  | {
+      enabled: false;
+      /** Always sent by this API; absent from older builds. */
+      reason?: FeeSponsorOffReason;
+    }
   | {
       enabled: true;
       /** The GroundTruth fee-payer public key (devnet). */

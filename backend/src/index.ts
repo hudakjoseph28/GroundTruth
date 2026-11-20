@@ -2,6 +2,7 @@ import { createDevnetChain } from "./actions/devnetChain.js";
 import { createApp } from "./app.js";
 import { createClaudeDocumentReader } from "./documents/claudeReader.js";
 import { readServerEnv } from "./env.js";
+import { describeFeeSponsor } from "./sponsor/feePayer.js";
 import { createOgripClient } from "./parcels/ogrip.js";
 import { createElevenLabsParcelVoice } from "./questions/elevenlabs.js";
 import { createOpenAiCheckSelector } from "./questions/openai.js";
@@ -49,14 +50,14 @@ const app = createApp(env.commit, {
   // One devnet reader for both: the reviewer Blink and Solana Pay funding.
   actions: { chain: devnet },
   solanaPay: { chain: devnet },
-  feeSponsor: { config: env.feeSponsor, chain: devnet },
+  feeSponsor: {
+    config: env.feeSponsor.config,
+    offReason: env.feeSponsor.reason,
+    chain: devnet,
+  },
 });
 
-if (env.feeSponsor) {
-  console.log(
-    `Fee sponsorship on: devnet fee payer ${env.feeSponsor.keypair.publicKey.toBase58()}, ${env.feeSponsor.maxPerDeal} per deal`,
-  );
-}
+console.log(describeFeeSponsor(env.feeSponsor));
 
 app.listen(env.port, () => {
   console.log(`GroundTruth API listening on ${env.port}`);

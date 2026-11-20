@@ -83,15 +83,15 @@ describe("Ask this lot grounding", () => {
   });
 
   it("refuses an unknown check instead of calling the model", async () => {
-    const selector = choose("utilities");
+    const selector = choose("easements");
     const answer = await answerParcelQuestion(
       goldenReport,
-      "Does public sewer reach the lot?",
+      "Is there a recorded easement on the lot?",
       selector,
     );
     expect(answer.covered).toBe(false);
-    expect(answer.responsibleParty.role).toContain("Water and sewer");
-    expect(answer.citations[0]).toMatchObject({ checkKind: "utilities" });
+    expect(answer.responsibleParty.role).toBe("Title reviewer");
+    expect(answer.citations[0]).toMatchObject({ checkKind: "easements" });
     expect(answer.citations[0]).not.toHaveProperty("source");
     expect(selector.select).not.toHaveBeenCalled();
   });

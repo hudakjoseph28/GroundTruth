@@ -63,7 +63,7 @@
 
 - The drawer heading is `Road access` with status `Needs review`.
 - `What we know` says no mapped road right-of-way touches the parcel and identifies Seaman Road as the nearest mapped road.
-- The current card rounds that road distance to about 107 m. The independent QA calculation is 105.75 m, or about 106 m, so the spoken line below uses `just over 100 metres`.
+- The card says about 106 m, matching the independent QA calculation of 105.75 m. The spoken line below uses `just over 100 metres`.
 - `What it does not establish` explains that GIS cannot show recorded easements, private lanes, or other legal access.
 - `Sources` names the county right-of-way layer, the county engineer road layer, and the Franklin County Zoning Resolution.
 - `Next action` sends the legal-access question to title review, followed by county zoning review for frontage or a conditional private-lane path.
