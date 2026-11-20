@@ -15,8 +15,10 @@ import {
 } from "@groundtruth/shared";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { HOLD_REASONS, ROLE_LABELS, STATE_LABELS } from "../content/deal";
-import { APPROVE_WITH_DOCUMENT, DOCUMENT_TYPE_LABELS } from "../content/documents";
+import { APPROVE_WITH_DOCUMENT, DOCUMENT_TYPE_LABELS, PARCEL_CHECK } from "../content/documents";
 import { DealDocuments } from "../documents/DealDocuments";
+import { FindingsButton, useDocumentFindings } from "../documents/DocumentFindings";
+import { mismatchedDocuments } from "../documents/ParcelCheckNote";
 import { OpenFileButton, ParticipantPanel } from "../documents/ParticipantTools";
 import { useDealDocuments } from "../documents/useDealDocuments";
 import { REVIEW } from "../content/review";
@@ -181,6 +183,8 @@ function DealCard({
   useEffect(() => () => abort.current?.abort(), []);
   const documents = useDealDocuments(deal.id);
   const docs = documents.state.status === "ready" ? documents.state.documents : [];
+  const findings = useDocumentFindings(deal);
+  const mismatched = mismatchedDocuments(docs, findings.byId);
   /** Per role: the SHA-256 of the document an approval relies on, or "". */
   const [relyOn, setRelyOn] = useState<Partial<Record<ReviewerRole, string>>>({});
 
@@ -288,6 +292,27 @@ function DealCard({
           <small>{REVIEW.fee.sponsoredNote}</small>
         </p>
       )}
+      {mismatched.length > 0 && (
+        <div className="review-parcel-warning" role="alert">
+          <p>
+            <strong>{PARCEL_CHECK.review.warning(mismatched.length)}</strong>
+          </p>
+          <ul>
+            {mismatched.map((doc) => {
+              const found = findings.byId?.get(doc.id)?.found?.parcelId;
+              return (
+                <li key={doc.id}>
+                  {DOCUMENT_TYPE_LABELS[doc.type]} · {doc.filename}
+                  {found ? ` · ${PARCEL_CHECK.differentId(found)}` : ""}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="review-parcel-advisory">{PARCEL_CHECK.review.advisory}</p>
+          <FindingsButton findings={findings} />
+        </div>
+      )}
+
       <div className="review-actions">
         {myRoles.map((role) => {
           const blocker = approveBlocker(deal, role, me);
@@ -319,6 +344,11 @@ function DealCard({
                     ))}
                   </select>
                   {chosen && <small>{APPROVE_WITH_DOCUMENT.note}</small>}
+                  {chosen && mismatched.includes(chosen) && (
+                    <small className="review-relyon-warning" role="alert">
+                      {PARCEL_CHECK.review.chosen}
+                    </small>
+                  )}
                 </label>
               )}
               <button
@@ -437,8 +467,14 @@ function DealCard({
         compact
         state={documents.state}
         timeline={deal.timeline}
+        findings={findings.byId}
         fileAction={(doc) => <OpenFileButton deal={deal} doc={doc} />}
-        participant={<ParticipantPanel deal={deal} onUploaded={documents.refresh} />}
+        participant={
+          <>
+            {mismatched.length === 0 && <FindingsButton findings={findings} />}
+            <ParticipantPanel deal={deal} onUploaded={documents.refresh} />
+          </>
+        }
       />
       <Link className="review-open" to={dealPath(deal.id)}>
         {REVIEW.openDeal} →

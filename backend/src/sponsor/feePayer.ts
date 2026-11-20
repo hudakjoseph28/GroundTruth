@@ -38,8 +38,9 @@ export function readFeeSponsor(
   participants: ReadonlySet<string> = stagedParticipants(),
 ): FeeSponsorConfig | undefined {
   const raw = source.FEE_SPONSOR_SECRET_KEY?.trim();
-  const maxPerDeal = readCap(source.FEE_SPONSOR_MAX_PER_DEAL);
+  // No key: sponsorship is off, and nothing else here can block startup.
   if (!raw) return undefined;
+  const maxPerDeal = readCap(source.FEE_SPONSOR_MAX_PER_DEAL);
 
   let bytes: unknown;
   try {

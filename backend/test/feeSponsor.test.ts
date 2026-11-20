@@ -435,6 +435,14 @@ describe("readFeeSponsor", () => {
     ).toBe(4);
   });
 
+  it("stays off without a key, even with a bad cap", () => {
+    expect(readFeeSponsor({ FEE_SPONSOR_MAX_PER_DEAL: "0" })).toBeUndefined();
+    expect(readFeeSponsor({ FEE_SPONSOR_MAX_PER_DEAL: "lots" })).toBeUndefined();
+    expect(
+      readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: "  ", FEE_SPONSOR_MAX_PER_DEAL: "0" }),
+    ).toBeUndefined();
+  });
+
   it("stops startup on a malformed key or cap", () => {
     expect(() => readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: "[1,2,3]" })).toThrow(
       /64 bytes/,

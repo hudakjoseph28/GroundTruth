@@ -6,6 +6,7 @@ import {
   DEFAULT_ACCESS_TIMEOUT_MS,
   DEFAULT_FEMA_TIMEOUT_MS,
   DEFAULT_STREAM_BUFFERS_TIMEOUT_MS,
+  DEFAULT_UTILITIES_TIMEOUT_MS,
   DEFAULT_WETLANDS_TIMEOUT_MS,
   DEFAULT_ZONING_TIMEOUT_MS,
 } from "./reports/pipeline.js";
@@ -28,6 +29,8 @@ export interface ServerEnv {
   wetlandsTimeoutMs: number;
   /** Limit for a Franklin report's stream-setback lookup, in milliseconds. */
   streamBuffersTimeoutMs: number;
+  /** Limit for a report's water and sewer check, in milliseconds. */
+  utilitiesTimeoutMs: number;
   /** ElevenLabs post-call webhook secret; the webhook refuses all deliveries without it. */
   elevenLabsWebhookSecret: string | undefined;
   /** Optional: only this agent's calls become evidence. */
@@ -38,6 +41,8 @@ export interface ServerEnv {
   solanaRpcUrl: string;
   /** Devnet fee payer for reviewer transactions in /review. Unset: reviewers pay their own fees. */
   feeSponsor: FeeSponsorConfig | undefined;
+  /** Claude API key for reading uploaded deal documents. Unset: uploads are stored unread. */
+  anthropicApiKey: string | undefined;
 }
 
 export function readServerEnv(
@@ -78,12 +83,18 @@ export function readServerEnv(
       source.STREAM_BUFFERS_TIMEOUT_MS,
       DEFAULT_STREAM_BUFFERS_TIMEOUT_MS,
     ),
+    utilitiesTimeoutMs: readTimeout(
+      "UTILITIES_TIMEOUT_MS",
+      source.UTILITIES_TIMEOUT_MS,
+      DEFAULT_UTILITIES_TIMEOUT_MS,
+    ),
     elevenLabsWebhookSecret:
       source.ELEVENLABS_WEBHOOK_SECRET?.trim() || undefined,
     elevenLabsAgentId: source.ELEVENLABS_AGENT_ID?.trim() || undefined,
     twilio: readTwilio(source),
     solanaRpcUrl: readRpcUrl(source.SOLANA_RPC_URL),
     feeSponsor: readFeeSponsor(source),
+    anthropicApiKey: source.ANTHROPIC_API_KEY?.trim() || undefined,
   };
 }
 

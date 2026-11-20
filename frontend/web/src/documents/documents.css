@@ -254,3 +254,79 @@
 .docs-result-hash code {
   overflow-wrap: anywhere;
 }
+
+/* Advisory parcel check on a document card. */
+.docs-parcel {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+  border-left: 3px solid var(--line);
+  padding: 0.35rem 0 0.35rem 0.65rem;
+  font-size: 0.875rem;
+}
+
+.docs-parcel-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  color: var(--text-2);
+}
+
+.docs-parcel-mark {
+  font-weight: 700;
+  min-width: 0.8em;
+}
+
+.docs-parcel[data-tone="match"] {
+  border-left-color: var(--green);
+}
+
+.docs-parcel[data-tone="match"] .docs-parcel-head {
+  color: var(--green-text);
+}
+
+.docs-parcel[data-tone="warning"] {
+  border-left-color: var(--red);
+  background: rgba(214, 69, 69, 0.08);
+}
+
+.docs-parcel[data-tone="warning"] .docs-parcel-head {
+  color: var(--red-text);
+}
+
+.docs-parcel-sub,
+.docs-parcel-advisory {
+  color: var(--text-2);
+}
+
+.docs-parcel-advisory {
+  font-size: 0.78rem;
+}
+
+.docs-found {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.15rem 0 0;
+}
+
+.docs-found div {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 0.5rem;
+}
+
+.docs-found dt {
+  color: var(--text-2);
+}
+
+.docs-found dd {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.docs-findings {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+}

@@ -177,6 +177,30 @@ export interface DealDocument {
   sha256: string;           // lowercase hex, computed by the API
   uploaderRole: DealParticipantRole;
   uploadedAt: string;
+  parcelCheck?: DocumentParcelCheck; // additive, Nov 20: advisory; status only, never the text read
+}
+
+// Additive, Nov 20. Advisory: never blocks or changes deal state.
+export type DocumentParcelCheckStatus =
+  | "checking" | "matches" | "different" | "noParcelId"
+  | "unavailable"; // not read: check off, failed, stale, or uploaded before checks
+export interface DocumentParcelCheck {
+  status: DocumentParcelCheckStatus;
+  checkedAt?: string;
+}
+
+// Participants only (fresh wallet signature): what the API read from a document.
+export interface DocumentFindings {
+  documentId: string;
+  parcelCheck: DocumentParcelCheck;
+  dealParcelId: string;     // the parcel ID part of the deal's parcel key
+  found?: {                 // absent unless the document was read
+    parcelId: string | null; // as printed
+    address: string | null;  // the property's address as printed
+    documentType: string;
+    keyFinding: string;      // one line
+  };
+  model?: string;
 }
 
 // The hash an approval's Memo instruction `groundtruth:doc:<sha256>` named.
@@ -228,6 +252,7 @@ All responses are JSON. Success returns the named object directly. Failure retur
 | `GET /api/deals/:id/documents` | `200 DealDocument[]` | Public staged deals only. Metadata only: never the file bytes or the uploader's wallet. |
 | `POST /api/deals/:id/documents` | `201 DealDocument` | Raw body (PDF, PNG, or JPG by its bytes, matching the extension; max 10 MB). Signed by the deal's buyer, seller, or an assigned reviewer: `documentAuthMessage()` in `packages/shared` over action, deal, file SHA-256, wallet, time, and a single-use nonce, valid 5 minutes. `401` bad/expired/replayed signature, `403` not a participant, `413` too large, `415` wrong type, `409` same bytes already on the deal. |
 | `POST /api/deals/:id/documents/:documentId/file` | `200` file bytes | Same signature rules, naming the document; `cache-control: private, no-store`. |
+| `POST /api/deals/:id/documents/findings` | `200 DocumentFindings[]` | Same signature rules with action `findings` (every document on the deal); `cache-control: private, no-store`. The public list carries only `parcelCheck`. |
 | `GET /api/deals/:id/solana-pay/fund` | `200 SolanaPayLabel` | Solana Pay transaction request, GET half: `{ label, icon }`. Public staged deals only. CORS `*`. |
 | `POST /api/deals/:id/solana-pay/fund` | `200 SolanaPayTransactionResponse` | Body `{ account }`. Only for the deal's bound buyer wallet (`403` otherwise). Only while the deal is `draft` in the API **and** `Draft` on devnet (`409` otherwise; the chain wins). The on-chain account must match the deal row's buyer, mint, amount, seller token account, and vault. Returns the buyer's `fund` transaction, base64 and **unsigned**: fee payer the buyer, accounts in the IDL's order. Devnet only: the RPC's genesis hash is checked (`503` otherwise); `502` (retryable) when devnet does not answer. Errors are `SolanaPayError`, which adds a top-level `message` that wallets display. |
 | `GET /actions.json` | `200 { rules }` | Solana Actions discovery (spec 2.4): maps `/deals/staged-devnet-deal-rehearsal-v2` and `/api/actions/**` to the Action API. CORS `*` on `GET` and `OPTIONS`. |
@@ -262,6 +287,7 @@ Wallets build and sign program transactions client-side from the checked-in IDL.
   - The check is `needsReview` when either source maps something on the lot (a permit or setback rule may apply).
   - It is `evidenceFound` only when every source that applies answered `found` with nothing on the lot. Its limitation must then say that "NWI shows none" is not a wetland delineation.
   - Otherwise it is `unknown`: a timeout, error, or an NWI `missing` (no mapping project covers the lot) never becomes "none".
+- **Water and sewer (`utilities`):** one check from independent sources, each with its own timeout: EPA's community water system and sewershed maps for every parcel, Franklin County Sanitary Engineering's service areas for Franklin parcels, and a city's public main map where one reaches the lot. It is `evidenceFound` only when the lot is inside a mapped water service area and a public sewer main is within 30 m of it; `unknown` only when no source answered; otherwise `needsReview`. Its limitation always says the maps don't guarantee capacity or a tap permit. When no public sewer is mapped, the finding ends with a `NO_PUBLIC_SEWER` sentence (`@groundtruth/shared`), which the web's bottom line reads; that is copy, not a new field.
 - **ElevenLabs:** only `conversation_id`, completion time, staged deal ID, consenting demo participant label, call success, and the configured analysis outcome are retained. Raw audio/transcript is not copied into the GroundTruth database.
 - **Twilio:** a deal text subscriber's phone number is stored in E.164 form for that deal only. It is never part of `Deal`, never logged, and never returned unmasked. A text reports a confirmed event and authorizes nothing.
 - **Deal documents:** a reviewer's approval may carry an SPL Memo instruction `groundtruth:doc:<sha256>` in the same transaction as `sign_approval`. The Stream filter passes the text of top-level Memo v1/v2 instructions as `memos`; memo-like text from any other program is ignored. Exactly one named document is recorded on that approval's timeline row and matched to the deal's uploads by hash when the deal is read. The memo is evidence of what the reviewer relied on; it does not change deal state.
@@ -309,4 +335,5 @@ A change to a field, status, route, instruction, PDA seed, required reviewer, or
 | 2026-11-19 | Homepage activity feed: `ActivityEvent` and `GET /api/activity` | Additive: a new type and a new read-only route over existing confirmed timeline rows; no field, status, instruction, or state-machine change | `packages/shared/src/contract.ts`; backend `src/routes/activity.ts`, `toActivityEvent` in `src/deals/mapDeal.ts`, tests `test/activity.test.ts` and `test/db/activity.db.test.ts`; web `src/activity/`, `src/content/activity.ts`, `src/data/activitySource.ts`. Fixtures unchanged. |
 | 2026-11-19 | Reviewer-approval Blink: `GET /actions.json`, `GET`/`POST /api/actions/approve/:dealId` (Solana Actions spec 2.4) for the rehearsal deal only | Additive: new routes; no type, status, instruction, PDA, or state-machine change; the escrow program is unchanged. The POST returns an unsigned transaction; the reviewer's wallet signs | backend `src/routes/actions.ts`, `src/actions/`, `test/actions.test.ts`; `vercel.json` forwards `/actions.json`. Fixtures unchanged. |
 | 2026-11-20 | Reviewer fee sponsorship: `GET /api/fee-sponsor`, `POST /api/deals/:id/sponsored-transaction`; `FeeSponsorStatus`, `SponsoredTransactionRequest`, `SponsoredTransactionResponse`, `SPONSORED_ACTIONS`, `sponsorRefusal`, `sameInstructions`; error code `RATE_LIMITED`; table `SponsoredFeeRecord` | Additive: new routes, types, an error code, and a table. No `Deal` field, status, instruction, PDA, or state-machine change; the escrow program is unchanged. The API signs as its own fee payer only, never for a participant | `packages/shared/src/feeSponsor.ts`, `contract.ts`; backend `src/routes/feeSponsor.ts`, `src/sponsor/`, migration `20261121000000_sponsored_fees`, tests `test/feeSponsor.test.ts`, `test/feeSponsorGuard.test.ts`, `test/db/sponsorLedger.db.test.ts`; web `src/review/` (`feeSponsor.ts`, `escrowTx.ts`, `ReviewPage.tsx`), `src/content/review.ts`. Fixtures unchanged. Devnet record: `escrow/demo-results/devnet-fee-sponsored-approval-v1.md`. |
+| 2026-11-20 | Document parcel checks: optional `DealDocument.parcelCheck`, `DocumentParcelCheck`, `DocumentFindings`, `DOCUMENT_PARCEL_CHECK_STATUSES`, the `findings` document-auth action, and `POST /api/deals/:id/documents/findings` | Additive: an optional field, new types, a new signed route, and a new signed-message action; existing upload/view messages are byte-for-byte unchanged. No deal status, instruction, PDA, or state-machine change; the check is advisory | `packages/shared/src/contract.ts` and `documents.ts`; backend `src/documents/parcelCheck.ts`, `claudeReader.ts`, `src/routes/documents.ts`, migration `20261121000000_document_parcel_checks`, sample PDFs `test/fixtures/documents/`; web `src/documents/ParcelCheckNote.tsx`, `DocumentFindings.tsx`, `/deals/:dealId`, `/review`. Fixtures unchanged. |
 | 2026-11-19 | Saved reports: the `groundtruth:report:<sha256>` Memo v1 format and its canonical-JSON hash | Additive: a client-side memo format; no type, route, status, instruction, or program change | web `src/seal/` (`reportHash.ts` and its tests), `src/content/seal.ts`, the parcel page. Fixtures unchanged. |

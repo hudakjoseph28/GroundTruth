@@ -59,7 +59,8 @@ export const DOCUMENT_AUTH_MAX_SKEW_MS = 60 * 1000;
 
 export type DocumentAuthRequest =
   | { action: "upload"; sha256: string }
-  | { action: "view"; documentId: string };
+  | { action: "view"; documentId: string }
+  | { action: "findings" };
 
 /**
  * Headers that carry a signed document request. The API rebuilds the message
@@ -81,11 +82,18 @@ export const DOCUMENT_UPLOAD_HEADERS = {
   filename: "x-groundtruth-filename",
 } as const;
 
+const ACTION_WORDS: Record<DocumentAuthRequest["action"], string> = {
+  upload: "upload a document",
+  view: "view a document",
+  findings: "read what the documents say",
+};
+
 /**
  * The text a participant signs with their wallet (Phantom "Sign message").
  * One request, one deal, one wallet, a time, and a single-use nonce. An
  * upload also names the file's SHA-256, so the signature covers exactly
- * the bytes sent; a view names the document.
+ * the bytes sent; a view names the document; reading findings covers
+ * every document on the deal.
  */
 export function documentAuthMessage(input: {
   dealId: string;
@@ -94,13 +102,16 @@ export function documentAuthMessage(input: {
   nonce: string;
   request: DocumentAuthRequest;
 }): string {
+  const request = input.request;
   const lines = [
     "GroundTruth deal documents (staged demo)",
-    `Action: ${input.request.action === "upload" ? "upload a document" : "view a document"}`,
+    `Action: ${ACTION_WORDS[request.action]}`,
     `Deal: ${input.dealId}`,
-    input.request.action === "upload"
-      ? `File SHA-256: ${input.request.sha256}`
-      : `Document: ${input.request.documentId}`,
+    request.action === "upload"
+      ? `File SHA-256: ${request.sha256}`
+      : request.action === "view"
+        ? `Document: ${request.documentId}`
+        : "Documents: every document on this deal",
     `Wallet: ${input.wallet}`,
     `Issued at: ${input.issuedAt}`,
     `Nonce: ${input.nonce}`,

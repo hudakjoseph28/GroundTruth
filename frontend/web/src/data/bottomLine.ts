@@ -1,4 +1,4 @@
-import type { CheckKind } from "@groundtruth/shared";
+import { findsNoPublicSewer, type Check, type CheckKind } from "@groundtruth/shared";
 import { SUMMARY } from "../content/parcel";
 import type { LedgerRecord, ParcelLedger } from "./ledger";
 
@@ -25,6 +25,12 @@ export interface BottomLine {
   opening: string;
   /** "Check first: road access (title reviewer).", or empty with no question. */
   ask: string;
+  /**
+   * When the water and sewer check finds no public sewer mapped for the lot,
+   * what the septic soils say, since a septic system is then the likely way
+   * to handle wastewater. Empty otherwise.
+   */
+  wastewater: string;
   /** The whole bottom line, as read aloud. */
   text: string;
 }
@@ -55,6 +61,34 @@ function partyFor(record: LedgerRecord): string | null {
 const answered = (record: LedgerRecord | undefined) =>
   record !== undefined && record.check.status !== "unknown";
 
+/** SSURGO's septic-tank absorption field ratings, most limiting first. */
+const SOIL_RATINGS = ["Very limited", "Somewhat limited", "Not limited"] as const;
+export type SoilRating = (typeof SOIL_RATINGS)[number];
+
+/**
+ * The most limiting soil rating the septic check reports, and whether every
+ * map unit it lists has that rating. Read from the check's own finding
+ * (“rated “Very limited””), so it never says more than the card; null when
+ * the check names no rating (unknown, or no soils record).
+ */
+export function septicRating(check: Check | undefined): { worst: SoilRating; all: boolean } | null {
+  if (!check || check.kind !== "septic" || check.status === "unknown") return null;
+  const found = [...check.finding.matchAll(/rated “(Very limited|Somewhat limited|Not limited)”/g)].map(
+    (match) => match[1] as SoilRating,
+  );
+  const worst = SOIL_RATINGS.find((rating) => found.includes(rating));
+  if (!worst) return null;
+  return { worst, all: found.every((rating) => rating === worst) };
+}
+
+/** The septic note, or empty when public sewer is mapped or unchecked. */
+function wastewaterNote(ledger: ParcelLedger): string {
+  const utilities = ledger.records.find((record) => record.check.kind === "utilities");
+  if (!utilities || !findsNoPublicSewer(utilities.check)) return "";
+  const septic = ledger.records.find((record) => record.check.kind === "septic");
+  return SUMMARY.noPublicSewer(septicRating(septic?.check));
+}
+
 /** The ledger's bottom line, or null when there is no report to summarize. */
 export function bottomLine(ledger: ParcelLedger): BottomLine | null {
   if (ledger.records.length === 0) return null;
@@ -71,6 +105,7 @@ export function bottomLine(ledger: ParcelLedger): BottomLine | null {
 
   const opening = SUMMARY.lead(lead, held.map(SUMMARY.noun));
   const ask = first ? SUMMARY.checkFirst(SUMMARY.noun(first.check.kind), party) : "";
+  const wastewater = wastewaterNote(ledger);
   return {
     lead,
     held,
@@ -78,6 +113,7 @@ export function bottomLine(ledger: ParcelLedger): BottomLine | null {
     party,
     opening,
     ask,
-    text: ask ? `${opening} ${ask}` : opening,
+    wastewater,
+    text: [opening, ask, wastewater].filter(Boolean).join(" "),
   };
 }

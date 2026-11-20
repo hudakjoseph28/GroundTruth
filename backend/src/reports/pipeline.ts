@@ -24,6 +24,8 @@ import type {
 } from "./franklinStreamBuffers.js";
 import type { NwiWetlandsClient, WetlandsOutcome } from "./nwiWetlands.js";
 import { TEMPLATE_KINDS, templateCheck } from "./templates.js";
+import type { UtilitiesClient } from "./utilities.js";
+import { utilitiesCheck } from "./utilitiesCheck.js";
 
 export const DEFAULT_FEMA_TIMEOUT_MS = 6_000;
 export const DEFAULT_ZONING_TIMEOUT_MS = 6_000;
@@ -36,6 +38,14 @@ export const DEFAULT_SOILS_TIMEOUT_MS = 6_000;
 export const DEFAULT_WETLANDS_TIMEOUT_MS = 10_000;
 /** The county layer answers in 0.2 s; a first setback download takes ~2 s. */
 export const DEFAULT_STREAM_BUFFERS_TIMEOUT_MS = 6_000;
+/**
+ * The whole water and sewer check. Each of its sources (EPA's two maps,
+ * Franklin County Sanitary Engineering, each city main map) has its own
+ * 6 s limit inside the client and they run at once; EPA and the county
+ * answered in 1.4 to 2.5 s and the city main maps in 1.8 to 3.7 s on
+ * 2026-11-19.
+ */
+export const DEFAULT_UTILITIES_TIMEOUT_MS = 8_000;
 /** Template checks do no I/O; the limit only guards against a bug. */
 const TEMPLATE_TIMEOUT_MS = 1_000;
 
@@ -75,6 +85,14 @@ export interface ReportPipelineOptions {
   streamBuffers?: FranklinStreamBuffersClient;
   /** Limit for the stream-setback part of the environmental check. */
   streamBuffersTimeoutMs?: number;
+  /**
+   * Water and sewer maps (EPA statewide, Franklin County Sanitary
+   * Engineering, and the city main maps that publish). When set, every
+   * parcel gets a live utilities check; otherwise it keeps the template.
+   */
+  utilities?: UtilitiesClient;
+  /** Limit for the utilities check. */
+  utilitiesTimeoutMs?: number;
   now: () => Date;
 }
 
@@ -263,7 +281,44 @@ export async function buildReport(
         }),
       }
     : null;
-  const live = [zoning, environmental, access, soils].filter(
+  const utilitiesClient = options.utilities;
+  const utilitiesTimeoutMs =
+    options.utilitiesTimeoutMs ?? DEFAULT_UTILITIES_TIMEOUT_MS;
+  const utilities: CheckRunner | null = utilitiesClient
+    ? {
+        kind: "utilities",
+        timeoutMs: utilitiesTimeoutMs,
+        async run(signal) {
+          const outcome = await utilitiesClient.utilities(parcel, signal);
+          return {
+            check: utilitiesCheck(parcel, outcome, utilitiesTimeoutMs),
+            transient: [
+              outcome.waterSystems,
+              outcome.sewersheds,
+              outcome.countyAreas,
+              ...outcome.mains.map((main) => main.answer),
+            ].some((answer) => answer?.status === "failed"),
+          };
+        },
+        failed: (cause) => ({
+          check: utilitiesCheck(
+            parcel,
+            {
+              waterSystems: { status: "failed", cause },
+              sewersheds: { status: "failed", cause },
+              countyAreas:
+                parcel.countyFips === FRANKLIN_COUNTY_FIPS
+                  ? { status: "failed", cause }
+                  : null,
+              mains: [],
+            },
+            utilitiesTimeoutMs,
+          ),
+          transient: true,
+        }),
+      }
+    : null;
+  const live = [zoning, environmental, access, utilities, soils].filter(
     (runner): runner is CheckRunner => runner !== null,
   );
   const templates = TEMPLATE_KINDS.filter(

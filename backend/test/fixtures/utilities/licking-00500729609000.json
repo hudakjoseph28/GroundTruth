@@ -1,0 +1,122 @@
+{
+  "name": "licking-00500729609000",
+  "parcel": {
+    "key": "ohio:39089:00500729609000",
+    "sourceParcelId": "00500729609000",
+    "county": "Licking",
+    "countyFips": "39089",
+    "siteAddress": "93 Woody Knoll Dr, Thornville, OH 43076",
+    "acreage": 1.2,
+    "centroid": {
+      "latitude": 39.953658358,
+      "longitude": -82.354917458
+    },
+    "geometry": {
+      "geojson": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -82.3543162,
+              39.9534197
+            ],
+            [
+              -82.3556256,
+              39.9534968
+            ],
+            [
+              -82.3554333,
+              39.9539036
+            ],
+            [
+              -82.3542848,
+              39.9538307
+            ],
+            [
+              -82.3543014,
+              39.9536076
+            ],
+            [
+              -82.3543162,
+              39.9534197
+            ]
+          ]
+        ]
+      },
+      "authority": "Ohio OGRIP",
+      "sourceUrl": "https://services2.arcgis.com/MlJ0G8iWUyC7jAmu/arcgis/rest/services/OhioStatewidePacels_full_view/FeatureServer/0/query?where=County%3D%27Licking%27+AND+LocalParcelID%3D%2700500729609000%27&outFields=County%2CLocalParcelID%2CStateParcelID%2CSitusAddressAll%2CLandArea&returnGeometry=true&outSR=4326&geometryPrecision=7&resultRecordCount=50&f=geojson",
+      "retrievedAt": "2026-11-17T01:07:51.000Z"
+    }
+  },
+  "recordedAt": "2026-11-20T00:16:00.351Z",
+  "exchanges": [
+    {
+      "method": "POST",
+      "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0/query",
+      "body": "where=1%3D1&geometry=%7B%22rings%22%3A%5B%5B%5B-82.3543162%2C39.9534197%5D%2C%5B-82.3556256%2C39.9534968%5D%2C%5B-82.3554333%2C39.9539036%5D%2C%5B-82.3542848%2C39.9538307%5D%2C%5B-82.3543014%2C39.9536076%5D%2C%5B-82.3543162%2C39.9534197%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=CWNS_ID%2CFACILITY_NAME%2CMethod&f=json",
+      "status": 200,
+      "responseBody": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "features": []
+      }
+    },
+    {
+      "method": "POST",
+      "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0/query",
+      "body": "where=1%3D1&geometry=%7B%22rings%22%3A%5B%5B%5B-82.3543162%2C39.9534197%5D%2C%5B-82.3556256%2C39.9534968%5D%2C%5B-82.3554333%2C39.9539036%5D%2C%5B-82.3542848%2C39.9538307%5D%2C%5B-82.3543014%2C39.9536076%5D%2C%5B-82.3543162%2C39.9534197%5D%5D%5D%2C%22spatialReference%22%3A%7B%22wkid%22%3A4326%7D%7D&geometryType=esriGeometryPolygon&inSR=4326&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=PWSID%2CPWS_Name%2CSymbology_Field&f=json",
+      "status": 200,
+      "responseBody": {
+        "objectIdFieldName": "OBJECTID",
+        "uniqueIdField": {
+          "name": "OBJECTID",
+          "isSystemMaintained": true
+        },
+        "globalIdFieldName": "",
+        "features": []
+      }
+    }
+  ],
+  "outcome": {
+    "waterSystems": {
+      "status": "answered",
+      "retrievedAt": "2026-11-20T00:16:00.351Z",
+      "value": []
+    },
+    "sewersheds": {
+      "status": "answered",
+      "retrievedAt": "2026-11-20T00:16:00.351Z",
+      "value": []
+    },
+    "countyAreas": null,
+    "mains": []
+  },
+  "check": {
+    "kind": "utilities",
+    "status": "needsReview",
+    "finding": "Not inside any community water system or wastewater plant's sewershed on EPA's maps. No public water or sewer main map is published for this area, so the distance to a main wasn't measured. No public water or sewer is mapped for this lot, so it likely needs a private well and a septic system.",
+    "limitation": "These maps show where a utility serves or where its mains run. They don't guarantee capacity for this lot, a tap permit, or what connecting costs. A lot outside every mapped service area can still be served by a line these maps don't show, or by an extension.",
+    "sources": [
+      {
+        "authority": "U.S. Environmental Protection Agency",
+        "title": "Community Water System Service Area Boundaries",
+        "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0",
+        "retrievedAt": "2026-11-20T00:16:00.351Z"
+      },
+      {
+        "authority": "U.S. Environmental Protection Agency",
+        "title": "Sewersheds of publicly owned treatment works (Clean Watersheds Needs Survey 2022)",
+        "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0",
+        "retrievedAt": "2026-11-20T00:16:00.351Z"
+      }
+    ],
+    "responsibleParty": {
+      "role": "Water and sewer utility"
+    },
+    "nextAction": "Ask the county sanitary engineer or the nearest water and sewer utility for a water/sewer availability letter before you buy. If neither can reach the lot, ask the local health district about well and septic permits."
+  }
+}

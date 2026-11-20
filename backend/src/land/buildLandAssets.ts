@@ -38,8 +38,8 @@ export const USGS_TILES = {
   zoom: 16, // the tile cache stops here; z17 returns 404
 };
 export const TERRARIUM = {
-  source: "AWS Terrain Tiles (Terrarium)",
-  attribution: "Elevation: AWS Terrain Tiles",
+  source: "USGS 3DEP-derived terrain (AWS Terrain Tiles)",
+  attribution: "Map elevation: USGS 3DEP via AWS Terrain Tiles · not a survey",
   url: "https://s3.amazonaws.com/elevation-tiles-prod/terrarium",
   zoom: 15,
 };
