@@ -29,9 +29,12 @@ GroundTruth helps a first-time buyer of vacant land in Ohio find a parcel, read 
 - **Find any Ohio parcel** by address, street, or parcel ID, using the state's published boundaries for all 88 counties.
 - **See the land in 3D** on real aerial imagery and terrain, with toggleable FEMA flood, wetlands, stream-setback, zoning, and road layers.
 - **Read the lot's elevation**: a height-colored layer with contour lines, steep-slope (over 15%) shading, the lowest and highest points, total rise, average and steepest slope, and a draggable elevation profile. It is map-derived USGS 3DEP elevation, labeled as not a survey.
-- **Get a straight answer.** A "Bottom line" up top, then nine checks (flood, wetlands, septic soils, water & sewer, zoning, road access, and more), each with its source, its date, what it doesn't prove, and who can resolve it. Missing data says *No answer yet*. It never guesses.
-- **Ask this lot.** Type a question or use the microphone. The answer can use only that parcel's report, cites every check and source it used, and says “I don't know” with the responsible party when the report has no answer.
-- **Pay safely.** Test USDC sits in a Solana escrow. A title, survey, or septic reviewer's hold blocks the payout on-chain; once every required reviewer approves, the exact amount goes to the seller the deal was opened with.
+- **Get a straight answer.** A "Bottom line" up top, then each check (flood, wetlands, septic soils, water & sewer, zoning, road access, easements, seller authority, survey, and the closing) with its source, its date, what it doesn't prove, and who can resolve it. Missing data says *No answer yet*. It never guesses.
+- **See how much of the lot is buildable.** The parcel boundary minus every constraint with a map: FEMA flood hazard area, NWI wetlands, the stream setback, slopes over 15%, and the Rural district's side and rear yards (Franklin County Zoning Resolution §302.043–302.044). On parcel 230-000918 that is about 2.5 of 3.0 mapped acres (83%). Anything not subtracted is named. It is an estimate from public maps, not a site plan or survey.
+- **Ask this lot.** Type a question or use the microphone. The answer can use only that parcel's report, cites every check and source it used, and says “I don't know” with the responsible party when the report has no answer. Needs `OPENAI_API_KEY` on the API (and `ELEVENLABS_API_KEY` + `ELEVENLABS_AGENT_ID` for the microphone); without it the card is hidden.
+- **Pay safely.** Test USDC sits in a Solana escrow, funded from the deal page or a Solana Pay QR code. A title, survey, or septic reviewer's hold blocks the payout on-chain; once every required reviewer approves, the exact amount goes to the seller the deal was opened with.
+- **Reviewers sign from their own wallet**, on a phone in Phantom. An approval can carry a document's SHA-256 in a Memo. Each staged reviewer wallet holds a staged credential on the [Solana Attestation Service](escrow/demo-results/sas-credentials-devnet.md), shown on rehearsal deals (the escrow does not check it). With `FEE_SPONSOR_SECRET_KEY` set, GroundTruth's devnet fee payer covers the reviewer's network fee and the reviewer still signs ([devnet record](escrow/demo-results/devnet-fee-sponsored-approval-v1.md)).
+- **Catch the wrong paperwork.** An uploaded deal document is read by Claude for its parcel ID, and the card says "Matches this parcel" or "Different parcel ID found". Advisory only: it never blocks an upload or an approval. Needs `ANTHROPIC_API_KEY` on the API; without it the check reads "unavailable".
 - **Follow the deal from your phone**, with no app or wallet. The deal page updates from QuickNode Streams, links every step to Solana Explorer, and has a **Verify on-chain** button that checks the page against the chain from your own browser.
 
 ## Screenshots
@@ -84,6 +87,8 @@ flowchart TB
   QN["QuickNode Stream, filtered to the program"]
   EL["ElevenLabs Agent: owner callback"]
   AI["OpenAI: report-check selection only"]
+  CL["Claude: advisory parcel-ID read of uploaded documents"]
+  SAS["Solana Attestation Service: staged reviewer credentials"]
 
   W -- "/api/*" --> A
   A --> DB
@@ -96,6 +101,8 @@ flowchart TB
   QN -- "HMAC-signed POST" --> WH
   EL -- "HMAC-signed post-call webhook" --> WH
   A -- "strict report JSON prompt" --> AI
+  A -- "uploaded document" --> CL
+  W -. "read credentials (public RPC)" .-> SAS
   A -- "speech in/out, configured agent voice" --> EL
 ```
 
@@ -197,8 +204,8 @@ Every check stores its source URL and `retrievedAt`. How each one works and what
 | --- | --- |
 | Web | React 19, Vite, TypeScript, Three.js, MapLibre GL, react-globe.gl, Solana wallet adapter (Phantom) |
 | API | Node 26, Express 5, Zod, Prisma, PostgreSQL 16 |
-| Chain | Rust, Anchor 1.2.2, SPL Token, SPL Memo, `@solana/web3.js`, Solana Pay transaction requests, Solana Actions (Blinks) |
-| Integrations | QuickNode Streams, ElevenLabs Agents + Twilio, Circle devnet USDC |
+| Chain | Rust, Anchor 1.2.2, SPL Token, SPL Memo, `@solana/web3.js`, Solana Pay transaction requests, Solana Actions (Blinks), Solana Attestation Service |
+| Integrations | QuickNode Streams, ElevenLabs Agents + Twilio, Circle devnet USDC, OpenAI (Ask this lot), Claude (document check) |
 | Shared | `@groundtruth/shared`: one TypeScript contract, the IDL, fixtures, and PDA helpers for web, API, and scripts |
 | Tests and CI | Vitest, Supertest, Anchor/Mocha, LiteSVM, GitHub Actions |
 | Hosting | Vercel (web), Railway (API + Postgres) |
@@ -236,12 +243,12 @@ npx --yes pnpm@12.18.0 --filter @groundtruth/web dev         # web on :5173, pro
 
 | Suite | Command | Tests | In CI |
 | --- | --- | --- | --- |
-| Backend unit + route (recorded provider responses, no network) | `pnpm --filter @groundtruth/backend test` | 795 | ✅ |
-| Web | `pnpm --filter @groundtruth/web test` | 197 | ✅ |
-| Backend against Postgres 16 | `pnpm --filter @groundtruth/backend test:db` | 49 | ✅ |
+| Backend unit + route (recorded provider responses, no network) | `pnpm --filter @groundtruth/backend test` | 897 | ✅ |
+| Web | `pnpm --filter @groundtruth/web test` | 248 | ✅ |
+| Backend against Postgres 16 | `pnpm --filter @groundtruth/backend test:db` | 53 | ✅ |
 | Anchor escrow (local validator) | `pnpm escrow:test` | 78 | needs the Solana, Anchor, and Rust toolchains, so it runs locally |
 
-Counts are from `main` on Nov 19, 2026. [CI](.github/workflows/ci.yml) runs on every PR and every push to `main`: typecheck, lint, the backend and web tests, the web build, and `db:migrate` → `db:seed` → `test:db` against a Postgres 16 service. It uses no secrets. The backend also replays the **real recorded devnet transactions** of both closings through the same filter, webhook, and decoder that live deliveries use.
+1,276 tests in all. Counts are from `main` at `88e906b` on the night of Nov 19, 2026 (the Anchor count is the number of `it(` cases in [`escrow/tests`](escrow/tests/groundtruth_escrow.ts)). [CI](.github/workflows/ci.yml) runs on every PR and every push to `main`: typecheck, lint, the backend and web tests, the web build, and `db:migrate` → `db:seed` → `test:db` against a Postgres 16 service. It uses no secrets. The backend also replays the **real recorded devnet transactions** of both closings through the same filter, webhook, and decoder that live deliveries use.
 
 ## Repo map
 
@@ -269,15 +276,16 @@ Start with [Architecture](docs/architecture/Architecture.md), the [data contract
 
 ## Roadmap
 
-Live today: the "Now" column. Next: a pilot with an Ohio title or closing company, mainnet USDC with sponsored fees, verified reviewer credentials, and more local checks. Later: nationwide parcels, deed e-recording handoff, and seller identity verification. Everything past "Now" is a plan, not a feature. → [groundtruth-lac.vercel.app/roadmap](https://groundtruth-lac.vercel.app/roadmap)
+Live today: the "Now" column, including Solana Pay funding and staged reviewer credentials on the Solana Attestation Service. Next: a pilot with an Ohio title or closing company, mainnet USDC with sponsored fees (the fee-payer flow is built on devnet), reviewer credentials from a real issuer that the escrow checks, and more local checks. Later: nationwide parcels, deed e-recording handoff, and seller identity verification. Everything past "Now" is a plan, not a feature. → [groundtruth-lac.vercel.app/roadmap](https://groundtruth-lac.vercel.app/roadmap)
 
 ## Honest limits
 
 - **Devnet and test USDC only.** No real money moves, and the program is not audited.
-- **Staged wallets.** The buyer, seller, and title, survey, and septic reviewers are staged devnet keys controlled by the team, not licensed professionals.
+- **Staged wallets and credentials.** The buyer, seller, and title, survey, and septic reviewers are staged devnet keys controlled by the team, not licensed professionals. Their Solana Attestation Service credentials are test credentials the team issued to its own wallets, and the escrow program does not check them.
 - **Example pages are labeled.** `/parcels/sample`, `/deals/sample`, and `/walkthrough` use a made-up lot and deal, each tagged *Example · Illustrative data*. They never fall back into real parcels or deals.
 - **Ohio only.** Parcels come from Ohio's OGRIP layer. Deeper checks (zoning, road access, stream setbacks) exist in Franklin County so far. Everywhere else they say *No answer yet*.
-- **Decision support, not a verdict.** A report is not a legal buildability opinion, title search, survey, or septic permit.
+- **The golden parcel's water & sewer card reads *No answer yet*.** Its report was hand-verified on Nov 17, before the live utilities check shipped, and a seeded report is never overwritten by a live one ([`store.ts`](backend/src/reports/store.ts)). The recorded live answer is in [`backend/test/fixtures/utilities/golden-230-000918.json`](backend/test/fixtures/utilities/golden-230-000918.json).
+- **Decision support, not a verdict.** A report is not a legal buildability opinion, title search, survey, or septic permit, and the buildable area is an estimate from public maps.
 - **Sponsor proofs have edges.** The held and released closings were backfilled into the timeline with `replay:devnet`, not delivered by the Stream (QuickNode backfill needs a paid plan). The ElevenLabs call was recorded after that deal's hold and refund, so it shows as evidence on a deal that had already settled.
 
 ## License

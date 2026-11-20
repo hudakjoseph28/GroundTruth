@@ -30,7 +30,7 @@ describe("RoadmapPage", () => {
 
   it("tags every Next and Later card as planned, and no Now card", () => {
     const html = render();
-    expect(planned.length).toBe(10);
+    expect(planned.length).toBe(9);
     expect(count(html, ROADMAP.planned)).toBe(planned.length);
     expect(count(html, ROADMAP.live)).toBe(cards.length - planned.length);
   });

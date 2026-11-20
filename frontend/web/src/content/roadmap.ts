@@ -64,6 +64,9 @@ export const ROADMAP = {
 const heldDeal = dealPath(stagedDeal.id);
 const clearedDeal = dealPath(stagedReleasedDeal.id);
 const liveDeal = dealPath(stagedLiveDeal.id);
+// Funded by Solana Pay (escrow/demo-results/devnet-solana-pay-fund-v1.md),
+// and one of the rehearsal deals that show reviewer credentials.
+const payRehearsalDeal = dealPath("staged-devnet-deal-pay-rehearsal");
 
 export const STAGES: readonly RoadmapStage[] = [
   {
@@ -110,7 +113,7 @@ export const STAGES: readonly RoadmapStage[] = [
         title: "Reviewer portal, documents, and Verify on-chain",
         body: [
           "Title, survey and septic reviewers approve or hold from their wallet, on a phone too through the Phantom app's browser.",
-          "Each document's hash is written on-chain, and Verify on-chain reads the escrow account straight from Solana devnet to check the page against it.",
+          "A reviewer can attach a document whose SHA-256 is written on-chain beside their approval, and Verify on-chain reads the escrow account straight from Solana devnet to check the page against it.",
         ],
         links: [
           { label: "Reviewer portal", to: "/review" },
@@ -138,6 +141,24 @@ export const STAGES: readonly RoadmapStage[] = [
         ],
         links: [{ label: "Ask the Franklin parcel", to: sampleParcelPath() }],
       },
+      {
+        id: "qr",
+        title: "Fund with Solana Pay",
+        body: [
+          "While a deal is a draft, its page shows a Solana Pay QR code that opens the escrow's fund transaction in the buyer's wallet.",
+          "The amount and the escrow address come filled in, and only the buyer can sign it.",
+        ],
+        links: [{ label: "The deal funded by Solana Pay", to: payRehearsalDeal }],
+      },
+      {
+        id: "credential",
+        title: "Staged reviewer credentials on Solana",
+        body: [
+          "Each staged reviewer wallet holds a devnet credential on the Solana Attestation Service, and rehearsal deal pages read it from the chain.",
+          "They are test credentials the team issued to its own wallets, and the escrow program does not check them yet.",
+        ],
+        links: [{ label: "A deal that shows credentials", to: payRehearsalDeal }],
+      },
     ],
   },
   {
@@ -159,22 +180,14 @@ export const STAGES: readonly RoadmapStage[] = [
         title: "Mainnet with real USDC and sponsored fees",
         body: [
           "Move the escrow from devnet test funds to Solana mainnet and real USDC.",
-          "Network fees would be sponsored, so a reviewer never needs to hold SOL to sign.",
-        ],
-      },
-      {
-        id: "qr",
-        title: "Pay with Solana Pay",
-        body: [
-          "The buyer funds the escrow by scanning a QR code with their wallet.",
-          "The amount and the escrow address would come filled in, so nothing has to be typed or copied.",
+          "Network fees would be sponsored with the fee-payer flow already built for the reviewer portal, so a reviewer never needs to hold SOL to sign.",
         ],
       },
       {
         id: "credential",
         title: "Verified reviewer credentials",
         body: [
-          "Licensed title, survey and septic professionals would carry a credential that can be checked on-chain.",
+          "Licensed title, survey and septic professionals would carry a credential from a real issuer, such as a licensing board or a title underwriter.",
           "The escrow would count an approval only from a wallet that holds the right one.",
         ],
       },
