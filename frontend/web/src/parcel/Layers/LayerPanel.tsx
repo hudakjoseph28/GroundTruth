@@ -4,20 +4,35 @@ import {
   type MapLayer,
   type ParcelLayers,
 } from "@groundtruth/shared";
+import { BUILDABLE } from "../../content/buildable";
 import { EXAMPLE } from "../../content/example";
-import { LAYERS, layerStatus, type LayerToggleId } from "../../content/layers";
+import {
+  LAYERS,
+  layerStatus,
+  percent,
+  type LayerToggleId,
+} from "../../content/layers";
 import { ELEVATION } from "../../content/parcel";
 import { useIsExample } from "../../example/ExampleContext";
+import { acres } from "../BuildableArea/BuildableAreaCard";
+import type { BuildableAreaEstimate } from "../BuildableArea/estimate";
 import { LAYER_COLORS } from "./paintLayers";
 import {
   ELEVATION_GRADIENT,
   type ElevationAnalysis,
 } from "../Elevation/elevation";
 
-const TERRAIN = new Set<LayerToggleId>(["boundary", "elevation", "slope"]);
+/** Toggles drawn in the browser (boundary, estimate, height grid), not API layers: no source status, no retry. */
+const LOCAL = new Set<LayerToggleId>([
+  "boundary",
+  "buildableArea",
+  "elevation",
+  "slope",
+]);
 
 export const LAYER_TOGGLES: readonly LayerToggleId[] = [
   "boundary",
+  "buildableArea",
   "elevation",
   "slope",
   ...MAP_LAYER_IDS,
@@ -26,8 +41,9 @@ export const LAYER_TOGGLES: readonly LayerToggleId[] = [
 /**
  * The toggles on when the land first shows. A parcel opens on the aerial
  * photo: elevation coloring is a toggle, on at the start only where the page
- * asks for it (the walkthrough). Slope shading always starts off. The example
- * parcel starts with every map layer on, so each finding is visible.
+ * asks for it (the walkthrough). Buildable area is a toggle too. Slope shading
+ * always starts off. The example parcel (and so the walkthrough) starts with
+ * every map layer and the Buildable area on, so each finding is visible.
  */
 export function initialLayers(
   example: boolean,
@@ -58,6 +74,7 @@ export function LayerPanel({
   onToggle,
   onToggleAll,
   onRetry,
+  buildable,
   elevation,
 }: {
   /** undefined while loading, null when they could not be loaded. */
@@ -69,15 +86,15 @@ export function LayerPanel({
   /** Turns every layer on, or back to the boundary alone when all are on. */
   onToggleAll: () => void;
   onRetry: () => void;
+  /** undefined while it is worked out, null when it cannot be. */
+  buildable?: BuildableAreaEstimate | null;
   /** The lot's elevation, once the height grid has loaded. */
   elevation?: { analysis: ElevationAnalysis; sourceUrl: string } | null;
 }) {
   const example = useIsExample();
   const shown = LAYER_TOGGLES.filter((id) => enabled.has(id));
   const layerOf = (id: LayerToggleId): MapLayer | undefined =>
-    TERRAIN.has(id)
-      ? undefined
-      : layers?.layers.find((layer) => layer.id === id);
+    LOCAL.has(id) ? undefined : layers?.layers.find((layer) => layer.id === id);
 
   return (
     <div className="layer-panel">
@@ -120,17 +137,26 @@ export function LayerPanel({
                 ? example
                   ? EXAMPLE.boundary
                   : LAYERS.boundary
-                : id === "elevation"
-                  ? LAYERS.elevation(elevation?.analysis.contourFeet ?? 2)
-                  : id === "slope"
-                    ? LAYERS.slope(elevation?.analysis.steepShare ?? null)
-                    : layers === undefined
-                      ? LAYERS.loading
-                      : layers === null
-                        ? LAYERS.failed
-                        : layer
-                          ? layerStatus(layer)
-                          : LAYERS.unavailable;
+                : id === "buildableArea"
+                  ? buildable === undefined
+                    ? LAYERS.loading
+                    : buildable === null
+                      ? BUILDABLE.layerMissing
+                      : `${BUILDABLE.layer(
+                          acres(buildable.buildableAcres),
+                          percent(buildable.buildableShare),
+                        )} ${BUILDABLE.disclaimer}`
+                  : id === "elevation"
+                    ? LAYERS.elevation(elevation?.analysis.contourFeet ?? 2)
+                    : id === "slope"
+                      ? LAYERS.slope(elevation?.analysis.steepShare ?? null)
+                      : layers === undefined
+                        ? LAYERS.loading
+                        : layers === null
+                          ? LAYERS.failed
+                          : layer
+                            ? layerStatus(layer)
+                            : LAYERS.unavailable;
             return (
               <li
                 key={id}
@@ -187,7 +213,7 @@ export function LayerPanel({
                     layer?.shapes.some((shape) => shape.tone === "light") && (
                       <p className="layer-note">{LAYERS.floodLight}</p>
                     )}
-                  {!TERRAIN.has(id) &&
+                  {!LOCAL.has(id) &&
                     (layers === null || layer?.status === "unavailable") && (
                       <button
                         type="button"

@@ -8,10 +8,15 @@ import {
   signApprovalInstruction,
   type Deal,
   type EscrowInstructionSpec,
+  type FeeSponsorStatus,
   type HoldReasonCode,
   type ReviewerRole,
+  type SponsoredTransactionRequest,
+  showsReviewerCredentials,
 } from "@groundtruth/shared";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { CredentialBadge } from "../credential/CredentialBadge";
+import { useReviewerCredentials } from "../credential/useReviewerCredentials";
 import { HOLD_REASONS, ROLE_LABELS, STATE_LABELS } from "../content/deal";
 import { APPROVE_WITH_DOCUMENT, DOCUMENT_TYPE_LABELS, PARCEL_CHECK } from "../content/documents";
 import { DealDocuments } from "../documents/DealDocuments";
@@ -29,8 +34,10 @@ import {
   explorerTx,
   sendAndConfirm,
   vaultFor,
+  type FeePaidBy,
   type SendPhase,
 } from "./escrowTx";
+import { sponsorFor, useFeeSponsor } from "./feeSponsor";
 import { useReviewerDeals } from "./useReviewerDeals";
 import { WalletBar } from "./WalletBar";
 import { WalletRoot } from "./WalletRoot";
@@ -52,6 +59,7 @@ function Portal() {
   const { publicKey } = useWallet();
   const me = publicKey?.toBase58() ?? null;
   const { state, refresh } = useReviewerDeals(me);
+  const feeSponsor = useFeeSponsor();
 
   return (
     <div className="review">
@@ -81,7 +89,7 @@ function Portal() {
           <ul className="review-deals">
             {state.deals.map((deal) => (
               <li key={deal.id}>
-                <DealCard deal={deal} me={me} onDone={refresh} />
+                <DealCard deal={deal} me={me} onDone={refresh} feeSponsor={feeSponsor} />
               </li>
             ))}
           </ul>
@@ -92,11 +100,17 @@ function Portal() {
 
 type ActionKind = "approve" | "hold" | "release";
 
-type ActionState =
+type ActionState = (
   | { phase: "idle" }
   | { phase: SendPhase; kind: ActionKind; signature?: string; attempt: number; of: number }
   | { phase: "confirmed"; kind: ActionKind; signature: string }
-  | { phase: "failed"; kind: ActionKind; message: string; signature?: string };
+  | { phase: "failed"; kind: ActionKind; message: string; signature?: string }
+) & {
+  /** Who pays the fee for the transaction in flight; set once known. */
+  paidBy?: FeePaidBy;
+  /** True when GroundTruth was asked to cover the fee for this action. */
+  offered?: boolean;
+};
 
 /** Why `role` cannot approve now, or null when it can. */
 function approveBlocker(deal: Deal, role: ReviewerRole, me: string): string | null {
@@ -148,12 +162,24 @@ function withConfirmed(deal: Deal, mine: Confirmed, me: string): Deal {
   return { ...deal, reviewers };
 }
 
-function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDone: () => void }) {
+function DealCard({
+  deal: fromApi,
+  me,
+  onDone,
+  feeSponsor,
+}: {
+  deal: Deal;
+  me: string;
+  onDone: () => void;
+  feeSponsor: FeeSponsorStatus;
+}) {
   const { connection } = useConnection();
   const { publicKey, signTransaction } = useWallet();
   const [mine, setMine] = useState<Confirmed>({ approved: [] });
   const deal = useMemo(() => withConfirmed(fromApi, mine, me), [fromApi, mine, me]);
   const view = viewDeal(deal);
+  // Staged SAS credentials, read from devnet in the browser: rehearsal deals only.
+  const credentials = useReviewerCredentials(deal.reviewers, showsReviewerCredentials(deal.id));
   const myRoles = deal.reviewers.filter((r) => r.wallet === me).map((r) => r.role);
   const [action, setAction] = useState<ActionState>({ phase: "idle" });
   const [reason, setReason] = useState<HoldReasonCode>("SELLER_IDENTITY_DISPUTED");
@@ -181,12 +207,16 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
       kind: ActionKind,
       spec: EscrowInstructionSpec,
       onConfirmed: () => void,
-      extra: EscrowInstructionSpec[] = [],
+      extra: EscrowInstructionSpec[],
+      sponsorBody: SponsoredTransactionRequest,
     ) => {
-      if (!publicKey || !signTransaction) return;
+      if (!publicKey || !signTransaction || !dealPda) return;
       abort.current?.abort();
       const controller = new AbortController();
       abort.current = controller;
+      const sponsor = sponsorFor(feeSponsor, fromApi.id, dealPda, sponsorBody);
+      const offered = Boolean(sponsor);
+      let paidBy: FeePaidBy | undefined;
       try {
         const signature = await sendAndConfirm({
           connection,
@@ -194,13 +224,19 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
           spec,
           extra,
           signTransaction,
+          sponsor,
           signal: controller.signal,
+          onFeePaidBy: (who) => {
+            paidBy = who;
+          },
           onProgress: (progress) => {
-            if (!controller.signal.aborted) setAction({ ...progress, kind });
+            if (!controller.signal.aborted) {
+              setAction({ ...progress, kind, paidBy, offered });
+            }
           },
         });
         if (!controller.signal.aborted) {
-          setAction({ phase: "confirmed", kind, signature });
+          setAction({ phase: "confirmed", kind, signature, paidBy, offered });
           onConfirmed();
           onDone();
         }
@@ -211,11 +247,13 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
             kind,
             message: explainFailure(error),
             signature: error instanceof SentActionError ? error.signature : undefined,
+            paidBy,
+            offered,
           });
         }
       }
     },
-    [connection, publicKey, signTransaction, onDone],
+    [connection, publicKey, signTransaction, onDone, feeSponsor, fromApi.id, dealPda],
   );
 
   if (!dealPda) return null;
@@ -244,6 +282,7 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
             <span className="review-signoff-status">
               {r.status === "signed" ? "Signed" : r.status === "held" ? "Hold placed" : r.status === "waiting" ? "Waiting" : "Not signed"}
             </span>
+            {credentials && <CredentialBadge reads={credentials} wallet={r.wallet} role={r.role} />}
           </li>
         ))}
       </ul>
@@ -253,6 +292,12 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
         </p>
       )}
 
+      {open && feeSponsor.enabled && (
+        <p className="review-fee" title={REVIEW.fee.sponsoredNote}>
+          {REVIEW.fee.sponsored}
+          <small>{REVIEW.fee.sponsoredNote}</small>
+        </p>
+      )}
       {mismatched.length > 0 && (
         <div className="review-parcel-warning" role="alert">
           <p>
@@ -322,6 +367,12 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
                     signApprovalInstruction({ reviewer: me, dealPda, role }),
                     () => setMine((m) => ({ ...m, approved: [...m.approved, role] })),
                     chosen ? [documentMemoInstruction({ signer: me, sha256: chosen.sha256 })] : [],
+                    {
+                      action: "sign_approval",
+                      account: me,
+                      role,
+                      ...(chosen ? { documentSha256: chosen.sha256 } : {}),
+                    },
                   )
                 }
               >
@@ -362,6 +413,8 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
                       "hold",
                       placeHoldInstruction({ reviewer: me, dealPda, role, reasonCode }),
                       () => setMine((m) => ({ ...m, hold: { role, reasonCode } })),
+                      [],
+                      { action: "place_hold", account: me, role, reasonCode },
                     );
                   }}
                 >
@@ -404,6 +457,8 @@ function DealCard({ deal: fromApi, me, onDone }: { deal: Deal; me: string; onDon
                     mint: deal.mint,
                   }),
                   () => setMine((m) => ({ ...m, released: true })),
+                  [],
+                  { action: "release", account: me },
                 )
               }
             >
@@ -455,6 +510,11 @@ function ActionStatus({ action }: { action: ActionState }) {
       aria-live="polite"
     >
       <p>{words}</p>
+      {action.paidBy === "groundtruth" ? (
+        <p className="review-fee-line">{REVIEW.fee.sponsored}</p>
+      ) : action.paidBy === "wallet" && action.offered ? (
+        <p className="review-fee-line">{REVIEW.fee.fellBack}</p>
+      ) : null}
       {signature && (
         <p className="review-sig">
           {REVIEW.status.signature} <code>{short(signature)}</code>{" "}

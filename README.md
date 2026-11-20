@@ -99,7 +99,7 @@ flowchart TB
   A -- "speech in/out, configured agent voice" --> EL
 ```
 
-The browser only ever calls the GroundTruth API and the user's wallet. Provider keys and webhook secrets live on Railway. The API builds unsigned transactions (Solana Pay, Blinks) but **never signs for a buyer, seller, or reviewer**.
+The browser only ever calls the GroundTruth API and the user's wallet. Provider keys and webhook secrets live on Railway. The API builds unsigned transactions (Solana Pay, Blinks) but **never signs for a buyer, seller, or reviewer**. In `/review` it can cover a reviewer's network fee: it signs only as GroundTruth's own devnet fee payer, which is never a deal party, and the reviewer's wallet still signs the approval, hold, or release itself.
 
 **A deal, from search to payout**
 

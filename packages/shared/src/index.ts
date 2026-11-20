@@ -138,6 +138,22 @@ export type {
   HoldReasonCode,
 } from "./reviewerInstructions.js";
 
+export {
+  SPONSORED_ACTIONS,
+  escrowInstructionName,
+  sameInstructions,
+  sponsorRefusal,
+  sponsoredTransactionPath,
+} from "./feeSponsor.js";
+export type {
+  FeeSponsorStatus,
+  SponsorPolicy,
+  SponsoredAction,
+  SponsoredMessageView,
+  SponsoredTransactionRequest,
+  SponsoredTransactionResponse,
+} from "./feeSponsor.js";
+
 export { solanaPayFundPath, solanaPayUrl } from "./solanaPay.js";
 export type {
   SolanaPayError,
@@ -178,5 +194,25 @@ export type {
   SignatureState,
   SignedAttempt,
 } from "./transactionSend.js";
+
+export {
+  AttestationDecodeError,
+  CREDENTIAL_DEAL_IDS,
+  SAS_ACCOUNT_DISCRIMINATOR,
+  SAS_FIELD_TYPE,
+  SAS_INSTRUCTION_DISCRIMINATOR,
+  SAS_MAX_NAME_BYTES,
+  SAS_PROGRAM_ID,
+  SAS_SEEDS,
+  STAGED_REVIEWER_CREDENTIAL,
+  decodeReviewerCredentialData,
+  decodeSasAttestation,
+  encodeCreateAttestationData,
+  encodeCreateCredentialData,
+  encodeCreateSchemaData,
+  encodeReviewerCredentialData,
+  showsReviewerCredentials,
+} from "./attestation.js";
+export type { ReviewerCredentialData, SasAttestation } from "./attestation.js";
 
 export { NO_PUBLIC_SEWER, findsNoPublicSewer } from "./utilities.js";

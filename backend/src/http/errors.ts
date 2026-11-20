@@ -5,17 +5,20 @@ export class HttpError extends Error {
   readonly status: number;
   readonly code: ApiError["error"]["code"];
   readonly retryable: boolean;
+  readonly details: Record<string, string> | undefined;
 
   constructor(
     status: number,
     code: ApiError["error"]["code"],
     message: string,
     retryable: boolean,
+    details?: Record<string, string>,
   ) {
     super(message);
     this.status = status;
     this.code = code;
     this.retryable = retryable;
+    this.details = details;
   }
 }
 
@@ -30,6 +33,7 @@ export function sendApiError(
       message: error.message,
       requestId,
       retryable: error.retryable,
+      ...(error.details ? { details: error.details } : {}),
     },
   };
   res.status(error.status).json(body);

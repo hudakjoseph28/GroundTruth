@@ -167,6 +167,31 @@
   font-size: 0.875rem;
 }
 
+/* Fee sponsorship: GroundTruth's devnet fee payer covers the network fee. */
+.review-fee {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--green) 45%, transparent);
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--green) 8%, transparent);
+  color: var(--green-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.review-fee small {
+  color: var(--text-2);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.review-fee-line {
+  color: var(--green-text);
+  font-size: 0.8125rem;
+}
+
 .review-holdbox,
 .review-release,
 .review-confirm {

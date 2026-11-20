@@ -1,8 +1,12 @@
 import type { MapLayer, MapLayerId } from "@groundtruth/shared";
 
 export type TerrainLayerId = "elevation" | "slope";
-/** A toggle on the land view: the boundary, terrain, or one of the API's map layers. */
-export type LayerToggleId = "boundary" | TerrainLayerId | MapLayerId;
+/** A toggle on the land view: the boundary, the Buildable area estimate, terrain, or one of the API's map layers. */
+export type LayerToggleId =
+  | "boundary"
+  | "buildableArea"
+  | TerrainLayerId
+  | MapLayerId;
 
 // Words for the map layers on the land view. Each status line says only what
 // the layer's source answered; "unavailable" never reads as "none".
@@ -16,6 +20,7 @@ export const LAYERS = {
     "The map layers could not be loaded. The report's checks below still hold.",
   names: {
     boundary: "Parcel boundary",
+    buildableArea: "Buildable area",
     elevation: "Elevation",
     slope: "Slope",
     flood: "FEMA flood zones",
