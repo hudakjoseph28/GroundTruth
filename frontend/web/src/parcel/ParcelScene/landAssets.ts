@@ -143,7 +143,11 @@ async function decode(
 }
 
 /** Bilinear height, 0..1, at a point in the baked region (u east, v south). */
-export function heightAt(assets: LandAssets, u: number, v: number): number {
+export function heightAt(
+  assets: Pick<LandAssets, "heights" | "heightSize">,
+  u: number,
+  v: number,
+): number {
   const size = assets.heightSize;
   const x = Math.min(size - 1, Math.max(0, u * size - 0.5));
   const y = Math.min(size - 1, Math.max(0, v * size - 0.5));
