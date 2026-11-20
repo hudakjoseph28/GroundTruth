@@ -5,7 +5,7 @@ import { LAYERS } from "../../content/layers";
 import { ELEVATION } from "../../content/parcel";
 import { ExampleProvider } from "../../example/ExampleContext";
 import { EXAMPLE_LAYERS } from "../../example/exampleFixture";
-import { LAYER_TOGGLES, LayerPanel } from "./LayerPanel";
+import { initialLayers, LAYER_TOGGLES, LayerPanel } from "./LayerPanel";
 
 const noop = () => {};
 
@@ -68,5 +68,19 @@ describe("LayerPanel", () => {
     expect(html).toContain("No part of the lot reads steeper than 15%");
     // Terrain toggles come from the height grid, so they never offer a retry.
     expect(html).not.toContain(LAYERS.retry);
+  });
+
+  it("opens a parcel on the aerial photo, with elevation as a toggle", () => {
+    expect([...initialLayers(false, false)]).toEqual(["boundary"]);
+    const example = initialLayers(true, false);
+    expect(example.has("elevation")).toBe(false);
+    expect(example.has("slope")).toBe(false);
+    expect(example.has("flood")).toBe(true);
+  });
+
+  it("starts the elevation coloring on only when asked (the walkthrough)", () => {
+    expect(initialLayers(true, true).has("elevation")).toBe(true);
+    expect(initialLayers(true, true).has("slope")).toBe(false);
+    expect(initialLayers(false, true).has("elevation")).toBe(true);
   });
 });

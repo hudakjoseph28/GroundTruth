@@ -16,7 +16,7 @@ import type { LayerToggleId } from "../../content/layers";
 import { LAND, PARCEL_PAGE } from "../../content/parcel";
 import { getParcelLayers, type LayersOutcome } from "../../data/layerSource";
 import { useIsExample } from "../../example/ExampleContext";
-import { LAYER_TOGGLES, LayerPanel } from "../Layers/LayerPanel";
+import { initialLayers, LAYER_TOGGLES, LayerPanel } from "../Layers/LayerPanel";
 import { paintLayers } from "../Layers/paintLayers";
 import { useParcelLayers } from "../Layers/useParcelLayers";
 import { ExploreMenu } from "../Explore/ExploreMenu";
@@ -63,6 +63,7 @@ export function LandBlock({
   onReady,
   getLayers = getParcelLayers,
   elevationCard = true,
+  elevationOnOpen = false,
 }: {
   parcel: Parcel;
   staged: boolean;
@@ -76,6 +77,8 @@ export function LandBlock({
   getLayers?: (parcelKey: string, signal: AbortSignal) => Promise<LayersOutcome>;
   /** The elevation summary and profile under the land. Off in the walkthrough's fixed layout. */
   elevationCard?: boolean;
+  /** Start with the elevation coloring on. Off by default: the land opens on the aerial photo. */
+  elevationOnOpen?: boolean;
 }) {
   const example = useIsExample();
   const ring = useMemo(() => outerRing(parcel.geometry.geojson), [parcel]);
@@ -89,12 +92,7 @@ export function LandBlock({
   // example). Asked for once the land can be drawn, so each toggle can say at
   // once what its source found.
   const [enabled, setEnabled] = useState<ReadonlySet<LayerToggleId>>(
-    () =>
-      new Set<LayerToggleId>(
-        example
-          ? LAYER_TOGGLES.filter((id) => id !== "slope")
-          : ["boundary", "elevation"],
-      ),
+    () => initialLayers(example, elevationOnOpen),
   );
   const toggleLayer = useCallback((id: LayerToggleId) => {
     setEnabled((current) => {

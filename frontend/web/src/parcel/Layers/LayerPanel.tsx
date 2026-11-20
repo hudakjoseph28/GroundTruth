@@ -23,6 +23,22 @@ export const LAYER_TOGGLES: readonly LayerToggleId[] = [
   ...MAP_LAYER_IDS,
 ];
 
+/**
+ * The toggles on when the land first shows. A parcel opens on the aerial
+ * photo: elevation coloring is a toggle, on at the start only where the page
+ * asks for it (the walkthrough). Slope shading always starts off. The example
+ * parcel starts with every map layer on, so each finding is visible.
+ */
+export function initialLayers(
+  example: boolean,
+  elevationOnOpen: boolean,
+): Set<LayerToggleId> {
+  const base: LayerToggleId[] = example
+    ? LAYER_TOGGLES.filter((id) => id !== "slope" && id !== "elevation")
+    : ["boundary"];
+  return new Set(elevationOnOpen ? [...base, "elevation"] : base);
+}
+
 const date = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", {
     month: "short",

@@ -135,6 +135,7 @@ export function LandScene() {
         onReady={noop}
         getLayers={EXAMPLE_DATA.getLayers}
         elevationCard={false}
+        elevationOnOpen
       />
     </div>
   );
