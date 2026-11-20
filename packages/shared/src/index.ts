@@ -175,4 +175,24 @@ export type {
   SignedAttempt,
 } from "./transactionSend.js";
 
+export {
+  AttestationDecodeError,
+  CREDENTIAL_DEAL_IDS,
+  SAS_ACCOUNT_DISCRIMINATOR,
+  SAS_FIELD_TYPE,
+  SAS_INSTRUCTION_DISCRIMINATOR,
+  SAS_MAX_NAME_BYTES,
+  SAS_PROGRAM_ID,
+  SAS_SEEDS,
+  STAGED_REVIEWER_CREDENTIAL,
+  decodeReviewerCredentialData,
+  decodeSasAttestation,
+  encodeCreateAttestationData,
+  encodeCreateCredentialData,
+  encodeCreateSchemaData,
+  encodeReviewerCredentialData,
+  showsReviewerCredentials,
+} from "./attestation.js";
+export type { ReviewerCredentialData, SasAttestation } from "./attestation.js";
+
 export { NO_PUBLIC_SEWER, findsNoPublicSewer } from "./utilities.js";
