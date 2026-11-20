@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { EXAMPLE } from "../../content/example";
 import { LAYERS } from "../../content/layers";
+import { ELEVATION } from "../../content/parcel";
 import { ExampleProvider } from "../../example/ExampleContext";
 import { EXAMPLE_LAYERS } from "../../example/exampleFixture";
 import { LAYER_TOGGLES, LayerPanel } from "./LayerPanel";
@@ -36,5 +37,36 @@ describe("LayerPanel", () => {
     );
     expect(html).toContain(EXAMPLE.boundary);
     expect(html).not.toContain(LAYERS.boundary);
+  });
+
+  it("labels the elevation legend in feet as map elevation, not a survey", () => {
+    const analysis = {
+      minFeet: 929.4,
+      maxFeet: 940.2,
+      riseFeet: 10.8,
+      averageSlopePercent: 1.7,
+      steepestSlopePercent: 7.9,
+      steepShare: 0,
+      contourFeet: 2,
+      summary: "",
+    };
+    const html = renderToStaticMarkup(
+      <LayerPanel
+        layers={EXAMPLE_LAYERS}
+        enabled={new Set(["elevation", "slope"])}
+        allOn={false}
+        onToggle={noop}
+        onToggleAll={noop}
+        onRetry={noop}
+        elevation={{ analysis, sourceUrl: "https://example.com/terrain" }}
+      />,
+    );
+    expect(html).toContain(LAYERS.elevation(2));
+    expect(html).toContain("929 ft");
+    expect(html).toContain("940 ft");
+    expect(html).toContain(ELEVATION.notSurvey);
+    expect(html).toContain("No part of the lot reads steeper than 15%");
+    // Terrain toggles come from the height grid, so they never offer a retry.
+    expect(html).not.toContain(LAYERS.retry);
   });
 });

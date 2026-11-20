@@ -8,8 +8,10 @@ import type { LandMeta } from "@groundtruth/shared";
 import { regionUV } from "../ParcelScene/landMeta";
 
 /** One colour per layer, far from the boundary's gold and from each other. */
-export const LAYER_COLORS: Record<MapLayerId | "boundary", string> = {
+export const LAYER_COLORS: Record<MapLayerId | "boundary" | "elevation" | "slope", string> = {
   boundary: "#c4a15a",
+  elevation: "#a8963c",
+  slope: "#dc3030",
   flood: "#4d8dff",
   streamSetback: "#b57bff",
   wetlands: "#2fd3b5",

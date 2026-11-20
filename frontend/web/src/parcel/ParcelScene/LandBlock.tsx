@@ -9,7 +9,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import type { MapLayerId, Parcel } from "@groundtruth/shared";
+import { MAP_LAYER_IDS, type MapLayerId, type Parcel } from "@groundtruth/shared";
 import { Segmented } from "../../components/Segmented";
 import { ParcelBoundary } from "../../components/ParcelBoundary";
 import type { LayerToggleId } from "../../content/layers";
@@ -23,6 +23,15 @@ import { ExploreMenu } from "../Explore/ExploreMenu";
 import { GOOGLE_MAPS_KEY } from "../Explore/links";
 import { SceneBoundary } from "../SceneBoundary";
 import type { RenderMode } from "../useRenderMode";
+import { ElevationPanel } from "../Elevation/ElevationPanel";
+import {
+  analyzeElevation,
+  combineOverlays,
+  defaultProfileLine,
+  paintElevationOverlay,
+  paintProfileLine,
+  type ProfileLine,
+} from "../Elevation/elevation";
 import { EXAGGERATION } from "./blockFrame";
 import { FlatLand } from "./FlatLand";
 import { FlatLandView } from "./FlatLandView";
@@ -53,6 +62,7 @@ export function LandBlock({
   revealed,
   onReady,
   getLayers = getParcelLayers,
+  elevationCard = true,
 }: {
   parcel: Parcel;
   staged: boolean;
@@ -64,6 +74,8 @@ export function LandBlock({
   onReady: () => void;
   /** Where the map layers come from: the API, or the example's fixture. */
   getLayers?: (parcelKey: string, signal: AbortSignal) => Promise<LayersOutcome>;
+  /** The elevation summary and profile under the land. Off in the walkthrough's fixed layout. */
+  elevationCard?: boolean;
 }) {
   const example = useIsExample();
   const ring = useMemo(() => outerRing(parcel.geometry.geojson), [parcel]);
@@ -77,7 +89,12 @@ export function LandBlock({
   // example). Asked for once the land can be drawn, so each toggle can say at
   // once what its source found.
   const [enabled, setEnabled] = useState<ReadonlySet<LayerToggleId>>(
-    () => new Set<LayerToggleId>(example ? LAYER_TOGGLES : ["boundary"]),
+    () =>
+      new Set<LayerToggleId>(
+        example
+          ? LAYER_TOGGLES.filter((id) => id !== "slope")
+          : ["boundary", "elevation"],
+      ),
   );
   const toggleLayer = useCallback((id: LayerToggleId) => {
     setEnabled((current) => {
@@ -92,9 +109,23 @@ export function LandBlock({
     setEnabled(allOn ? new Set<LayerToggleId>(["boundary"]) : new Set(LAYER_TOGGLES));
   }, [allOn]);
   const { layers, wetlandsImage, retry: retryLayers } = useParcelLayers(parcel.key, drawable, getLayers);
-  const overlay = useMemo(() => {
+  const analysis = useMemo(
+    () => (assets ? analyzeElevation(assets, ring) : null),
+    [assets, ring],
+  );
+  const automaticLine = useMemo(
+    () => (assets ? defaultProfileLine(assets, ring) : null),
+    [assets, ring],
+  );
+  const [chosenLine, setChosenLine] = useState<ProfileLine | null>(null);
+  const profileLine = chosenLine ?? automaticLine;
+  const mapOverlay = useMemo(() => {
     if (!assets || !layers) return null;
-    const on = new Set([...enabled].filter((id): id is MapLayerId => id !== "boundary"));
+    const on = new Set(
+      [...enabled].filter((id): id is MapLayerId =>
+        (MAP_LAYER_IDS as readonly string[]).includes(id),
+      ),
+    );
     return paintLayers({
       meta: assets.meta,
       width: assets.imagery.naturalWidth,
@@ -106,6 +137,33 @@ export function LandBlock({
       lot: ring,
     });
   }, [assets, layers, enabled, wetlandsImage, example, ring]);
+  const elevationOn = enabled.has("elevation");
+  const slopeOn = enabled.has("slope");
+  const terrainOverlay = useMemo(() => {
+    if (!assets || !analysis) return null;
+    return paintElevationOverlay({
+      assets,
+      boundary: ring,
+      width: assets.imagery.naturalWidth,
+      height: assets.imagery.naturalHeight,
+      elevation: elevationOn,
+      slope: slopeOn,
+      analysis,
+    });
+  }, [assets, ring, elevationOn, slopeOn, analysis]);
+  // The profile's line shows with the elevation colors, where it reads as a cut.
+  const profileOverlay = useMemo(() => {
+    if (!assets || !profileLine || !elevationOn) return null;
+    return paintProfileLine(assets.imagery.naturalWidth, assets.imagery.naturalHeight, profileLine);
+  }, [assets, profileLine, elevationOn]);
+  const overlay = useMemo(() => {
+    if (!assets) return null;
+    return combineOverlays(
+      assets.imagery.naturalWidth,
+      assets.imagery.naturalHeight,
+      [terrainOverlay, mapOverlay, profileOverlay],
+    );
+  }, [assets, terrainOverlay, mapOverlay, profileOverlay]);
   const boundary = enabled.has("boundary");
   // The flat picture is SVG, so it takes the layers as an image URL. Encoded
   // only when the flat picture is showing; the 3D block reads the canvas.
@@ -315,6 +373,15 @@ export function LandBlock({
           </div>
         </div>
       </div>
+      {elevationCard && analysis && profileLine && (
+        <ElevationPanel
+          assets={assets}
+          boundary={ring}
+          analysis={analysis}
+          line={profileLine}
+          onLineChange={setChosenLine}
+        />
+      )}
       <LayerPanel
         layers={layers}
         enabled={enabled}
@@ -322,6 +389,14 @@ export function LandBlock({
         onToggle={toggleLayer}
         onToggleAll={toggleAll}
         onRetry={retryLayers}
+        elevation={
+          analysis
+            ? {
+                analysis,
+                sourceUrl: meta.elevation.sourceUrl,
+              }
+            : null
+        }
       />
       <figcaption className="land-caption">
         <div className="land-credit">
