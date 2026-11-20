@@ -39,6 +39,11 @@ import type { LandAssets } from "./landAssets";
 import type { Turn } from "./LandBlockScene";
 import { outerRing } from "./landMeta";
 import { useLandView } from "./useLandView";
+import {
+  estimateBuildableArea,
+  type BinaryMask,
+  type BuildableAreaEstimate,
+} from "../BuildableArea/estimate";
 
 const LandBlockScene = lazy(() =>
   import("./LandBlockScene").then((module) => ({ default: module.LandBlockScene })),
@@ -64,6 +69,7 @@ export function LandBlock({
   getLayers = getParcelLayers,
   elevationCard = true,
   elevationOnOpen = false,
+  onBuildableArea,
 }: {
   parcel: Parcel;
   staged: boolean;
@@ -79,6 +85,8 @@ export function LandBlock({
   elevationCard?: boolean;
   /** Start with the elevation coloring on. Off by default: the land opens on the aerial photo. */
   elevationOnOpen?: boolean;
+  /** Hears the Buildable area estimate: null until it can be worked out. */
+  onBuildableArea?: (estimate: BuildableAreaEstimate | null) => void;
 }) {
   const example = useIsExample();
   const ring = useMemo(() => outerRing(parcel.geometry.geojson), [parcel]);
@@ -88,9 +96,10 @@ export function LandBlock({
   const show3d = !loading && drawable && view === "3d" && !threeDisabled;
   const show2d = !loading && drawable && !show3d;
 
-  // Map layers: off by default except the boundary (all of them on the
-  // example). Asked for once the land can be drawn, so each toggle can say at
-  // once what its source found.
+  // Layers: only the boundary at first, so the lot opens on the aerial photo
+  // (the example adds every map layer and the Buildable area; see
+  // initialLayers). Asked for once the land can be drawn, so each toggle can
+  // say at once what its source found.
   const [enabled, setEnabled] = useState<ReadonlySet<LayerToggleId>>(
     () => initialLayers(example, elevationOnOpen),
   );
@@ -107,6 +116,14 @@ export function LandBlock({
     setEnabled(allOn ? new Set<LayerToggleId>(["boundary"]) : new Set(LAYER_TOGGLES));
   }, [allOn]);
   const { layers, wetlandsImage, retry: retryLayers } = useParcelLayers(parcel.key, drawable, getLayers);
+  // The estimate needs the layers and the height map; undefined while either loads.
+  const buildable = useMemo(() => {
+    if (assets === null || ring.length < 3 || layers === null) return null;
+    if (assets === undefined || layers === undefined) return undefined;
+    const wetlandsMask = imageMask(wetlandsImage);
+    return estimateBuildableArea({ parcel, layers, assets, wetlandsMask });
+  }, [assets, layers, wetlandsImage, parcel, ring]);
+  useEffect(() => onBuildableArea?.(buildable ?? null), [buildable, onBuildableArea]);
   const analysis = useMemo(
     () => (assets ? analyzeElevation(assets, ring) : null),
     [assets, ring],
@@ -131,10 +148,11 @@ export function LandBlock({
       layers,
       enabled: on,
       wetlandsImage,
+      buildable: enabled.has("buildableArea") ? buildable : null,
       labels: example,
       lot: ring,
     });
-  }, [assets, layers, enabled, wetlandsImage, example, ring]);
+  }, [assets, layers, enabled, wetlandsImage, buildable, example, ring]);
   const elevationOn = enabled.has("elevation");
   const slopeOn = enabled.has("slope");
   const terrainOverlay = useMemo(() => {
@@ -387,6 +405,7 @@ export function LandBlock({
         onToggle={toggleLayer}
         onToggleAll={toggleAll}
         onRetry={retryLayers}
+        buildable={buildable}
         elevation={
           analysis
             ? {
@@ -413,6 +432,23 @@ export function LandBlock({
       {areaView}
     </figure>
   );
+}
+
+/** NWI's drawing of the view as a mask: anything it painted is mapped. */
+function imageMask(image: HTMLImageElement | null): BinaryMask | null {
+  if (!image || image.naturalWidth < 1 || image.naturalHeight < 1) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return null;
+  context.drawImage(image, 0, 0);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const data = new Uint8Array(canvas.width * canvas.height);
+  for (let index = 0; index < data.length; index += 1) {
+    data[index] = pixels[index * 4 + 3]! > 24 ? 1 : 0;
+  }
+  return { width: canvas.width, height: canvas.height, data };
 }
 
 function FlatLandReady({ onReady, children }: { onReady: () => void; children: ReactNode }) {

@@ -80,8 +80,11 @@ export function ringInRegion(
   return ring.map(([lng = 0, lat = 0]) => regionUV(assets.meta.bbox, lng, lat));
 }
 
+/** The parts of the land assets the height and slope readings use. */
+export type HeightGrid = Pick<LandAssets, "meta" | "heights" | "heightSize">;
+
 export function elevationFeetAt(
-  assets: LandAssets,
+  assets: HeightGrid,
   point: ProfilePoint,
 ): number {
   const { minMeters, maxMeters } = assets.meta.elevation;
@@ -113,8 +116,12 @@ function inside(point: ProfilePoint, ring: readonly ProfilePoint[]): boolean {
  */
 const SLOPE_HALF_BASELINE_METERS = 4;
 
+/**
+ * Percent grade at one point of the region. The Slope layer's shading and the
+ * Buildable area's "steeper than 15%" deduction both call this, so they agree.
+ */
 export function slopePercentAt(
-  assets: LandAssets,
+  assets: HeightGrid,
   point: ProfilePoint,
 ): number {
   const { width, depth } = assets.meta.groundMeters;

@@ -36,6 +36,8 @@ import { LandBlock } from "../parcel/ParcelScene/LandBlock";
 import { useLandAssets } from "../parcel/ParcelScene/useLandAssets";
 import { SceneBoundary } from "../parcel/SceneBoundary";
 import { useRenderMode } from "../parcel/useRenderMode";
+import { BuildableAreaCard } from "../parcel/BuildableArea/BuildableAreaCard";
+import type { BuildableAreaEstimate } from "../parcel/BuildableArea/estimate";
 import { stagedReleasedDeal } from "@groundtruth/shared";
 import {
   fileSize,
@@ -123,6 +125,7 @@ export function FindScene() {
 export function LandScene() {
   const { assets, building } = useLandAssets(EXAMPLE_PARCEL);
   const mode = useRenderMode();
+  const [buildable, setBuildable] = useState<BuildableAreaEstimate | null>(null);
   return (
     <div className="walk-land">
       <LandBlock
@@ -134,9 +137,11 @@ export function LandScene() {
         revealed
         onReady={noop}
         getLayers={EXAMPLE_DATA.getLayers}
+        onBuildableArea={setBuildable}
         elevationCard={false}
         elevationOnOpen
       />
+      {buildable && <BuildableAreaCard estimate={buildable} compact />}
     </div>
   );
 }

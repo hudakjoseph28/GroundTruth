@@ -21,6 +21,7 @@ import {
 import { ExampleTag, useIsExample } from "../example/ExampleContext";
 import { usePageTitle } from "../layout/usePageTitle";
 import { BlockTransition } from "../parcel/BlockTransition/BlockTransition";
+import type { BuildableAreaEstimate } from "../parcel/BuildableArea/estimate";
 import { readBlockOrigin } from "../parcel/BlockTransition/origin";
 import { Ledger } from "../parcel/Ledger/Ledger";
 import { LandBlock } from "../parcel/ParcelScene/LandBlock";
@@ -304,6 +305,7 @@ export function ParcelView({
   const location = useLocation();
   const [origin] = useState(() => readBlockOrigin(location.state));
   const [landReady, setLandReady] = useState(false);
+  const [buildable, setBuildable] = useState<BuildableAreaEstimate | null>(null);
   const markLandReady = useCallback(() => setLandReady(true), []);
 
   // The transition covers the page until the land is drawn, then hands off to it.
@@ -381,6 +383,7 @@ export function ParcelView({
             revealed={revealed}
             onReady={markLandReady}
             getLayers={data.getLayers}
+            onBuildableArea={setBuildable}
           />
         </div>
         {reportOutcome?.status === "found" && dealOutcomes !== null ? (
@@ -391,6 +394,7 @@ export function ParcelView({
             revealed={revealed}
             animated={mode !== "reduced"}
             bottomLine={data.bottomLine}
+            buildable={buildable}
             // Saving a made-up report on devnet would record nothing true.
             after={example ? undefined : <ReportSeal report={reportOutcome.report} />}
           />
