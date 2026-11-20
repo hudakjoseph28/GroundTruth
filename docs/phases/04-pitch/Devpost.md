@@ -142,6 +142,7 @@ This section and the site's roadmap page (`/roadmap`) say the same thing; change
 - **Solana escrow: holds block payouts, approvals release.** A reviewer's hold makes the payout fail on-chain, and the test USDC stays in the vault. Once every required reviewer approves, the program releases the exact USDC amount the deal was opened with.
 - **Reviewer portal, documents, and Verify on-chain.** Title, survey and septic reviewers approve or hold from their wallet, on a phone too through the Phantom app's browser. Each document's hash is written on-chain, and Verify on-chain reads the escrow account straight from Solana devnet to check the page against it.
 - **Live updates and an owner callback.** QuickNode Streams sends each confirmed escrow transaction to the backend, and the deal's timeline updates without a reload. An ElevenLabs voice agent's call to the owner on record is saved on the held deal's timeline as evidence, never as an approval.
+- **Ask this lot.** Ask a question in plain English or by microphone and get an answer drawn only from that parcel report's checks and sources. Every answer cites its check and record, and an uncovered question says I don't know and names the responsible party.
 
 Still open in the live build:
 
@@ -170,7 +171,6 @@ These are the measures from [Problem.md](../../context/Problem.md#proof-pilot-an
 - **Deed recording handoff.** After the escrow releases, the deed would be handed to the county's e-recording system. The recording receipt would join the deal's timeline beside the payout.
 - **Seller identity verification.** A trusted identity partner would confirm the seller is the owner on record. It would be a step inside the closing flow, finished before any reviewer can approve.
 - **Milestone payments and deadlines.** A deal could be split into staged payments, each with its own deadline. If a review never arrives in time, the buyer's money would be refunded automatically.
-- **Ask this lot.** Ask a question in plain English and get an answer drawn only from the report's sources. Every answer would cite its record, and say plainly when the records don't answer the question.
 - **Saved lots with alerts.** Save a lot and get an alert when its public records change, such as a new flood map. Each alert would link to the source that changed.
 
 ## Technologies used

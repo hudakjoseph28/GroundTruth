@@ -10,6 +10,7 @@
 
 - OGRIP adapter and parcel/report routes under `backend/src` using the v1 shared schemas.
 - Search, result list, parcel map, evidence stack, and all loading/empty/unknown/error states under `frontend/web/src`.
+- “Ask this lot” on each real parcel: typed questions cite the report checks and sources used; uncovered questions name the report's responsible party.
 - `golden-parcel.json` and `second-county-parcel.json` in `packages/shared/src/fixtures`, populated only after manual source verification.
 - A coverage note recording the two tested counties, exact parcel keys, source URLs, retrieval time, and which evidence adapters returned usable facts.
 
@@ -40,6 +41,7 @@ What was tested, where each check returns evidence, sources with retrieval times
 1. Search returns mapped parcels from at least two Ohio counties, and each boundary shows where the geometry came from and when it was checked.
 2. On the sample parcel, the biggest unresolved item has a status, a dated source or an explicit gap, and a concrete next action.
 3. With the local zoning source unavailable, the report still shows the parcel and the supported findings, and explains what's needed to resolve zoning.
+4. Three covered questions cite their check and public source. The refusal set receives no invented fact, includes “I don't know,” and names the report's responsible party.
 
 Run and report:
 

@@ -14,6 +14,7 @@ GroundTruth does four things this week:
 2. Shows what an authoritative record supports, what is still unknown, who can resolve it, and the source date.
 3. Holds test USDC in a Solana devnet program whose bound reviewers can approve or hold a staged closing.
 4. Shows a rejected payout and a successful payout with balances and Explorer receipts.
+5. Answers typed or spoken parcel questions only from that parcel report, with check-and-source citations and explicit gaps.
 
 GroundTruth does **not** issue a legal buildability opinion, replace a survey or title search, verify a real person's identity, transfer a deed, custody production funds, or promise deep record coverage for all 88 Ohio counties. Those claims would be dishonest and would expand the build past the demo.
 
@@ -28,6 +29,7 @@ flowchart LR
     API --> Parcel["OGRIP + FEMA + verified local sources"]
     API --> DB["PostgreSQL · reports, evidence, timeline cache"]
     API --> Voice["ElevenLabs · staged owner callback"]
+    API --> Model["OpenAI · report-check selection"]
     API --> RPC["Solana devnet RPC"]
 
     Web -->|"wallet-signed transaction"| Program["Anchor escrow program"]
@@ -50,6 +52,7 @@ The browser owns presentation and user signatures. The API owns provider adapter
 | Who may approve or hold? | Reviewer wallets bound when the deal is initialized | Deal row for display | The program rejects any unbound signer. |
 | Is the deal funded, held, released, or refunded? | Confirmed Solana account and transaction state | Timeline projection in PostgreSQL | Chain state wins after disagreement or restart. |
 | What happened in the owner call? | Verified ElevenLabs post-call webhook | Private evidence row | Store the minimum needed for the demo; a human reviewer decides the effect. |
+| What answers a parcel question? | The exact `ParcelReport` loaded by the API | No conversation or answer is stored | The model may select only eligible checks. The API composes prose from those checks and cites their sources; an uncovered question stays unknown. |
 
 ## Parcel path
 
@@ -136,6 +139,7 @@ flowchart TB
 - Return webhook success only after the event is durably queued or written. Reprocessing the same delivery must be harmless.
 - A provider timeout becomes `unknown` with a next action. A chain/RPC timeout becomes `pending confirmation`, never `released` or `held`.
 - The model may rewrite supplied evidence into plain English. It may not browse independently, invent a source, assign a legal status, or authorize money movement.
+- Ask this lot uses the stricter rule: the model emits only structured check identifiers. It cannot author buyer-facing facts. Questions and recordings are processed for the response and are not stored by GroundTruth.
 - Test funds, staged roles, illustrative globe traffic, and incomplete coverage are labeled in the interface and video.
 
 ## Architecture exit check

@@ -21,6 +21,7 @@ Re-probed signed out for the README rewrite. The audit below is kept as written;
 - **H10 is resolved.** A fresh live report for Franklin parcel `230-001377` includes the `environmental` (wetlands and stream setbacks) and `access` checks, along with zoning, flood, and septic.
 - **H4 is partly done.** Rehearsal v3 exists (5 test USDC; see [Escrow](../01-escrow/Escrow.md)).
 - **Still open:** B3 (the README's demo video link is the placeholder `VIDEO_LINK_HERE`), B4, B5, H1 (second-device measurement), and the items not re-checked here.
+- **Ask this lot needs two Railway variables (Satya).** After it deploys, set `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`, default `gpt-4o-mini`) and `ELEVENLABS_API_KEY` on the API service; the voice also needs `ELEVENLABS_AGENT_ID`, the owner-callback agent (confirm it is set; this PR did not read Railway). Until then the parcel page hides the card, and without the ElevenLabs key it hides only the microphone. Check: on `/parcels/ohio%3A39049%3A230-000918`, "What flood zone is shown?" cites the FEMA flood check, and "How much are the annual property taxes?" says "I don't know from the report".
 
 ## Where we stand
 

@@ -15,8 +15,29 @@ describe("readServerEnv", () => {
       accessTimeoutMs: 6000,
       wetlandsTimeoutMs: 10000,
       streamBuffersTimeoutMs: 6000,
+      elevenLabsWebhookSecret: undefined,
+      elevenLabsAgentId: undefined,
+      elevenLabsApiKey: undefined,
+      openAiApiKey: undefined,
+      openAiModel: "gpt-4o-mini",
+      quicknodeStreamToken: undefined,
+      twilio: undefined,
       solanaRpcUrl: "https://api.devnet.solana.com",
     });
+  });
+
+  it("reads the server-only Ask this lot settings", () => {
+    const env = readServerEnv({
+      DATABASE_URL,
+      OPENAI_API_KEY: " openai-test ",
+      OPENAI_MODEL: "gpt-test",
+      ELEVENLABS_API_KEY: " eleven-test ",
+      ELEVENLABS_AGENT_ID: " agent-test ",
+    });
+    expect(env.openAiApiKey).toBe("openai-test");
+    expect(env.openAiModel).toBe("gpt-test");
+    expect(env.elevenLabsApiKey).toBe("eleven-test");
+    expect(env.elevenLabsAgentId).toBe("agent-test");
   });
 
   it("reads SOLANA_RPC_URL (Blink and Solana Pay) and rejects a non-URL", () => {

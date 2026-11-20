@@ -51,6 +51,20 @@ export function postJson(
   });
 }
 
+/** One binary POST (used for a recorded voice question). */
+export function postBinary(
+  path: string,
+  body: Blob,
+  signal?: AbortSignal,
+): Promise<ApiResponse> {
+  return call(path, {
+    method: "POST",
+    signal,
+    headers: { accept: "application/json", "content-type": body.type },
+    body,
+  });
+}
+
 async function call(path: string, init: RequestInit): Promise<ApiResponse> {
   const signal = init.signal;
   let response: Response;

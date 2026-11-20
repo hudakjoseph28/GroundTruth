@@ -10,10 +10,10 @@ These are the current owners. Update this table and the phase file before transf
 
 | Owner | Owns | Folder |
 | --- | --- | --- |
-| Joey Hudak | Buyer UI / responsive web. Target: ship the core screens in under 3 days, then float to backend and escrow integration. | `frontend/web` |
+| Joey Hudak | Buyer UI / responsive web, including the Ask this lot chat and microphone experience. | `frontend/web` |
 | Gagan Karnati | Parcel evidence and data: Ohio OGRIP parcels, FEMA flood, USDA SSURGO soils/septic screening, report pipeline. Originated the idea. | `backend` (report pipeline) |
 | Kadhir | Solana escrow: Anchor program, USDC vault, hold, release, refund | `escrow` |
-| Satya | Backend API, QuickNode Streams, ElevenLabs, deployment | `backend`, deployment |
+| Satya | Backend API, QuickNode Streams, ElevenLabs, Ask this lot grounding/rate limits, deployment | `backend`, deployment |
 
 ## Read before you work
 

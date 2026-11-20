@@ -25,6 +25,8 @@ pnpm --filter @groundtruth/backend dev
 
 `GET /api/parcels/:parcelKey/report` returns a `ParcelReport`; see [Parcel report](#parcel-report-live-ogrip--fema--usda-ssurgo). The parcel key is URL-encoded, for example `ohio%3A39049%3A230-000918`.
 
+`POST /api/parcels/:parcelKey/questions` asks only that report; `POST /api/parcels/:parcelKey/questions/voice` accepts a recorded question. See [Ask this lot](#ask-this-lot).
+
 ## Parcel search (live Ohio OGRIP)
 
 These routes query Ohio's statewide parcel layer and address locator from the API. They need no database and no credentials. Code: [src/parcels/](src/parcels/).
@@ -115,6 +117,21 @@ pnpm --filter @groundtruth/backend record:ogrip franklin-address  # one scenario
 ```
 
 Scenarios live in [test/fixtures/ogrip/scenarios.ts](test/fixtures/ogrip/scenarios.ts). Those listed in `LOCATOR_DOWN` are recorded with the recorder answering HTTP 503 for the locator (marked `forcedFailure`), so the fallback runs against real parcel-layer responses.
+
+## Ask this lot
+
+The parcel page sends typed questions to `POST /api/parcels/:parcelKey/questions` and microphone recordings to `/questions/voice`. Both routes load the parcel report on the server, share a limit of six questions per client per minute (sixty per minute across all clients; the client is the first `X-Forwarded-For` address, since Railway and Vercel proxy every request), and return a `ParcelAnswer` with the responsible party and explicit check/source citations.
+
+`OPENAI_API_KEY` stays on the API. Its strict Responses API prompt includes the full report JSON, but asks for structured check identifiers only. The API rejects unsupported topics or unknown/source-less checks and assembles visible prose from `finding`, `limitation`, and `nextAction`; model prose is never shown. The refusal set in `test/fixtures/refusalQuestions.ts` covers taxes, price, ownership, connectivity, exact building plans, seller trust, wells, endangered species, and schools.
+
+Voice uses `ELEVENLABS_API_KEY` for transcription and speech. It reads the voice ID from the already configured `ELEVENLABS_AGENT_ID`; it does not reuse the owner-callback conversation prompt. Audio and questions are not stored by GroundTruth. Without `OPENAI_API_KEY` both routes answer `503`, and the parcel page hides the card (it probes each route with an empty body, which answers `503` when off and `400` when on, and spends no question); without the ElevenLabs key and agent ID it hides only the microphone. A model or ElevenLabs failure is a retryable `502`, never a guessed answer. Configure:
+
+```dotenv
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4o-mini
+ELEVENLABS_API_KEY=...
+ELEVENLABS_AGENT_ID=...
+```
 
 ## Parcel report (live OGRIP + FEMA + USDA SSURGO)
 

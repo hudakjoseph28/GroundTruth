@@ -30,10 +30,18 @@ import { createFranklinStreamBuffersClient } from "./reports/franklinStreamBuffe
 import { createOgripClient, type OgripClient } from "./parcels/ogrip.js";
 import { parcelRoutes } from "./routes/parcels.js";
 import {
+  parcelQuestionRoutes,
+  type ParcelQuestionRouteOptions,
+} from "./routes/parcelQuestions.js";
+import {
   quickNodeWebhook,
   type QuickNodeWebhookOptions,
 } from "./routes/quicknodeWebhook.js";
-import { reportRoute, type ReportRouteOptions } from "./routes/report.js";
+import {
+  createParcelReportReader,
+  reportRouteFromReader,
+  type ReportRouteOptions,
+} from "./routes/report.js";
 import { createSmsSubscription } from "./routes/smsSubscriptions.js";
 import {
   solanaPayRoutes,
@@ -50,6 +58,8 @@ export interface AppOptions {
   ogrip?: OgripClient;
   /** FEMA client, report store, flood limit, and clock for live reports. */
   report?: Omit<ReportRouteOptions, "ogrip">;
+  /** Ask this lot model, voice, and limiter. Report access is always server-owned. */
+  questions?: Omit<ParcelQuestionRouteOptions, "reports">;
   /** Map layers on the land block. Defaults to the live sources the report checks use. */
   layers?: { layers(parcel: Parcel): Promise<ParcelLayers>; now?: () => Date };
   /** Land block assets. Defaults to building from live OGRIP, NAIP, and Terrarium, cached in PostgreSQL. */
@@ -120,14 +130,15 @@ export function createApp(commit: string, options: AppOptions = {}) {
     }),
   );
   app.get("/api/parcels/:parcelKey/land/:file", land.file);
-  app.get(
-    "/api/parcels/:parcelKey/report",
-    reportRoute({
-      streamBuffers: streamSetbacks,
-      ...options.report,
-      ogrip,
-    }),
-  );
+  const reports = createParcelReportReader({
+    streamBuffers: streamSetbacks,
+    ...options.report,
+    ogrip,
+  });
+  app.get("/api/parcels/:parcelKey/report", reportRouteFromReader(reports));
+  const questions = parcelQuestionRoutes({ reports, ...options.questions });
+  app.post("/api/parcels/:parcelKey/questions", ...questions.text);
+  app.post("/api/parcels/:parcelKey/questions/voice", ...questions.voice);
   app.get("/api/activity", getActivity);
   app.get("/api/deals/:id", getDeal);
   app.get("/api/deals/:id/timeline", getDealTimeline);

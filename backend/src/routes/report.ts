@@ -1,4 +1,4 @@
-import type { Parcel } from "@groundtruth/shared";
+import type { Parcel, ParcelReport } from "@groundtruth/shared";
 import type { RequestHandler } from "express";
 import { prisma } from "../db.js";
 import { asyncRoute } from "../http/asyncRoute.js";
@@ -73,6 +73,10 @@ export interface ReportRouteOptions {
   now?: () => Date;
 }
 
+export interface ParcelReportReader {
+  read(parcelKey: string, requestId: string): Promise<ParcelReport>;
+}
+
 /**
  * `GET /api/parcels/:parcelKey/report`
  *
@@ -86,6 +90,23 @@ export interface ReportRouteOptions {
  *    report; it only decides the answer when OGRIP has no such parcel.
  */
 export function reportRoute(options: ReportRouteOptions): RequestHandler {
+  return reportRouteFromReader(createParcelReportReader(options));
+}
+
+export function reportRouteFromReader(
+  reader: ParcelReportReader,
+): RequestHandler {
+  return asyncRoute(async (req, res) => {
+    const parcelKey =
+      typeof req.params.parcelKey === "string" ? req.params.parcelKey : "";
+    res.json(await reader.read(parcelKey, String(res.locals.requestId)));
+  });
+}
+
+/** One report loader shared by the report page and Ask this lot. */
+export function createParcelReportReader(
+  options: ReportRouteOptions,
+): ParcelReportReader {
   const fema = options.fema ?? createFemaFloodClient();
   const store = options.store ?? prismaReportStore(prisma);
   const floodTimeoutMs = options.floodTimeoutMs ?? DEFAULT_FEMA_TIMEOUT_MS;
@@ -105,83 +126,80 @@ export function reportRoute(options: ReportRouteOptions): RequestHandler {
     options.streamBuffersTimeoutMs ?? DEFAULT_STREAM_BUFFERS_TIMEOUT_MS;
   const now = options.now ?? (() => new Date());
 
-  return asyncRoute(async (req, res) => {
-    const requestId = String(res.locals.requestId);
-    const raw = req.params.parcelKey;
-    const parcelKey = typeof raw === "string" ? raw : "";
-    const key = parseParcelKey(parcelKey);
-    if (!key) {
-      throw new HttpError(
-        400,
-        "INVALID_REQUEST",
-        "Parcel key must look like ohio:39049:PARCEL-ID.",
-        false,
-      );
-    }
-
-    let storeFailure: unknown;
-    try {
-      const stored = await store.read(parcelKey, now());
-      if (stored) {
-        res.json(stored);
-        return;
+  return {
+    async read(parcelKey, requestId) {
+      const key = parseParcelKey(parcelKey);
+      if (!key) {
+        throw new HttpError(
+          400,
+          "INVALID_REQUEST",
+          "Parcel key must look like ohio:39049:PARCEL-ID.",
+          false,
+        );
       }
-    } catch (error) {
-      storeFailure = error;
-      logSafeFailure(requestId, error);
-    }
 
-    const county = countyByFips(key.countyFips);
-    if (!county) {
-      if (storeFailure) throw storeFailure;
-      throw new HttpError(
-        404,
-        "NO_COVERAGE",
-        `${key.countyFips} is not an Ohio county code. GroundTruth covers Ohio's 88 counties.`,
-        false,
-      );
-    }
-
-    const parcel = await loadParcel(
-      options.ogrip,
-      key.countyFips,
-      key.sourceParcelId,
-      requestId,
-    );
-    if (!parcel) {
-      if (storeFailure) throw storeFailure;
-      throw new HttpError(
-        404,
-        "NOT_FOUND",
-        `Ohio's parcel map has no parcel ${key.sourceParcelId} in ${county.name} County.`,
-        false,
-      );
-    }
-
-    const built = await buildReport(parcel, {
-      fema,
-      floodTimeoutMs,
-      zoning,
-      zoningTimeoutMs,
-      access,
-      accessTimeoutMs,
-      soils: soils ?? undefined,
-      soilsTimeoutMs,
-      wetlands,
-      wetlandsTimeoutMs,
-      streamBuffers,
-      streamBuffersTimeoutMs,
-      now,
-    });
-    res.json(built.report);
-
-    if (built.complete && !storeFailure) {
-      const expiresAt = new Date(now().getTime() + LIVE_REPORT_TTL_MS);
-      store.write(parcel, built.report, expiresAt).catch((error: unknown) => {
+      let storeFailure: unknown;
+      try {
+        const stored = await store.read(parcelKey, now());
+        if (stored) {
+          return stored;
+        }
+      } catch (error) {
+        storeFailure = error;
         logSafeFailure(requestId, error);
+      }
+
+      const county = countyByFips(key.countyFips);
+      if (!county) {
+        if (storeFailure) throw storeFailure;
+        throw new HttpError(
+          404,
+          "NO_COVERAGE",
+          `${key.countyFips} is not an Ohio county code. GroundTruth covers Ohio's 88 counties.`,
+          false,
+        );
+      }
+
+      const parcel = await loadParcel(
+        options.ogrip,
+        key.countyFips,
+        key.sourceParcelId,
+        requestId,
+      );
+      if (!parcel) {
+        if (storeFailure) throw storeFailure;
+        throw new HttpError(
+          404,
+          "NOT_FOUND",
+          `Ohio's parcel map has no parcel ${key.sourceParcelId} in ${county.name} County.`,
+          false,
+        );
+      }
+
+      const built = await buildReport(parcel, {
+        fema,
+        floodTimeoutMs,
+        zoning,
+        zoningTimeoutMs,
+        access,
+        accessTimeoutMs,
+        soils: soils ?? undefined,
+        soilsTimeoutMs,
+        wetlands,
+        wetlandsTimeoutMs,
+        streamBuffers,
+        streamBuffersTimeoutMs,
+        now,
       });
-    }
-  });
+      if (built.complete && !storeFailure) {
+        const expiresAt = new Date(now().getTime() + LIVE_REPORT_TTL_MS);
+        store.write(parcel, built.report, expiresAt).catch((error: unknown) => {
+          logSafeFailure(requestId, error);
+        });
+      }
+      return built.report;
+    },
+  };
 }
 
 /** An OGRIP failure is a retryable v1 error, never a guessed parcel. */
