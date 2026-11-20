@@ -32,6 +32,8 @@ export interface Simulation {
  */
 export interface SponsorChain extends ActionChain {
   blockhash(): Promise<{ blockhash: string; lastValidBlockHeight: number }>;
+  /** An account's devnet balance in lamports, at `confirmed`. */
+  balance(address: string): Promise<number>;
   recentPriorityFees(
     writable: string[],
   ): Promise<{ prioritizationFee: number }[]>;
@@ -56,6 +58,8 @@ export function createDevnetChain(
       return (await connection.getLatestBlockhash("confirmed")).blockhash;
     },
     blockhash: () => connection.getLatestBlockhash("confirmed"),
+    balance: (address) =>
+      connection.getBalance(new web3.PublicKey(address), "confirmed"),
     recentPriorityFees: (writable) =>
       connection.getRecentPrioritizationFees({
         lockedWritableAccounts: writable.map((key) => new web3.PublicKey(key)),

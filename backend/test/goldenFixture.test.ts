@@ -56,7 +56,7 @@ describe("golden parcel fixture", () => {
     expect(`${access.finding} ${access.nextAction}`).not.toMatch(
       /\bno (legal )?access\b|landlocked|inaccessible/i,
     );
-    expect(access.finding).toContain("about 107 m");
+    expect(access.finding).toContain("about 106 m");
     expect(access.nextAction).toContain("§302.0391");
     // §302.0391 private lanes: platted, Planning Commission-approved, HOA-kept.
     expect(access.nextAction).toMatch(/subdivision plat/);
@@ -143,6 +143,54 @@ describe("golden parcel fixture", () => {
     expect(septic.nextAction).toMatch(
       /^Ask Franklin County Public Health for a site and soil evaluation/,
     );
+  });
+
+  it("carries every check the live pipeline runs for a Franklin lot", () => {
+    // db:seed writes this report with no expiry, so a check the pipeline
+    // runs but the fixture lacks would never reach the golden lot.
+    expect(goldenReport.checks.map((entry) => entry.kind)).toEqual([
+      "access",
+      "zoning",
+      "flood",
+      "environmental",
+      "utilities",
+      "easements",
+      "sellerAuthority",
+      "survey",
+      "septic",
+    ]);
+  });
+
+  it("answers water and sewer from EPA and county maps, without claiming a distance", () => {
+    const utilities = check("utilities");
+    expect(utilities.status).toBe("needsReview");
+    expect(utilities.finding).toMatch(
+      /^Not inside any community water system or wastewater plant's sewershed/,
+    );
+    expect(utilities.finding).toContain(
+      "the distance to a main wasn't measured",
+    );
+    expect(utilities.finding).toContain(
+      "likely needs a private well and a septic system",
+    );
+    expect(utilities.sources.map((source) => source.authority)).toEqual([
+      "U.S. Environmental Protection Agency",
+      "U.S. Environmental Protection Agency",
+      "Franklin County Sanitary Engineering",
+    ]);
+    expect(utilities.responsibleParty.organization).toBe(
+      "Franklin County Sanitary Engineering",
+    );
+  });
+
+  it("screens wetlands and the Big Darby setback, needing review", () => {
+    const environmental = check("environmental");
+    expect(environmental.status).toBe("needsReview");
+    expect(environmental.finding).toContain("maps no wetland on this lot");
+    expect(environmental.finding).toContain("about 4.7%");
+    expect(environmental.limitation).toMatch(/not a wetland delineation/);
+    // The zoning check's setback share agrees with the environmental check.
+    expect(check("zoning").limitation).toContain("about 4.7% of the parcel");
   });
 
   it("keeps access the biggest open question with septic now under review", () => {

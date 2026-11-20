@@ -31,14 +31,14 @@
   },
   "report": {
     "parcelKey": "ohio:39049:230-000918",
-    "generatedAt": "2026-11-17T01:21:56.000Z",
+    "generatedAt": "2026-11-20T02:37:01.741Z",
     "coverage": "partial",
     "biggestOpenQuestion": "access",
     "checks": [
       {
         "kind": "access",
         "status": "needsReview",
-        "finding": "No road right-of-way touches this parcel in Franklin County's right-of-way layer. The nearest mapped road, Seaman Rd, is about 107 m away in the county engineer's road layer. The Franklin County Auditor lists the parcel as \"SEAMAN RD REAR\".",
+        "finding": "No road right-of-way touches this parcel in Franklin County's right-of-way layer. The nearest mapped road, Seaman Rd, is about 106 m away in the county engineer's road layer. The Franklin County Auditor lists the parcel as \"SEAMAN RD REAR\".",
         "limitation": "These layers show mapped right-of-way and road centerlines. They do not show recorded easements, private lanes, or other legal access, so they cannot establish whether the parcel has access.",
         "sources": [
           {
@@ -49,7 +49,7 @@
           },
           {
             "authority": "Franklin County Engineer",
-            "title": "Public road sections: nearest road Seaman Rd, about 107 m",
+            "title": "Public road sections: nearest road Seaman Rd, about 106 m",
             "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCEO_Road_Sections_Public/FeatureServer/0",
             "retrievedAt": "2026-11-17T00:54:49.000Z"
           },
@@ -69,7 +69,7 @@
         "kind": "zoning",
         "status": "evidenceFound",
         "finding": "Franklin County's zoning map places the whole parcel in the Rural (R) district. The parcel is in unincorporated Pleasant Township, where the county administers zoning. The Rural District permits one-family dwellings (§302.021) with at least 2.5 acres per dwelling (§302.041); the Franklin County Auditor lists 3.015 legal acres. A dwelling lot must also abut an improved, dedicated, publicly maintained street right-of-way for at least 150 feet, or front on an approved private street (§302.042).",
-        "limitation": "A zoning map and a lot size are not a zoning certificate or a building permit. The county's right-of-way layer shows no road touching this parcel (see access), so whether it meets the §302.042 frontage requirement needs county zoning review. If a building, driveway, or septic system would go near the stream, the Big Darby Creek Watershed riparian setback, which covers about 5% of the parcel in the county's stream-buffer layer, would also apply.",
+        "limitation": "A zoning map and a lot size are not a zoning certificate or a building permit. The county's right-of-way layer shows no road touching this parcel (see access), so whether it meets the §302.042 frontage requirement needs county zoning review. If a building, driveway, or septic system would go near the stream, the Big Darby Creek Watershed riparian setback, which covers about 4.7% of the parcel in the county's stream-buffer layer, would also apply.",
         "sources": [
           {
             "authority": "Franklin County Economic Development & Planning",
@@ -91,7 +91,7 @@
           },
           {
             "authority": "Franklin County Economic Development & Planning",
-            "title": "Stream buffers: Big Darby Creek Watershed Riparian Setbacks cover about 5% of the parcel",
+            "title": "Stream buffers: Big Darby Creek Watershed Riparian Setbacks cover about 4.7% of the parcel",
             "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/Franklin_County_Stream_Buffers/FeatureServer/0",
             "retrievedAt": "2026-11-17T00:54:49.000Z"
           },
@@ -145,15 +145,68 @@
         "nextAction": "Before closing, check the current FIRM for this lot on FEMA's Map Service Center."
       },
       {
-        "kind": "utilities",
-        "status": "unknown",
-        "finding": "No utility record has been checked for this lot.",
-        "limitation": "No conclusion either way: public water and sewer may reach the lot, or it may need a well and a septic system.",
-        "sources": [],
+        "kind": "environmental",
+        "status": "needsReview",
+        "finding": "The National Wetlands Inventory maps no wetland on this lot. Franklin County's stream-buffer map puts about 4.7% of it inside the Big Darby Creek Watershed Riparian Setbacks.",
+        "limitation": "\"NWI shows none\" is not a wetland delineation. The NWI is drawn from aerial imagery (here from 2007) and misses many small, forested, or seasonally dry wetlands; only a delineation in the field, confirmed by the U.S. Army Corps of Engineers or Ohio EPA, says whether regulated wetlands are on the lot. The stream-buffer map shows where the county's riparian setback applies. What may be built, graded, or placed inside it is set by the county's setback rules, which this check does not read.",
+        "sources": [
+          {
+            "authority": "U.S. Fish and Wildlife Service",
+            "title": "National Wetlands Inventory: no wetland mapped on the parcel",
+            "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Wetlands/MapServer/0",
+            "retrievedAt": "2026-11-20T02:37:00.878Z"
+          },
+          {
+            "authority": "U.S. Fish and Wildlife Service",
+            "title": "National Wetlands Inventory: mapped from 2007 imagery",
+            "url": "https://fwspublicservices.wim.usgs.gov/wetlandsmapservice/rest/services/Data_Source/MapServer/3",
+            "retrievedAt": "2026-11-20T02:37:00.878Z"
+          },
+          {
+            "authority": "Franklin County Economic Development & Planning",
+            "title": "Stream buffers: Big Darby Creek Watershed Riparian Setbacks cover about 4.7% of the parcel",
+            "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/Franklin_County_Stream_Buffers/FeatureServer/0",
+            "retrievedAt": "2026-11-20T02:36:59.355Z"
+          }
+        ],
         "responsibleParty": {
-          "role": "Water and sewer utility for this area"
+          "role": "County planning office (riparian setbacks)",
+          "organization": "Franklin County Economic Development & Planning",
+          "publicContactUrl": "https://www.franklincountyohio.gov/Business-Development/Development-Planning/Planning-Zoning"
         },
-        "nextAction": "Ask the utility that serves this area whether water and sewer reach the lot, and what connecting would cost."
+        "nextAction": "Ask Franklin County Economic Development & Planning what the riparian setback allows on this lot."
+      },
+      {
+        "kind": "utilities",
+        "status": "needsReview",
+        "finding": "Not inside any community water system or wastewater plant's sewershed on EPA's maps, or any Franklin County Sanitary Engineering service area. No public water or sewer main map is published for this area, so the distance to a main wasn't measured. No public water or sewer is mapped for this lot, so it likely needs a private well and a septic system.",
+        "limitation": "These maps show where a utility serves or where its mains run. They don't guarantee capacity for this lot, a tap permit, or what connecting costs. A lot outside every mapped service area can still be served by a line these maps don't show, or by an extension.",
+        "sources": [
+          {
+            "authority": "U.S. Environmental Protection Agency",
+            "title": "Community Water System Service Area Boundaries",
+            "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0",
+            "retrievedAt": "2026-11-20T02:36:59.065Z"
+          },
+          {
+            "authority": "U.S. Environmental Protection Agency",
+            "title": "Sewersheds of publicly owned treatment works (Clean Watersheds Needs Survey 2022)",
+            "url": "https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0",
+            "retrievedAt": "2026-11-20T02:36:59.110Z"
+          },
+          {
+            "authority": "Franklin County Sanitary Engineering",
+            "title": "Water and sewer service areas",
+            "url": "https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCSE_Service_Areas/FeatureServer/0",
+            "retrievedAt": "2026-11-20T02:36:59.227Z"
+          }
+        ],
+        "responsibleParty": {
+          "role": "Water and sewer utility",
+          "organization": "Franklin County Sanitary Engineering",
+          "publicContactUrl": "https://www.franklincountyohio.gov/Agency-Directory/Sanitary-Engineering"
+        },
+        "nextAction": "Ask Franklin County Sanitary Engineering for a water/sewer availability letter before you buy. If neither can reach the lot, ask Franklin County Public Health about well and septic permits."
       },
       {
         "kind": "easements",
@@ -167,6 +220,30 @@
           "publicContactUrl": "https://www.franklincountyohio.gov/Agency-Directory/Recorder/Real-Estate/Recording-FAQs"
         },
         "nextAction": "Ask a title company to search the recorded documents for this parcel."
+      },
+      {
+        "kind": "sellerAuthority",
+        "status": "unknown",
+        "sources": [],
+        "finding": "The seller's right to sell this lot has not been verified.",
+        "limitation": "This report does not check ownership records or the seller's identity. Sellers who impersonate the real owner often target vacant land (see the linked ALTA guidance).",
+        "responsibleParty": {
+          "role": "Title reviewer",
+          "organization": "American Land Title Association (guidance)",
+          "publicContactUrl": "https://www.alta.org/file/ALTA-Seller-Impersonation-Handout"
+        },
+        "nextAction": "Have a title company confirm the owner of record and reach the owner through contact details it finds independently, not ones the seller supplied."
+      },
+      {
+        "kind": "survey",
+        "status": "unknown",
+        "sources": [],
+        "finding": "No survey of this lot is attached.",
+        "limitation": "The boundary shown comes from Ohio's statewide parcel map (OGRIP), which is not a survey. The real corners and lines can differ.",
+        "responsibleParty": {
+          "role": "Licensed Ohio surveyor"
+        },
+        "nextAction": "Hire a licensed Ohio surveyor to locate the boundary before you close."
       },
       {
         "kind": "septic",

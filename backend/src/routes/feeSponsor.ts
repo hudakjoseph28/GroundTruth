@@ -1,6 +1,7 @@
 // Fee sponsorship for the reviewer portal (/review).
 //
-//   GET  /api/fee-sponsor                         whether fees are covered now
+//   GET  /api/fee-sponsor                         whether fees are covered now,
+//                                                 or the safe reason they aren't
 //   POST /api/deals/:id/sponsored-transaction     a fee-payer-signed transaction
 //
 // The POST answers only for a staged deal, only for `sign_approval`,
@@ -29,7 +30,11 @@ import { ActionRefusal, ChainUnavailable } from "../actions/approvalAction.js";
 import type { SponsorChain } from "../actions/devnetChain.js";
 import { asyncRoute } from "../http/asyncRoute.js";
 import { HttpError, logSafeFailure } from "../http/errors.js";
-import type { FeeSponsorConfig } from "../sponsor/feePayer.js";
+import {
+  MIN_FEE_PAYER_LAMPORTS,
+  type FeeSponsorConfig,
+  type FeeSponsorSetupReason,
+} from "../sponsor/feePayer.js";
 import type { SponsorLedger } from "../sponsor/ledger.js";
 import { createRateLimiter, type RateLimiter } from "../sponsor/rateLimit.js";
 import {
@@ -43,6 +48,11 @@ import {
 export interface FeeSponsorRouteOptions {
   /** Unset: sponsorship is off and every POST answers 503. */
   config?: FeeSponsorConfig;
+  /** Why `config` is unset, from readFeeSponsor (default `missing_key`). */
+  offReason?: FeeSponsorSetupReason;
+  /** How long one fee-payer balance read is reused (default 30 s). */
+  balanceTtlMs?: number;
+  now?: () => number;
   chain: SponsorChain;
   ledger: SponsorLedger;
   limiter?: RateLimiter;
@@ -95,16 +105,30 @@ export function feeSponsorRoutes(options: FeeSponsorRouteOptions) {
   const limiter = options.limiter ?? createRateLimiter();
   const { config } = options;
 
-  const status: RequestHandler = (_req, res) => {
-    const body: FeeSponsorStatus = config
-      ? {
-          enabled: true,
-          feePayer: config.keypair.publicKey.toBase58(),
-          maxPerDeal: config.maxPerDeal,
-        }
-      : { enabled: false };
+  const lowBalance = config
+    ? feePayerLowBalance(
+        options.chain,
+        config.keypair.publicKey.toBase58(),
+        options.balanceTtlMs ?? BALANCE_TTL_MS,
+        options.now ?? Date.now,
+      )
+    : undefined;
+
+  const status: RequestHandler = asyncRoute(async (_req, res) => {
+    let body: FeeSponsorStatus;
+    if (!config) {
+      body = { enabled: false, reason: options.offReason ?? "missing_key" };
+    } else if (await lowBalance!()) {
+      body = { enabled: false, reason: "low_balance" };
+    } else {
+      body = {
+        enabled: true,
+        feePayer: config.keypair.publicKey.toBase58(),
+        maxPerDeal: config.maxPerDeal,
+      };
+    }
     res.set("cache-control", "no-store").json(body);
-  };
+  });
 
   const transaction: RequestHandler[] = [
     rawJson,
@@ -161,6 +185,46 @@ export function feeSponsorRoutes(options: FeeSponsorRouteOptions) {
   ];
 
   return { status, transaction };
+}
+
+const BALANCE_TTL_MS = 30_000;
+const BALANCE_READ_TIMEOUT_MS = 3_000;
+
+/**
+ * Whether the fee payer is under MIN_FEE_PAYER_LAMPORTS, read from devnet at
+ * most once per `ttlMs`. A read that fails or is slow says "not low": the
+ * POST still refuses with `outOfSol` when a simulation can't pay the fee.
+ */
+function feePayerLowBalance(
+  chain: SponsorChain,
+  feePayer: string,
+  ttlMs: number,
+  now: () => number,
+): () => Promise<boolean> {
+  let cached: { low: boolean; at: number } | undefined;
+  let pending: Promise<boolean> | undefined;
+  return async () => {
+    if (cached && now() - cached.at < ttlMs) return cached.low;
+    pending ??= withTimeout(chain.balance(feePayer), BALANCE_READ_TIMEOUT_MS)
+      .then((lamports) => {
+        const low = lamports < MIN_FEE_PAYER_LAMPORTS;
+        cached = { low, at: now() };
+        return low;
+      })
+      .catch(() => false)
+      .finally(() => {
+        pending = undefined;
+      });
+    return pending;
+  };
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("timed out")), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 function toHttpError(res: Response, error: unknown): unknown {

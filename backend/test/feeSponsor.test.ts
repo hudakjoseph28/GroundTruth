@@ -17,8 +17,11 @@ import type { SponsorChain } from "../src/actions/devnetChain.js";
 import { createApp } from "../src/app.js";
 import {
   DEFAULT_MAX_SPONSORED_PER_DEAL,
+  MIN_FEE_PAYER_LAMPORTS,
+  describeFeeSponsor,
   readFeeSponsor,
   stagedParticipants,
+  type FeeSponsorSetupReason,
 } from "../src/sponsor/feePayer.js";
 import { memorySponsorLedger } from "../src/sponsor/ledger.js";
 import { createRateLimiter } from "../src/sponsor/rateLimit.js";
@@ -43,6 +46,8 @@ function setup(
     maxPerDeal?: number;
     perWallet?: number;
     off?: boolean;
+    offReason?: FeeSponsorSetupReason;
+    now?: () => number;
   } = {},
 ) {
   const keypair = web3.Keypair.generate();
@@ -53,6 +58,8 @@ function setup(
       config: options.off
         ? undefined
         : { keypair, maxPerDeal: options.maxPerDeal ?? 12 },
+      offReason: options.offReason,
+      now: options.now,
       chain,
       ledger,
       limiter: createRateLimiter({
@@ -95,11 +102,56 @@ function signedBy(
 }
 
 describe("GET /api/fee-sponsor", () => {
-  it("says off when no fee-payer key is configured", async () => {
+  it("says off, with reason missing_key, when no fee-payer key is configured", async () => {
     const { app } = setup({ off: true });
     const res = await request(app).get("/api/fee-sponsor");
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ enabled: false });
+    expect(res.body).toEqual({ enabled: false, reason: "missing_key" });
+  });
+
+  it("passes on the setup's reason, and never the key", async () => {
+    const setupOff = readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: "[1,2,3]" });
+    expect(setupOff).toEqual({ reason: "bad_key_format" });
+    const { app } = setup({ off: true, offReason: setupOff.reason });
+    const res = await request(app).get("/api/fee-sponsor");
+    expect(res.body).toEqual({ enabled: false, reason: "bad_key_format" });
+    expect(res.text).not.toContain("[1,2,3]");
+  });
+
+  it("says low_balance under 0.001 devnet SOL, and on again once funded", async () => {
+    let lamports = MIN_FEE_PAYER_LAMPORTS - 1;
+    let clock = 0;
+    const reads: string[] = [];
+    const chain = {
+      ...fakeSponsorChain(),
+      balance: async (address: string) => {
+        reads.push(address);
+        return lamports;
+      },
+    };
+    const { app, keypair } = setup({ chain, now: () => clock });
+    const low = await request(app).get("/api/fee-sponsor");
+    expect(low.body).toEqual({ enabled: false, reason: "low_balance" });
+    expect(reads).toEqual([keypair.publicKey.toBase58()]);
+
+    // One read per 30 s, however many reviewers open the portal.
+    lamports = MIN_FEE_PAYER_LAMPORTS;
+    clock = 29_999;
+    expect((await request(app).get("/api/fee-sponsor")).body.reason).toBe(
+      "low_balance",
+    );
+    expect(reads).toHaveLength(1);
+    clock = 30_000;
+    const funded = await request(app).get("/api/fee-sponsor");
+    expect(funded.body).toMatchObject({ enabled: true });
+    expect(reads).toHaveLength(2);
+  });
+
+  it("stays on when devnet can't be read, since the POST still checks the fee", async () => {
+    const chain = fakeSponsorChain({ balance: new Error("devnet down") });
+    const { app } = setup({ chain });
+    const res = await request(app).get("/api/fee-sponsor");
+    expect(res.body).toMatchObject({ enabled: true });
   });
 
   it("names the fee payer and the per-deal cap when on", async () => {
@@ -421,55 +473,85 @@ describe("POST /api/deals/:id/sponsored-transaction", () => {
 describe("readFeeSponsor", () => {
   const key = web3.Keypair.generate();
   const json = JSON.stringify([...key.secretKey]);
+  const base58 = utils.bytes.bs58.encode(key.secretKey);
+  const configured = (env: NodeJS.ProcessEnv) =>
+    readFeeSponsor(env).config?.keypair.publicKey.toBase58();
 
   it("is off without a key and reads a solana-keygen key with the default cap", () => {
-    expect(readFeeSponsor({})).toBeUndefined();
-    const config = readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: json });
+    expect(readFeeSponsor({})).toEqual({ reason: "missing_key" });
+    const config = readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: json }).config;
     expect(config?.keypair.publicKey.toBase58()).toBe(key.publicKey.toBase58());
     expect(config?.maxPerDeal).toBe(DEFAULT_MAX_SPONSORED_PER_DEAL);
     expect(
       readFeeSponsor({
         FEE_SPONSOR_SECRET_KEY: json,
         FEE_SPONSOR_MAX_PER_DEAL: "4",
-      })?.maxPerDeal,
+      }).config?.maxPerDeal,
     ).toBe(4);
   });
 
-  it("stays off without a key, even with a bad cap", () => {
-    expect(readFeeSponsor({ FEE_SPONSOR_MAX_PER_DEAL: "0" })).toBeUndefined();
-    expect(readFeeSponsor({ FEE_SPONSOR_MAX_PER_DEAL: "lots" })).toBeUndefined();
+  it("reads the same key in base58, as a wallet exports it, and with pasted quotes", () => {
+    const want = key.publicKey.toBase58();
+    expect(configured({ FEE_SPONSOR_SECRET_KEY: base58 })).toBe(want);
+    expect(configured({ FEE_SPONSOR_SECRET_KEY: ` ${base58}\n` })).toBe(want);
+    expect(configured({ FEE_SPONSOR_SECRET_KEY: `"${base58}"` })).toBe(want);
+    expect(configured({ FEE_SPONSOR_SECRET_KEY: `'${json}'` })).toBe(want);
     expect(
-      readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: "  ", FEE_SPONSOR_MAX_PER_DEAL: "0" }),
-    ).toBeUndefined();
+      configured({ FEE_SPONSOR_SECRET_KEY: JSON.stringify(json) }),
+    ).toBe(want);
   });
 
-  it("stops startup on a malformed key or cap", () => {
-    expect(() => readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: "[1,2,3]" })).toThrow(
-      /64 bytes/,
-    );
-    expect(() => readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: "nope" })).toThrow(
-      /64 bytes/,
-    );
+  it("stays off without a key, even with a bad cap", () => {
+    expect(readFeeSponsor({ FEE_SPONSOR_MAX_PER_DEAL: "0" })).toEqual({
+      reason: "missing_key",
+    });
+    expect(readFeeSponsor({ FEE_SPONSOR_MAX_PER_DEAL: "lots" })).toEqual({
+      reason: "missing_key",
+    });
+    expect(
+      readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: "  ", FEE_SPONSOR_MAX_PER_DEAL: "0" }),
+    ).toEqual({ reason: "missing_key" });
+  });
+
+  it("turns off with bad_key_format on a malformed key, without stopping the API", () => {
     const bad = [...key.secretKey];
     bad[63] = (bad[63]! + 1) % 256;
-    expect(() =>
-      readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: JSON.stringify(bad) }),
-    ).toThrow(/valid ed25519/);
-    expect(() =>
-      readFeeSponsor({
-        FEE_SPONSOR_SECRET_KEY: json,
-        FEE_SPONSOR_MAX_PER_DEAL: "0",
-      }),
-    ).toThrow(/between 1 and 100/);
+    for (const value of [
+      "[1,2,3]",
+      "nope",
+      "[not json",
+      // A 32-byte public key is not a secret key.
+      key.publicKey.toBase58(),
+      // A base58 string with a character outside the alphabet (0).
+      `0${base58.slice(1)}`,
+      // 64 bytes whose public half does not match.
+      JSON.stringify(bad),
+      utils.bytes.bs58.encode(Uint8Array.from(bad)),
+    ]) {
+      expect(readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: value })).toEqual({
+        reason: "bad_key_format",
+      });
+    }
+  });
+
+  it("turns off with bad_max_per_deal on a bad cap", () => {
+    for (const cap of ["0", "101", "lots", "1.5"]) {
+      expect(
+        readFeeSponsor({
+          FEE_SPONSOR_SECRET_KEY: json,
+          FEE_SPONSOR_MAX_PER_DEAL: cap,
+        }),
+      ).toEqual({ reason: "bad_max_per_deal" });
+    }
   });
 
   it("refuses a key that is a staged participant", () => {
-    expect(() =>
+    expect(
       readFeeSponsor(
         { FEE_SPONSOR_SECRET_KEY: json },
         new Set([key.publicKey.toBase58()]),
       ),
-    ).toThrow(/dedicated key/);
+    ).toEqual({ reason: "participant_key" });
     const staged = stagedParticipants();
     for (const wallet of [
       stagedDeal.buyerWallet,
@@ -480,5 +562,17 @@ describe("readFeeSponsor", () => {
     ]) {
       expect(staged.has(wallet)).toBe(true);
     }
+  });
+
+  it("logs the fee payer's public key or the reason, never the secret", () => {
+    const on = describeFeeSponsor(readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: json }));
+    expect(on).toContain(key.publicKey.toBase58());
+    expect(on).not.toContain(base58);
+    const off = describeFeeSponsor(
+      readFeeSponsor({ FEE_SPONSOR_SECRET_KEY: base58.slice(0, 40) }),
+    );
+    expect(off).toBe(
+      "Fee sponsorship off: bad_key_format (see FEE_SPONSOR_SECRET_KEY in backend/README.md)",
+    );
   });
 });

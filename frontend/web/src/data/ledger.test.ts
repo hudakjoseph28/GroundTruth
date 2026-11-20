@@ -76,11 +76,11 @@ const kindsOf = (report: ParcelReport, deal = false) =>
   );
 
 describe("ledger kinds", () => {
-  it("lists the golden parcel exactly as before: no environmental card", () => {
-    expect(kindsOf(goldenReport)).toEqual([
-      "access",
-      ...BEFORE_ENVIRONMENTAL.filter((kind) => kind !== "access"),
-    ]);
+  /** The golden lot's seeded report carries the live environmental check (Nov 20, 2026). */
+  const GOLDEN_KINDS = ["access", "zoning", "flood", "environmental", "utilities", "easements", "sellerAuthority", "survey", "septic"];
+
+  it("lists the golden parcel with its seeded environmental card after flood", () => {
+    expect(kindsOf(goldenReport)).toEqual(GOLDEN_KINDS);
   });
 
   it("shows the golden parcel's seeded SSURGO septic screening, not a placeholder", () => {
@@ -96,13 +96,9 @@ describe("ledger kinds", () => {
     );
   });
 
-  it("lists the golden parcel with its deal exactly as before: closing, no environmental", () => {
+  it("lists the golden parcel with its deal: environmental, then closing last", () => {
     const kinds = kindsOf(goldenReport, true);
-    expect(kinds).toEqual([
-      "access",
-      ...BEFORE_ENVIRONMENTAL.filter((kind) => kind !== "access"),
-      "closing",
-    ]);
+    expect(kinds).toEqual([...GOLDEN_KINDS, "closing"]);
     const ledger = getParcelLedger(
       goldenReport.parcelKey,
       goldenReport,
@@ -185,14 +181,18 @@ describe("the parcel ledger renders", () => {
       ),
     );
 
-  it("renders the golden parcel with no wetlands card", () => {
+  it("renders the golden parcel with its wetlands card", () => {
     const html = render(goldenReport);
     expect(html).toContain("Can you build here?");
-    expect(html).not.toContain("Wetlands &amp; streams");
+    expect(html).toContain("Wetlands &amp; streams");
+  });
+
+  it("renders the Licking parcel with no wetlands card", () => {
+    expect(render(secondCountyReport)).not.toContain("Wetlands &amp; streams");
   });
 
   it("renders a wetlands card and a card for a kind it does not know", () => {
-    const html = render(withChecks(goldenReport, wetlands, newer));
+    const html = render(withChecks(secondCountyReport, wetlands, newer));
     expect(html).toContain("Wetlands &amp; streams");
     expect(html).toContain("Radon test");
   });

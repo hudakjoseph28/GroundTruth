@@ -24,6 +24,7 @@ describe("readServerEnv", () => {
       quicknodeStreamToken: undefined,
       twilio: undefined,
       solanaRpcUrl: "https://api.devnet.solana.com",
+      feeSponsor: { reason: "missing_key" },
     });
   });
 

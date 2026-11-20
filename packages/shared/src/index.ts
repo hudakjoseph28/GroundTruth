@@ -139,6 +139,7 @@ export type {
 } from "./reviewerInstructions.js";
 
 export {
+  FEE_SPONSOR_OFF_REASONS,
   SPONSORED_ACTIONS,
   escrowInstructionName,
   sameInstructions,
@@ -146,6 +147,7 @@ export {
   sponsoredTransactionPath,
 } from "./feeSponsor.js";
 export type {
+  FeeSponsorOffReason,
   FeeSponsorStatus,
   SponsorPolicy,
   SponsoredAction,

@@ -580,7 +580,7 @@ In `/review`, GroundTruth can pay a reviewer's network fee, so a reviewer wallet
 
 | Route | What it does |
 | --- | --- |
-| `GET /api/fee-sponsor` | `{ enabled: false }`, or `{ enabled: true, feePayer, maxPerDeal }`. The portal reads it once and shows **Network fee paid by GroundTruth** when it is on. |
+| `GET /api/fee-sponsor` | `{ enabled: false, reason }`, or `{ enabled: true, feePayer, maxPerDeal }`. `reason` is `missing_key` (unset or blank), `bad_key_format` (not 64 bytes as a JSON array or base58, or not a valid keypair), `bad_max_per_deal`, `participant_key` (a staged wallet), or `low_balance` (under 0.001 devnet SOL, read at most every 30 s). It never includes the key. The portal reads it once and shows **Network fee paid by GroundTruth** when it is on. |
 | `POST /api/deals/:id/sponsored-transaction` | Body `{ action: "sign_approval", account, role, documentSha256? }`, `{ action: "place_hold", account, role, reasonCode }`, or `{ action: "release", account }`. Returns `{ transaction, feePayer, signature, lastValidBlockHeight, action }`: a base64 v0 transaction signed by the fee payer only, with the reviewer's slot empty. `signature` is the fee payer's, which is also the transaction ID. |
 
 **What happens on each POST**, in order. Each refusal is the usual `ApiError`, and nothing is signed:
@@ -595,7 +595,7 @@ In `/review`, GroundTruth can pay a reviewer's network fee, so a reviewer wallet
 
 **In the portal** (`frontend/web/src/review/`), the browser runs the same `sponsorRefusal` again. It also checks that the instructions are exactly the ones the reviewer clicked for and that the fee payer is the advertised one. Only then does the wallet sign. After signing, the fee payer's signature must be unchanged. If GroundTruth declines (`429`, a `503`, or unreachable), the portal says so and the wallet pays the fee instead. A refusal the program would also make stops the action with the API's words.
 
-**Setup:** generate a fresh devnet keypair (never a staged wallet; the API refuses to start with one) and fund it with devnet SOL. Set `FEE_SPONSOR_SECRET_KEY` (the solana-keygen JSON array) in Railway variables, and optionally `FEE_SPONSOR_MAX_PER_DEAL`. At startup the API logs the fee payer's public key. One sponsored approval costs 10,000 lamports (two signatures, no priority fee on a quiet devnet), so 0.2 SOL covers about 20,000.
+**Setup:** generate a fresh devnet keypair (never a staged wallet; the API refuses to sign with one) and fund it with devnet SOL. Set `FEE_SPONSOR_SECRET_KEY` on the Railway `api` service to the solana-keygen file's contents (`[12,34,...]`, 64 numbers) or the same key in base58, optionally set `FEE_SPONSOR_MAX_PER_DEAL`, and deploy the staged change. At startup the API logs `Fee sponsorship on: devnet fee payer <public key>` or `Fee sponsorship off: <reason>`, and `GET /api/fee-sponsor` gives the same reason. One sponsored approval costs 10,000 lamports (two signatures, no priority fee on a quiet devnet), so 0.2 SOL covers about 20,000.
 
 **Devnet proof (2026-11-20 UTC, rehearsal deal `staged-devnet-deal-pay-rehearsal` only):** the title reviewer approved from `/review` with GroundTruth paying the fee. The transaction's fee payer lost 10,000 lamports and the title wallet lost nothing. A fee-payer-signed transaction without the reviewer's signature fails devnet's signature check. See [the record](../escrow/demo-results/devnet-fee-sponsored-approval-v1.md).
 

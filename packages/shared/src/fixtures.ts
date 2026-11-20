@@ -18,6 +18,17 @@ import secondCounty from "./fixtures/second-county-parcel.json" with { type: "js
  * legal acreage is cited inside the zoning check instead. The septic check
  * (added 2026-11-19) is the SSURGO soil screening from Esri's Living Atlas
  * copy of USDA gSSURGO, checked live on that date; see QA-Proof.md.
+ *
+ * `db:seed` writes this report on every deploy with no expiry, so the live
+ * pipeline never replaces it: when the pipeline gains a check, add it here.
+ * On 2026-11-20 UTC the `environmental` (NWI wetlands, Franklin stream
+ * buffers) and `utilities` (EPA water systems and sewersheds, Franklin
+ * County Sanitary Engineering service areas) checks were copied verbatim
+ * from the live pipeline's report for this parcel, with their retrieval
+ * times, along with the `sellerAuthority` and `survey` template checks it
+ * emits; `generatedAt` is that run. The same run measured Seaman Rd at about
+ * 106 m and the riparian setback at about 4.7% (QA-Proof.md: 105.75 m and
+ * 4.661%), so the access and zoning wording now says so.
  */
 export const goldenParcel: Parcel = toParcel(golden.parcel);
 export const goldenReport: ParcelReport = toReport(golden.report);

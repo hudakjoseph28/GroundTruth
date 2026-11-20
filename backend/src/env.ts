@@ -1,6 +1,6 @@
 import { DEFAULT_SOLANA_RPC_URL } from "./actions/devnetChain.js";
 import { DEFAULT_OGRIP_TIMEOUT_MS } from "./parcels/ogrip.js";
-import { readFeeSponsor, type FeeSponsorConfig } from "./sponsor/feePayer.js";
+import { readFeeSponsor, type FeeSponsorSetup } from "./sponsor/feePayer.js";
 import type { TwilioConfig } from "./sms/sender.js";
 import {
   DEFAULT_ACCESS_TIMEOUT_MS,
@@ -44,8 +44,8 @@ export interface ServerEnv {
   twilio: TwilioConfig | undefined;
   /** Devnet RPC for the reviewer Blink and Solana Pay funding (one setting, one connection); both refuse any other cluster by genesis hash. */
   solanaRpcUrl: string;
-  /** Devnet fee payer for reviewer transactions in /review. Unset: reviewers pay their own fees. */
-  feeSponsor: FeeSponsorConfig | undefined;
+  /** Devnet fee payer for reviewer transactions in /review, or why it is off (reviewers pay their own fees). */
+  feeSponsor: FeeSponsorSetup;
   /** Claude API key for reading uploaded deal documents. Unset: uploads are stored unread. */
   anthropicApiKey: string | undefined;
 }

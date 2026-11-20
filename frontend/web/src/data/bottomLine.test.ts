@@ -206,11 +206,15 @@ describe("the bottom line", () => {
       expect(result?.wastewater).toMatch(/^No public sewer is mapped here, so the septic soils matter/);
     });
 
+    it("adds the same line to the seeded golden report, whose utilities check is the live answer", () => {
+      expect(line(goldenReport)?.wastewater).toBe(line(golden)?.wastewater);
+    });
+
     it("says nothing when sewer is mapped, unchecked, or only the seeded template is there", () => {
       const inSewershed = noSewer(
         "Inside the Columbus Public Water System service area on EPA's community water system map. Inside the Columbus Jackson Pike WWTP & Sewers sewershed on EPA's map.",
       );
-      for (const report of [goldenReport, secondCountyReport, inSewershed]) {
+      for (const report of [secondCountyReport, inSewershed]) {
         expect(line(report)?.wastewater).toBe("");
         expect(line(report)?.text).not.toMatch(/septic soils/);
       }

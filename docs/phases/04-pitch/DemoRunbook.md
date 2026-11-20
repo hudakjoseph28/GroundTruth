@@ -129,7 +129,7 @@ The reviewer portal (<https://groundtruth-lac.vercel.app/review>) lets the septi
 - Parcel `230-000918`, `Franklin County`, and parcel key `ohio:39049:230-000918`
 - The published parcel boundary outlined in gold over real aerial imagery and terrain
 - `Road access · Needs review · Biggest open question`
-- No mapped right-of-way touches the parcel; Seaman Road is about 107 m away; GIS cannot establish a recorded easement or other legal access
+- No mapped right-of-way touches the parcel; Seaman Road is about 106 m away; GIS cannot establish a recorded easement or other legal access
 - Rural zoning permits a one-family dwelling and the Auditor lists 3.015 legal acres, but the 150-foot frontage condition still applies
 - FEMA maps Zone X, with the limitation that this is not zero flood risk or a flood-insurance determination
 - `Septic · Needs review`: USDA SSURGO maps Ko 46.05%, CrB 38.31%, and CeB2 15.64% of the lot, all “Very limited” for septic-tank absorption fields (Living Atlas SSURGO copy, retrieved Nov 19); next action is Franklin County Public Health's site and soil evaluation. Access stays the biggest open question.
