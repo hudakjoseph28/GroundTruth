@@ -65,6 +65,27 @@ export const LAND = {
   },
 } as const;
 
+export const ELEVATION = {
+  kicker: "Terrain",
+  title: "Elevation at a glance",
+  source: "USGS 3DEP map elevation via AWS Terrain Tiles",
+  notSurvey: "Map-derived estimate, not a survey",
+  lowest: "Lowest point",
+  highest: "Highest point",
+  rise: "Total rise",
+  averageSlope: "Average slope",
+  steepestSlope: "Steepest slope",
+  profile: "Elevation profile",
+  profileHint: "Drag either numbered end across the lot to choose a path.",
+  across: "across the selected line",
+  selectorLabel: "Choose the line used for the elevation profile",
+  handle: (number: number) => `Profile line end ${number}`,
+  handlePlace: (eastMeters: number, southMeters: number) =>
+    `${Math.round(eastMeters * 3.28084)} ft from the left, ${Math.round(southMeters * 3.28084)} ft from the top of the outline`,
+  chartLabel: (low: string, high: string, distance: string) =>
+    `Elevation profile from ${low} to ${high} feet over ${distance} feet`,
+} as const;
+
 // Links out to the real surroundings. Google's names are theirs; the in-app
 // view is labeled as Google's imagery, not as anything about the parcel.
 export const EXPLORE = {
@@ -123,6 +144,15 @@ export const SUMMARY = {
     party ? `Check first: ${noun} (${party}).` : `Check first: ${noun}.`,
   noun: (kind: string) =>
     (CHECK_NOUNS as Partial<Record<string, string>>)[kind] ?? checkTitle(kind).toLowerCase(),
+  /**
+   * Said after the ask when the water and sewer check finds no public sewer
+   * mapped for the lot: the soils then decide whether a septic system can
+   * work. The rating is SSURGO's, word for word, never a feasibility call.
+   */
+  noPublicSewer: (rating: { worst: string; all: boolean } | null) =>
+    rating
+      ? `No public sewer is mapped here, so the septic soils matter: USDA rates ${rating.all ? "them" : "part of them"} “${rating.worst}” for a septic drain field.`
+      : "No public sewer is mapped here, so the septic soils matter, and they haven't been rated yet.",
   answered: (answered: number, total: number) => `${answered} of ${total} checks answered`,
   checks: "Every check, by status",
   tip: (title: string, status: string) => `${title} · ${status}`,

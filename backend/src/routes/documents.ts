@@ -19,6 +19,13 @@ import {
   detectContentType,
 } from "../documents/fileType.js";
 import {
+  PUBLIC_CHECK_COLUMNS,
+  runDocumentCheck,
+  toDocumentFindings,
+  toParcelCheck,
+  type DocumentReader,
+} from "../documents/parcelCheck.js";
+import {
   verifyParticipantRequest,
   type DealParticipants,
   type VerifiedParticipant,
@@ -40,11 +47,26 @@ const METADATA = {
   sha256: true,
   uploaderRole: true,
   uploadedAt: true,
+  check: { select: PUBLIC_CHECK_COLUMNS },
 } as const;
 
 export interface DocumentRouteOptions {
   now?: () => Date;
+  /**
+   * Reads an uploaded document and checks its parcel ID against the deal's
+   * (documents/parcelCheck.ts). Absent: uploads are stored unread and their
+   * parcel check is `unavailable`.
+   */
+  reader?: DocumentReader;
+  /** Runs a check after the upload response. Default: in the background. */
+  schedule?: (task: () => Promise<void>) => void;
+  log?: (line: string) => void;
 }
+
+/** A deal's public document rows with their parcel check status. */
+type DocumentRow = Parameters<typeof toDealDocument>[0] & {
+  check: Parameters<typeof toParcelCheck>[0];
+};
 
 /**
  * Deal documents (staged demo):
@@ -52,16 +74,30 @@ export interface DocumentRouteOptions {
  *   GET  /api/deals/:id/documents                    public metadata only
  *   POST /api/deals/:id/documents                    participant upload (raw body)
  *   POST /api/deals/:id/documents/:documentId/file   participant download
+ *   POST /api/deals/:id/documents/findings           participant: what each document says
  *
- * Writes and downloads need a fresh wallet signature from the deal's buyer,
- * seller, or an assigned reviewer (documents/walletAuth.ts). The API signs
- * nothing.
+ * Writes, downloads, and findings need a fresh wallet signature from the
+ * deal's buyer, seller, or an assigned reviewer (documents/walletAuth.ts).
+ * The API signs nothing.
+ *
+ * After an upload the API reads the document (options.reader) and compares
+ * the parcel ID it prints with the deal's. The public list carries only the
+ * match status; the text read goes to a signed participant. Advisory: a
+ * check never blocks an upload or an approval and never changes deal state.
  */
 export function documentRoutes(
   prisma: PrismaClient,
   options: DocumentRouteOptions = {},
 ) {
   const now = options.now ?? (() => new Date());
+  const log = options.log ?? ((line: string) => console.warn(line));
+  const schedule =
+    options.schedule ??
+    ((task: () => Promise<void>) => {
+      setImmediate(() => void task());
+    });
+  const publicDocument = (row: DocumentRow) =>
+    toDealDocument(row, toParcelCheck(row.check, row.uploadedAt, now()));
 
   const list: RequestHandler = asyncRoute(async (req, res) => {
     const deal = await loadDeal(prisma, req);
@@ -70,7 +106,7 @@ export function documentRoutes(
       orderBy: [{ uploadedAt: "asc" }, { id: "asc" }],
       select: METADATA,
     });
-    res.json(rows.map(toDealDocument));
+    res.json(rows.map(publicDocument));
   });
 
   const upload: (RequestHandler | ErrorRequestHandler)[] = [
@@ -139,10 +175,26 @@ export function documentRoutes(
             uploaderWallet: participant.wallet,
             uploadedAt: now(),
             file: { create: { content: new Uint8Array(bytes) } },
+            check: {
+              create: { status: options.reader ? "pending" : "off" },
+            },
           },
           select: METADATA,
         });
-        res.status(201).json(toDealDocument(row));
+        res.status(201).json(publicDocument(row));
+        const reader = options.reader;
+        if (reader) {
+          schedule(() =>
+            runDocumentCheck(prisma, reader, {
+              documentId: id,
+              parcelKey: deal.parcelKey,
+              bytes,
+              contentType: detected,
+              now,
+              log,
+            }),
+          );
+        }
       } catch (error) {
         if (isUniqueViolation(error)) {
           throw new HttpError(
@@ -192,14 +244,52 @@ export function documentRoutes(
     }),
   ];
 
-  return { list, upload, file };
+  const findings: RequestHandler[] = [
+    express.raw({ type: () => true, limit: "1kb" }),
+    asyncRoute(async (req, res) => {
+      const deal = await loadDeal(prisma, req);
+      const participant = verifyParticipantRequest(
+        req,
+        deal,
+        { action: "findings" },
+        now(),
+      );
+      await burnNonce(prisma, participant);
+
+      const rows = await prisma.dealDocumentRecord.findMany({
+        where: { dealId: deal.id },
+        orderBy: [{ uploadedAt: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          uploadedAt: true,
+          check: {
+            select: {
+              status: true,
+              parcelMatch: true,
+              parcelId: true,
+              address: true,
+              documentType: true,
+              keyFinding: true,
+              model: true,
+              checkedAt: true,
+            },
+          },
+        },
+      });
+      const at = now();
+      res.setHeader("cache-control", "private, no-store");
+      res.json(rows.map((row) => toDocumentFindings(row, deal.parcelKey, at)));
+    }),
+  ];
+
+  return { list, upload, file, findings };
 }
 
 /** A public staged deal and the wallets bound to it. */
 async function loadDeal(
   prisma: PrismaClient,
   req: Request,
-): Promise<DealParticipants> {
+): Promise<DealParticipants & { parcelKey: string }> {
   const parsed = dealIdSchema.safeParse(readParam(req.params.id));
   if (!parsed.success) {
     throw new HttpError(
@@ -213,6 +303,7 @@ async function loadDeal(
     where: { id: parsed.data },
     select: {
       id: true,
+      parcelKey: true,
       publicDemo: true,
       buyerWallet: true,
       sellerWallet: true,

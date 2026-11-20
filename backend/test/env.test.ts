@@ -15,8 +15,19 @@ describe("readServerEnv", () => {
       accessTimeoutMs: 6000,
       wetlandsTimeoutMs: 10000,
       streamBuffersTimeoutMs: 6000,
+      utilitiesTimeoutMs: 8000,
       solanaRpcUrl: "https://api.devnet.solana.com",
     });
+  });
+
+  it("reads ANTHROPIC_API_KEY for document checks, trimmed, blank as unset", () => {
+    expect(
+      readServerEnv({ DATABASE_URL, ANTHROPIC_API_KEY: " sk-ant-test " })
+        .anthropicApiKey,
+    ).toBe("sk-ant-test");
+    expect(
+      readServerEnv({ DATABASE_URL, ANTHROPIC_API_KEY: "  " }).anthropicApiKey,
+    ).toBeUndefined();
   });
 
   it("reads SOLANA_RPC_URL (Blink and Solana Pay) and rejects a non-URL", () => {
@@ -42,6 +53,16 @@ describe("readServerEnv", () => {
     expect(() =>
       readServerEnv({ DATABASE_URL, WETLANDS_TIMEOUT_MS: "100" }),
     ).toThrow("WETLANDS_TIMEOUT_MS must be between 500 and 60000");
+  });
+
+  it("reads UTILITIES_TIMEOUT_MS and rejects an out-of-range value", () => {
+    expect(
+      readServerEnv({ DATABASE_URL, UTILITIES_TIMEOUT_MS: "5000" })
+        .utilitiesTimeoutMs,
+    ).toBe(5000);
+    expect(() =>
+      readServerEnv({ DATABASE_URL, UTILITIES_TIMEOUT_MS: "100" }),
+    ).toThrow("UTILITIES_TIMEOUT_MS must be between 500 and 60000");
   });
 
   it("reads FEMA_TIMEOUT_MS and rejects an out-of-range value", () => {

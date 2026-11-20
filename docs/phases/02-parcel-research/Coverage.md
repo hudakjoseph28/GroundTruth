@@ -1,6 +1,6 @@
 # Phase 2 · Coverage note
 
-**Recorded Nov 17–19, 2026, against `main`**; the environmental check (NWI wetlands everywhere plus Franklin stream setbacks) and statewide USDA NRCS soils coverage were added Nov 18, and the Living Atlas SSURGO fallback Nov 19. Also on Nov 19, a flood check that finds a Special Flood Hazard Area or a regulatory floodway became `needsReview`, and a floodway became the biggest open question (see [Flood status and the biggest open question](#flood-status-and-the-biggest-open-question)). This note covers what GroundTruth searched, what it checked, and where. Each claim comes from a recorded live response, a provider-contract fixture, or a hand-verified fixture in this repository. It measures **search coverage** and **report depth** separately, as [ParcelResearch.md](ParcelResearch.md#demo-scope) asks.
+**Recorded Nov 17–19, 2026, against `main`**; the environmental check (NWI wetlands everywhere plus Franklin stream setbacks) and statewide USDA NRCS soils coverage were added Nov 18, and the Living Atlas SSURGO fallback Nov 19. Also on Nov 19, a flood check that finds a Special Flood Hazard Area or a regulatory floodway became `needsReview`, and a floodway became the biggest open question (see [Flood status and the biggest open question](#flood-status-and-the-biggest-open-question)). Also on Nov 19, a live water and sewer check fills the `utilities` kind (see [Water and sewer](#water-and-sewer-live-results-nov-19-2026)). This note covers what GroundTruth searched, what it checked, and where. Each claim comes from a recorded live response, a provider-contract fixture, or a hand-verified fixture in this repository. It measures **search coverage** and **report depth** separately, as [ParcelResearch.md](ParcelResearch.md#demo-scope) asks.
 
 ## Summary
 
@@ -12,8 +12,9 @@
 | Counties where the zoning check can return evidence | **1 of 88:** Franklin, live from the county's zoning map, for lots in the townships under county zoning (added Nov 17, 2026) |
 | Counties where the environmental check can return evidence | **88 of 88:** NWI wetlands, live. NWI's mapping-status layer is `Digital` everywhere it touches Ohio (recorded Nov 18, 2026). Franklin lots also get the county's riparian stream setbacks. |
 | Counties where the septic check can return evidence | **88 of 88:** live USDA NRCS Soil Data Access (SSURGO) map units and the published septic-tank absorption field dominant-condition rating, with the Esri Living Atlas copy of SSURGO as the fallback when SDA fails |
+| Counties where the water and sewer (`utilities`) check can return evidence | **88 of 88:** US EPA's community water system and wastewater sewershed maps, live. Franklin lots also get Franklin County Sanitary Engineering's service areas, and lots in or near **Dublin, Grove City, and Canal Winchester** get the distance to the nearest public water and sewer main from each city's own map. Columbus publishes no main map. |
 | Other checks with sourced evidence | Franklin access is live; the golden access result is also seeded and verified by hand |
-| Utilities, easements, seller authority, and survey | `unknown`, with a named responsible party and next action |
+| Easements, seller authority, and survey | `unknown`, with a named responsible party and next action |
 
 ## Canonical parcels
 
@@ -39,6 +40,7 @@ These are recorded live responses, replayed by exact request in `backend/test`. 
 | `ohio:39175:010025000000` | Wyandot | Flood `unknown`: Wyandot County has no NFHL study |
 | `ohio:39049:230-002100` | Franklin | Environmental `needsReview`: NWI riverine, emergent wetland, and pond on the lot, and the Big Darby setback on about 41%. Flood `needsReview` too (the same four zones, AE floodway included), so the biggest open question is flood. |
 | `ohio:39089:04011612400001` | Licking | Environmental `needsReview`: NWI forested wetland (PFO1A) on about 31% of 8391 Cooper Rd |
+| `ohio:39049:040-002918` | Franklin | Water and sewer `evidenceFound`: 2534 Dartmoor Rd, Grove City, inside the Columbus Public Water System's area with Grove City water and gravity sewer mains along the lot line (`backend/test/fixtures/utilities/`) |
 | `ohio:39049:999-999999` | Franklin | Well-formed key that OGRIP does not publish: `404 NOT_FOUND` |
 
 Address queries with no match return `[]` and are also recorded:
@@ -56,10 +58,11 @@ Address queries with no match return `[]` and are also recorded:
 | **Access** | **Golden parcel only:** seeded `needsReview` (county right-of-way and road layers, Zoning Resolution 2026 §302.042 and §302.0391). It never says "no access". | `unknown` from the template |
 | **Environmental** (wetlands and stream setbacks) | **Live in all 88 counties** for wetlands: the parcel is checked against the National Wetlands Inventory, and types and approximate shares are measured on NWI's own drawing of the lot. **Franklin lots** also get the share inside a riparian setback from the county's Stream Buffers layer, the layer the golden report cites. Either found: `needsReview`. Both answered with nothing on the lot: `evidenceFound`, stating that "NWI shows none" is not a delineation. **Golden parcel:** the seeded report is unchanged and has no environmental check. Live, it gives no NWI wetland and the Big Darby setback on about 4.7%, matching QA-Proof's 4.661%. | Either source timing out (each has its own limit) or failing: that part is `unknown`, and the check can't be `evidenceFound`. NWI with no mapping for a lot: `unknown`, never "none". Without an NWI client: `unknown` from the template, naming the county soil and water conservation district or a wetland consultant. |
 | **Septic** | **Live statewide.** The full parcel polygon is sent to USDA NRCS Soil Data Access (3 s budget). If SDA fails or uses its budget, the parcel's bounding box is sent to Esri's ArcGIS Living Atlas "USA Soils Map Units" layer (USDA gSSURGO copy) and the overlap is measured locally. Either way, SSURGO map units are intersected with the parcel and returned with area share and the published `muaggatt.engstafdcd` dominant-condition rating: `Very limited`, `Somewhat limited`, or `Not limited`. The source that answered is cited with `retrievedAt`. A rated response is always `needsReview`, never a site-feasibility conclusion. | No map unit, an unrated/other value, timeout, provider error, or malformed response is `unknown`. Every outcome ends by directing the buyer to the Ohio Department of Health homeowner page, their local health district, and a site and soil evaluation. |
-| Utilities, easements, seller authority, survey | Nowhere yet | `unknown` from the template, each with its own responsible party and next action |
+| **Water and sewer** (`utilities`) | **Live in all 88 counties.** The parcel polygon is intersected with US EPA's Community Water System Service Area Boundaries and EPA's sewersheds of publicly owned treatment works; the sewershed's utility comes from the plant's endpoint record. Franklin lots are also intersected with Franklin County Sanitary Engineering's 46 service areas. Where a city main map reaches within 500 m of the lot (Dublin, Grove City, Canal Winchester), the nearest active public main, and for sewer only gravity mains, is measured from the lot boundary. `evidenceFound` only when the lot is inside a mapped water service area **and** a public sewer main is within 30 m. Otherwise `needsReview`. When every sewer source answered and none reaches the lot, the finding ends "No public sewer is mapped for this lot, so it likely needs a septic system" (or "a private well and a septic system"), and the web's bottom line adds the septic soils rating. The limitation always says the maps don't guarantee capacity, a tap permit, or the cost. The next action names the utility to ask for a water/sewer availability letter and tap fees. **Golden parcel:** the seeded report is unchanged and keeps the `unknown` template; see below for the live answer, verified by hand. | No source answering (each has its own 6 s limit; the whole check has 8 s): `unknown`, naming Franklin County Sanitary Engineering in Franklin, or the county sanitary engineer or nearest utility elsewhere. One source failing leaves the others' answers in a `needsReview` check, and the report is not cached. Without a utilities client: `unknown` from the template. |
+| Easements, seller authority, survey | Nowhere yet | `unknown` from the template, each with its own responsible party and next action |
 | Closing | Comes from the staged deal, not the report | Seeded reports have no closing check |
 
-`GET /api/coverage` matches this table: `evidenceKinds: ["zoning", "flood", "environmental", "septic"]` for Franklin, `["flood", "environmental", "septic"]` for the other 82 counties with an NFHL study, and `["environmental", "septic"]` for the five without one.
+`GET /api/coverage` matches this table: `evidenceKinds: ["zoning", "flood", "environmental", "utilities", "septic"]` for Franklin, `["flood", "environmental", "utilities", "septic"]` for the other 82 counties with an NFHL study, and `["environmental", "utilities", "septic"]` for the five without one.
 
 ### Flood status and the biggest open question
 
@@ -81,6 +84,44 @@ Recorded parcels, replayed in `backend/test/report.test.ts`:
 | `ohio:39049:230-000918` (golden) | Zone X (minimal). Seeded and live reports unchanged. | access → access |
 
 GroundTruth does not measure how much of a lot lies in each flood zone, so a sliver of floodway along one edge ranks the same as a lot entirely in it. The finding says so in its limitation.
+
+### Water and sewer, live results (Nov 19, 2026)
+
+Recorded live at 2026-11-20T00:15:58Z–00:16:01Z (Nov 19, 7:16 p.m. ET) by `pnpm --filter @groundtruth/backend record:utilities` into `backend/test/fixtures/utilities/`, and replayed by exact request in `backend/test/utilities.test.ts` and `backend/test/report.test.ts`.
+
+| Parcel | Water | Sewer | Status | Next action names |
+| --- | --- | --- | --- | --- |
+| `ohio:39049:230-000918` (golden), Seaman Rd rear lot | Not inside any EPA community water system | Not inside any EPA sewershed or Franklin County Sanitary Engineering service area. No main map covers the area. | `needsReview`: "No public water or sewer is mapped for this lot, so it likely needs a private well and a septic system." | Franklin County Sanitary Engineering, then Franklin County Public Health for well and septic permits |
+| `ohio:39049:010-042534`, 84 W Dodridge St, Columbus | Inside the Columbus Public Water System (EPA, system-sourced boundary) | Inside the Columbus Jackson Pike WWTP & Sewers sewershed (EPA, sourced from Ohio data) | `needsReview`: Columbus publishes no main map, so no distance to a main | The Columbus Public Water System and the Columbus Division of Sewerage and Drainage (EPA's name for the sewer utility) |
+| `ohio:39089:00500729609000` (Licking), 93 Woody Knoll Dr | Not inside any EPA community water system | Not inside any EPA sewershed. No county or city sewer source for Licking. | `needsReview`: private well and septic system likely | The county sanitary engineer or the nearest water and sewer utility, then the local health district |
+| `ohio:39049:040-002918`, 2534 Dartmoor Rd, Grove City | Inside the Columbus Public Water System; a Grove City water main runs along the lot line (0.3 m) | Inside the Columbus Southerly WWTP & Sewers sewershed; a Grove City gravity sewer main runs along the lot line (0 m) | `evidenceFound` | The City of Grove City |
+
+**The golden parcel's live answer, verified by hand (Nov 19, 2026).** The seeded report is unchanged: its `utilities` check is still the `unknown` template. The live answer is not a near miss. Measured from the lot's boundary on the same day:
+- The nearest EPA community water system boundary is about 5.2 km away (West Jefferson Village PWS, a modeled boundary); the Columbus Public Water System's is about 6.3 km.
+- The nearest EPA sewershed is about 4.5 km away (Franklin Co Darbydale Area WWTP & Sewers, modeled); the nearest Franklin County Sanitary Engineering service area, Darbydale, is about 5.8 km away.
+- An independent source agrees: the county's Big Darby Accord planning data (`Big_Darby_Accord_View_Only`, layers 43 `T2009_Skeleton_Mains`, 46 `Sanitary_Mains`, 82 `Sewer_Service_Areas`) has no sanitary main and no skeleton water main within 5 km of the lot, and its nearest sewer service area is Darbydale, about 5.8 km away. That data dates from the 2006–2009 Accord plan, so it is a cross-check only, not a source the check reads.
+
+Whether to seed this answer into the golden report is the maintainer's call.
+
+**84 W Dodridge St, cross-checked.** Columbus's lead service line inventory (`ServiceLine_viewing_…/FeatureServer/0` in the City of Columbus ArcGIS Online organization) lists a water service line at `84 W DODRIDGE ST`, which agrees with the EPA water area. The check doesn't read that layer: it is an address inventory, not a main map.
+
+**Sources tried for this check (Nov 19, 2026).**
+
+| Source | Result | Used? |
+| --- | --- | --- |
+| US EPA Community Water System Service Area Boundaries, `Water_System_Boundaries/FeatureServer/0` | Answers; 44,615 systems nationwide, 1,078 with Ohio primacy | **Yes** |
+| US EPA sewersheds of POTWs, `National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0` (polygons) and `/1` (plant endpoints, for `Authority_Name`) | Answers | **Yes** |
+| Franklin County Sanitary Engineering, `FCSE_Service_Areas/FeatureServer/0` | Answers; 46 areas | **Yes** |
+| City of Dublin, `Sanitary_Sewer/FeatureServer/6` (Sanitary Mains) and `Water_Utility/FeatureServer/9` (Water Pipes) | Answer | **Yes** |
+| City of Grove City, `SanitarySewer/MapServer/7` (San. Gravity Main) and `Water_Utilities_ArcPro/MapServer/9` (Main), on `arcgisweb.grovecityohio.gov:6443` | Answer, in 2.6–2.8 s | **Yes** |
+| City of Canal Winchester, `Sanitary_View_Layer/FeatureServer/22` (Sanitary_Mains) and `Water_View_Layer/FeatureServer/17` (Water Mains) | Answer | **Yes** |
+| City of Columbus water and sewer mains | **None published.** Checked the service directories on `gis.columbus.gov`, `arc.columbus.gov`, `maps.columbus.gov`, and `maps2.columbus.gov`, all 69 items on `opendata.columbus.gov`, and the 180 services of the City of Columbus ArcGIS Online organization. The only utility layers are electric service areas, an overflow-location test layer, and the lead service line inventory. The city's GIS page refers data requests to DPU GIS. | No |
+| Ohio EPA public water system service areas | **No statewide layer.** `geo.epa.ohio.gov` has `Hosted/SWOhio_ServiceAreas/FeatureServer/0` (a southwest Ohio study copy of EPA's boundaries) and `Hosted/PWS_SewerSheds/FeatureServer/1`; neither covers any of the four test lots. `DrinkingWater/SWAP` holds source-water protection areas, not service areas. | No |
+| Ohio EPA 208 facility planning areas, `SurfaceWater/Areawide_201_208_Ohio_EPA/FeatureServer/0` and `/1` | Answers, but these are wastewater **planning** areas and prescriptions (the golden lot is in the Columbus regional FPA), not where sewer is today | No |
+| City of Reynoldsburg, `gis.reynoldsburg.gov/arcgis/rest/services/Editable/Sanitary/FeatureServer` | HTTP 500: "Could not generate or find MSD for service Editable/Sanitary.MapServer" | No |
+| City of Westerville, `TransparencyHub/UtilityLines/FeatureServer/0` | Answers, but mains are published as masked points, not lines | No |
+| `wgtn_admin`'s `SanitarySewer_GPS_View` (found searching "Worthington") | Worthington, **Minnesota** (extent near −95.6°) | No |
+| Rome_Hilliard_Utilities (a consultant's project layer) and Grandview Heights' consultant-built Water & Sewer layer | Not the utility's own map | No |
 
 ### Franklin zoning, live results (Nov 17, 2026)
 
@@ -109,7 +150,18 @@ The exact query URLs are stored in each fixture's `sourceUrl` / `sources[].url`.
 | Franklin County Stream Buffers | <https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/Franklin_County_Stream_Buffers/FeatureServer/0> | Report recordings 2026-11-18T23:49Z |
 | USDA NRCS Soil Data Access (SSURGO) | <https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest> (`mupolygon`, `mapunit`, `muaggatt.engstafdcd`) | Each successful live report records its own `retrievedAt`. Real HTTP 502 responses recorded at 2026-11-18T23:17:00Z and 2026-11-19T03:38Z (see known limits). |
 | Esri ArcGIS Living Atlas, USA Soils Map Units (USDA NRCS gSSURGO, published Dec 2025) | <https://services5.arcgis.com/7weheFjxuNkGGiZi/arcgis/rest/services/USA_Soils_Map_Units/FeatureServer/0> (`MUKEY`, `MUSYM`, `muname`, `engstafdcd`) | SDA fallback. Real responses recorded 2026-11-19T03:38:02Z (230-000918) and 03:38:03Z (Licking 00500729609000) in `backend/test/fixtures/ssurgo/`. |
+| US EPA Community Water System Service Area Boundaries (v3.0, Mar 17, 2026) | <https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/Water_System_Boundaries/FeatureServer/0> | Utilities recordings 2026-11-20T00:15:58Z–00:16:01Z |
+| US EPA sewersheds of publicly owned treatment works (CWNS 2022) | <https://services.arcgis.com/cJ9YHowT8TU7DUyn/arcgis/rest/services/National_Sewershed_Web_Map_Internal_WFL1/FeatureServer/0> (sewersheds), `/1` (plant endpoints) | Utilities recordings 2026-11-20T00:15:58Z–00:16:01Z |
 | Ohio Department of Health homeowner sewage guidance | <https://odh.ohio.gov/know-our-programs/sewage-treatment-systems/information-for-homeowners/> | Read 2026-11-18; used only for the required local-health-district and site-and-soil-evaluation next action, not as parcel evidence. |
+
+### Franklin County water and sewer
+
+| Source | URL | Retrieved |
+| --- | --- | --- |
+| Franklin County Sanitary Engineering service areas | <https://services1.arcgis.com/7r2Wl09a1Apy459r/arcgis/rest/services/FCSE_Service_Areas/FeatureServer/0>; department page <https://www.franklincountyohio.gov/Agency-Directory/Sanitary-Engineering> | Utilities recordings 2026-11-20T00:15:58Z–00:16:00Z |
+| City of Grove City sanitary gravity mains and water mains | <https://arcgisweb.grovecityohio.gov:6443/arcgis/rest/services/Web_GIS_Services_New/SanitarySewer/MapServer/7>, <https://arcgisweb.grovecityohio.gov:6443/arcgis/rest/services/Production_Services/Water_Utilities_ArcPro/MapServer/9> | 2026-11-20T00:16:00Z (Dartmoor Rd) |
+| City of Dublin sanitary mains and water pipes | <https://services1.arcgis.com/NqY8dnPSEdMJhuRw/arcgis/rest/services/Sanitary_Sewer/FeatureServer/6>, <https://services1.arcgis.com/NqY8dnPSEdMJhuRw/arcgis/rest/services/Water_Utility/FeatureServer/9> | Queried live 2026-11-19 (25 S High St: sewer main 2.5 m, water main 15.6 m); no recording, as no test lot is in Dublin |
+| City of Canal Winchester sanitary mains and water mains | <https://services3.arcgis.com/y4utLgB1hH3ocvdq/arcgis/rest/services/Sanitary_View_Layer/FeatureServer/22>, <https://services3.arcgis.com/y4utLgB1hH3ocvdq/arcgis/rest/services/Water_View_Layer/FeatureServer/17> | Queried live 2026-11-19 (31 E Waterloo St: sewer main 13.9 m, water main 4.3 m); no recording |
 
 ### Golden parcel `ohio:39049:230-000918`
 
@@ -150,6 +202,10 @@ Current verification runs `vitest run test/ssurgoSoils.test.ts test/report.test.
   - Septic becomes `unknown`; it makes no suitability conclusion and still ends with the health-district site and soil evaluation next action.
   - The timed-out report is not cached, so the next request can ask USDA again.
   - If SDA alone hangs past its 3 s budget, the Living Atlas fallback still answers inside the 6 s check limit (`test/ssurgoSoils.test.ts`).
+- **The water and sewer maps time out** (every source forced to hang, utilities limit 200 ms) on `ohio:39049:010-042534`:
+  - The report still returns **`200`** within 2 s and every other check is unchanged.
+  - Utilities becomes `unknown`: "EPA's water system and sewershed maps and Franklin County Sanitary Engineering's service area map didn't answer within 0.2 seconds, so water and sewer service weren't checked." It names Franklin County Sanitary Engineering.
+  - The report is not cached. One source hanging alone (EPA's water map, or Grove City's sewer map) is cut off at that source's own limit; the others' answers stay, and the check is `needsReview`, never `evidenceFound` (`test/utilities.test.ts`).
 - **OGRIP times out on the report route:** `504 PROVIDER_TIMEOUT`, `retryable: true`, with no guessed report.
 - **OGRIP times out on parcel-ID search, address search, the parcel route, the explore map's area route and `/api/coverage`:** each returns `504 PROVIDER_TIMEOUT`, `retryable: true`, with no partial result.
 - **An address search whose individual requests fit the per-request limit, but together exceed the search budget:** `504 PROVIDER_TIMEOUT`.
@@ -173,4 +229,6 @@ Current verification runs `vitest run test/ssurgoSoils.test.ts test/report.test.
   - A dense search box that hits OGRIP's 2,000-record limit without a match returns `[]` rather than widening.
 - **Zoning is live in Franklin County only,** and only for lots under county zoning. It names the district; it does not say what can be built there. District shares are measured by testing a 300 × 300 grid of points across the lot; on 7 lots they matched exact areas to within 0.02 percentage points.
 - **Map layers on the land view show the same sources' coverage.** Flood is drawn wherever FEMA has a study, wetlands wherever NWI has mapping, and stream setbacks, zoning lines, and road right-of-way in Franklin only; elsewhere those toggles say "Franklin County only". NWI's server answered `503 Server Unavailable` several times on Nov 18–19, 2026; the wetlands layer then says the source did not answer and offers a retry, and the API keeps no copy of that answer.
+- **Water and sewer maps are not availability letters.** EPA modeled about 44% of community water system boundaries and many sewersheds from other data; the finding and limitation say when a boundary is modeled. A lot that touches a service area at all counts as inside it. A main within 30 m of the lot boundary counts as adjacent; that is a map distance, not a tap location.
+- **Main distances in three cities only.** Dublin, Grove City, and Canal Winchester publish their main maps; the check reads a city's map only when the lot is within 500 m of its extent, and names each map's owner as it is coded (City of Dublin, City of Columbus, Del-Co Water Company, and so on). Columbus, the county's largest utility, publishes none, so Columbus lots get service areas but no distance, and the finding says so. A city map that shows no main near the lot says only that about its own mains.
 - **Hand-verified access is one parcel.** Access evidence exists only for the golden parcel. A live access check against the county right-of-way layer is a later task.

@@ -6,13 +6,38 @@ import {
 } from "@groundtruth/shared";
 import { EXAMPLE } from "../../content/example";
 import { LAYERS, layerStatus, type LayerToggleId } from "../../content/layers";
+import { ELEVATION } from "../../content/parcel";
 import { useIsExample } from "../../example/ExampleContext";
 import { LAYER_COLORS } from "./paintLayers";
+import {
+  ELEVATION_GRADIENT,
+  type ElevationAnalysis,
+} from "../Elevation/elevation";
+
+const TERRAIN = new Set<LayerToggleId>(["boundary", "elevation", "slope"]);
 
 export const LAYER_TOGGLES: readonly LayerToggleId[] = [
   "boundary",
+  "elevation",
+  "slope",
   ...MAP_LAYER_IDS,
 ];
+
+/**
+ * The toggles on when the land first shows. A parcel opens on the aerial
+ * photo: elevation coloring is a toggle, on at the start only where the page
+ * asks for it (the walkthrough). Slope shading always starts off. The example
+ * parcel starts with every map layer on, so each finding is visible.
+ */
+export function initialLayers(
+  example: boolean,
+  elevationOnOpen: boolean,
+): Set<LayerToggleId> {
+  const base: LayerToggleId[] = example
+    ? LAYER_TOGGLES.filter((id) => id !== "slope" && id !== "elevation")
+    : ["boundary"];
+  return new Set(elevationOnOpen ? [...base, "elevation"] : base);
+}
 
 const date = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", {
@@ -33,6 +58,7 @@ export function LayerPanel({
   onToggle,
   onToggleAll,
   onRetry,
+  elevation,
 }: {
   /** undefined while loading, null when they could not be loaded. */
   layers: ParcelLayers | null | undefined;
@@ -43,11 +69,13 @@ export function LayerPanel({
   /** Turns every layer on, or back to the boundary alone when all are on. */
   onToggleAll: () => void;
   onRetry: () => void;
+  /** The lot's elevation, once the height grid has loaded. */
+  elevation?: { analysis: ElevationAnalysis; sourceUrl: string } | null;
 }) {
   const example = useIsExample();
   const shown = LAYER_TOGGLES.filter((id) => enabled.has(id));
   const layerOf = (id: LayerToggleId): MapLayer | undefined =>
-    id === "boundary"
+    TERRAIN.has(id)
       ? undefined
       : layers?.layers.find((layer) => layer.id === id);
 
@@ -74,7 +102,7 @@ export function LayerPanel({
             onClick={() => onToggle(id)}
             style={{ "--layer": LAYER_COLORS[id] } as CSSProperties}
           >
-            <span className="layer-swatch" aria-hidden="true" />
+            <span className="layer-swatch" data-kind={id} aria-hidden="true" />
             {LAYERS.names[id]}
           </button>
         ))}
@@ -92,13 +120,17 @@ export function LayerPanel({
                 ? example
                   ? EXAMPLE.boundary
                   : LAYERS.boundary
-                : layers === undefined
-                  ? LAYERS.loading
-                  : layers === null
-                    ? LAYERS.failed
-                    : layer
-                      ? layerStatus(layer)
-                      : LAYERS.unavailable;
+                : id === "elevation"
+                  ? LAYERS.elevation(elevation?.analysis.contourFeet ?? 2)
+                  : id === "slope"
+                    ? LAYERS.slope(elevation?.analysis.steepShare ?? null)
+                    : layers === undefined
+                      ? LAYERS.loading
+                      : layers === null
+                        ? LAYERS.failed
+                        : layer
+                          ? layerStatus(layer)
+                          : LAYERS.unavailable;
             return (
               <li
                 key={id}
@@ -115,11 +147,47 @@ export function LayerPanel({
                   <p>
                     <strong>{LAYERS.names[id]}</strong> {status}
                   </p>
+                  {id === "elevation" && elevation && (
+                    <>
+                      <div
+                        className="elevation-legend"
+                        role="img"
+                        aria-label={`${LAYERS.elevationScale}: ${Math.round(elevation.analysis.minFeet)} to ${Math.round(elevation.analysis.maxFeet)}`}
+                      >
+                        <span>
+                          {Math.round(
+                            elevation.analysis.minFeet,
+                          ).toLocaleString("en-US")}{" "}
+                          ft
+                        </span>
+                        <span
+                          className="elevation-ramp"
+                          style={{ background: ELEVATION_GRADIENT("90deg") }}
+                        />
+                        <span>
+                          {Math.round(
+                            elevation.analysis.maxFeet,
+                          ).toLocaleString("en-US")}{" "}
+                          ft
+                        </span>
+                      </div>
+                      <p className="layer-note">
+                        <a
+                          href={elevation.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {ELEVATION.source}
+                        </a>
+                        {` · ${ELEVATION.notSurvey}`}
+                      </p>
+                    </>
+                  )}
                   {id === "flood" &&
                     layer?.shapes.some((shape) => shape.tone === "light") && (
                       <p className="layer-note">{LAYERS.floodLight}</p>
                     )}
-                  {id !== "boundary" &&
+                  {!TERRAIN.has(id) &&
                     (layers === null || layer?.status === "unavailable") && (
                       <button
                         type="button"

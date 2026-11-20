@@ -240,6 +240,62 @@ export interface DealDocument {
   sha256: string;
   uploaderRole: DealParticipantRole;
   uploadedAt: string;
+  /**
+   * Whether the parcel ID printed in the document is this deal's parcel
+   * (additive, 2026-11-20). Advisory only: it never blocks or changes deal
+   * state. Public: the status alone, never the text the API read.
+   */
+  parcelCheck?: DocumentParcelCheck;
+}
+
+/**
+ * - `checking`: the API is reading the document.
+ * - `matches`: the document names this deal's parcel ID.
+ * - `different`: the document names another parcel ID.
+ * - `noParcelId`: no parcel ID was found in the document.
+ * - `unavailable`: the document was not read (check off, failed, or
+ *   uploaded before the check existed). Never a finding either way.
+ */
+export const DOCUMENT_PARCEL_CHECK_STATUSES = [
+  "checking",
+  "matches",
+  "different",
+  "noParcelId",
+  "unavailable",
+] as const;
+
+export type DocumentParcelCheckStatus =
+  (typeof DOCUMENT_PARCEL_CHECK_STATUSES)[number];
+
+export interface DocumentParcelCheck {
+  status: DocumentParcelCheckStatus;
+  /** When the API finished reading the document; absent while checking or unread. */
+  checkedAt?: string;
+}
+
+/**
+ * What the API read from one document, for a deal participant only
+ * (a fresh wallet signature). Machine-read and advisory: a reviewer still
+ * reads the document and signs the decision.
+ */
+export interface DocumentFindings {
+  documentId: string;
+  parcelCheck: DocumentParcelCheck;
+  /** The parcel ID the deal is for, as the parcel key holds it. */
+  dealParcelId: string;
+  /** Absent unless the document was read. */
+  found?: {
+    /** As printed in the document; null when none was found. */
+    parcelId: string | null;
+    /** The property's address as printed; null when none was found. */
+    address: string | null;
+    /** What the document says it is, e.g. "Septic system soil evaluation". */
+    documentType: string;
+    /** One line: the document's main finding in its own terms. */
+    keyFinding: string;
+  };
+  /** The model that read the document. */
+  model?: string;
 }
 
 /** A document hash an approval transaction committed to on-chain. */

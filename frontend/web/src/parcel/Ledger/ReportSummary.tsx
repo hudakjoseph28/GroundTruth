@@ -60,6 +60,7 @@ export function ReportSummary({
       <p className="summary-line">
         <strong>{line.opening}</strong>
         {line.ask && <> {line.ask}</>}
+        {line.wastewater && <> {line.wastewater}</>}
       </p>
       <div className="summary-foot">
         <p className="summary-count">
